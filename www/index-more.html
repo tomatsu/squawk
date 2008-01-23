@@ -1,0 +1,311 @@
+<html><head><title>Goals of Squawk</title>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+
+
+<style type="text/css">
+<!--
+ul.NoBullet {
+  list-style-type: none}
+
+ul.NoBulletNoIndent {
+  list-style-type: none;
+  margin-left: 0px;
+  padding-left: 0px
+}
+.style3 {color: #e76f00}
+.style5 {color: #e76f00; font-weight: bold; }
+a:link {
+	text-decoration: none;
+}
+a:visited {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+a:active {
+	text-decoration: none;
+}
+
+-->
+
+   	.axial { display: none;	}
+  	#apphead { display: none; }
+</style></head><body bgcolor="#ffffff" text="#000000">  
+
+<script>
+    // kill "description" h3 bar
+    ld = document.getElementById("longdescription");
+    for( n=ld.firstChild; n!=null; n=n.nextSibling ) {
+        if(n.nodeType==1 && n.innerHTML=="Description" ) {
+            n.parentNode.removeChild(n);
+            break;
+        }
+    }
+</script>
+
+<H1>Overview (continued)</H1>
+<table border="0" cellpadding="4" cellspacing="3" width="100%">
+  <tbody>
+  <tr>
+  <td valign="top">
+<H3>Goals of Squawk</H3>
+<!-- insert content here -->
+<p>A major goal of the Squawk project is to write as much of the
+virtual machine as possible in Java, for portability, ease of
+debugging, and maintainability. Squawk aims at
+a small footprint.  Squawk is <a href="http://java.sun.com/products/cldc/">CLDC 1.1</a> and <a href="http://java.sun.com/products/imp/">IMP 1.1</a> compliant.
+Squawk is meant to be used in small, resource constrained devices.<A href=  "index-detailed.html">&nbsp;&nbsp;more...</A>
+</p>
+<p>
+The main goal however of Squawk, is to enable Java technology in the micro-embedded space. The majority of development in the micro-embedded space today is done using low level languages and custom sets of tools and Operating Systems.  We believe that by bringing Java technology to the micro-embedded space we can lower the cost of development and enable new types of applications that would otherwise not be built.  Java technology brings with it a signifcant amount of standard development tools and libraries built a large Java developer community.
+</p>
+<p>
+      Powering all this functionality is a core set of Java ME technologies known 
+      as CLDC (the Java VM) and IMP (the information module profile). IMP
+      is a subset of MIDP (the mobile information device profile) that removes all
+      parts of the API relating to the requirement of a physical display device.
+      CLDC and MIDP are the most widely adopted Java ME application platforms 
+      used in mobile phones today.  This allows developers to have access to a font
+      of resources to aid in their development of applications.
+</p>
+<p>
+To see papers published go to the Sun Microsystems Laboratories <a href="http://research.sun.com/project/squawk">Project Squawk</a> page.
+</p>
+<h3><a name="architecture">Architecture</a></h3>
+<p>The architecture of the Squawk VM was inspired in part by the <a
+ href="http://www.squeak.org">Squeak</a> and <a href="http://sunlabs.eng/projects/dashboard.php?id=12">Klein VM</a>
+architectures. In particular, it is (mostly) implemented in the language that
+it executes (Java).
+
+<p><img border="0" src="figures/SquawkVM.jpg"></p>
+
+
+<p>Features of the Squawk architecture include:</p>
+
+<ul>
+    <li>
+<p><b>A compact bytecode instruction set</b></p>
+<ul>
+  <li>Smaller than standard bytecode (35% - 45% size of equivalent J2ME class files)</li>
+  <li>Fixed up/pre linked</li>
+  <li>Immutable ==&gt; execute in place</li>
+  <li>Simplified garbage collection:
+      <ul>
+          <li>local variables are partitioned into pointers and primitives ==&gt; only one pointer map per method</li>
+          <li>there is nothing on evaluation stack at operations that may result in an invocation ==&gt; no need to statically interpret methods during GC </li>
+      </ul>
+  </li>
+</ul>
+</li>
+
+<li>
+<p><b>Suites</b></p>
+
+<p>A suite is a collection of classes. Each class in a suite only refers to other
+classes in the suite or to a class in a parent suite. That is, a chain of suites
+is a transitive closure of classes as shown below:
+
+<p><img border="0" src="figures/SuiteChain.jpg" alt="Chain of suites" width="594" height="314"></p>
+
+The representation of classes in a suite is very compact
+as they are all prelinked to each other.  On average, suites are 
+one third of the size of class files.</p>  
+
+<p>Once a suite is <i>closed</i> (i.e. cannot
+have any more classes loaded into it), it is immutable.
+An immutable suite can  be saved to and loaded from a file. This results in a
+significantly reduced start up time when running an application from a suite
+(as opposed to a dynamically loaded set of classes).</p>
+</li>
+
+<li>
+<p><b>Split VM</b></p>
+Squawk supports using a split VM architecture in order to save memory 
+on-device.
+<p><img border="0" src="figures/Squawk-SplitVM.jpg" width="642"
+ height="325">
+<a name="arch"></a></p>
+<p>The host machine verifies, optimizes, and transforms the the application classes into Squawk's internal object
+representation, which is then saved into a suite.
+Suites are then loaded into the embedded device and are interpreted by
+the VM on-device.&nbsp; This allows for a smaller VM to be stored in the
+embedded device, as well as faster start-up time for the embedded
+ application.</a>
+</li>
+
+<li>
+<p><b>Isolates</b></p>
+
+<p>An <a href="http://www.jcp.org/en/jsr/detail?id=121">isolate</a> 
+is a mechanism by which an application is represented as an object. 
+In Squawk, one or more applications can run in the single JVM. 
+Conceptually, each application is completely isolated from all other applications. Given the
+immutability of suites, the isolate implementation in Squawk shares common suites between
+applications. This can significantly reduce the memory footprint of each application, which
+is particularly important in the embedded device space.</p>
+
+<p>In addition to the standard semantics of isolates, the Squawk implementation has
+one extra feature: <i>isolate migration</i>. That is, an isolate running on one Squawk VM instance
+can be paused, serialized to a file or over a network connection and restarted in another
+Squawk VM instance. This feature is a direct result of certain architectural choices made
+in Squawk such as using a green threaded model, representing all VM structures (including
+thread stacks) as objects and not implementing a general native code interface such as the JNI.
+The isolate migration mechanism also works between two VM instances running on platforms that
+have a different machine word endianess. A compelling use of this mechanism is for deploying
+a configured running application to a device running a Squawk VM that does not have the
+resources required for standard class file loading and Java object serialization.</p>
+
+</li>
+
+<li>
+<p><b>VM Components</b></p>
+
+<p>The VM components include: 
+<ul>
+    <li>The class loader/bytecode translator</li>
+    <li>The ahead-of-time bytecode optimizer</li>
+    <li>The threading system (green threads)</li>
+    <li>The garbage collectors (selected at build time):
+        <ul>
+            <li>Simple two space Cheney collector</li>
+            <li>Mark/compact "Lisp2" collector</li>
+            <li>Generational mark/compact "Lisp2" collector</li>
+        </ul>
+    </li>
+</ul>
+
+<p>Squawk's design includes a compiler that can be used to:</P>
+<ul>
+  <li>compile the core VM components ahead-of-time</li>
+  <li>compile an interpreter written in Java ahead-of-time</li>
+  <li>compile other Java components ahead-of-time</li>
+  <li>compile bytecodes just-in-time (JIT compilation)</li>
+</ul>
+
+<p>The general Squawk compiler is not complete, but limited ahead-of-time
+compilation of Java components such as the garbage collector is
+supported.
+</li>
+
+</ul>
+
+<h3><a name="Futures">Current Plans</h3></a>
+<i>rough plans</i>
+<ul>
+  <li> Implement Real-Time support in Squawk, starting with a sub-set
+  of the RTSJ (<a href="http://jcp.org/en/jsr/detail?id=1">Real-Time Specification for Java</a>).
+  <li> Figure out and implement technology transfer plan, including
+  Open Source and business licensing.
+  <li> Execution Engine enhancements, which may include interpreter rewrite,
+  AOT-compilation, and byte-code optimizations (inlining, etc).
+  <li> Continue SPOT support, fixing critical bugs
+  <li> New SPOT-requested features.
+</ul>
+<!-- content ends here -->
+<td width="3%">&nbsp;</td>
+<td width=208 valign="top">
+
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+
+	    <a href="https://squawk.dev.java.net"><img src="figures/duke-squeak-transparent-anti-aliased.gif"></a><BR> <BR>
+		<A href="download.html"><IMG src="https://phoneme.dev.java.net/branding/images/phoneme/download.gif" align="absmiddle"> &nbsp; Download</A><BR> <BR>
+	<A href="https://mobileandembedded.dev.java.net/content/contribute.html"><IMG src="https://phoneme.dev.java.net/branding/images/phoneme/projects.gif" align="absmiddle"> &nbsp; Contribute</A><BR> <BR>
+	<A href="https://squawk.dev.java.net/source/browse/squawk/"><IMG src="https://phoneme.dev.java.net/branding/images/phoneme/srcbrowse.gif" align="absmiddle"> &nbsp; Browse</A>
+</tr>
+<tr>
+<td width=208 style="background-repeat: repeat-y;" background="https://mobileandembedded.dev.java.net/images/gradationBox_top.png"></td>
+</tr>
+<tr>
+<td width=208 style="background-repeat: repeat-y;" background="https://mobileandembedded.dev.java.net/images/gradationBox_middle.png" valign="top"> 
+  <TABLE WIDTH=100% CELLSPACING=0 CELLPADDING=15 BORDER=0 VALIGN="top">
+  <TR>
+  <TD>
+	<FONT size="-1">  
+  <UL class="NoBulletNoIndent">
+		&nbsp;Popular Links<BR>
+		&nbsp;
+		<SUP>..................................</SUP>
+		<BR>
+		
+		<LI>&nbsp;<A href="http://community.java.net/mobileandembedded/">Mobile & Embedded Community</A> </LI>
+		<LI>&nbsp;<A href="https://mobileandembedded.dev.java.net/contacts.html#Squawk">Technical Contacts</A> </LI>
+		<LI>&nbsp;<A HREF="/phoneme_vision.html">Project Vision</A></LI>
+	</UL><UL class="NoBulletNoIndent">
+		&nbsp;Mailing Lists<BR>
+<LI>&nbsp;
+<SCRIPT language="JavaScript" type="text/javascript">
+<!--
+var name = "feedback";
+var domain = "squawk.dev.java.net";
+var display = "feedback";
+var subject = "";
+var ending = "";
+var style = "";
+document.write('<a class=\"' + style + '\" href=\"mailto:' + name + '&#64;' + domain + '?subject=' + subject + '\">');
+if (display) {
+ document.write(display);
+} else {
+ document.write(name + '&#64;' + domain);
+}
+document.write('</a>' + ending);
+document.write('<!-- mailmunge bit -->');
+// -->
+</SCRIPT>
+</LI>  
+<LI>&nbsp;
+<SCRIPT language="JavaScript" type="text/javascript">
+<!--
+var name = "help";
+var domain = "squawk.dev.java.net";
+var display = "help";
+var subject = "";
+var ending = "";
+var style = "";
+document.write('<a class=\"' + style + '\" href=\"mailto:' + name + '&#64;' + domain + '?subject=' + subject + '\">');
+if (display) {
+ document.write(display);
+} else {
+ document.write(name + '&#64;' + domain);
+}
+document.write('</a>' + ending);
+document.write('<!-- mailmunge bit -->');
+// -->
+</SCRIPT>
+</LI>  
+	</UL>
+	
+  <UL class="NoBulletNoIndent">
+		&nbsp;Forums<BR>
+		<LI>&nbsp;<A href="http://forums.java.net/jive/forum.jspa?forumID=???">Squawk</A></LI>
+		<LI>&nbsp;<A href="http://forums.java.net/jive/forum.jspa?forumID=99">phoneME Feature</A></LI>
+	</UL>
+
+  <UL class="NoBulletNoIndent">
+		&nbsp;Blogs<BR>
+		<LI>&nbsp;<A href="http://blogs.sun.com/eric/">Eric Arseneau</A></LI>
+		<LI>&nbsp;<A href="http://weblogs.java.net/blog/terrencebarr/">Terrence Barr</A><BR></LI>
+		<LI>&nbsp;<A href="http://blogs.sun.com/hinkmond/">Hinkmond Wong</A></LI>
+		<LI>&nbsp;<A href="http://weblogs.java.net/blog/stuart_marks/">Stuart Marks</A><BR></LI>
+		<LI>&nbsp;<A href="http://weblogs.java.net/blog/mlam/">Mark Lam</A></LI>
+		<LI>&nbsp;<A href="http://weblogs.java.net/blog/darryl_m/">Darryl Mocek</A></LI>
+		<LI>&nbsp;<A href="http://weblogs.java.net/blog/danila/">Danila Sinopalnikov</A></LI>
+	</UL>
+	<P>
+	</FONT>	
+</TD>
+</TR>
+</TABLE>
+</td>
+
+</tr>
+<tr>
+<td width=208 style="background-repeat: no-repeat;" background="https://mobileandembedded.dev.java.net/images/gradationBox_bottom.png">&nbsp;</td>
+</tr>
+</table>
+</td>
+</tr>
+</tbody></table>
