@@ -1,0 +1,27 @@
+# The following 3 lines have to be uncommented to include as much of the compiler
+# in the bootstrap image as is currently possible (until CSystem is replaced with
+# something compatible with Squawk)
+#com.sun.squawk.compiler.tests.*
+#com.sun.squawk.compiler.Linker
+#com.sun.squawk.compiler.Compilation
+com.sun.squawk.compiler.*
+
+com.sun.squawk.os.*
+TRACING_ENABLED=false                          com.sun.squawk.BytecodeTracer
+GC=com.sun.squawk.Lisp2Collector               com.sun.squawk.CheneyCollector*
+GC=com.sun.squawk.Lisp2Collector               com.sun.squawk.Lisp2Generational*
+GC=com.sun.squawk.Lisp2GenerationalCollector   com.sun.squawk.CheneyCollector*
+GC=com.sun.squawk.Lisp2GenerationalCollector   com.sun.squawk.Lisp2Collector*
+GC=com.sun.squawk.CheneyCollector              com.sun.squawk.Lisp2*
+
+###############################################
+# Classes that don't need to be on device, but on desktop (move to seperate suite):
+###############################################
+#FLASH_MEMORY=true                              com.sun.squawk.io.j2me.channel.*
+
+###############################################
+# Classes on the way out. No known users:
+###############################################
+com.sun.cldc.io.connections.HttpConnection
+com.sun.squawk.ClassTunnel
+
