@@ -747,7 +747,7 @@ public class Build {
         	toolsJarPath = "";
         	toolsJarPathEntry = "";
         } else {
-        	toolsJarPath = toolsJarURL.getPath();
+        	toolsJarPath = toolsJarURL.getPath().substring(1);
         	toolsJarPathEntry = toolsJarPath + ":";
         }
         Target vm2c = addTarget(false,  "vm2c", null, toolsJarPath);

@@ -95,14 +95,12 @@ public class JavaCompiler {
         }
         env.log(env.verbose, "[initializing Java compiler tools]");
 
-        URL[] toolsClassPath = env.toURLClassPath(env.getJDK().getHome() + "/lib/tools.jar:tools/javamake.jar");
-        ClassLoader loader = new URLClassLoader(toolsClassPath);
 
         // Try to initialize javadoc
         String javadocClassName = System.getProperty("builder.tools.javadoc.class", "com.sun.tools.javadoc.Main");
         String javadocMethodName = System.getProperty("builder.tools.javadoc.method", "execute");
         try {
-            Class javadocClass = loader.loadClass(javadocClassName);
+            Class javadocClass = Class.forName(javadocClassName);
             javadocMethod = javadocClass.getMethod(javadocMethodName, new Class[] {String[].class});
             if (!Modifier.isStatic(javadocMethod.getModifiers())) {
                 throw new BuildException("javadoc entry method must be static");
@@ -119,7 +117,7 @@ public class JavaCompiler {
             String javamakeMethodName = "mainProgrammatic";
             Method customizeOutput = null;
             try {
-                javamakeClass = loader.loadClass(javamakeClassName);
+                javamakeClass = Class.forName(javamakeClassName);
                 javamakeMethod = javamakeClass.getMethod(javamakeMethodName, new Class[] {String[].class});
 
                 customizeOutput = javamakeClass.getMethod("customizeOutput", new Class[]{ boolean.class, boolean.class, boolean.class });
@@ -141,7 +139,7 @@ public class JavaCompiler {
         String javacClassName = System.getProperty("builder.tools.javac.class", "com.sun.tools.javac.Main");
         String javacMethodName = System.getProperty("builder.tools.javac.method", "compile");
         try {
-            Class javacClass = loader.loadClass(javacClassName);
+            Class javacClass = Class.forName(javacClassName);
             javacMethod = javacClass.getMethod(javacMethodName, new Class[] {String[].class});
             if (!Modifier.isStatic(javacMethod.getModifiers())) {
                 throw new BuildException("javac entry method must be static");
