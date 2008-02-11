@@ -45,12 +45,20 @@ java_irq_hndl:
 			mov			r1, #1
 			mov			r1, r1, lsl r0
 			
+			# mask the FIQ to prevent conflicts
+			mrs			r0, cpsr
+			orr			r2, r0, #0x40
+			msr			cpsr_cxsf, r2
+			
 			# get the current status value into r3
 			ldr			r2, =java_irq_status
 			ldr			r3, [r2]
 			# set the status bit and store status
 			orr			r3, r3, r1
 			str			r3, [r2]
+
+			# restore FIQ state
+			msr			cpsr_cxsf, r0
 			
 			# mask this interrupt
 			str			r1, [r4, #AIC_IDCR]
