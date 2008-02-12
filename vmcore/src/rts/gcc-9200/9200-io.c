@@ -62,9 +62,10 @@ static stopProcessor() {
 /*
  * Enter deep sleep
  */
-static void doDeepSleep(long long targetMillis) {
+static void doDeepSleep(long long targetMillis, int remain_powered) {
 	long long millisecondsToWait = targetMillis - getMilliseconds();
 	diagnosticWithValue("In doDeepSleep", (int)targetMillis);
+//	error("In doDeepSleep", remain_powered);
     unsigned int statusReturnedFromDeepSleep = deepSleep(millisecondsToWait);
     lowLevelSetup(); //need to repeat low-level setup after a restart
     avrSetOutstandingStatus(statusReturnedFromDeepSleep);
@@ -522,7 +523,7 @@ int avr_low_result = 0;
             res = ChannelConstants_RESULT_OK;
             break;
         case ChannelConstants_DEEP_SLEEP: {
-        	doDeepSleep(rebuildLongParam(i1, i2));
+        	doDeepSleep(rebuildLongParam(i1, i2), i3);
     		res = 0;
 	        } 
             break;
