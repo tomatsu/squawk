@@ -53,22 +53,18 @@ long long minimumDeepSleepMillis = 0x7FFFFFFFFFFFFFFFLL;
 long long totalShallowSleepTime; // total time the SPOT has been shallow sleeping
 
 /*
- * Stop the processor clock - restarts on interrupt
- */
-static stopProcessor() {
-	*AT91C_PMC_SCDR = AT91C_PMC_PCK;
-}
-
-/*
  * Enter deep sleep
  */
 static void doDeepSleep(long long targetMillis, int remain_powered) {
 	long long millisecondsToWait = targetMillis - getMilliseconds();
-	diagnosticWithValue("In doDeepSleep", (int)targetMillis);
-//	error("In doDeepSleep", remain_powered);
-    unsigned int statusReturnedFromDeepSleep = deepSleep(millisecondsToWait);
-    lowLevelSetup(); //need to repeat low-level setup after a restart
-    avrSetOutstandingStatus(statusReturnedFromDeepSleep);
+	if (remain_powered) {
+		avrSetAlarmAndWait(millisecondsToWait);
+		synchroniseWithAVRClock();
+	} else {
+    	unsigned int statusReturnedFromDeepSleep = deepSleep(millisecondsToWait);
+	    lowLevelSetup(); //need to repeat low-level setup after a restart
+    	avrSetOutstandingStatus(statusReturnedFromDeepSleep);
+	}
 }
 
 /*
