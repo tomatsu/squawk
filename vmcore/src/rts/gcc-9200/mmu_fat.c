@@ -41,7 +41,8 @@
 #define VIRTUAL_ADDRESS_FILE_SPACING 		(1024*1024)
 #define VIRTUAL_ADDRESS_SPACE_LOWER_BOUND 	0x10800000
 #define VIRTUAL_ADDRESS_SPACE_UPPER_BOUND 	(VIRTUAL_ADDRESS_SPACE_LOWER_BOUND + (VIRTUAL_ADDRESS_FILE_COUNT*VIRTUAL_ADDRESS_FILE_SPACING))
-#define FAT_IDENTIFIER						0x12345678
+#define FAT_IDENTIFIER_V1					0x12345678
+#define FAT_IDENTIFIER_V2					0x12345679
 
 // MMU mapping tables
 #define LEVEL_2_TABLE_ENTRIES				(256)
@@ -169,21 +170,26 @@ static int read_number(unsigned char* ptr, int number_of_bytes) {
 	return result;
 }
 
+static int is_FAT_V2;
+
 static int is_FAT_valid() {
-	return read_number((char*)get_sector_address(FAT_SECTOR), 4) == FAT_IDENTIFIER;
+	int fat_id = read_number((char*)get_sector_address(FAT_SECTOR), 4);
+	is_FAT_V2 = FALSE;
+	switch (fat_id) {
+		case FAT_IDENTIFIER_V2:
+			is_FAT_V2 = TRUE;
+		case FAT_IDENTIFIER_V1:
+			return TRUE;
+		default:
+			return FALSE;
+	}
 }
 
-/*
- * Answer the space (in bytes) allocated to the FlashFile that occupies
- * the given virtual address. If there is no such file, answers -1.
- * 
- * required_virtual_address   Virtual address of required FlashFile
- */
-int get_allocated_file_size(int required_virtual_address) {
+static int get_allocated_file_size_V2(int required_virtual_address) {
+}
+
+static int get_allocated_file_size_V1(int required_virtual_address) {
 	int i, j;
-	if (!is_FAT_valid()) {
-		return -1;
-	}
 	char* fat_ptr = (char*)(get_sector_address(FAT_SECTOR)+4); // +4 to skip identifier
 
 	int file_count = read_number(fat_ptr, 2);
@@ -210,13 +216,26 @@ int get_allocated_file_size(int required_virtual_address) {
 }
 
 /*
- * Answer the virtual address of the flash file with a specified name. If
- * there is no such file, answers -1.
+ * Answer the space (in bytes) allocated to the FlashFile that occupies
+ * the given virtual address. If there is no such file, answers -1.
  * 
- * target_file_name_length    Length of the file name
- * target_file_name           Address of the buffer containing the file name
+ * required_virtual_address   Virtual address of required FlashFile
  */
-unsigned int get_file_virtual_address(int target_file_name_length, char* target_file_name) {
+int get_allocated_file_size(int required_virtual_address) {
+	if (!is_FAT_valid()) {
+		return -1;
+	}
+	if (is_FAT_V2) {
+		return get_allocated_file_size_V2(required_virtual_address);
+	} else {
+		return get_allocated_file_size_V1(required_virtual_address);
+	}
+}
+
+static unsigned int get_file_virtual_address_V2(int target_file_name_length, char* target_file_name) {
+}
+
+static unsigned int get_file_virtual_address_V1(int target_file_name_length, char* target_file_name) {
 	int i, j;
 	if (!is_FAT_valid()) {
 		return -1;
@@ -252,13 +271,27 @@ unsigned int get_file_virtual_address(int target_file_name_length, char* target_
 }
 
 /*
- * Reprogram the MMU to map files into virtual memory as implied 
- * by the virtual memory addresses specified in the FAT. Answer whether
- * a valid FAT was detected (if not, the MMU is left untouched).
+ * Answer the virtual address of the flash file with a specified name. If
+ * there is no such file, answers -1.
  * 
- * ignore_obsolete_files    specify whether or not to map obsolete files
+ * target_file_name_length    Length of the file name
+ * target_file_name           Address of the buffer containing the file name
  */
-int reprogram_mmu(int ignore_obsolete_files) {
+unsigned int get_file_virtual_address(int target_file_name_length, char* target_file_name) {
+	if (!is_FAT_valid()) {
+		return -1;
+	}
+	if (is_FAT_V2) {
+		return get_file_virtual_address_V2(target_file_name_length, target_file_name);
+	} else {
+		return get_file_virtual_address_V1(target_file_name_length, target_file_name);
+	}
+}
+
+static int reprogram_mmu_V2(int ignore_obsolete_files) {
+}
+
+static int reprogram_mmu_V1(int ignore_obsolete_files) {
 	int i, j;
 	if (!is_FAT_valid()) {
 		return FALSE;
@@ -292,4 +325,22 @@ int reprogram_mmu(int ignore_obsolete_files) {
 	invalidate_data_tlb();
 	data_cache_enable();
 	return TRUE;
+}
+
+/*
+ * Reprogram the MMU to map files into virtual memory as implied 
+ * by the virtual memory addresses specified in the FAT. Answer whether
+ * a valid FAT was detected (if not, the MMU is left untouched).
+ * 
+ * ignore_obsolete_files    specify whether or not to map obsolete files
+ */
+int reprogram_mmu(int ignore_obsolete_files) {
+	if (!is_FAT_valid()) {
+		return -1;
+	}
+	if (is_FAT_V2) {
+		return reprogram_mmu_V2(ignore_obsolete_files);
+	} else {
+		return reprogram_mmu_V1(ignore_obsolete_files);
+	}
 }
