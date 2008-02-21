@@ -222,13 +222,10 @@ public class ObjectMemoryLoader {
             	suiteIn = Connector.openInputStream(uri);
                 try {
                 	if (!SignatureVerifier.isVerifiedSuite(suiteIn) && !noPublicKeyInstalled) {
-                		if (VM.isVerbose())                			
-                			VM.println("Verifying signature of suite ("+uri+")");                		
-/*if[NATIVE_VERIFICATION]*/
+                		if (VM.isVerbose()) {
+                			System.out.println("Verifying signature of suite ("+uri+")");
+                        }
                 		SignatureVerifier.verifySuite(suiteIn);
-/*else[NATIVE_VERIFICATION]*/
-//                  SignatureVerifier.verifySuite(suiteIn);
-/*end[NATIVE_VERIFICATION]*/
                 	} else {
                 		//System.out.println("NOT verifying suite with uri " + uri);
                 	}

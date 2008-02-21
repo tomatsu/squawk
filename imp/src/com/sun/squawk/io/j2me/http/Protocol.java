@@ -38,7 +38,7 @@ import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
 import javax.microedition.io.StreamConnection;
 
-import com.sun.cldc.io.DateParser;
+import com.sun.midp.util.DateParser;
 import com.sun.squawk.Isolate;
 import com.sun.squawk.VM;
 import com.sun.squawk.io.ConnectionBase;

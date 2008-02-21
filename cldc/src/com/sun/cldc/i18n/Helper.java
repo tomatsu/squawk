@@ -25,8 +25,7 @@
 package com.sun.cldc.i18n;
 
 import java.io.*;
-import com.sun.squawk.*;
-import com.sun.squawk.util.Assert;
+//import com.sun.squawk.util.Assert;
 
 /**
  * This class provides general helper functions for the J2ME environment.
@@ -73,7 +72,11 @@ public class Helper {
         try {
             return getStreamReader(is, defaultEncoding);
         } catch(UnsupportedEncodingException x) {
-            throw new RuntimeException(x.toString());
+                throw new RuntimeException(
+/*if[VERBOSE_EXCEPTIONS]*/
+                                             "Missing default encoding "+defaultEncoding
+/*end[VERBOSE_EXCEPTIONS]*/
+                );
         }
     }
 
@@ -88,7 +91,7 @@ public class Helper {
     public static Reader getStreamReader(InputStream is, String name) throws UnsupportedEncodingException {
 
         /* Test for null arguments */
-        if(is == null) {
+        if (is == null || name == null) {
             throw new NullPointerException();
         }
 
@@ -108,19 +111,34 @@ public class Helper {
         name = internalNameForEncoding(name);
 
         try {
-            String className = defaultMEPath + '.' + name + suffix;
+             String className;
 
-            /* Using the decoder names lookup the implementation class */
-            Klass clazz = Klass.forName(className);
+             /* Get the reader class name */
+             className = defaultMEPath + '.' + name + suffix;
 
-            /* Return a new instance */
-            return clazz.newInstance();
+             /* Using the decoder names lookup the implementation class */
+             Class clazz = Class.forName(className);
+
+             /* Return a new instance */
+             return clazz.newInstance();
         } catch(ClassNotFoundException x) {
-            throw new UnsupportedEncodingException(x.toString());
+            throw new UnsupportedEncodingException(
+/*if[VERBOSE_EXCEPTIONS]*/
+                                         "Encoding "+name+" not found"
+/*end[VERBOSE_EXCEPTIONS]*/
+            );
         } catch(InstantiationException x) {
-            throw new RuntimeException(x.toString());
+            throw new RuntimeException(
+/*if[VERBOSE_EXCEPTIONS]*/
+                                         "InstantiationException "+x.getMessage()
+/*end[VERBOSE_EXCEPTIONS]*/
+            );
         } catch(IllegalAccessException x) {
-            throw new RuntimeException(x.toString());
+            throw new RuntimeException(
+/*if[VERBOSE_EXCEPTIONS]*/
+                                         "IllegalAccessException "+x.getMessage()
+/*end[VERBOSE_EXCEPTIONS]*/
+            );
         }
     }
 
@@ -135,7 +153,12 @@ public class Helper {
         try {
             return getStreamWriter(os, defaultEncoding);
         } catch(UnsupportedEncodingException x) {
-            throw new RuntimeException("Missing default encoding "+defaultEncoding);
+            throw new RuntimeException(
+/*if[VERBOSE_EXCEPTIONS]*/
+                                             "Missing default encoding " + 
+                                             defaultEncoding
+/*end[VERBOSE_EXCEPTIONS]*/
+                );
         }
     }
 
@@ -151,7 +174,7 @@ public class Helper {
     public static Writer getStreamWriter(OutputStream os, String name) throws UnsupportedEncodingException {
 
         /* Test for null arguments */
-        if(os == null) {
+        if (os == null || name == null) {
             throw new NullPointerException();
         }
 
@@ -174,7 +197,11 @@ public class Helper {
         try {
             return byteToCharArray(buffer, offset, length, defaultEncoding);
         } catch(UnsupportedEncodingException x) {
-            throw new RuntimeException("Missing default encoding "+defaultEncoding);
+            throw new RuntimeException(
+/*if[VERBOSE_EXCEPTIONS]*/
+                                         "Missing default encoding " + defaultEncoding
+/*end[VERBOSE_EXCEPTIONS]*/
+            );
         }
     }
 
@@ -190,7 +217,11 @@ public class Helper {
         try {
             return charToByteArray(buffer, offset, length, defaultEncoding);
         } catch(UnsupportedEncodingException x) {
-            throw new RuntimeException("Missing default encoding "+defaultEncoding);
+            throw new RuntimeException(
+/*if[VERBOSE_EXCEPTIONS]*/
+                                         "Missing default encoding "+defaultEncoding
+/*end[VERBOSE_EXCEPTIONS]*/
+            );
         }
     }
 
@@ -212,16 +243,28 @@ public class Helper {
      */
     public static char[] byteToCharArray(byte[] buffer, int offset, int length, String enc) throws UnsupportedEncodingException {
         if (offset < 0) {
-            throw new IndexOutOfBoundsException(Integer.toString(offset));
+            throw new IndexOutOfBoundsException(
+/*if[VERBOSE_EXCEPTIONS]*/
+                                         Integer.toString(offset)
+/*end[VERBOSE_EXCEPTIONS]*/
+            );
         }
+
         if (length < 0) {
-            throw new IndexOutOfBoundsException(Integer.toString(length));
+            throw new IndexOutOfBoundsException(
+/*if[VERBOSE_EXCEPTIONS]*/
+                                         Integer.toString(length)
+/*end[VERBOSE_EXCEPTIONS]*/
+            );
         }
 
         /* Note: offset or length might be near -1>>>1 */
         if (offset > buffer.length - length) {
             throw new IndexOutOfBoundsException(
-                Integer.toString(offset + length));
+/*if[VERBOSE_EXCEPTIONS]*/                                           
+                                         Integer.toString(offset + length)
+/*end[VERBOSE_EXCEPTIONS]*/
+            );
         }
 
         //Because most cases use ISO8859_1 encoding, we can optimize this case.
@@ -259,11 +302,20 @@ public class Helper {
 
         try {
             /* Read the input */
-            lastReader.read(outbuf, 0, size);
+            int numread = lastReader.read(outbuf, 0, size);
+            if (numread<size) {
+                // this may happen only if the last character is truncated
+                // (say, it should be of 3 bytes, but there are only 2).
+                lastReader.read(outbuf, numread, size-numread);
+            }
             /* Close the reader */
             lastReader.close();
         } catch(IOException x) {
-            throw new RuntimeException(x.toString());
+            throw new RuntimeException(
+/*if[VERBOSE_EXCEPTIONS]*/
+                                         "IOException reading reader " +x.getMessage()
+/*end[VERBOSE_EXCEPTIONS]*/
+            );
         }
 
         /* And return the buffer */
@@ -302,7 +354,12 @@ public class Helper {
             /* Close the writer */
             lastWriter.close();
         } catch(IOException x) {
-            throw new RuntimeException(x.toString());
+            throw new RuntimeException(
+/*if[VERBOSE_EXCEPTIONS]*/
+                                         "IOException writing writer " 
+                                         +x.getMessage()
+/*end[VERBOSE_EXCEPTIONS]*/
+            );
         }
 
         /* Close the output stream */
@@ -346,7 +403,8 @@ public class Helper {
     
     /** 
      * Is encodingName some variation of "ISO8859_1"?
-     *
+     * 
+     * @param encodingName
      * @return true if encodingName is some variation of "ISO8859_1".
      */
     public static boolean isISO8859_1(String encodingName) {

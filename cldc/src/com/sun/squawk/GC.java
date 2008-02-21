@@ -303,6 +303,7 @@ public class GC implements GlobalStaticFields {
         arr[current.length] = om;
         readOnlyObjectMemories = arr;
 
+/*if[!FLASH_MEMORY]*/
         if (VM.isVeryVerbose()) {
             PrintStream out = null;
             try {
@@ -311,7 +312,7 @@ public class GC implements GlobalStaticFields {
                     om = readOnlyObjectMemories[i];
                     out.println(om.getURI() + "=" + om.getStart().toUWord().toPrimitive());
                 }
-                VM.println("[wrote/updated relocation info for read-only object memories to 'squawk.reloc']");
+                System.out.println("[wrote/updated relocation info for read-only object memories to 'squawk.reloc']");
             } catch (IOException ex) {
                 ex.printStackTrace();
             } finally {
@@ -320,6 +321,7 @@ public class GC implements GlobalStaticFields {
                 }
             }
         }
+/*end[FLASH_MEMORY]*/
 
     }
 
@@ -344,7 +346,7 @@ public class GC implements GlobalStaticFields {
         readOnlyObjectMemories = arr;
 
         if (VM.isVeryVerbose()) {
-	        VM.println("[removed read only object memory: " + om.getURI() +"]");
+	        System.out.println("[removed read only object memory: " + om.getURI() +"]");
         }
     }
 

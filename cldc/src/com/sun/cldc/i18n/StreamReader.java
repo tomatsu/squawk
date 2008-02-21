@@ -76,7 +76,11 @@ public abstract class StreamReader extends Reader {
         if (in.markSupported()) {
             in.mark(readAheadLimit);
         } else {
-            throw new IOException("mark() not supported");
+            throw new IOException(
+/*if[VERBOSE_EXCEPTIONS]*/
+                                         "mark() not supported"
+/*end[VERBOSE_EXCEPTIONS]*/
+            );
         }
     }
 
