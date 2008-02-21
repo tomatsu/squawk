@@ -44,6 +44,14 @@
 #define FAT_IDENTIFIER_V1					0x12345678
 #define FAT_IDENTIFIER_V2					0x12345679
 
+// FAT V2 constants - must match the same constants in FATRecord.java
+#define FILE_FAT_RECORD_TYPE				0
+#define FREE_SECTORS_FAT_RECORD_TYPE		1
+#define UNUSED_FAT_RECORD_STATUS			0xFFFF
+#define DELETED_FAT_RECORD_STATUS			0x0000
+#define FAT_RECORD_HEADER_SIZE				4
+#define CURRENT_FAT_RECORD_STATUS			0x00FF
+
 // MMU mapping tables
 #define LEVEL_2_TABLE_ENTRIES				(256)
 #define LEVEL_2_TABLE_SIZE					(sizeof(int)*LEVEL_2_TABLE_ENTRIES)
@@ -186,6 +194,42 @@ static int is_FAT_valid() {
 }
 
 static int get_allocated_file_size_V2(int required_virtual_address) {
+	char* fat_ptr = (char*)(get_sector_address(FAT_SECTOR)+4); // +4 to skip identifier
+	int recordStatus = read_number(fat_ptr, 2);
+	int flags, is_obsolete, sector_count;
+	unsigned int virtual_address;
+	while (recordStatus != UNUSED_FAT_RECORD_STATUS) {
+		int recordSize = read_number(fat_ptr+2, 2);
+		int recordType = read_number(fat_ptr+4, 1);
+		switch (recordStatus) {
+			case DELETED_FAT_RECORD_STATUS:
+				break;
+			case CURRENT_FAT_RECORD_STATUS:
+				switch (recordType) {
+					case FILE_FAT_RECORD_TYPE:
+						flags = read_number(fat_ptr+5, 2);
+						is_obsolete = flags & OBSOLETE_FLAG_MASK;
+						virtual_address = read_number(fat_ptr+7, 4);
+						if (virtual_address == required_virtual_address && !is_obsolete) {
+							sector_count = read_number(fat_ptr+11, 2);
+							return sector_count * SECTOR_SIZE;
+						}
+						break;
+					case FREE_SECTORS_FAT_RECORD_TYPE:
+						break;
+					default:
+						error("FAT contains bad record type ", recordType);
+				}
+				break;
+			default:
+				error("FAT contains bad record status ", recordStatus);
+		}
+		fat_ptr += recordSize;
+		if (recordSize % 2 != 0) {
+			fat_ptr += 1;
+		}
+		recordStatus = recordStatus = read_number(fat_ptr, 2);
+	}
 }
 
 static int get_allocated_file_size_V1(int required_virtual_address) {
@@ -233,6 +277,45 @@ int get_allocated_file_size(int required_virtual_address) {
 }
 
 static unsigned int get_file_virtual_address_V2(int target_file_name_length, char* target_file_name) {
+	char* fat_ptr = (char*)(get_sector_address(FAT_SECTOR)+4); // +4 to skip identifier
+	int recordStatus = read_number(fat_ptr, 2);
+	int flags, is_obsolete, sector_count, file_name_length;
+	unsigned int virtual_address;
+	while (recordStatus != UNUSED_FAT_RECORD_STATUS) {
+		int recordSize = read_number(fat_ptr+2, 2);
+		int recordType = read_number(fat_ptr+4, 1);
+		switch (recordStatus) {
+			case DELETED_FAT_RECORD_STATUS:
+				break;
+			case CURRENT_FAT_RECORD_STATUS:
+				switch (recordType) {
+					case FILE_FAT_RECORD_TYPE:
+						flags = read_number(fat_ptr+5, 2);
+						is_obsolete = flags & OBSOLETE_FLAG_MASK;
+						virtual_address = read_number(fat_ptr+7, 4);
+						sector_count = read_number(fat_ptr+11, 2);
+						file_name_length = read_number(fat_ptr+13+(sector_count*2), 2);
+						if (!is_obsolete && (file_name_length == target_file_name_length)) {
+							if (strncmp(target_file_name, fat_ptr+13+(sector_count*2)+2, file_name_length) == 0) {
+								return virtual_address;
+							}
+						}
+						break;
+					case FREE_SECTORS_FAT_RECORD_TYPE:
+						break;
+					default:
+						error("FAT contains bad record type ", recordType);
+				}
+				break;
+			default:
+				error("FAT contains bad record status ", recordStatus);
+		}
+		fat_ptr += recordSize;
+		if (recordSize % 2 != 0) {
+			fat_ptr += 1;
+		}
+		recordStatus = recordStatus = read_number(fat_ptr, 2);
+	}
 }
 
 static unsigned int get_file_virtual_address_V1(int target_file_name_length, char* target_file_name) {
@@ -289,6 +372,46 @@ unsigned int get_file_virtual_address(int target_file_name_length, char* target_
 }
 
 static int reprogram_mmu_V2(int ignore_obsolete_files) {
+	char* fat_ptr = (char*)(get_sector_address(FAT_SECTOR)+4); // +4 to skip identifier
+	int recordStatus = read_number(fat_ptr, 2);
+	int flags, is_obsolete, sector_count, j;
+	unsigned int virtual_address;
+	while (recordStatus != UNUSED_FAT_RECORD_STATUS) {
+		int recordSize = read_number(fat_ptr+2, 2);
+		int recordType = read_number(fat_ptr+4, 1);
+		switch (recordStatus) {
+			case DELETED_FAT_RECORD_STATUS:
+				break;
+			case CURRENT_FAT_RECORD_STATUS:
+				switch (recordType) {
+					case FILE_FAT_RECORD_TYPE:
+						flags = read_number(fat_ptr+5, 2);
+						is_obsolete = flags & OBSOLETE_FLAG_MASK;
+						virtual_address = read_number(fat_ptr+7, 4);
+						sector_count = read_number(fat_ptr+11, 2);
+						for (j = 0; j < sector_count; ++j) {
+							int sector_number = read_number(fat_ptr+13+(j*2), 2);
+							if (virtual_address != 0 && !(is_obsolete && ignore_obsolete_files)) {
+								map_level_2_entry_using_addresses(virtual_address, get_sector_address(sector_number));
+								virtual_address += SECTOR_SIZE;
+							}
+						}
+						break;
+					case FREE_SECTORS_FAT_RECORD_TYPE:
+						break;
+					default:
+						error("FAT contains bad record type ", recordType);
+				}
+				break;
+			default:
+				error("FAT contains bad record status ", recordStatus);
+		}
+		fat_ptr += recordSize;
+		if (recordSize % 2 != 0) {
+			fat_ptr += 1;
+		}
+		recordStatus = recordStatus = read_number(fat_ptr, 2);
+	}
 }
 
 static int reprogram_mmu_V1(int ignore_obsolete_files) {
