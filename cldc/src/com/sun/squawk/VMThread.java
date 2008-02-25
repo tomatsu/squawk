@@ -33,7 +33,8 @@ import java.util.Enumeration;
 
 /**
  * The Squawk implementation of threads.
- *
+ * 
+ * @see Monitor
  */
 public final class VMThread implements GlobalStaticFields {
 
@@ -266,6 +267,7 @@ public final class VMThread implements GlobalStaticFields {
 
     /**
      * Gets the daemon state of the thread.
+     * @return tue if thread is a daemon thread
      */
     public boolean isDaemon() {
         return isDaemon;
@@ -2146,17 +2148,17 @@ VM.println(VM.branchCount());
      *             current thread is cleared when this exception is thrown.
      */
     public static void monitorWait(Object object, long delta) throws InterruptedException {
-        VMThread currentThread = VMThread.currentThread;
-        currentThread.checkInvarients();
+        VMThread theCurrentThread = VMThread.currentThread;
+        theCurrentThread.checkInvarients();
         Monitor monitor = getMonitor(object);
 
         // Throw an exception if things look bad
-        if (monitor.owner != currentThread) {
+        if (monitor.owner != theCurrentThread) {
             throwIllegalMonitorStateException(monitor, object);
         }
 
         // Was the thread interrupted?
-        currentThread.handlePendingInterrupt();
+        theCurrentThread.handlePendingInterrupt();
 
 /*if[SMARTMONITORS]*/
         // Record that the monitor was waited upon.
@@ -2165,14 +2167,14 @@ VM.println(VM.branchCount());
 
         // Add to timer queue if time is > 0
         if (delta > 0) {
-            timerQueue.add(currentThread, delta);
+            timerQueue.add(theCurrentThread, delta);
         }
 
         // Save the nesting depth so it can be restored when it regains the monitor.
-        currentThread.monitorDepth = monitor.depth;
+        theCurrentThread.monitorDepth = monitor.depth;
 
         // Add to the wait queue
-        monitor.addCondvarWait(currentThread);
+        monitor.addCondvarWait(theCurrentThread);
 
         // Having relinquished the monitor, get the next thread off its wait queue.
         releaseMonitor(monitor);
@@ -2180,7 +2182,7 @@ VM.println(VM.branchCount());
 
         // Wait for a notify or a timeout.
         Assert.that(monitor.condvarQueue != null);
-        Assert.that(currentThread.monitor == monitor);
+        Assert.that(theCurrentThread.monitor == monitor);
         reschedule();
         
         // OK, wait has been notified or timed out.
@@ -2194,11 +2196,11 @@ VM.println(VM.branchCount());
 //traceMonitor("monitorWait: woke up and re-locked: ", monitor, object);
 
         // Was the thread interrupted?
-        currentThread.handlePendingInterrupt();
+        theCurrentThread.handlePendingInterrupt();
 
         // Safety...
-        currentThread.checkInvarients();
-        Assert.that(monitor.owner == currentThread);
+        theCurrentThread.checkInvarients();
+        Assert.that(monitor.owner == theCurrentThread);
     }
 
     /**
@@ -2366,13 +2368,13 @@ VM.println(VM.branchCount());
 
             // If the thread is waiting on a monitor then remove it
             // from the conditional variable wait queue.
-            Monitor monitor = this.monitor;
-            if (monitor != null) {
+            Monitor thisMonitor = this.monitor;
+            if (thisMonitor != null) {
 
                 // May also be on a timer queue
                 timerQueue.remove(this);
 
-                monitor.removeCondvarWait(this);
+                thisMonitor.removeCondvarWait(this);
                 
                 // allow waiter to be runnable,
                 // the waiter will have to contend for the lock.
@@ -2660,192 +2662,6 @@ final class HitBreakpoint {
         return appThreadTop.isZero() || appThreadTop.lt(catchFO);
     }
 }
-
-/*=======================================================================*\
- *                                Monitor                                *
-\*=======================================================================*/
-
-final class Monitor {
-
-    /**
-     * The thread that owns the monitor.
-     */
-    VMThread owner;
-
-    /**
-     * Queue of threads waiting to claim the monitor.
-     */
-    VMThread monitorQueue;
-
-    /**
-     * Queue of threads waiting to claim the object.
-     */
-    VMThread condvarQueue;
-
-/*if[SMARTMONITORS]*/
-    /**
-     * Nesting depth.
-     */
-    short depth;
-
-    /**
-     * Flag to show if a wait occured.
-     */
-    boolean hasHadWaiter;
-/*else[SMARTMONITORS]*/
-//  int depth;
-/*end[SMARTMONITORS]*/
-    
-    /**
-     * The object that this is a monitor for. Used for debugging/assertions.
-     */
-    final Object object;
-
-    /*
-     * Constructor
-     */
-    Monitor(Object object) {
-        this.object = object;
-        VMThread.monitorsAllocatedCount++;
-    }
-
-    /**
-     * Add a thread to the monitor wait queue.
-     *
-     * @param thread the thread to add
-     */
-    void addMonitorWait(VMThread thread) {
-        thread.setInQueue(VMThread.Q_MONITOR);
-        Assert.that(thread.nextThread == null);
-        VMThread next = monitorQueue;
-        if (next == null) {
-            monitorQueue = thread;
-        } else {
-            while (next.nextThread != null) {
-                next = next.nextThread;
-            }
-            next.nextThread = thread;
-        }
-    }
-    
-    /**
-     * Add a thread to the head of the monitor wait queue.
-     * @todo should be ordered first by priority, then by wait.
-     *
-     * @param thread the thread to add
-     */
-    void addMonitorWaitHead(VMThread thread) {
-        thread.setInQueue(VMThread.Q_MONITOR);
-        Assert.that(thread.nextThread == null);
-        thread.nextThread = monitorQueue;
-        monitorQueue = thread;
-    }
-
-    /**
-     * Remove a thread from the monitor wait queue.
-     *
-     * @return a thread or null if there is none
-     */
-    VMThread removeMonitorWait() {
-        VMThread thread = monitorQueue;
-        if (thread != null) {
-            monitorQueue = thread.nextThread;
-            thread.setNotInQueue(VMThread.Q_MONITOR);
-            thread.nextThread = null;
-        }
-        return thread;
-    }
-
-    /**
-     * Add a thread to the conditional variable wait queue.
-     *
-     * @param thread the thread to add
-     */
-    void addCondvarWait(VMThread thread) {
-        thread.setInQueue(VMThread.Q_CONDVAR);
-        thread.monitor = this;
-        Assert.that(thread.nextThread == null);
-        VMThread next = condvarQueue;
-        if (next == null) {
-            condvarQueue = thread;
-        } else {
-            while (next.nextThread != null) {
-                next = next.nextThread;
-            }
-            next.nextThread = thread;
-        }
-    }
-
-    /**
-     * Remove the next thread from the conditional variable wait queue.
-     *
-     * @return a thread or null if there is none
-     */
-    VMThread removeCondvarWait() {
-        VMThread thread = condvarQueue;
-        if (thread != null) {
-            condvarQueue = thread.nextThread;
-            thread.setNotInQueue(VMThread.Q_CONDVAR);
-            thread.monitor = null;
-            thread.nextThread = null;
-        }
-        return thread;
-    }
-
-    /**
-     * Remove a specific thread from the conditional variable wait queue.
-     *
-     * @param thread the thread to remove
-     */
-    void removeCondvarWait(VMThread thread) {
-        if (thread.inQueue(VMThread.Q_CONDVAR)) {
-            VMThread next = condvarQueue;
-            Assert.that(next != null);
-            if (next == thread) {
-                condvarQueue = thread.nextThread;
-            } else {
-                while (next.nextThread != thread) {
-                    next = next.nextThread;
-                    Assert.that(next != null);
-                }
-                if (next.nextThread == thread) {
-                    next.nextThread = thread.nextThread;
-                }
-            }
-            thread.setNotInQueue(VMThread.Q_CONDVAR);
-            thread.monitor = null;
-            thread.nextThread = null;
-        }
-    }
-    
- 
-    void printWaitingThreads(Object o) {
-        VMThread thread = condvarQueue;
-        if (condvarQueue != null || monitorQueue != null) {
-            VM.print("===== Monitor queues for ");
-            VM.printAddress(this);
-            VM.print(" for object ");
-            VM.println(o.toString());
-        }
-        if (thread != null) {
-            VM.println("Threads waiting for notify:");
-            while (thread != null) {
-                thread.printStackTrace();
-                thread = thread.nextThread;
-            }
-        }
-        
-        thread = monitorQueue;
-        if (thread != null) {
-            VM.println("Threads waiting for lock:");
-            while (thread != null) {
-                thread.printStackTrace();
-                thread = thread.nextThread;
-            }
-        }
-    }
-}
-
 
 /*=======================================================================*\
  *                              ThreadQueue                              *
@@ -3156,7 +2972,7 @@ class CrossIsolateThread extends Thread {
      * @param   target   the isolate whose <code>run</code> method is called.
      * @param   name     the name of the new thread.
      */
-    public CrossIsolateThread(Isolate target, String name) {
+    CrossIsolateThread(Isolate target, String name) {
         super(target, name);
     }
     

@@ -29,9 +29,8 @@ import java.io.*;
 import com.sun.squawk.GC;
 import com.sun.squawk.Isolate;
 import com.sun.squawk.Klass;
-import com.sun.squawk.Lisp2Bitmap;
 import com.sun.squawk.VM;
-import com.sun.squawk.util.*;
+import com.sun.squawk.util.Assert;
 import com.sun.cldc.i18n.Helper;
 
 /**
@@ -247,60 +246,25 @@ public final class System {
            ) {
             throw new ArrayIndexOutOfBoundsException();
         }
-        if (!primitive) {
-            if (!dstComponentType.isAssignableFrom(srcComponentType)) {
-                Object[] srcArray = (Object[])src;
-                Object[] dstArray = (Object[])dst;
-                for (int i = 0 ; i < length ; i++) {
-                    Object item = srcArray[srcPos + i];
-                    if (item != null && !dstComponentType.isAssignableFrom(GC.getKlass(item))) {
-                        throw new ArrayStoreException();
-                    }
-                    dstArray[dstPos + i] = item;
-                }
-                return;
-            }
-
-/*if[WRITE_BARRIER]*/
-            if (length > 0) {
-                Lisp2Bitmap.updateWriteBarrierForPointerArraycopy(dst, dstPos, length);
-            }
-/*end[WRITE_BARRIER]*/
-        }
+        
         if (length > 0) {
-            arraycopy0(src, srcPos, dst, dstPos, length, srcComponentType.getDataSize());
-        }
-    }
-
-    /*
-     * arraycopy0
-     */
-    private static void arraycopy0(Object src, int src_position, Object dst, int dst_position, 
-            int totalLength, int dataSize) {
-        // think harder about equivalnce between backward branch counts and bytes copied vie GC.arraycopy()
-        final int MAXMOVE = 4096; // in word-size units
-        int max = MAXMOVE;
-        switch (dataSize) { // adjust max for element size
-            case 1:
-                max = MAXMOVE * 4;
-                break;
-            case 2:
-                max = MAXMOVE * 2;
-                break;
-            case 8:
-                max = MAXMOVE / 2;
-                break;
-        }
-        while (true) {
-            int length = Math.min(totalLength, max);
-            GC.arraycopy(src, src_position, dst, dst_position, length);
-            totalLength -= length;
-            if (totalLength == 0) {
-                break;
+            if (!primitive) {
+                if (!dstComponentType.isAssignableFrom(srcComponentType)) {
+                    Object[] srcArray = (Object[]) src;
+                    Object[] dstArray = (Object[]) dst;
+                    for (int i = 0; i < length; i++) {
+                        Object item = srcArray[srcPos + i];
+                        if (item != null && !dstComponentType.isAssignableFrom(GC.getKlass(item))) {
+                            throw new ArrayStoreException();
+                        }
+                        dstArray[dstPos + i] = item;
+                    }
+                } else {
+                    VM.arraycopyObject0(src, srcPos, dst, dstPos, length);
+                }
+            } else {
+                VM.arraycopyPrimitive0(src, srcPos, dst, dstPos, length, srcComponentType.getDataSize());
             }
-            src_position += length;
-            dst_position += length;
-            com.sun.squawk.VMThread.yield();
         }
     }
 
@@ -341,18 +305,18 @@ public final class System {
         /*
          * These are the hard-coded properties that cannot be changed.
          */
-        if (key.equals("microedition.configuration"))                   return "CLDC-1.1";
-        if (key.equals("microedition.encoding"))                        return Helper.defaultEncoding;
-        if (key.equals("microedition.locale"))                          return "en-US";
-        if (key.equals("microedition.platform"))                        return "j2me";
-//        if (key.equals("microedition.profiles"))                        return MIDlet.SUPPORTED_PROFILE;
-        if (key.equals("microedition.profiles"))                        return "IMP-1.0";
+        if (key.equals("microedition.configuration"))                   { return "CLDC-1.1"; }
+        if (key.equals("microedition.encoding"))                        { return Helper.defaultEncoding; }
+        if (key.equals("microedition.locale"))                          { return "en-US"; }
+        if (key.equals("microedition.platform"))                        { return "j2me"; }
+//      if (key.equals("microedition.profiles"))                        { return MIDlet.SUPPORTED_PROFILE; }
+        if (key.equals("microedition.profiles"))                        { return "IMP-1.0"; }
 /*if[!FLASH_MEMORY]*/
-        if (key.equals("awtcore.classbase"))                            return "awtcore.impl.squawk";
+        if (key.equals("awtcore.classbase"))                            { return "awtcore.impl.squawk"; }
 /*end[FLASH_MEMORY]*/
-        if (key.equals("javax.microedition.io.Connector.protocolpath")) return "com.sun.squawk.io";
-        if (key.equals("file.separator"))	                            return "" + VM.getFileSeparatorChar();
-        if (key.equals("path.separator"))                               return "" + VM.getPathSeparatorChar();
+        if (key.equals("javax.microedition.io.Connector.protocolpath")) { return "com.sun.squawk.io"; }
+        if (key.equals("file.separator"))	                            { return "" + VM.getFileSeparatorChar(); }
+        if (key.equals("path.separator"))                               { return "" + VM.getPathSeparatorChar(); }
 
         String value = VM.getCurrentIsolate().getProperty(key);
         return value;

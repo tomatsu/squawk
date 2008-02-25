@@ -45,12 +45,12 @@ public class Protocol extends ConnectionBase implements StreamConnection {
     /** FileInputStream object */
     OutputStream fos;
 
-    /**
-     * Open the connection
-     */
-    public void open(String name, int mode, boolean timeouts) throws IOException {
-        throw new RuntimeException("Should not be called");
-    }
+//    /**
+//     * Open the connection
+//     */
+//    public void open(String name, int mode, boolean timeouts) throws IOException {
+//        throw new RuntimeException("Should not be called");
+//    }
 
     /**
      * Open the connection to file.
@@ -67,6 +67,7 @@ public class Protocol extends ConnectionBase implements StreamConnection {
      *
      *             append:    Specifies if the file should be opened in append mode. Default is false.
      *             pathentry Specifies a directory path to look for the file in, can have as many as needed.
+     * @throws java.io.IOException 
      */
     public Connection open(String protocol, String name, int mode, boolean timeouts) throws IOException {
         String fileName = name;

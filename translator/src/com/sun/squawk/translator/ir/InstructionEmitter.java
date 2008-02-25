@@ -27,6 +27,7 @@ package com.sun.squawk.translator.ir;
 import com.sun.squawk.util.Assert;
 import com.sun.squawk.util.Tracer;
 import com.sun.squawk.translator.NoSuchMethodError;
+import com.sun.squawk.translator.NoSuchFieldError;
 import com.sun.squawk.translator.Translator;
 import com.sun.squawk.translator.ClassFile;
 import com.sun.squawk.translator.ci.ConstantPool;
@@ -1635,6 +1636,9 @@ public class InstructionEmitter implements InstructionVisitor {
          * add the field to the appropriate table if it is missing.
          */
         Integer index = (Integer)table.get(fieldname);
+        if (index == null) {
+            throw new NoSuchFieldError("No built-in global field " + fieldname);
+        }
         Assert.that(index != null);
 
 /*if[SUITE_VERIFIER]*/

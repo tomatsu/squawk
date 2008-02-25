@@ -759,6 +759,109 @@ public class Build {
         // Add "runvm2c" target
         addJavaCommand("runvm2c", toolsJarPathEntry + "vm2c/classes:cldc/classes", false, "", "com.sun.squawk.vm2c.Main", "vm2c").
         	setDescription("runs the VM Java source file to C converter");
+        
+        // Add the "user-compile" command
+        addCommand(new Command(this, "user-compile") {
+            public String getDescription() {
+                return "compile a user-project";
+            }
+            public void run(String[] args) {
+                int argi = 0;
+                String cp = "";
+                while (args[argi].startsWith("-")) {
+                    if (args[argi].startsWith("-cp:")) {
+                        cp = args[argi].substring("-cp:".length());
+                    } else {
+                        throw new BuildException("malformed option " + args[argi]);
+                    }
+                    argi++;
+                }
+                String userBaseDir = args[argi];
+                System.out.println("Compiling user project at " + userBaseDir);
+                
+                Target compileTarget = addTarget(true, userBaseDir, "cldc imp", cp);
+                compileTarget.run(NO_ARGS);
+            }
+        });
+        
+        // Add the "user-suite" command
+        addCommand(new Command(this, "user-suite") {
+            public String getDescription() {
+                return "link a user-project";
+            }
+            public void run(String[] args) {
+                int argi = 0;
+                String parent = "";
+                String cp = "-cp:.";
+                while (args[argi].startsWith("-")) {
+                    if (args[argi].startsWith("-parent:")) {
+                        parent = args[argi].substring("-parent:".length());
+                    } if (args[argi].startsWith("-cp:")) {
+                        cp = args[argi];
+                    } else {
+                        throw new BuildException("malformed option " + args[argi]);
+                    }
+                    argi++;
+                }
+               String squawkDir = args[argi];
+                String userBaseDir = args[argi];
+                String userModule = new File(userBaseDir).getName();
+                Command compileCommand = getCommand("user-compile");
+                String[] cmpArgs = new String[2];
+                cmpArgs[0] = cp;
+                cmpArgs[1] = userBaseDir;
+                compileCommand.run(cmpArgs);
+                
+                String suitepath = "";
+                try {
+                    suitepath =  new File(".").getCanonicalPath()  + ":" +  new File(userBaseDir).getCanonicalPath();
+                } catch (IOException e) {
+                    System.out.println("Bad suite path for " + userBaseDir);
+                    System.out.println(e);
+                }
+                if (parent.length() != 0) {
+                    suitepath = suitepath + ":" + parent;
+                }
+                System.out.println("linking user project at " + userBaseDir);
+                
+                Command romize = getCommand("romize");
+                String jarfile = userBaseDir+"/j2meclasses";
+                String[] rargs = new String[9];
+                rargs[0] ="-cp:" + jarfile;
+                 rargs[1] = "-suitepath:" + suitepath;
+                 rargs[2] = "-boot:squawk";
+                if (parent.length() == 0) {
+                    rargs[3] = "-metadata"; // dummay arg
+                } else {
+                    rargs[3] = "-parent:" + parent + "/" + parent;
+                }
+                rargs[4] = "-o:" + userBaseDir + "/" + userModule;
+                rargs[5] = "-v";
+                rargs[6] = "-metadata";
+                rargs[7] = userBaseDir + "/j2meclasses";
+                rargs[8] = userBaseDir + "/res";
+                romize.run(rargs);
+            }
+        });
+        
+        // Add the "user-clean" command
+        addCommand(new Command(this, "user-clean") {
+            public String getDescription() {
+                return "clean a user-project";
+            }
+            public void run(String[] args) {
+                String userBaseDir = args[0];
+                System.out.println("Cleaning user project at " + userBaseDir);
+                
+                Target compileTarget = addTarget(true, userBaseDir, "cldc imp");
+                compileTarget.clean();
+                Build.delete(new File(userBaseDir, userBaseDir + ".suite"));
+                Build.delete(new File(userBaseDir, userBaseDir + ".suite.api"));
+                Build.delete(new File(userBaseDir, userBaseDir + ".suite.metadata"));
+                Build.delete(new File(userBaseDir, userBaseDir + ".sym"));
+            }
+        });
+               
     }
 
     /**

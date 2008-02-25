@@ -25,7 +25,6 @@
 package com.sun.squawk.io.mailboxes;
 
 import com.sun.squawk.util.Assert;
-import com.sun.squawk.util.SimpleLinkedList;
 
 /**
  * Given that a {@link Channel} is a one-to-one connection between two isolates, a ServerChannel 
@@ -211,7 +210,7 @@ public final class ServerChannel {
      * NOTE: To avoid race conditions during hibernation, should sleep a little (100ms) between getting a 
      * MailboxClosedException and calling reOpen().<p>
      * 
-     * @TODO Design better scheme to handle race.
+     * @todo Design better scheme to handle race.
      *
      * @throws MailboxInUseException if there is already a ServerChannel registered under the name <code>name</code>.
      * @throws IllegalStateException if the ServerChannel is already open.
@@ -220,8 +219,7 @@ public final class ServerChannel {
         if (isOpen()) {
             throw new IllegalStateException();
         }
-        Mailbox serverBox = Mailbox.create(getName(), new ServerChannelMailboxHandler());
-        this.serverBox = serverBox;
+        serverBox = Mailbox.create(getName(), new ServerChannelMailboxHandler());
         Assert.that(isOpen());
     }
     

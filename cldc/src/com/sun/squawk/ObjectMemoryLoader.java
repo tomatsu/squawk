@@ -108,7 +108,7 @@ public class ObjectMemoryLoader {
      * The validating reader used to read the components of an object memory from
      * an input stream.
      */
-    protected final ObjectMemoryReader reader;
+    final ObjectMemoryReader reader;
 
     /**
      * Specifies if the object memory is to be moved to read-only memory once it
@@ -133,7 +133,7 @@ public class ObjectMemoryLoader {
      * @param reader
      * @param loadIntoReadOnlyMemory
      */
-    protected ObjectMemoryLoader(ObjectMemoryReader reader, boolean loadIntoReadOnlyMemory) {
+    ObjectMemoryLoader(ObjectMemoryReader reader, boolean loadIntoReadOnlyMemory) {
         this.reader = reader;
         this.loadIntoReadOnlyMemory = loadIntoReadOnlyMemory;
         if (Klass.TRACING_ENABLED) {
@@ -176,10 +176,10 @@ public class ObjectMemoryLoader {
      * stream corresponds to the URI of an object memory already present in the system, then that object
      * memory is returned instead.
      *
-     * @param dis                     the data input stream from which to read
      * @param uri                     a URI identifying the object memory being loaded
      * @param loadIntoReadOnlyMemory  specifies if the object memory should be put into read-only memory
      * @return the ObjectMemoryFile instance encapsulating the loaded/resolved object memory
+     * @throws java.io.IOException 
      */
     public static ObjectMemoryFile load(String uri, boolean loadIntoReadOnlyMemory) throws IOException{
         String url;
@@ -483,7 +483,7 @@ public class ObjectMemoryLoader {
     
     /**
      * Expecting a string that looks something like "c:\dev\1${File.separatorChar}c:\windows".
-     * @param pathentries
+     * @param path entries
      */
     public static void setFilePath(String path) {
         if (path == null) {

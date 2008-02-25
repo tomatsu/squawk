@@ -260,12 +260,10 @@ public class GC implements GlobalStaticFields {
      * @return the ObjectMemory that corresponds to <code>uri</code> or null if there is no such ObjectMemory
      */
     static ObjectMemory lookupReadOnlyObjectMemoryBySourceURI(String uri) {
-        if (readOnlyObjectMemories != null) {
-            for (int i = 0; i != readOnlyObjectMemories.length; ++i) {
-                ObjectMemory om = readOnlyObjectMemories[i];
-                if (om.getURI().equals(uri)) {
-                    return om;
-                }
+        for (int i = 0; i != readOnlyObjectMemories.length; ++i) {
+            ObjectMemory om = readOnlyObjectMemories[i];
+            if (om.getURI().equals(uri)) {
+                return om;
             }
         }
         return null;
@@ -278,12 +276,10 @@ public class GC implements GlobalStaticFields {
      * @return the ObjectMemory that corresponds to <code>root</code> or null if there is no such ObjectMemory
      */
     static ObjectMemory lookupReadOnlyObjectMemoryByRoot(Object root) {
-        if (readOnlyObjectMemories != null) {
-            for (int i = 0; i != readOnlyObjectMemories.length; ++i) {
-                ObjectMemory om = readOnlyObjectMemories[i];
-                if (om.getRoot() == root) {
-                    return om;
-                }
+        for (int i = 0; i != readOnlyObjectMemories.length; ++i) {
+            ObjectMemory om = readOnlyObjectMemories[i];
+            if (om.getRoot() == root) {
+                return om;
             }
         }
         return null;
@@ -379,7 +375,7 @@ public class GC implements GlobalStaticFields {
     static Address allocateNvmBuffer(int size) {
         Assert.that(size == roundUpToWord(size));
         Address block  = nvmAllocationPointer;
-        Address next = nvmAllocationPointer.add(size);;
+        Address next = nvmAllocationPointer.add(size);
         if (VM.isHosted()) {
         	nvmEnd = next;
         } else if (next.hi(nvmEnd)) {
@@ -483,17 +479,14 @@ public class GC implements GlobalStaticFields {
     private static Address allocEnd;
 
     /**
-     * Initialize the memory system.
+     * Initialize the memory system when hosted
      */
-    static void initialize(Suite bootstrapSuite) {
-
-        if (VM.isHosted()) {
-            ramStart = Address.zero();
-            ramEnd = Address.zero();
-            nvmStart = Address.zero();
-            nvmEnd = Address.zero();
-            nvmAllocationPointer = nvmStart;
-        }
+    static void initialize() throws HostedPragma {
+        ramStart = Address.zero();
+        ramEnd = Address.zero();
+        nvmStart = Address.zero();
+        nvmEnd = Address.zero();
+        nvmAllocationPointer = nvmStart;
 
         // Get the pointers rounded correctly.
         Assert.always(ramStart.eq(ramStart.roundUpToWord()), "RAM limit is not word aligned");
@@ -505,20 +498,34 @@ public class GC implements GlobalStaticFields {
         setAllocationParameters(ramStart, ramStart, ramEnd, ramEnd);
         setAllocationEnabled(true);
 
-        if (VM.isHosted()) {
-            // Initialize the record of loaded/resident object memories
-            readOnlyObjectMemories = new ObjectMemory[] {};
-        } else {
-            // Allocate the collector object outside the scope of the memory that will be managed by the collector.
-            GarbageCollector collector = new /*VAL*/CheneyCollector/*GC*/(ramStart, ramEnd);
-            // Initialize the collector.
-            collector.initialize(ramStart, allocTop, ramEnd);
-            // Initialize the record of loaded/resident object memories
-            readOnlyObjectMemories = new ObjectMemory[] { ObjectMemory.createBootstrapObjectMemory(bootstrapSuite)};
-            // Enable GC.
-            GC.collector = collector;
-            gcEnabled = true;
-        }
+        readOnlyObjectMemories = new ObjectMemory[]{};
+    }
+        
+    /**
+     * Initialize the memory system.
+     */
+    static void initialize(Suite bootstrapSuite) {
+        Assert.that(!VM.isHosted());
+
+        // Get the pointers rounded correctly.
+        Assert.always(ramStart.eq(ramStart.roundUpToWord()), "RAM limit is not word aligned");
+        Assert.always(ramEnd.eq(ramEnd.roundDownToWord()), "RAM limit is not word aligned");
+
+        // Temporarily set the main allocation point to the start-end addresses
+        // supplied. This allows permanent objects to be allocated outside the
+        // garbage collected heap.
+        setAllocationParameters(ramStart, ramStart, ramEnd, ramEnd);
+        setAllocationEnabled(true);
+
+        // Allocate the collector object outside the scope of the memory that will be managed by the collector.
+        GarbageCollector newcollector = new /*VAL*/CheneyCollector/*GC*/(ramStart, ramEnd);
+        // Initialize the collector.
+        newcollector.initialize(ramStart, allocTop, ramEnd);
+        // Initialize the record of loaded/resident object memories
+        readOnlyObjectMemories = new ObjectMemory[]{ObjectMemory.createBootstrapObjectMemory(bootstrapSuite)};
+        // Enable GC.
+        GC.collector = newcollector;
+        gcEnabled = true;
     }
 
     /**
@@ -989,7 +996,7 @@ public class GC implements GlobalStaticFields {
      * @return the length in elements of the array
      */
     static int getArrayLengthNoCheck(Object array) throws ForceInlinedPragma {
-        return (int)decodeLengthWord(NativeUnsafe.getUWord(array, HDR.length));
+        return decodeLengthWord(NativeUnsafe.getUWord(array, HDR.length));
     }
 
     /**
@@ -1434,17 +1441,16 @@ public class GC implements GlobalStaticFields {
      */
     public static void stringcopy(Object src, int srcPos, Object dst, int dstPos, int lth) {
         int srcsize = getStringOperandSize(src);
-        int dstsize = getStringOperandSize(dst);
-        if (srcsize == dstsize) {
-            VM.copyBytes(Address.fromObject(src), srcPos * dstsize,  Address.fromObject(dst), dstPos * dstsize, lth * dstsize, false);
+        if (srcsize == getStringOperandSize(dst)) {
+            VM.copyBytes(Address.fromObject(src), srcPos * srcsize,  Address.fromObject(dst), dstPos * srcsize, lth * srcsize, false);
         } else if (srcsize == 1) {
-            Assert.that(dstsize == 2);
+            Assert.that(getStringOperandSize(dst) == 2);
             for (int i = 0 ; i < lth ; i++) {
                 int ch = NativeUnsafe.getByte(src, srcPos++) & 0xFF;
                 NativeUnsafe.setChar(dst, dstPos++, ch);
             }
        } else {
-            Assert.that(srcsize == 2 && dstsize == 1);
+            Assert.that(srcsize == 2 && getStringOperandSize(dst) == 1);
             for (int i = 0 ; i < lth ; i++) {
                 int ch = NativeUnsafe.getChar(src, srcPos++) & 0xFF;
                 NativeUnsafe.setByte(dst, dstPos++, ch);
@@ -1753,7 +1759,7 @@ public class GC implements GlobalStaticFields {
         switch (taggedWord.and(UWord.fromPrimitive(HDR.headerTagMask)).toInt()) {
             case HDR.basicHeaderTag:  return block.add(HDR.basicHeaderSize);                 // Instance
             case HDR.arrayHeaderTag:  return block.add(HDR.arrayHeaderSize);                 // Array
-            case HDR.methodHeaderTag: return block.add((int)GC.decodeLengthWord(taggedWord) * HDR.BYTES_PER_WORD); // Method
+            case HDR.methodHeaderTag: return block.add(GC.decodeLengthWord(taggedWord) * HDR.BYTES_PER_WORD); // Method
             default: VM.fatalVMError();
         }
         return null;

@@ -723,10 +723,11 @@ public class VM implements GlobalStaticFields {
     }
 
     static final class WeakIsolateListEntry extends Ref {
-        private WeakIsolateListEntry next;
+        private WeakIsolateListEntry nextIsolateRef;
+        
         WeakIsolateListEntry(Isolate isolate, WeakIsolateListEntry next) {
             super(isolate);
-            this.next = next;
+            this.nextIsolateRef = next;
         }
 
         /**
@@ -735,8 +736,8 @@ public class VM implements GlobalStaticFields {
         boolean contains(Isolate isolate) {
             if (get() == isolate) {
                 return true;
-            } else if (next != null) {
-                return next.contains(isolate);
+            } else if (nextIsolateRef != null) {
+                return nextIsolateRef.contains(isolate);
             } else {
                 return false;
             }
@@ -750,8 +751,8 @@ public class VM implements GlobalStaticFields {
             if (isolate != null) {
                 set.addElement(isolate);
             }
-            if (next != null) {
-                next.copyInto(set);
+            if (nextIsolateRef != null) {
+                nextIsolateRef.copyInto(set);
             }
         }
     }
@@ -809,19 +810,19 @@ public class VM implements GlobalStaticFields {
                 if (head == null) {
                     head = last = entry;
                 } else {
-                    last.next = entry;
+                    last.nextIsolateRef = entry;
                     last = entry;
                 }
             } else {
 //VM.println(" entry.isolate = null");
             }
-            entry = entry.next;
+            entry = entry.nextIsolateRef;
         }
 
         // At least the primordial isolate must be alive
         Assert.always(last != null);
 
-        last.next = null;
+        last.nextIsolateRef = null;
         isolates = head;
 //VM.println("VM::pruneIsolateList --- start --");
     }
@@ -1359,6 +1360,9 @@ hbp.dumpState();
     
     /**
      * On a hosted system , this calls System.setProperty(), otherwise calls Isolate.currentIsolate().setProperty()
+     * 
+     * @param name property name
+     * @param value property value 
      */
     public static void setProperty(String name, String value) {
         Isolate.currentIsolate().setProperty(name, value);
@@ -2115,6 +2119,7 @@ hbp.dumpState();
      * property <code>file.separator</code>.  On UNIX systems the value of this
      * field is <code>'/'</code>; on Microsoft Windows systems it is <code>'\'</code>.
      *
+     * @return char
      * @see     java.lang.System#getProperty(java.lang.String)
      */
     public static char getFileSeparatorChar() {
@@ -2359,7 +2364,7 @@ hbp.dumpState();
         }
 
         // Adjust the oop map to be exactly the right size
-        byte[] memory = (byte[])cb.memory;
+        byte[] memory = cb.memory;
         byte[] newBits = new byte[GC.calculateOopMapSizeInBytes(memory.length)];
         GC.arraycopy(bits, 0, newBits, 0, newBits.length);
         cb.oopMap = new com.sun.squawk.util.BitSet(newBits);
@@ -2378,7 +2383,9 @@ hbp.dumpState();
      */
     public static void stopVM(int code) {
         // thread-safe in Squawk only! This is a system class.
-        if (executingHooks) return;
+        if (executingHooks) {
+            return;
+        }
         
         executingHooks = true;
         
@@ -2635,7 +2642,222 @@ hbp.dumpState();
      * @vm2c proxy
      */
     native static void copyBytes(Address src, int srcPos, Address dst, int dstPos, int length, boolean nvmDst);
+    
+    /**
+     * VM-private version of System.arraycopy for arrays that does little error checking.
+     * <p>
+     * Impose the following restrictions on the input arguments:
+     * <ul>
+     * <li><code>dst</code> is not <code>null</code>.
+     * <li><code>src</code> is not <code>null</code>.
+     * <li>The <code>srcOffset</code> argument is not negative.
+     * <li>The <code>dstOffset</code> argument is not negative.
+     * <li>The <code>length</code> argument is not negative.
+     * <li><code>srcOffset+length</code> is not greater than
+     *     <code>src.length</code>, the length of the source array.
+     * <li><code>dstOffset+length</code> is not greater than
+     *     <code>dst.length</code>, the length of the destination array.
+     * <li>any actual component of the source array from position 
+     *     <code>srcOffset</code> through <code>srcOffset+length-1</code> 
+     *     can be converted to the component type of the destination array
+     * </ul>
+     * <p>
+     * The caller is responsible that these restrictions are not violated.
+     * If any of the restrictions above is violated, the behavior is undefined.
+     * <p>
+     * Copies an array from the specified source array, beginning at the
+     * specified position, to the specified position of the destination array.
+     * A subsequence of array components are copied from the source
+     * array referenced by <code>src</code> to the destination array
+     * referenced by <code>dst</code>. The number of components copied is
+     * equal to the <code>length</code> argument. The components at
+     * positions <code>srcOffset</code> through
+     * <code>srcOffset+length-1</code> in the source array are copied into
+     * positions <code>dstOffset</code> through
+     * <code>dstOffset+length-1</code>, respectively, of the destination
+     * array.
+     * <p>
+     * If the <code>src</code> and <code>dst</code> arguments refer to the
+     * same array object, then the copying is performed as if the
+     * components at positions <code>srcOffset</code> through
+     * <code>srcOffset+length-1</code> were first copied to a temporary
+     * array with <code>length</code> components and then the contents of
+     * the temporary array were copied into positions
+     * <code>dstOffset</code> through <code>dstOffset+length-1</code> of the
+     * destination array.
+     * <p>
+     * This method will cooperate with the thread scheduler so that thread scheduling
+     * can occur during very long array copies.
+     *
+     * @param      src          the source array.
+     * @param      src_position       start position in the source array.
+     * @param      dst          the destination array.
+     * @param      dst_position       start position in the destination data.
+     * @param      totalLength       the number of array elements to be copied.
+     * @param      dataSize       the size of a data element (1, 2, 4, 8)
+     */
+    private static void arraycopy0(Object src, int src_position, Object dst, int dst_position, 
+                                           int totalLength, int dataSize) {
+        // think harder about equivalnce between backward branch counts and bytes copied vie GC.arraycopy()
+        final int MAXMOVE = 4096; // in word-size units
+        int max = MAXMOVE;
+        switch (dataSize) { // adjust max for element size
+            case 1:
+                max = MAXMOVE * 4;
+                break;
+            case 2:
+                max = MAXMOVE * 2;
+                break;
+            case 4:
+                break;
+            case 8:
+                max = MAXMOVE / 2;
+                break;
+            default:
+                Assert.shouldNotReachHere();
+        }
+        
+        Assert.that(src != null && GC.getKlass(src).isArray());
+        Assert.that(dst != null && GC.getKlass(dst).isArray());
+        Assert.that(src_position >= 0 && dst_position >= 0 && totalLength >= 0);
+        Assert.that((src_position + totalLength) <=  GC.getArrayLength(src));
+        Assert.that((dst_position + totalLength) <=  GC.getArrayLength(dst));
 
+        while (totalLength != 0) {
+            int length = Math.min(totalLength, max);
+            GC.arraycopy(src, src_position, dst, dst_position, length);
+            totalLength -= length;
+            if (totalLength == 0) {
+                break;
+            }
+            src_position += length;
+            dst_position += length;
+            VMThread.yield();
+        }
+    }
+    
+    /**
+     * VM-private version of System.arraycopy for arrays of primitives that does little error checking.
+     * <p>
+     * Impose the following restrictions on the input arguments:
+     * <ul>
+     * <li><code>dst</code> is not <code>null</code>.
+     * <li><code>src</code> is not <code>null</code>.
+     * <li>The <code>srcOffset</code> argument is not negative.
+     * <li>The <code>dstOffset</code> argument is not negative.
+     * <li>The <code>length</code> argument is not negative.
+     * <li><code>srcOffset+length</code> is not greater than
+     *     <code>src.length</code>, the length of the source array.
+     * <li><code>dstOffset+length</code> is not greater than
+     *     <code>dst.length</code>, the length of the destination array.
+     * <li>any actual component of the source array from position 
+     *     <code>srcOffset</code> through <code>srcOffset+length-1</code> 
+     *     can be converted to the component type of the destination array
+     * </ul>
+     * <p>
+     * The caller is responsible that these restrictions are not violated.
+     * If any of the restrictions above is violated, the behavior is undefined.
+     * <p>
+     * Copies an array from the specified source array, beginning at the
+     * specified position, to the specified position of the destination array.
+     * A subsequence of array components are copied from the source
+     * array referenced by <code>src</code> to the destination array
+     * referenced by <code>dst</code>. The number of components copied is
+     * equal to the <code>length</code> argument. The components at
+     * positions <code>srcOffset</code> through
+     * <code>srcOffset+length-1</code> in the source array are copied into
+     * positions <code>dstOffset</code> through
+     * <code>dstOffset+length-1</code>, respectively, of the destination
+     * array.
+     * <p>
+     * If the <code>src</code> and <code>dst</code> arguments refer to the
+     * same array object, then the copying is performed as if the
+     * components at positions <code>srcOffset</code> through
+     * <code>srcOffset+length-1</code> were first copied to a temporary
+     * array with <code>length</code> components and then the contents of
+     * the temporary array were copied into positions
+     * <code>dstOffset</code> through <code>dstOffset+length-1</code> of the
+     * destination array.
+     * <p>
+     * This method will cooperate with the thread scheduler so that thread scheduling
+     * can occur during very long array copies.
+     *
+     * @param      src          the source array.
+     * @param      src_position       start position in the source array.
+     * @param      dst          the destination array.
+     * @param      dst_position       start position in the destination data.
+     * @param      totalLength       the number of array elements to be copied.
+     * @param      dataSize       the size of a data element (1, 2, 4, 8)
+     */
+    public static void arraycopyPrimitive0(Object src, int src_position, Object dst, int dst_position, 
+                                           int totalLength, int dataSize) {
+        Assert.that(GC.getKlass(src) == GC.getKlass(dst));
+        arraycopy0(src, src_position, dst, dst_position, totalLength, dataSize);
+    }
+    
+    /**
+     * VM-private version of System.arraycopy for arrays of objects that does little error checking.
+     * <p>
+     * Impose the following restrictions on the input arguments:
+     * <ul>
+     * <li><code>dst</code> is not <code>null</code>.
+     * <li><code>src</code> is not <code>null</code>.
+     * <li>The <code>srcOffset</code> argument is not negative.
+     * <li>The <code>dstOffset</code> argument is not negative.
+     * <li>The <code>length</code> argument is not negative.
+     * <li><code>srcOffset+length</code> is not greater than
+     *     <code>src.length</code>, the length of the source array.
+     * <li><code>dstOffset+length</code> is not greater than
+     *     <code>dst.length</code>, the length of the destination array.
+     * <li>any actual component of the source array from position 
+     *     <code>srcOffset</code> through <code>srcOffset+length-1</code> 
+     *     can be converted to the component type of the destination array
+     * </ul>
+     * <p>
+     * The caller is responsible that these restrictions are not violated.
+     * If any of the restrictions above is violated, the behavior is undefined.
+     * <p>
+     * Copies an array from the specified source array, beginning at the
+     * specified position, to the specified position of the destination array.
+     * A subsequence of array components are copied from the source
+     * array referenced by <code>src</code> to the destination array
+     * referenced by <code>dst</code>. The number of components copied is
+     * equal to the <code>length</code> argument. The components at
+     * positions <code>srcOffset</code> through
+     * <code>srcOffset+length-1</code> in the source array are copied into
+     * positions <code>dstOffset</code> through
+     * <code>dstOffset+length-1</code>, respectively, of the destination
+     * array.
+     * <p>
+     * If the <code>src</code> and <code>dst</code> arguments refer to the
+     * same array object, then the copying is performed as if the
+     * components at positions <code>srcOffset</code> through
+     * <code>srcOffset+length-1</code> were first copied to a temporary
+     * array with <code>length</code> components and then the contents of
+     * the temporary array were copied into positions
+     * <code>dstOffset</code> through <code>dstOffset+length-1</code> of the
+     * destination array.
+     * <p>
+     * This method will cooperate with the thread scheduler so that thread scheduling
+     * can occur during very long array copies. this method also handles GC write barriers if needed.
+     *
+     * @param      src          the source array.
+     * @param      src_position       start position in the source array.
+     * @param      dst          the destination array.
+     * @param      dst_position       start position in the destination data.
+     * @param      length       the number of array elements to be copied.
+     */
+    public static void arraycopyObject0(Object src, int src_position, Object dst, int dst_position, 
+                                           int length) {
+        Assert.that(dst != null && GC.getKlass(dst).isArray());
+/*if[WRITE_BARRIER]*/
+        if (length > 0) {
+            Lisp2Bitmap.updateWriteBarrierForPointerArraycopy(dst, dst_position, length);
+        }
+/*end[WRITE_BARRIER]*/
+        arraycopy0(src, src_position, dst, dst_position, length, HDR.BYTES_PER_WORD);
+    }
+    
     /**
      * Allocate a chunk of zeroed memory from RAM.
      *
@@ -2676,13 +2898,17 @@ hbp.dumpState();
     
     /** 
      * Perform a shallow copy of the original object, without calling a constructor
+     * 
+     *  WARNING: This is bypassing the write barrier, which is (sort of) OK because we are writing to a new 
+     *           object. This can't create a ptr from old->young gen, which is what write barrier is looking for.
+     *           Don't copy this code for other purposes! 
      *
      * @param original the iobject to copy
      * @return a copy of the original object.
      */
     public static Object shallowCopy(Object original) {
         Klass klass = GC.getKlass(original);
-        Object copy = GC.newInstance(klass);
+        Object copy = GC.newInstance(klass); // dst is new object
         VM.copyBytes(Address.fromObject(original), 0, Address.fromObject(copy), 0, klass.getInstanceSize() * HDR.BYTES_PER_WORD, false);
         return copy;
     }
@@ -3044,6 +3270,7 @@ hbp.dumpState();
      * @param send      an outgoing array parameter
      * @param receive   an incoming array parameter
      * @return          the integer result value
+     * @throws java.io.IOException 
      */
     public static int execIO(int op, int channel, int i1, int i2, int i3, int i4, int i5, int i6, Object send, Object receive) throws IOException {
         int context = currentIsolate.getChannelContext();
@@ -3073,7 +3300,9 @@ hbp.dumpState();
      * @param op        the opcode
      * @param key       the message key
      * @param data      the message data or null
+     * @param status    the message status
      * @return          the Address result or null
+     * @throws java.io.IOException 
      */
     public static Address execMessageIO(int op, Object key, Object data, int status) throws IOException {
         for (; ; ) {
@@ -3108,6 +3337,7 @@ hbp.dumpState();
      * @param send      a outgoing reference parameter
      * @param receive   an incoming reference parameter (i.e. an array of some type)
      * @return          the long result
+     * @throws java.io.IOException 
      */
     public static long execIOLong(int op, int channel, int i1, int i2, int i3, int i4, int i5, int i6, Object send, Object receive) throws IOException {
         long low     = execIO(op, channel, i1, i2, i3, i4, i5, i6, send, receive);
@@ -3255,6 +3485,7 @@ hbp.dumpState();
      *
      * @param type the channel type
      * @return the identifier for the newly created channel
+     * @throws java.io.IOException 
      */
     public static int getChannel(int type) throws IOException {
         int context = currentIsolate.getChannelContext();
@@ -3268,6 +3499,7 @@ hbp.dumpState();
      * Frees a channel.
      *
      * @param channel the identifier of the channel to free
+     * @throws java.io.IOException 
      */
     public static void freeChannel(int channel) throws IOException {
         int context = currentIsolate.getChannelContext();
@@ -3748,6 +3980,8 @@ hbp.dumpState();
     
     /**
      * A helper method to provide access to the manifest of midlet suites from outside the bootstrap.
+     * @param uri suite's uri
+     * @return hashtable of properties from manifest
      */
     public static Hashtable getManifestPropertiesOfSuite(String uri) {
     	Hashtable properties = new Hashtable();
@@ -3876,7 +4110,7 @@ hbp.dumpState();
      * is used during the bootstrap process by the romizer to strip certain fields and methods
      * based on their names.
      *
-     * @param klass         the class to consider
+     * @param member        the method or field to consider
      * @return true if the class symbols should be stripped
      */
     public static boolean stripSymbols(Member member) {
@@ -3896,7 +4130,7 @@ hbp.dumpState();
      /**
      * Determines if the klass is internal, so should be retained (even if symbol gets stripped)
      *
-     * @param member        the method or field to consider
+     * @param klass         the class to consider
      * @return true if the class symbols should be stripped
      */
     public static boolean isInternal(Klass klass) {
@@ -3907,6 +4141,8 @@ hbp.dumpState();
      * Support routine to get the object representing the class of a given object.
      * This takes into account whether or not the VM is running in hosted mode or
      * not. The returned object can only be used for identity comparisons.
+     * @param object
+     * @return a VM internal object representing the Class
      */
     public static Object getClass(Object object) {
         return GC.getKlass(object);
@@ -3916,6 +4152,8 @@ hbp.dumpState();
      * Support routine to test whether a given object is an array.
      * This takes into account whether or not the VM is running in hosted mode or
      * not.
+     * @param o object to test
+     * @return true if o is an array
      */
     public static boolean isArray(Object o) {
         return (GC.getKlass(o).isArray());

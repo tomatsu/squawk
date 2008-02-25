@@ -81,7 +81,7 @@ public final class ObjectGraphSerializer {
      * @param serializedObject  the serialized copy of <code>object</code>
      */
     private static void traceAllocation(Klass klass, Object object, Address serializedObject) {
-        if (Tracer.isTracing("image")) {
+        if (Klass.TRACING_ENABLED && Tracer.isTracing("image")) {
             Address block = GC.oopToBlock(klass, serializedObject);
             int bodySize = GC.getBodySize(klass, serializedObject);
             Tracer.traceln("[allocated " + klass.getName() + " instance @ " + serializedObject +
@@ -104,7 +104,7 @@ public final class ObjectGraphSerializer {
 
         if (currentMemorySize == 0) {
             // Initialize the allocator
-            GC.initialize(VM.getCurrentIsolate().getBootstrapSuite());
+            GC.initialize();
         }
 
         save(object);
@@ -531,5 +531,8 @@ public final class ObjectGraphSerializer {
             }
         }
     }
+
+    /** do not instantiate */
+    private ObjectGraphSerializer() { }
 
 }

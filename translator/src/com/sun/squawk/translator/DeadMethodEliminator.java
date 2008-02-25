@@ -29,13 +29,12 @@ import com.sun.squawk.Suite;
 import com.sun.squawk.VM;
 import com.sun.squawk.util.*;
 import com.sun.squawk.Method;
-import com.sun.squawk.Modifier;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
 /**
- * Uses the MethodDB to figure out which which methods in a givcen suite are definitely NOT used. It has to be conservative 
- * about methods that might be called, for example any methods that are exprted from a Suite (not private and not stripped).
+ * Uses the MethodDB to figure out which which methods in a given suite are definitely NOT used. It has to be conservative 
+ * about methods that might be called, for example any methods that are exported from a Suite (not private and not stripped).
  *
  * After calling computeMethodsUsed(), the translator can use isMarkedUsed() to determine unused methods.
  *
@@ -47,7 +46,9 @@ public class DeadMethodEliminator {
     
     private Hashtable usedMethods = null;
     
-    /** Creates a new instance of DeadMethodEliminator */
+    /** Creates a new instance of DeadMethodEliminator
+     * @param translator 
+     */
     public DeadMethodEliminator(Translator translator) {
         this.translator = translator;
         this.methodDB = translator.methodDB;

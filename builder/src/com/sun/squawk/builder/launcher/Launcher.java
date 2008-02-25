@@ -28,6 +28,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -72,12 +73,22 @@ public class Launcher {
 
     public static URL getBuildCommandsJar() throws MalformedURLException {
 		URL launcherJarUrl = Launcher.class.getProtectionDomain().getCodeSource().getLocation();
-		File launcherJarFile = new File(launcherJarUrl.getFile());
-		File buildCommandsJarFile = new File(launcherJarFile.getParent(), "build-commands.jar");
-		if (buildCommandsJarFile.exists()) {
-			return buildCommandsJarFile.toURL();
-		}
-		throw new RuntimeException("Unable to locate build-commands.jar.  Expected to find it at " + buildCommandsJarFile.getPath());
+        try {
+            // URL's don't handle encoded spaces well, switch to URI:
+            File launcherJarFile = new File(launcherJarUrl.toURI().getPath());
+            File buildCommandsJarFile = new File(launcherJarFile.getParent(), "build-commands.jar");
+            if (buildCommandsJarFile.exists()) {
+                return buildCommandsJarFile.toURL();
+            }
+            // the above doesn't work if path has space! ???!.
+            buildCommandsJarFile = new File("build-commands.jar");
+            if (buildCommandsJarFile.exists()) {
+                return buildCommandsJarFile.toURL();
+            }
+		   throw new RuntimeException("Unable to locate build-commands.jar.  Expected to find it at " + buildCommandsJarFile.getPath());
+        } catch (URISyntaxException uRISyntaxException) {
+            throw new RuntimeException("Unable to locate build-commands.jar: " + uRISyntaxException);
+        }
     }
     
     public static URL getToolsJar() throws MalformedURLException {

@@ -245,6 +245,11 @@ public class ObjectGraphLoader {
         if (bootstrapSuiteProperty == null) {
             bootstrapSuiteProperty = "file://squawk.suite";
         }
+        
+        if (NativeUnsafe.getMemorySize() == 0) {
+            GC.initialize();
+        }
+        
         ObjectMemory objectMemory = GC.lookupReadOnlyObjectMemoryBySourceURI(url);
         if (objectMemory == null) {
     		if (url.equals(bootstrapSuiteProperty)) {
@@ -255,9 +260,7 @@ public class ObjectGraphLoader {
         	Assert.that(objectMemory.getRoot() instanceof Suite);
         	return (Suite) objectMemory.getRoot();
         }
-        if (NativeUnsafe.getMemorySize() == 0) {
-            GC.initialize(null);
-        }
+
         objectMemory = ObjectMemoryLoader.load(url, false).objectMemory;
         if (objectMemory == null) {
         	throw new IOException("No object memories found with URL: " + url);

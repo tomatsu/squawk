@@ -21,10 +21,14 @@
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 package com.sun.cldchi.jvm;
 
+import com.sun.squawk.VM;
+
 public class JVM {
+    
+    /** do not instantiate */
+    private JVM() {}
 
     /**
      * Copy an array from the specified source array, beginning at the
@@ -55,44 +59,43 @@ public class JVM {
      * @param      dstOffset    start position in the destination data.
      * @param      length       the number of array elements to be copied.
      */
-    public static void unchecked_byte_arraycopy(byte[] src, 
-                                                       int srcOffset,
-                                                       byte[] dst, 
-                                                       int dstOffset, 
-                                                       int length) {
-      System.arraycopy(src, srcOffset, dst, dstOffset, length);
+    public static void unchecked_byte_arraycopy(byte[] src,
+            int srcOffset,
+            byte[] dst,
+            int dstOffset,
+            int length) {
+        VM.arraycopyPrimitive0(src, srcOffset, dst, dstOffset, length, 1);
     }
 
-    public static void unchecked_char_arraycopy(char[] src, 
-                                                       int srcOffset,
-                                                       char[] dst, 
-                                                       int dstOffset, 
-                                                       int length) {
-      System.arraycopy(src, srcOffset, dst, dstOffset, length);
+    public static void unchecked_char_arraycopy(char[] src,
+            int srcOffset,
+            char[] dst,
+            int dstOffset,
+            int length) {
+        VM.arraycopyPrimitive0(src, srcOffset, dst, dstOffset, length, 2);
     }
 
-    public static void unchecked_int_arraycopy(int[] src, 
-                                                      int srcOffset,
-                                                      int[] dst, 
-                                                      int dstOffset, 
-                                                      int length) {
-      System.arraycopy(src, srcOffset, dst, dstOffset, length);
+    public static void unchecked_int_arraycopy(int[] src,
+            int srcOffset,
+            int[] dst,
+            int dstOffset,
+            int length) {
+        VM.arraycopyPrimitive0(src, srcOffset, dst, dstOffset, length, 4);
     }
 
-    public static void unchecked_long_arraycopy(long[] src, 
-                                                int srcOffset,
-                                                long[] dst, 
-                                                int dstOffset, 
-                                                int length) {
-      System.arraycopy(src, srcOffset, dst, dstOffset, length);
+    public static void unchecked_long_arraycopy(long[] src,
+            int srcOffset,
+            long[] dst,
+            int dstOffset,
+            int length) {
+        VM.arraycopyPrimitive0(src, srcOffset, dst, dstOffset, length, 8);
     }
 
-    public static void unchecked_obj_arraycopy(Object[] src, 
-                                                      int srcOffset,
-                                                      Object[] dst, 
-                                                      int dstOffset, 
-                                                      int length) {
-      System.arraycopy(src, srcOffset, dst, dstOffset, length);
+    public static void unchecked_obj_arraycopy(Object[] src,
+            int srcOffset,
+            Object[] dst,
+            int dstOffset,
+            int length) {
+        VM.arraycopyObject0(src, srcOffset, dst, dstOffset, length);
     }
-
 }
