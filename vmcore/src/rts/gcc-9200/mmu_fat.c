@@ -41,7 +41,6 @@
 #define VIRTUAL_ADDRESS_FILE_SPACING 		(1024*1024)
 #define VIRTUAL_ADDRESS_SPACE_LOWER_BOUND 	0x10800000
 #define VIRTUAL_ADDRESS_SPACE_UPPER_BOUND 	(VIRTUAL_ADDRESS_SPACE_LOWER_BOUND + (VIRTUAL_ADDRESS_FILE_COUNT*VIRTUAL_ADDRESS_FILE_SPACING))
-#define FAT_IDENTIFIER_V1					0x12345678
 #define FAT_IDENTIFIER_V2					0x12345679
 
 // FAT V2 constants - must match the same constants in FATRecord.java
@@ -178,22 +177,26 @@ static int read_number(unsigned char* ptr, int number_of_bytes) {
 	return result;
 }
 
-static int is_FAT_V2;
-
 static int is_FAT_valid() {
 	int fat_id = read_number((char*)get_sector_address(FAT_SECTOR), 4);
-	is_FAT_V2 = FALSE;
 	switch (fat_id) {
 		case FAT_IDENTIFIER_V2:
-			is_FAT_V2 = TRUE;
-		case FAT_IDENTIFIER_V1:
 			return TRUE;
 		default:
 			return FALSE;
 	}
 }
 
-static int get_allocated_file_size_V2(int required_virtual_address) {
+/*
+ * Answer the space (in bytes) allocated to the FlashFile that occupies
+ * the given virtual address. If there is no such file, answers -1.
+ * 
+ * required_virtual_address   Virtual address of required FlashFile
+ */
+int get_allocated_file_size(int required_virtual_address) {
+	if (!is_FAT_valid()) {
+		return -1;
+	}
 	char* fat_ptr = (char*)(get_sector_address(FAT_SECTOR)+4); // +4 to skip identifier
 	int recordStatus = read_number(fat_ptr, 2);
 	int flags, is_obsolete, sector_count;
@@ -232,51 +235,19 @@ static int get_allocated_file_size_V2(int required_virtual_address) {
 	}
 }
 
-static int get_allocated_file_size_V1(int required_virtual_address) {
-	int i, j;
-	char* fat_ptr = (char*)(get_sector_address(FAT_SECTOR)+4); // +4 to skip identifier
 
-	int file_count = read_number(fat_ptr, 2);
-	fat_ptr += 2;
-	for (i = 0; i < file_count; ++i) {
-		int flags = read_number(fat_ptr, 2);
-		fat_ptr += 2;
-		int is_obsolete = flags & OBSOLETE_FLAG_MASK;
-		unsigned int virtual_address = read_number(fat_ptr, 4);
-		fat_ptr += 4;
-		int sector_count = read_number(fat_ptr, 2);
-		if (virtual_address == required_virtual_address && !is_obsolete) {
-			return sector_count * SECTOR_SIZE;
-		}
-		fat_ptr += 2;
-		fat_ptr += 2 * sector_count;
-
-		fat_ptr += 2 + read_number(fat_ptr, 2); // skip name
-		fat_ptr += 4; // skip size
-		fat_ptr += 8; // skip time modified (a long)
-		fat_ptr += 2 + read_number(fat_ptr, 2); // skip comment
-	}
-	return -1;
-}
 
 /*
- * Answer the space (in bytes) allocated to the FlashFile that occupies
- * the given virtual address. If there is no such file, answers -1.
+ * Answer the virtual address of the flash file with a specified name. If
+ * there is no such file, answers -1.
  * 
- * required_virtual_address   Virtual address of required FlashFile
+ * target_file_name_length    Length of the file name
+ * target_file_name           Address of the buffer containing the file name
  */
-int get_allocated_file_size(int required_virtual_address) {
+unsigned int get_file_virtual_address(int target_file_name_length, char* target_file_name) {
 	if (!is_FAT_valid()) {
 		return -1;
 	}
-	if (is_FAT_V2) {
-		return get_allocated_file_size_V2(required_virtual_address);
-	} else {
-		return get_allocated_file_size_V1(required_virtual_address);
-	}
-}
-
-static unsigned int get_file_virtual_address_V2(int target_file_name_length, char* target_file_name) {
 	char* fat_ptr = (char*)(get_sector_address(FAT_SECTOR)+4); // +4 to skip identifier
 	int recordStatus = read_number(fat_ptr, 2);
 	int flags, is_obsolete, sector_count, file_name_length;
@@ -318,60 +289,17 @@ static unsigned int get_file_virtual_address_V2(int target_file_name_length, cha
 	}
 }
 
-static unsigned int get_file_virtual_address_V1(int target_file_name_length, char* target_file_name) {
-	int i, j;
-	if (!is_FAT_valid()) {
-		return -1;
-	}
-	char* fat_ptr = (char*)(get_sector_address(FAT_SECTOR)+4); // +4 to skip identifier
-
-	int file_count = read_number(fat_ptr, 2);
-	fat_ptr += 2;
-	for (i = 0; i < file_count; ++i) {
-		int flags = read_number(fat_ptr, 2);
-		fat_ptr += 2;
-		int is_obsolete = flags & OBSOLETE_FLAG_MASK;
-		unsigned int virtual_address = read_number(fat_ptr, 4);
-		fat_ptr += 4;
-		int sector_count = read_number(fat_ptr, 2);
-		fat_ptr += 2;
-		fat_ptr += 2 * sector_count;
-
-		int file_name_length = read_number(fat_ptr, 2);
-		fat_ptr += 2;
-		if (!is_obsolete && (file_name_length == target_file_name_length)) {
-			if (strncmp(target_file_name, fat_ptr, file_name_length) == 0) {
-				return virtual_address;
-			}
-		}
-		fat_ptr += file_name_length;
-
-		fat_ptr += 4; // skip size
-		fat_ptr += 8; // skip time modified (a long)
-		fat_ptr += 2 + read_number(fat_ptr, 2); // skip comment
-	}
-	return -1;
-}
-
 /*
- * Answer the virtual address of the flash file with a specified name. If
- * there is no such file, answers -1.
+ * Reprogram the MMU to map files into virtual memory as implied 
+ * by the virtual memory addresses specified in the FAT. Answer whether
+ * a valid FAT was detected (if not, the MMU is left untouched).
  * 
- * target_file_name_length    Length of the file name
- * target_file_name           Address of the buffer containing the file name
+ * ignore_obsolete_files    specify whether or not to map obsolete files
  */
-unsigned int get_file_virtual_address(int target_file_name_length, char* target_file_name) {
+int reprogram_mmu(int ignore_obsolete_files) {
 	if (!is_FAT_valid()) {
 		return -1;
 	}
-	if (is_FAT_V2) {
-		return get_file_virtual_address_V2(target_file_name_length, target_file_name);
-	} else {
-		return get_file_virtual_address_V1(target_file_name_length, target_file_name);
-	}
-}
-
-static int reprogram_mmu_V2(int ignore_obsolete_files) {
 	char* fat_ptr = (char*)(get_sector_address(FAT_SECTOR)+4); // +4 to skip identifier
 	int recordStatus = read_number(fat_ptr, 2);
 	int flags, is_obsolete, sector_count, j;
@@ -411,59 +339,5 @@ static int reprogram_mmu_V2(int ignore_obsolete_files) {
 			fat_ptr += 1;
 		}
 		recordStatus = recordStatus = read_number(fat_ptr, 2);
-	}
-}
-
-static int reprogram_mmu_V1(int ignore_obsolete_files) {
-	int i, j;
-	if (!is_FAT_valid()) {
-		return FALSE;
-	}
-	char* fat_ptr = (char*)(get_sector_address(FAT_SECTOR)+4); // +4 to skip identifier
-
-	int file_count = read_number(fat_ptr, 2);
-	fat_ptr += 2;
-	for (i = 0; i < file_count; ++i) {
-		int flags = read_number(fat_ptr, 2);
-		fat_ptr += 2;
-		int is_obsolete = flags & OBSOLETE_FLAG_MASK;
-		unsigned int virtual_address = read_number(fat_ptr, 4);
-		fat_ptr += 4;
-		int sector_count = read_number(fat_ptr, 2);
-		fat_ptr += 2;
-		for (j = 0; j < sector_count; ++j) {
-			int sector_number = read_number(fat_ptr, 2);
-			fat_ptr += 2;
-			if (virtual_address != 0 && !(is_obsolete && ignore_obsolete_files)) {
-				map_level_2_entry_using_addresses(virtual_address, get_sector_address(sector_number));
-				virtual_address += SECTOR_SIZE;
-			}
-		}
-		fat_ptr += 2 + read_number(fat_ptr, 2); // skip name
-		fat_ptr += 4; // skip size
-		fat_ptr += 8; // skip time modified (a long)
-		fat_ptr += 2 + read_number(fat_ptr, 2); // skip comment
-	}
-	data_cache_disable();
-	invalidate_data_tlb();
-	data_cache_enable();
-	return TRUE;
-}
-
-/*
- * Reprogram the MMU to map files into virtual memory as implied 
- * by the virtual memory addresses specified in the FAT. Answer whether
- * a valid FAT was detected (if not, the MMU is left untouched).
- * 
- * ignore_obsolete_files    specify whether or not to map obsolete files
- */
-int reprogram_mmu(int ignore_obsolete_files) {
-	if (!is_FAT_valid()) {
-		return -1;
-	}
-	if (is_FAT_V2) {
-		return reprogram_mmu_V2(ignore_obsolete_files);
-	} else {
-		return reprogram_mmu_V1(ignore_obsolete_files);
 	}
 }
