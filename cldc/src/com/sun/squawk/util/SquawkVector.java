@@ -26,6 +26,7 @@ package com.sun.squawk.util;
 
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
+import com.sun.cldchi.jvm.JVM;
 
 
 /**
@@ -46,11 +47,9 @@ import java.util.NoSuchElementException;
  * <code>capacityIncrement</code>. An application can increase the
  * capacity of a vector before inserting a large number of
  * components; this reduces the amount of incremental reallocation.
- * <p>
- * Note: To conserve space, the CLDC implementation
- * is based on JDK 1.1.8, not JDK 1.3.
- * 
- * @version 1.39, 07/01/98 (CLDC 1.0, Spring 2000)
+ *
+ * @version 12/17/01 (CLDC 1.1)
+ * @since   JDK1.0, CLDC 1.0
  */
 public class SquawkVector {
 
@@ -85,9 +84,13 @@ public class SquawkVector {
      */
     public SquawkVector(int initialCapacity, int capacityIncrement) {
         super();
-        if (initialCapacity < 0)
-            throw new IllegalArgumentException("Illegal Capacity: "+
-                                               initialCapacity);
+        if (initialCapacity < 0) {
+            throw new IllegalArgumentException(
+/* #ifdef VERBOSE_EXCEPTIONS */
+/// skipped                       "Illegal Capacity: "+ initialCapacity
+/* #endif */
+            );
+        }
         this.elementData = new Object[initialCapacity];
         this.capacityIncrement = capacityIncrement;
     }
@@ -131,7 +134,8 @@ public class SquawkVector {
         if (elementCount < oldCapacity) {
             Object oldData[] = elementData;
             elementData = new Object[elementCount];
-            System.arraycopy(oldData, 0, elementData, 0, elementCount);
+            JVM.unchecked_obj_arraycopy(oldData, 0, 
+                                        elementData, 0, elementCount);
         }
     }
 
@@ -153,8 +157,8 @@ public class SquawkVector {
      * Synchronized methods in this class can internally call this
      * method for ensuring capacity without incurring the cost of an
      * extra synchronization.
-     * 
-     * @see java.util.Vector.ensureCapacity(int)
+     *
+     * @see java.util.Vector#ensureCapacity(int)
      */
     private void ensureCapacityHelper(int minCapacity) {
         int oldCapacity = elementData.length;
@@ -165,7 +169,8 @@ public class SquawkVector {
             newCapacity = minCapacity;
         }
         elementData = new Object[newCapacity];
-        System.arraycopy(oldData, 0, elementData, 0, elementCount);
+        JVM.unchecked_obj_arraycopy(oldData, 0, 
+                                    elementData, 0, elementCount);
     }
 
     /**
@@ -175,6 +180,8 @@ public class SquawkVector {
      * components at index <code>newSize</code> and greater are discarded.
      *
      * @param   newSize   the new size of this vector.
+     * @throws  ArrayIndexOutOfBoundsException if new size is negative.
+     * @since   JDK1.0
      */
     public void setSize(int newSize) {
         if ((newSize > elementCount) && (newSize > elementData.length)) {
@@ -237,7 +244,7 @@ public class SquawkVector {
     }
 
     /**
-     * Searches for the first occurence of the given argument, testing
+     * Searches for the first occurrence of the given argument, testing
      * for equality using the <code>equals</code> method.
      *
      * @param   elem   an object.
@@ -250,7 +257,7 @@ public class SquawkVector {
     }
 
     /**
-     * Searches for the first occurence of the given argument, beginning
+     * Searches for the first occurrence of the given argument, beginning
      * the search at <code>index</code>, and testing for equality using
      * the <code>equals</code> method.
      *
@@ -295,10 +302,17 @@ public class SquawkVector {
      * @return  the index of the last occurrence of the specified object in this
      *          vector at position less than <code>index</code> in the vector;
      *          <code>-1</code> if the object is not found.
+     * @exception  IndexOutOfBoundsException  if <tt>index</tt> is greater
+     *             than or equal to the current size of this vector.
+     * @since   JDK1.0
      */
     public int lastIndexOf(Object elem, int index) {
         if (index >= elementCount) {
-            throw new IndexOutOfBoundsException(index + " >= " + elementCount);
+            throw new IndexOutOfBoundsException(
+/* #ifdef VERBOSE_EXCEPTIONS */
+/// skipped                       index + " >= " + elementCount
+/* #endif */
+            );
         }
 
         if (elem == null) {
@@ -323,18 +337,13 @@ public class SquawkVector {
      */
     public Object elementAt(int index) {
         if (index >= elementCount) {
-            throw new ArrayIndexOutOfBoundsException(index + " >= " + elementCount);
+            throw new ArrayIndexOutOfBoundsException(
+/* #ifdef VERBOSE_EXCEPTIONS */
+/// skipped                       index + " >= " + elementCount
+/* #endif */
+            );
         }
-        /* Since try/catch is free, except when the exception is thrown,
-           put in this extra try/catch to catch negative indexes and
-           display a more informative error message.  This might not
-           be appropriate, especially if we have a decent debugging
-           environment - JP. */
-        try {
-            return elementData[index];
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new ArrayIndexOutOfBoundsException(index + " < 0");
-        }
+        return elementData[index];
     }
 
     /**
@@ -379,8 +388,12 @@ public class SquawkVector {
      */
     public void setElementAt(Object obj, int index) {
         if (index >= elementCount) {
-            throw new ArrayIndexOutOfBoundsException(index + " >= " +
-                                                     elementCount);
+            throw new ArrayIndexOutOfBoundsException(
+/* #ifdef VERBOSE_EXCEPTIONS */
+/// skipped                       index + " >= " +
+/// skipped                       elementCount
+/* #endif */
+            );
         }
         elementData[index] = obj;
     }
@@ -400,15 +413,24 @@ public class SquawkVector {
      */
     public void removeElementAt(int index) {
         if (index >= elementCount) {
-            throw new ArrayIndexOutOfBoundsException(index + " >= " +
-                                                     elementCount);
+            throw new ArrayIndexOutOfBoundsException(
+/* #ifdef VERBOSE_EXCEPTIONS */
+/// skipped                       index + " >= " +
+/// skipped                       elementCount
+/* #endif */
+            );
         }
         else if (index < 0) {
-            throw new ArrayIndexOutOfBoundsException(index);
+            throw new ArrayIndexOutOfBoundsException(
+/* #ifdef VERBOSE_EXCEPTIONS */
+/// skipped                       index
+/* #endif */
+            );
         }
         int j = elementCount - index - 1;
         if (j > 0) {
-            System.arraycopy(elementData, index + 1, elementData, index, j);
+            JVM.unchecked_obj_arraycopy(elementData, index + 1, 
+                                        elementData, index, j);
         }
         elementCount--;
         elementData[elementCount] = null; /* to let gc do its work */
@@ -431,14 +453,19 @@ public class SquawkVector {
      */
     public void insertElementAt(Object obj, int index) {
         int newcount = elementCount + 1;
-        if (index >= newcount) {
-            throw new ArrayIndexOutOfBoundsException(index
-                                                     + " > " + elementCount);
+        if (index < 0 || index >= newcount) {
+            throw new ArrayIndexOutOfBoundsException(
+/* #ifdef VERBOSE_EXCEPTIONS */
+/// skipped                       index + " > " + elementCount
+/* #endif */
+            );
         }
         if (newcount > elementData.length) {
             ensureCapacityHelper(newcount);
         }
-        System.arraycopy(elementData, index, elementData, index + 1, elementCount - index);
+        JVM.unchecked_obj_arraycopy(elementData, index, 
+                                    elementData, index + 1, 
+                                    elementCount - index);
         elementData[index] = obj;
         elementCount++;
     }
