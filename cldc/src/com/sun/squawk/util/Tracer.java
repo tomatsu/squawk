@@ -25,8 +25,7 @@
 package com.sun.squawk.util;
 
 import java.io.PrintStream;
-import com.sun.squawk.util.SquawkHashtable;  // Version without synchronization
-import com.sun.squawk.pragma.*;
+import com.sun.squawk.pragma.GlobalStaticFields;
 
 
 /**
@@ -133,6 +132,7 @@ public final class Tracer implements GlobalStaticFields {
      *
      * @param  feature    the feature to be traced
      * @param  component  the component to be traced
+     * @return true if tracing this feature
      */
     public static boolean isTracing(String feature, String component) {
         return (features().contains(feature) &&
@@ -145,6 +145,7 @@ public final class Tracer implements GlobalStaticFields {
      * Determines whether or not a given feature is being traced.
      *
      * @param  feature    the feature to be traced
+     * @return true if tracing this feature
      */
     public static boolean isTracing(String feature) {
         return (features().containsKey(feature));
