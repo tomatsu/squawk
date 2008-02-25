@@ -1585,7 +1585,7 @@ public class ObjectMemoryMapper {
         claimObjectGraph(SUITE_STATS, getField(oop, suiteKlass, Klass.STRING, "name"), false);
         claimObjectGraph(SUITE_STATS, getField(oop, suiteKlass, Klass.STRING, "configuration"), false);
         claimObjectGraph(SUITE_STATS, getField(oop, suiteKlass, "[com.sun.squawk.Klass", "classes"), false);
-        claimObjectGraph(SUITE_STATS, getField(oop, suiteKlass, Klass.STRING, "noClassDefFoundClassesString"), false);
+        claimObjectGraph(SUITE_STATS, getField(oop, suiteKlass, Klass.STRING_ARRAY, "noClassDefFoundErrorClassNames"), false);
         
         claimObjectGraph(METADATA_STATS,       getField(oop, suiteKlass, "[com.sun.squawk.KlassMetadata", "metadatas"), false);
         claimObjectGraph(RESOURCE_FILES_STATS, getField(oop, suiteKlass, "[com.sun.squawk.ResourceFile", "resourceFiles"), false);

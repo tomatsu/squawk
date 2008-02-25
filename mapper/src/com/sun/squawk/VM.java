@@ -310,5 +310,20 @@ public class VM {
         System.err.print(val);
     }
 
-
+    /**
+     * VM-private version of System.arraycopy for arrays of primitives that does little error checking.
+     */
+    public static void arraycopyPrimitive0(Object src, int src_position, Object dst, int dst_position, 
+                                           int totalLength, int dataSize) {
+        System.arraycopy(src, src_position, dst, dst_position, totalLength);
+    }
+    
+    /**
+     * VM-private version of System.arraycopy for arrays of objects that does little error checking.
+     */
+    public static void arraycopyObject0(Object src, int src_position, Object dst, int dst_position, 
+                                           int length) {
+        System.arraycopy(src, src_position, dst, dst_position, length);
+    }
+    
 }
