@@ -33,7 +33,10 @@ import com.sun.squawk.util.*;
 public final class ResourceFile {
 	/**
 	 * Creates a resource file object.
-	 */
+     * 
+     * @param name resource name
+     * @param data resource data
+     */
 	public ResourceFile(String name, byte [] data) {
 		this.name = name;
 		this.data = data;
@@ -58,19 +61,19 @@ public final class ResourceFile {
 		 *
 		 * @param o1 a ResourceFile object
 		 * @param o2 either a ResourceFile object or a String object
+         * @throws ClassCastException if the arguments' types prevent them from
+         * 	       being compared by this Comparer.
 		 */
 		public int compare(Object o1, Object o2) {
-			if (o1 == o2 || !(o1 instanceof ResourceFile)) {
+			if (o1 == o2) {
 				return 0;
 			}
-			
+			ResourceFile rf1 = (ResourceFile)o1;
 			if (o2 instanceof ResourceFile) {
-				return ((ResourceFile) o1).name.compareTo(((ResourceFile) o2).name);
-			} else if (o2 instanceof String) {
-				return ((ResourceFile) o1).name.compareTo((String) o2);
-			} 
-			
-			return 0;
+				return rf1.name.compareTo(((ResourceFile) o2).name);
+			} else {
+				return rf1.name.compareTo((String) o2);
+			}
 		}
 	};
 }

@@ -33,6 +33,8 @@ import com.sun.squawk.util.*;
 public final class ManifestProperty {
 	/**
 	 * Creates a property object.
+     * @param name property nane
+     * @param value property value
 	 */
 	public ManifestProperty(String name, String value) {
 		this.name = name;
@@ -58,19 +60,19 @@ public final class ManifestProperty {
 		 *
 		 * @param o1 a IMletProperty object
 		 * @param o2 either a IMletProperty object or a String object
+         * @throws ClassCastException if the arguments' types prevent them from
+         * 	       being compared by this Comparer.
 		 */
 		public int compare(Object o1, Object o2) {
-			if (o1 == o2 || !(o1 instanceof ManifestProperty)) {
+			if (o1 == o2) {
 				return 0;
 			}
-			
+			ManifestProperty mf1 = (ManifestProperty)o1;
 			if (o2 instanceof ManifestProperty) {
-				return ((ManifestProperty) o1).name.compareTo(((ManifestProperty) o2).name);
-			} else if (o2 instanceof String) {
-				return ((ManifestProperty) o1).name.compareTo((String) o2);
-			} 
-			
-			return 0;
+				return mf1.name.compareTo(((ManifestProperty) o2).name);
+			} else {
+				return mf1.name.compareTo((String) o2);
+			}
 		}
 	};
 }

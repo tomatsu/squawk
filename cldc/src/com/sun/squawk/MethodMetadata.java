@@ -184,6 +184,8 @@ public class MethodMetadata {
          * Compares its two arguments for order.  Returns a negative integer,
          * zero, or a positive integer as the first argument is less than, equal
          * to, or greater than the second.
+         * @throws ClassCastException if the arguments' types prevent them from
+         * 	       being compared by this Comparer.
          */
         public int compare(Object a, Object b) {
             MethodMetadata ma = (MethodMetadata)a;
@@ -209,12 +211,13 @@ public class MethodMetadata {
             MethodMetadata midVal = a[mid];
             int cmp = midVal.offset - keyOffset;
             
-            if (cmp < 0)
+            if (cmp < 0) {
                 low = mid + 1;
-            else if (cmp > 0)
+            } else if (cmp > 0) {
                 high = mid - 1;
-            else
+            } else {
                 return mid; // key found
+            }
         }
         return -1;  // key not found.
     }
