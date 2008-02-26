@@ -260,10 +260,12 @@ public class GC implements GlobalStaticFields {
      * @return the ObjectMemory that corresponds to <code>uri</code> or null if there is no such ObjectMemory
      */
     static ObjectMemory lookupReadOnlyObjectMemoryBySourceURI(String uri) {
-        for (int i = 0; i != readOnlyObjectMemories.length; ++i) {
-            ObjectMemory om = readOnlyObjectMemories[i];
-            if (om.getURI().equals(uri)) {
-                return om;
+        if (readOnlyObjectMemories != null) {
+            for (int i = 0; i != readOnlyObjectMemories.length; ++i) {
+                ObjectMemory om = readOnlyObjectMemories[i];
+                if (om.getURI().equals(uri)) {
+                    return om;
+                }
             }
         }
         return null;
@@ -276,10 +278,12 @@ public class GC implements GlobalStaticFields {
      * @return the ObjectMemory that corresponds to <code>root</code> or null if there is no such ObjectMemory
      */
     static ObjectMemory lookupReadOnlyObjectMemoryByRoot(Object root) {
-        for (int i = 0; i != readOnlyObjectMemories.length; ++i) {
-            ObjectMemory om = readOnlyObjectMemories[i];
-            if (om.getRoot() == root) {
-                return om;
+        if (readOnlyObjectMemories != null) {
+            for (int i = 0; i != readOnlyObjectMemories.length; ++i) {
+                ObjectMemory om = readOnlyObjectMemories[i];
+                if (om.getRoot() == root) {
+                    return om;
+                }
             }
         }
         return null;
