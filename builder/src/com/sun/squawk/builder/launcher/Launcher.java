@@ -97,10 +97,12 @@ public class Launcher {
         try {
             // just check whether this throws an exception
             Class.forName("com.sun.tools.javac.Main");
+            System.out.println("Launcher: com.sun.tools.javac.Main already in classpath.");
             toolsJarAvailable = true;
         } catch (Exception e1) {
             try {
                 Class.forName("sun.tools.javac.Main");
+                System.out.println("Launcher: sun.tools.javac.Main already in classpath.");
                 toolsJarAvailable = true;
             } catch (Exception e2) {
                 // ignore
@@ -112,6 +114,7 @@ public class Launcher {
         String javaHome = System.getProperty("java.home");
         File toolsJar = new File(javaHome + "/lib/tools.jar");
         if (toolsJar.exists()) {
+            System.out.println("Launcher: Found tools.har in " + toolsJar.getPath() + ".");
             return toolsJar.toURL();
         }
         String lookFor = File.separator + "jre";
@@ -122,6 +125,7 @@ public class Launcher {
         if (!toolsJar.exists()) {
         	throw new RuntimeException("Unable to locate tools.jar. Expected to find it in " + toolsJar.getPath());
         }
+        System.out.println("Launcher: Found tools.har in " + toolsJar.getPath() + ", by popping up a level from jre.");
         return toolsJar.toURL();
     }
     
