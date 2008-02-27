@@ -40,6 +40,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -750,10 +751,14 @@ public class Build {
         	toolsJarPath = "";
         	toolsJarPathEntry = "";
         } else {
-// Find out why dave is having a problem here and why it fails on some Windows
-//        	toolsJarPath = toolsJarURL.getPath().substring(1);
-        	toolsJarPath = toolsJarURL.getPath();
-        	toolsJarPathEntry = toolsJarPath + ":";
+            File f;
+            try {
+                f = new File(toolsJarURL.toURI());
+            } catch(URISyntaxException e) {
+                f = new File(toolsJarURL.getPath());
+            }
+            toolsJarPath = f.getPath();
+            toolsJarPathEntry = toolsJarPath + File.pathSeparator;
         }
         System.out.println("For vm2c tools.jar=" + toolsJarPath);
         Target vm2c = addTarget(false,  "vm2c", null, toolsJarPath);
