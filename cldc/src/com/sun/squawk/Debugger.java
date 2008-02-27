@@ -88,9 +88,11 @@ public abstract class Debugger {
             this.object = object;
         }
 
+/*if[DEBUG_CODE_ENABLED]*/
         public String toString() {
             return "event[kind=" + kind + ",object=" + object + "]";
         }
+/*end[DEBUG_CODE_ENABLED]*/
         
         public void setThread(Thread thread, Object threadID) {
             Assert.always(thread != null && threadID != null);
@@ -124,9 +126,11 @@ public abstract class Debugger {
             super(type, object);
             this.location = location;
         }
+/*if[DEBUG_CODE_ENABLED]*/
         public String toString() {
             return name() + "[kind=" + kind + ",object=" + object + ",location{" + location + "}]";
         }
+/*end[DEBUG_CODE_ENABLED]*/
 
         abstract String name();
     }
@@ -157,10 +161,12 @@ public abstract class Debugger {
             this.catchLocation = catchLocation;
             this.isCaught = isCaught;
         }
+/*if[DEBUG_CODE_ENABLED]*/
         public String toString() {
             return name() + "[kind=" + kind + ",exception=" + object + ",throwLocation{" + location +
                 "},catchLocation{" + catchLocation + "},caught=" + isCaught + "]";
         }
+/*end[DEBUG_CODE_ENABLED]*/
         String name() {
             return "exception";
         }
@@ -290,6 +296,7 @@ public abstract class Debugger {
 
         /**
          * Gets the stepping state
+         * @return REQUESTED, HIT, or DEFERRED
          */
         public final int getState() {
             return this.state;

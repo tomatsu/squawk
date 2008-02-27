@@ -79,6 +79,7 @@ public class VM {
      * property <code>file.separator</code>.  On UNIX systems the value of this
      * field is <code>'/'</code>; on Microsoft Windows systems it is <code>'\'</code>.
      *
+     * @return <code>'/'</code> or <code>'\'</code>
      * @see     java.lang.System#getProperty(java.lang.String)
      */
     public static char getFileSeparatorChar() {
@@ -112,6 +113,8 @@ public class VM {
     
     /**
      * On a hosted system , this calls System.setProperty(), otherwise calls Isolate.currentIsolate().setProperty()
+     * @param name property name
+     * @param value property value
      */
     public static void setProperty(String name, String value) {
         System.setProperty(name, value);
@@ -129,7 +132,7 @@ public class VM {
     /**
      * Set the endianess.
      *
-     * @value new value of isBigEndian
+     * @param value new value of isBigEndian
      */
     public static void setIsBigEndian(boolean value) {
         bigEndian = value;
@@ -514,7 +517,7 @@ public class VM {
     /**
      * Determines if the klass is internal, so should be retained (even if symbol gets stripped)
      *
-     * @param member        the method or field to consider
+     * @param klass        the klass to consider
      * @return true if the class symbols should be stripped
      */
     public static boolean isInternal(Klass klass) {
@@ -526,6 +529,8 @@ public class VM {
      * Support routine to get the object representing the class of a given object.
      * This takes into account whether or not the VM is running in hosted mode or
      * not. The returned object can only be used for identity comparisons.
+     * @param object
+     * @return Class
      */
     public static Object getClass(Object object) {
         return object.getClass();
@@ -535,6 +540,8 @@ public class VM {
      * Support routine to test whether a given object is an array.
      * This takes into account whether or not the VM is running in hosted mode or
      * not.
+     * @param object
+     * @return true if object is an array
      */
     public static boolean isArray(Object object) {
         return object.getClass().isArray();
@@ -583,6 +590,7 @@ public class VM {
      * Sets the stream for the VM.print... methods to one of the STREAM_... constants.
      *
      * @param stream  the stream to use for the print... methods
+     * @return old stream
      */
     public static int setStream(int stream) {
         Assert.always(stream >= STREAM_STDOUT && stream <= STREAM_HEAPTRACE, "invalid stream specifier");
@@ -716,7 +724,7 @@ public class VM {
     /**
      * Hashtable to translate names into enumerations.
      */
-    private static Hashtable<String, Integer> table = new Hashtable<String, Integer>();
+    private static Hashtable<String, Integer> methodTable = new Hashtable<String, Integer>();
 
     /**
      * Hashtable of unused native methods.
@@ -738,7 +746,7 @@ public class VM {
                 if (field.getType() == Integer.TYPE) {
                     String name = field.getName().replace('_', '.').replace('$', '.');
                     int number = field.getInt(null);
-                    table.put(name, new Integer(number));
+                    methodTable.put(name, new Integer(number));
                     unused.put(name, name);
                 }
             }
@@ -791,7 +799,7 @@ public class VM {
      * @return the identifier for the method or -1 if the method has not been registered
      */
     public static int lookupNative(String name) {
-        Integer id = table.get(name);
+        Integer id = methodTable.get(name);
         if (id != null) {
             unused.remove(name);
             return id.intValue();
@@ -800,12 +808,12 @@ public class VM {
     }
 
     /**
-     * Get all the symbols in a form that will go into a properties file.
+     * Print all the symbols in a form that will go into a properties file.
      *
-     * @return a string with all the definitions.
+     * @param out stream to print to
      */
     public static void printNatives(PrintStream out) {
-    	for (Map.Entry<String, Integer> entry : table.entrySet()) {
+    	for (Map.Entry<String, Integer> entry : methodTable.entrySet()) {
             out.println("NATIVE." + entry.getKey() + ".NAME=" + entry.getValue());
         }
 
@@ -817,6 +825,9 @@ public class VM {
             System.err.println("Warning: Unused native method "+keys.nextElement());
         }
 */
+    }
+
+    private VM() {
     }
     
 }

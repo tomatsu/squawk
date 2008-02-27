@@ -25,7 +25,7 @@
 package com.sun.squawk;
 
 import java.io.*;
-import java.util.*;
+import java.util.Hashtable;
 
 import javax.microedition.io.Connector;
 
@@ -88,6 +88,7 @@ public class JavaApplicationManager {
      * Main routine.
      *
      * @param args the command line argument array
+     * @throws java.lang.Exception 
      */
     public static void main(String[] args) throws Exception {
         // If no name is specified for MIDlet, assume MIDlet-1
@@ -120,54 +121,60 @@ public class JavaApplicationManager {
          * Get the start time.
          */
         long startTime = System.currentTimeMillis();
-
-        /*
-         * Create the application isolate and run it.
-         */
-        Isolate isolate;
-        if (mainClassName != null) {
-            // create raw isolate
-            isolate = new Isolate(newProps, mainClassName, javaArgs, classPath, parentSuiteURI);
-        } else {
-             // create midlet
-            isolate = new Isolate(newProps, midletPropertyNum, classPath, parentSuiteURI);
-        }
+        int exitCode = 999;
         
-        /*
-         * Start the isolate and wait for it to complete.
-         */
-        isolate.start();
-        isolate.join();
-
-        /*
-         * If the isolate was hibernated then save it and restart it.
-         */
-        while (isolate.isHibernated() && testoms) {
-            try {
-                String url = "file://" + isolate.getMainClassName() + ".isolate";
-                DataOutputStream dos = Connector.openDataOutputStream(url);
-                isolate.save(dos, url, VM.isBigEndian());
-                System.out.println("Saved isolate to " + url);
-                dos.close();
-
-                DataInputStream dis = Connector.openDataInputStream(url);
-                /*isolate = */Isolate.load(dis, url);
-                dis.close();
-
-                isolate.unhibernate();
-                isolate.join();
-
-            } catch (java.io.IOException ioe) {
-                System.err.println("I/O error while trying to save or re-load isolate: ");
-                ioe.printStackTrace();
-                break;
+        try {
+            /*
+             * Create the application isolate and run it.
+             */
+            Isolate isolate;
+            if (mainClassName != null) {
+                // create raw isolate
+                isolate = new Isolate(newProps, mainClassName, javaArgs, classPath, parentSuiteURI);
+            } else {
+                // create midlet
+                isolate = new Isolate(newProps, midletPropertyNum, classPath, parentSuiteURI);
             }
-        }
 
-        /*
-         * Get the exit status.
-         */
-        int exitCode = isolate.getExitCode();
+            /*
+             * Start the isolate and wait for it to complete.
+             */
+            isolate.start();
+            isolate.join();
+
+            /*
+             * If the isolate was hibernated then save it and restart it.
+             */
+            while (isolate.isHibernated() && testoms) {
+                try {
+                    String url = "file://" + isolate.getMainClassName() + ".isolate";
+                    DataOutputStream dos = Connector.openDataOutputStream(url);
+                    isolate.save(dos, url, VM.isBigEndian());
+                    System.out.println("Saved isolate to " + url);
+                    dos.close();
+
+                    DataInputStream dis = Connector.openDataInputStream(url);
+                    /*isolate = */                    Isolate.load(dis, url);
+                    dis.close();
+
+                    isolate.unhibernate();
+                    isolate.join();
+
+                } catch (java.io.IOException ioe) {
+                    System.err.println("I/O error while trying to save or re-load isolate: ");
+                    ioe.printStackTrace();
+                    break;
+                }
+            }
+
+            /*
+             * Get the exit status.
+             */
+            exitCode = isolate.getExitCode();
+
+        } catch (Error e) {
+            System.err.println(e);
+        }
 
         /*
          * Show execution statistics if requested
@@ -351,7 +358,7 @@ public class JavaApplicationManager {
             String url = arg.substring("-sampleStatData:".length());
             try {
                 System.out.println("Sending samples of statictics to " + url);
-                final DataOutputStream dos = Connector.openDataOutputStream(url);;
+                final DataOutputStream dos = Connector.openDataOutputStream(url);
                 new Thread(new Runnable() {
                     public void run() {
                         VM.Stats stats = new VM.Stats();
@@ -436,7 +443,7 @@ public class JavaApplicationManager {
         }
         TranslatorInterface t = VM.getCurrentIsolate().getTranslator();
         if (t == null) {
-            t = VM.getCurrentIsolate().getDefaultTranslator();
+            t = Isolate.getDefaultTranslator();
         }
         if (t != null) {
             t.printTraceFlags(out);

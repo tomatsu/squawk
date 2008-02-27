@@ -25,7 +25,6 @@
 package com.sun.squawk;
 
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -400,7 +399,7 @@ public final class Suite {
      * its added to our list of {@link #classesToNoClassDefFoundError} then we will throw a
      * {@link NoClassDefFoundError}.
      * 
-     * @param className
+     * @param classNames
      */
 	public void addNoClassDefFoundErrorClassNames(String[] classNames) {
 		if (noClassDefFoundErrorClassNames == null && (classNames == null || classNames.length == 0)) {
@@ -448,7 +447,7 @@ public final class Suite {
 	/**
 	 * Installs a collection of resource files into this suite. 
 	 *
-	 * @param resources array of resource files to install
+	 * @param resourceFile file to install
 	 */
 	public void installResource(ResourceFile resourceFile) {
 		checkWrite();
@@ -542,7 +541,7 @@ public final class Suite {
     /**
 	 * Installs a collection of IMlet property values into this suite.
 	 *
-	 * @param properties IMlet properties array to install
+	 * @param property IMlet property to install
 	 */
 	public void installProperty(ManifestProperty property) {
 		checkWrite();
@@ -699,13 +698,11 @@ public final class Suite {
      * @throws Error if the suite denoted by URI is not available or there was
      *         a problem while loading it
      */
-    public static Suite getSuite(String uri, boolean errorOnIOException) {
+    public static Suite getSuite(String uri, boolean errorOnIOException) throws Error {
         ObjectMemory om = GC.lookupReadOnlyObjectMemoryBySourceURI(uri);
         if (om == null) {
             try {
-                DataInputStream dis = Connector.openDataInputStream(uri);
-                om = ObjectMemoryLoader.load(dis, uri, true).objectMemory;
-                dis.close();
+                om = ObjectMemoryLoader.load(uri, true).objectMemory;
             } catch (IOException e) {
                 if (errorOnIOException) {
                     throw new Error("IO error while loading suite from '" + uri + "': " + e);
@@ -729,7 +726,7 @@ public final class Suite {
      * @throws Error if the suite denoted by URI is not available or there was
      *         a problem while loading it
      */
-     public static Suite getSuite(String uri) {
+     public static Suite getSuite(String uri) throws Error {
          return getSuite(uri, true);
      }
 
@@ -760,7 +757,7 @@ public final class Suite {
      * @throws OutOfMemoryError if there was insufficient memory to do the save
      * @throws IOException if there was some IO problem while writing the output
      */
-    public void save(DataOutputStream dos, String uri) throws java.io.IOException {
+    public void save(DataOutputStream dos, String uri) throws java.io.IOException, OutOfMemoryError {
         save(dos, uri, VM.isBigEndian());
     }
 
@@ -771,10 +768,11 @@ public final class Suite {
      * @param  uri       the URI identifier of the serialized suite
      * @param  bigEndian the endianess to be used when serializing this suite
      *
+     * @return if hosted, returns the objectMemory that suite was saved to
      * @throws OutOfMemoryError if there was insufficient memory to do the save
      * @throws IOException if there was some IO problem while writing the output
      */
-    public ObjectMemory save(DataOutputStream dos, String uri, boolean bigEndian) throws java.io.IOException {
+    public ObjectMemory save(DataOutputStream dos, String uri, boolean bigEndian) throws java.io.IOException, OutOfMemoryError {
         ObjectMemorySerializer.ControlBlock cb = VM.copyObjectGraph(this);
         ObjectMemory parentMemory = null;
         if (!isBootstrap()) {
@@ -802,7 +800,7 @@ public final class Suite {
      * @throws OutOfMemoryError if there was insufficient memory to do the save
      * @throws IOException if there was some IO problem while writing the output
      */
-    public void saveKlassMetadatas(DataOutputStream dos, String uri) throws java.io.IOException {
+    public void saveKlassMetadatas(DataOutputStream dos, String uri) throws java.io.IOException, OutOfMemoryError {
         saveKlassMetadatas(dos, uri, VM.isBigEndian());
     }
 
@@ -816,7 +814,7 @@ public final class Suite {
      * @throws OutOfMemoryError if there was insufficient memory to do the save
      * @throws IOException if there was some IO problem while writing the output
      */
-    public void saveKlassMetadatas(DataOutputStream dos, String uri, boolean bigEndian) throws java.io.IOException {
+    public void saveKlassMetadatas(DataOutputStream dos, String uri, boolean bigEndian) throws java.io.IOException, OutOfMemoryError {
         int originalMemorySize = NativeUnsafe.getMemorySize();
         ObjectMemorySerializer.ControlBlock cb = VM.copyObjectGraph(metadatas);
         ObjectMemorySerializer.save(dos, uri, cb, getReadOnlyObjectMemory(), bigEndian);
@@ -926,6 +924,9 @@ public final class Suite {
      *
      * @param type  specifies the type of the suite after closing. Must be
      *              {@link #APPLICATION}, {@link #LIBRARY}, {@link #EXTENDABLE_LIBRARY} or {@link #DEBUG}.
+     * @param name new suite name
+     * @param parent
+     * @return stripped copy of this suite
      */
     public Suite strip(int type, String name, Suite parent) {
         if (type < APPLICATION || type > METADATA) {

@@ -114,7 +114,7 @@ public class ObjectMemoryFileEndianessConverter {
             ObjectMemoryFile omf = ObjectMemoryLoader.load(dis, "file://" + in.getPath(), false);
             dis.close();
 
-            if (VM.bigEndian != outputBigEndian.booleanValue()) {
+            if (VM.isBigEndian() != outputBigEndian.booleanValue()) {
                 System.out.println("Swapping endianess.");
                 convertObjectMemory(omf.objectMemory, out, outputBigEndian.booleanValue());
             } else {
@@ -192,5 +192,8 @@ public class ObjectMemoryFileEndianessConverter {
         os.write(content);
         dis.close();
         os.close();
+    }
+
+    private ObjectMemoryFileEndianessConverter() {
     }
 }

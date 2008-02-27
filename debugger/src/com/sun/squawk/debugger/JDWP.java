@@ -1313,4 +1313,7 @@ public class JDWP {
     // InvokeOptions:
     public static final int InvokeOptions_INVOKE_SINGLE_THREADED = 0x01;
     public static final int InvokeOptions_INVOKE_NONVIRTUAL = 0x02;
+
+    private JDWP() {
+    }
 }

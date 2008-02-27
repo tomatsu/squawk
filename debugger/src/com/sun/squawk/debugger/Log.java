@@ -71,27 +71,27 @@ public class Log {
      * @return the logging level
      */
     private static int configLevel() {
-        int level = NONE;
+        int newlevel = NONE;
         String prop = System.getProperty("squawk.debugger.log.level");
         if (prop != null) {
             if (prop.equals("none")) {
-                level = NONE;
+                newlevel = NONE;
             } else if (prop.equals("info")) {
-                level = INFO;
+                newlevel = INFO;
             } else if (prop.equals("verbose")) {
-                level = VERBOSE;
+                newlevel = VERBOSE;
             } else if (prop.equals("debug")) {
 /*if[DEBUG_CODE_ENABLED]*/
-                level = DEBUG;
+                newlevel = DEBUG;
 /*else[DEBUG_CODE_ENABLED]*/
 //              System.err.println("NOTE: Log level \"debug\" only supported in debug builds. Setting log level to \"verbose\"");
-//              level = VERBOSE;
+//              newlevel = VERBOSE;
 /*end[DEBUG_CODE_ENABLED]*/
             } else {
                 System.err.println("logging disabled - invalid log level in squawk.debugger.log.level system property: " + prop);
             }
         }
-        return level;
+        return newlevel;
     }
 
     /**
@@ -101,13 +101,13 @@ public class Log {
      * @return the logging stream
      */
     private static PrintStream configOut(int level) {
-        PrintStream out = System.out;
+        PrintStream newout = System.out;
         if (level != NONE) {
             System.err.println("logging level: " + Log.level);
             String prop = System.getProperty("squawk.debugger.log.url");
             if (prop != null) {
                 try {
-                    out = new PrintStream(Connector.openOutputStream(prop));
+                    newout = new PrintStream(Connector.openOutputStream(prop));
                     System.err.println("logging to " + prop);
                 } catch (IOException e) {
                     System.err.println("logging to System.out - exception while opening log stream: " + prop);
@@ -117,7 +117,7 @@ public class Log {
                 System.err.println("logging to System.out");
             }
         }
-        return out;
+        return newout;
     }
 
     public static boolean info() {
@@ -133,6 +133,7 @@ public class Log {
      * In non-debug builds, this is a constant method, easily inlinable,
      * allowing dead-code elimination in the callers 
      * (once byte-code optimizer is enabled).
+     * @return true if level >= DEBUG
      */
 /*if[DEBUG_CODE_ENABLED]*/
     public static boolean debug() {
@@ -155,5 +156,8 @@ public class Log {
             out.println(msg);
             out.flush();
         }
+    }
+
+    private Log() {
     }
 }

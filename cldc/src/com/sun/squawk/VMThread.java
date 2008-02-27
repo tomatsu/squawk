@@ -874,10 +874,12 @@ public final class VMThread implements GlobalStaticFields {
             throw new RuntimeException("ExecutionPoints cannot be keys in a hashtable");
         }
 
+/*if[DEBUG_CODE_ENABLED]*/
         public String toString() {
             return "frame=" + frame.toPrimitive() +
                 ",bci=" + bci.toPrimitive() + ",mp=" + Address.fromObject(mp).toUWord().toPrimitive() + "]";
         }
+/*end[DEBUG_CODE_ENABLED]*/ 
     }
 
     /**
@@ -1258,12 +1260,14 @@ VM.println();
         isolate.addThread(this);
         addToRunnableThreadsQueue(this);
 
+/*if[ENABLE_SDA_DEBUGGER]*/        
         if (VM.isThreadingInitialized()) {
             Debugger debugger = VM.getCurrentIsolate().getDebugger();
             if (debugger != null) {
                 debugger.notifyEvent(new Debugger.Event(Debugger.Event.THREAD_START, this));
             }
         }
+/*end[ENABLE_SDA_DEBUGGER]*/
     }
 
     /**
@@ -1292,6 +1296,7 @@ VM.println();
  
         Assert.always(state == ALIVE);
         
+/*if[ENABLE_SDA_DEBUGGER]*/
         // do notification before setting state = dead, otherwise sync code gets confused...
         if (VM.isThreadingInitialized()) {
             Debugger debugger = VM.getCurrentIsolate().getDebugger();
@@ -1299,7 +1304,8 @@ VM.println();
                 debugger.notifyEvent(new Debugger.Event(Debugger.Event.THREAD_END, this));
             }
         }
-                
+/*end[ENABLE_SDA_DEBUGGER]*/
+        
 //VM.print("Thread::killThread - owner of stack chunk "); VM.printAddress(stack); VM.print(" = "); VM.printAddress(NativeUnsafe.getObject(stack, SC.owner)); VM.println();
         boolean exitIsolate = false;
         if (nicely) {

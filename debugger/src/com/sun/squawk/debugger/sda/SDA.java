@@ -1410,6 +1410,8 @@ public class SDA extends Debugger {
     public static void main(String args[]) {
         Assert.always(!VM.isHosted(), "Squawk Debugger Agent can only run on a native Squawk VM, not hosted");
         VMThread.currentThread().setName("SDA");
+        
+/*if[ENABLE_SDA_DEBUGGER]*/
 
         SDA debugger = new SDA();
         if (!debugger.parseArgs(args)) {
@@ -1436,5 +1438,8 @@ public class SDA extends Debugger {
         if (debugger.getDebuggeeIsolate() != null) {
             System.exit(debugger.getDebuggeeIsolate().getExitCode());
         }
+/*else[ENABLE_SDA_DEBUGGER]*/
+//      Assert.shouldNotReachHere("This version of Squawk VM compiled with ENABLE_SDA_DEBUGGER=false!");
+/*end[ENABLE_SDA_DEBUGGER]*/
     }
 }

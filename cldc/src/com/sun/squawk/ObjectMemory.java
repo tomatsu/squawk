@@ -81,6 +81,13 @@ public final class ObjectMemory {
 
     /**
      * Constructs a new object memory file.
+     * 
+     * @param start   the start address of the object memory.
+     * @param size    the size (in bytes) of the object memory
+     * @param uri     the URI identifying this object memory
+     * @param root    the root of the serialized graph in the object memory
+     * @param hash    the hash object memory in canonical form
+     * @param parent  the direct parent object memory
      */
     public ObjectMemory(Address start, int size, String uri, Object root, int hash, ObjectMemory parent) {
         this.start = start;
@@ -99,6 +106,7 @@ public final class ObjectMemory {
     /**
      * Creates an ObjectMemory that is a wrapper for the bootstrap suite.
      *
+     * @param bootstrapSuite 
      * @return an ObjectMemory that is a wrapper for the bootstrap suite
      */
     static public ObjectMemory createBootstrapObjectMemory(Suite bootstrapSuite) {
@@ -370,7 +378,7 @@ public final class ObjectMemory {
      * @param trace             enables tracing if true
      * @param verifyClearOopMap if true, this routine will verify that the oop map is empty before returning
      *
-     * @throws GCDuringRelocation if 'sourceStartBuffer' is not null and some point has a different value than
+     * @throws GCDuringRelocationError if 'sourceStartBuffer' is not null and some point has a different value than
      *                          'sourceStart' which implies that a garbage collection occurred
      */
     public static void relocate(String uri,
@@ -383,7 +391,7 @@ public final class ObjectMemory {
                                 boolean toCanonical,
                                 boolean requiresEndianSwap,
                                 boolean trace,
-                                boolean verifyClearOopMap)
+                                boolean verifyClearOopMap) throws GCDuringRelocationError
     {
         final Address start;
         Address pointerAddress;

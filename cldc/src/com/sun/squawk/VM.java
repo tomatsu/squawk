@@ -640,10 +640,14 @@ public class VM implements GlobalStaticFields {
      * @throws the original exception.
      */
     static void reportException() throws Throwable, InterpreterInvokedPragma {
+/*if[ENABLE_SDA_DEBUGGER]*/
         VMThread thread = VMThread.currentThread();
         Assert.that(thread.getHitBreakpoint() != null);
         Assert.that(thread.frameOffsetAsPointer(thread.getHitBreakpoint().hitOrThrowFO).eq(getPreviousFP(getFP())));
         thread.reportException(VM.getCurrentIsolate().getDebugger());
+/*else[ENABLE_SDA_DEBUGGER]*/
+//      Assert.shouldNotReachHere();
+/*end[ENABLE_SDA_DEBUGGER]*/
     }
 
     /**
@@ -655,6 +659,7 @@ public class VM implements GlobalStaticFields {
      * @param hitBCI  the bytecode index of the instruction at which the breakpoint was set
      */
     static void reportBreakpoint(Offset hitFO, Offset hitBCI) throws InterpreterInvokedPragma {
+/*if[ENABLE_SDA_DEBUGGER]*/
         VMThread thread = VMThread.currentThread();
         Debugger debugger = VM.getCurrentIsolate().getDebugger();
         Assert.always(debugger != null);
@@ -663,6 +668,9 @@ public class VM implements GlobalStaticFields {
         } catch (Throwable e) {
             e.printStackTrace();
         }
+/*else[ENABLE_SDA_DEBUGGER]*/
+//      Assert.shouldNotReachHere();
+/*end[ENABLE_SDA_DEBUGGER]*/
     }
 
     /**
@@ -674,8 +682,12 @@ public class VM implements GlobalStaticFields {
      * @param bci  the bytecode index of the instruction stepped to
      */
     static void reportStepEvent(Offset fo, Offset bci) throws InterpreterInvokedPragma {
+/*if[ENABLE_SDA_DEBUGGER]*/
         VMThread thread = VMThread.currentThread();
         thread.reportStepEvent(fo, bci);
+/*else[ENABLE_SDA_DEBUGGER]*/
+//      Assert.shouldNotReachHere();
+/*end[ENABLE_SDA_DEBUGGER]*/
     }
 
     /**
@@ -854,6 +866,7 @@ public class VM implements GlobalStaticFields {
 
         /**
          * {@inheritDoc}
+         * @param o 
          */
         public boolean equals(Object o) {
             if (o instanceof StackTraceElement) {
@@ -1161,6 +1174,7 @@ public class VM implements GlobalStaticFields {
          */
         Klass exceptionKlass = GC.getKlass(exception);
 
+/*if[ENABLE_SDA_DEBUGGER]*/
         HitBreakpoint hbp = throwingThread.getHitBreakpoint();
         if (hbp != null && hbp.getState() == HitBreakpoint.EXC_REPORTED) {
             /*
@@ -1185,7 +1199,8 @@ hbp.dumpState();
             GC.setAllocationEnabled(oldState);
             return;
         }
-
+/*end[ENABLE_SDA_DEBUGGER]*/
+        
         /*
          * Get the fp, ip, mp, and relative ip of the frame before the
          * one that is currently executing.
@@ -1245,6 +1260,7 @@ hbp.dumpState();
                         GC.setAllocationEnabled(oldState);
                         exceptionsEnabled = true;
 
+/*if[ENABLE_SDA_DEBUGGER]*/
                         /*
                          * Report exception to debugger. Both the code on the application side and the debugger side
                          * must be careful not to wedge the system if an exception occurs somewhere in the debugger's
@@ -1270,7 +1286,8 @@ hbp.dumpState();
                              */
                             return;
                         }
-
+/*end[ENABLE_SDA_DEBUGGER]*/
+                        
                         NativeUnsafe.setAddress(throwingStack, SC.lastFP, fp);
                         NativeUnsafe.setUWord(throwingStack, SC.lastBCI, handler_bci);
                         return;

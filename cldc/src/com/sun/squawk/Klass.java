@@ -268,6 +268,9 @@ public class Klass {
     /**
      * Gets the Class instance corresponding to a given Klass instance, creating it
      * first if necessary.
+     * 
+     * @param klass the Klass object
+     * @return the Class object
      */
     public static Class asClass(Klass klass) {
         if (klassToClass == null) {
@@ -288,6 +291,8 @@ public class Klass {
 
     /**
      * Gets the Klass instance corresponding to a given Class instance.
+     * @param c the Class object
+     * @return the Klass object
      */
     public static Klass asKlass(Class c) {
         if (c == null) {
@@ -299,6 +304,9 @@ public class Klass {
     /**
      * Returns the <code>Klass</code> object associated with the class
      * with the given string name.
+     * @param className the class name to lookup
+     * @return Klass
+     * @throws java.lang.ClassNotFoundException 
      */
     public static Klass forName(String className) throws ClassNotFoundException {
         return forName(className, false, true);
@@ -409,6 +417,9 @@ public class Klass {
     /**
      * Creates a new instance of a class. This method can only be called for a non-array,
      * non-interface class that {@link #hasDefaultConstructor has a default constructor}.
+     * @return new object
+     * @throws java.lang.InstantiationException
+     * @throws java.lang.IllegalAccessException 
      */
     public final Object newInstance() throws InstantiationException, IllegalAccessException {
         Assert.always(!(isSquawkArray() || isInterface() || isAbstract()) && hasDefaultConstructor());
@@ -427,6 +438,7 @@ public class Klass {
 
     /**
      * Returns the modifiers for this class or interface.
+     * @return int representing class modifiers
      */
     public final int getModifiers() {
         return modifiers;
@@ -542,6 +554,8 @@ public class Klass {
     /**
      * Determines if the specified <code>Object</code> is assignment-compatible
      * with the object represented by this <code>Klass</code>.
+     * @param obj object to test
+     * @return true if obj is intance of this klass
      */
     public final boolean isInstance(Object obj) {
         return obj != null && isAssignableFrom(GC.getKlass(obj));
@@ -615,6 +629,7 @@ public class Klass {
 
     /**
      * Returns the name of this entity in the format expected by {@link Class#getName}.
+     * @return the class name in std Java format
      */
     public final String getName() {
         if (!isArray()) {
@@ -1319,7 +1334,6 @@ public class Klass {
      * @return the virtual slot of this class
      */
     final int findSlot(Klass iklass, int islot) {
-        Klass[] interfaces = this.interfaces;
         int icount = interfaces.length;
         for (int i = 0; i < icount; i++) {
             if (interfaces[i] == iklass) {
@@ -1339,13 +1353,13 @@ public class Klass {
      * @return the interface slot of this method in the interface, or -1.
      */
     final int findISlot(int vslot, Object[] results) {
-        Klass[] interfaces = this.interfaces;
         int icount = interfaces.length;
         for (int i = 0; i < icount; i++) {
-            Klass iKlass = interfaces[i];
             short[] islots = interfaceVTableMaps[i];
-            for (int j = 0; i < islots.length; i++) {
+            int scount = islots.length;
+            for (int j = 0; j < scount; j++) {
                 if (islots[j] == vslot) {
+                    Klass iKlass = interfaces[i];
 					//VM.print(this.getInternalName());
 					//VM.print("#");
 					//VM.print(vslot);
@@ -1627,6 +1641,7 @@ public class Klass {
                 }
             }
 
+/*if[ENABLE_SDA_DEBUGGER]*/
             // Inform the debugger of this class
             if (!VM.isHosted() && !isInternalType()) {
                 Debugger debugger = VM.getCurrentIsolate().getDebugger();
@@ -1634,6 +1649,7 @@ public class Klass {
                     debugger.notifyEvent(new Debugger.Event(Debugger.Event.CLASS_PREPARE, this));
                 }
             }
+/*end[ENABLE_SDA_DEBUGGER]*/
 
             /*
              * Verbose trace.
@@ -2579,9 +2595,9 @@ public class Klass {
 
         SymbolParser parser = metadata.getSymbolParser();
         int category = isStatic ? SymbolParser.STATIC_METHODS : SymbolParser.VIRTUAL_METHODS;
-        int id = parser.lookupMember(category, name, parameterTypes, returnType);
-        if (id != -1) {
-            Method method = new Method(metadata, id);
+        int mid = parser.lookupMember(category, name, parameterTypes, returnType);
+        if (mid != -1) {
+            Method method = new Method(metadata, mid);
             if (
                   currentClass == null ||
                   currentClass == this ||
@@ -2631,6 +2647,7 @@ public class Klass {
      * and the index into the metadata are the same.
      *
      * @param offset the vtable offset
+     * @return Method
      */
     public final Method lookupVirtualMethod(int offset) {
         Object[] table = virtualMethods;
@@ -2645,9 +2662,9 @@ public class Klass {
 
         SymbolParser parser = metadata.getSymbolParser();
         int category = SymbolParser.VIRTUAL_METHODS;
-        int id = parser.lookupMethod(category, offset);
-        if (id != -1) {
-            return new Method(metadata, id);
+        int mid = parser.lookupMethod(category, offset);
+        if (mid != -1) {
+            return new Method(metadata, mid);
         }
         return null;
     }
@@ -2670,9 +2687,9 @@ public class Klass {
         }
         SymbolParser parser = metadata.getSymbolParser();
         final int category = isStatic ? SymbolParser.STATIC_FIELDS : SymbolParser.INSTANCE_FIELDS;
-        int id = parser.lookupMember(category, name, Klass.NO_CLASSES, type);
-        if (id != -1) {
-            return new Field(metadata, id);
+        int mid = parser.lookupMember(category, name, Klass.NO_CLASSES, type);
+        if (mid != -1) {
+            return new Field(metadata, mid);
         }
 
         /*
@@ -2731,8 +2748,8 @@ public class Klass {
         if (metadata == null) {
             return null;
         }
-        int id = metadata.getSymbolParser().getMemberID(category, index);
-        return new Field(metadata, id);
+        int fid = metadata.getSymbolParser().getMemberID(category, index);
+        return new Field(metadata, fid);
     }
 
     /**
@@ -2770,8 +2787,8 @@ public class Klass {
         if (parser.getMemberCount(category) <= index) {
             return null;
         }
-        int id = parser.getMemberID(category, index);
-        return new Method(metadata, id);
+        int mid = parser.getMemberID(category, index);
+        return new Method(metadata, mid);
     }
     
     /**
@@ -2792,13 +2809,10 @@ public class Klass {
     }
     
     /**
-     * Gets a method object declared by this class based on a given method table index.
+     * Gets the bytecode array for the given Method object
      *
-     * @param  index    the index of the desired method
-     * @param  isStatic specifies whether or not the desired method is static
-     * @return the method at <code>index</code> in the table of static or
-     *                  virtual methods (as determined by <code>isStatic</code>)
-     *                  declared by this class
+     * @param method the Method to look for
+     * @return the bytecode array object for the Method
      */
     public final Object getMethodObject(Method method) {
         Assert.that(getState() >= Klass.STATE_CONVERTED);
@@ -3011,14 +3025,14 @@ public class Klass {
         if (getClassState() != null) {
             return INITSTATE_INITIALIZED;
         }
-        KlassInitializationState state = initializationQueue;
-        while (state != null && state.klass != this) {
-            state = state.next;
+        KlassInitializationState istate = initializationQueue;
+        while (istate != null && istate.klass != this) {
+            istate = istate.next;
         }
-        if (state == null) {
+        if (istate == null) {
             return INITSTATE_NOTINITIALIZED;
         }
-        if (state.thread == null) {
+        if (istate.thread == null) {
             return INITSTATE_FAILED;
         }
         return INITSTATE_INITIALIZING;
@@ -3032,19 +3046,19 @@ public class Klass {
      */
     private void setInitializationState(VMThread thread) {
         KlassInitializationState first = initializationQueue;
-        KlassInitializationState state = first;
-        while (state != null && state.klass != this) {
-            state = state.next;
+        KlassInitializationState istate = first;
+        while (istate != null && istate.klass != this) {
+            istate = istate.next;
         }
-        if (state == null) {
-            state = new KlassInitializationState();
-            state.next = first;
-            state.thread = thread;
-            state.klass = this;
-            state.classState = GC.newClassState(this);
-            initializationQueue = state;
+        if (istate == null) {
+            istate = new KlassInitializationState();
+            istate.next = first;
+            istate.thread = thread;
+            istate.klass = this;
+            istate.classState = GC.newClassState(this);
+            initializationQueue = istate;
         } else {
-            state.thread = thread;
+            istate.thread = thread;
         }
     }
 
@@ -3054,12 +3068,12 @@ public class Klass {
      * @return the thread being used to initialize this class
      */
     private VMThread getInitializationThread() {
-        KlassInitializationState state = initializationQueue;
-        while (state.klass != this) {
-            state = state.next;
-            Assert.that(state != null);
+        KlassInitializationState istate = initializationQueue;
+        while (istate.klass != this) {
+            istate = istate.next;
+            Assert.that(istate != null);
         }
-        return state.thread;
+        return istate.thread;
     }
 
     /**
@@ -3068,29 +3082,29 @@ public class Klass {
      * @return the initialization state object for this class
      */
     private Object getInitializationClassState() {
-        KlassInitializationState state = initializationQueue;
-        while (state.klass != this) {
-            state = state.next;
-            Assert.that(state != null);
+        KlassInitializationState istate = initializationQueue;
+        while (istate.klass != this) {
+            istate = istate.next;
+            Assert.that(istate != null);
         }
-        return state.classState;
+        return istate.classState;
     }
 
     /**
      * Remove the initialization state object for this class.
      */
     private void removeInitializationState() {
-        KlassInitializationState state = initializationQueue;
+        KlassInitializationState istate = initializationQueue;
         KlassInitializationState prev = null;
-        while (state.klass != this) {
-            prev = state;
-            state = state.next;
-            Assert.that(state != null);
+        while (istate.klass != this) {
+            prev = istate;
+            istate = istate.next;
+            Assert.that(istate != null);
         }
         if (prev == null) {
-            initializationQueue = state.next;
+            initializationQueue = istate.next;
         } else {
-            prev.next = state.next;
+            prev.next = istate.next;
         }
     }
 
@@ -3753,6 +3767,7 @@ public class Klass {
      *
      * @param   name               the name of the class to get
      * @param   isFieldDescriptor  if true, then <code>name</code> is in the format described above
+     * @return  klass
      */
     public static Klass getClass(String name, boolean isFieldDescriptor) {
 

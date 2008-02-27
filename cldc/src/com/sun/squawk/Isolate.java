@@ -394,7 +394,13 @@ public final class Isolate implements Runnable {
             }
         }
         
-        updateLeafSuite(true); // TO DO: Also updated in run, but that is too late to find the main class
+        try {
+           updateLeafSuite(true); // TO DO: Also updated in run, but that is too late to find the main class
+        } catch (Error e) {
+            // note errors releated to loading the suites
+            System.err.println("Error constructing Isolate based on suite: " + parentSuiteSourceURI + " and classpath: " + classPath);
+            throw e;
+        }
 
         VM.registerIsolate(this);
     }
@@ -617,7 +623,8 @@ public final class Isolate implements Runnable {
      *
      * @return  a translator for installing new classes or null if the system does not support dynamic class loading
      */
-    public static TranslatorInterface getDefaultTranslator() throws IllegalThreadStateException {
+    public static TranslatorInterface getDefaultTranslator() throws AllowInlinedPragma {
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
         try {
             String translatorSuiteUrl = System.getProperty("com.sun.squawk.Isolate.getDefaultTranslator");
             if (translatorSuiteUrl == null) {
@@ -635,6 +642,7 @@ public final class Isolate implements Runnable {
         } catch (InstantiationException ex) {
             ex.printStackTrace();
         }
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         return null;
     }
     
@@ -645,11 +653,11 @@ public final class Isolate implements Runnable {
      *
      * @return  a translator for installing new classes or null if the system does not support dynamic class loading
      */
-    public TranslatorInterface getTranslator() throws IllegalThreadStateException {
+    public TranslatorInterface getTranslator() throws AllowInlinedPragma {
         if (VM.isHosted()) {
             return translator;
         }
-
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
         /*
          * Create the translator instance reflectively. This (compile and runtime) dynamic
          * binding to the translator means that it can be an optional component.
@@ -666,6 +674,7 @@ public final class Isolate implements Runnable {
             ex.printStackTrace();
         }
  
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         return null;
     }
 
@@ -1156,6 +1165,7 @@ public final class Isolate implements Runnable {
      * <a href="http://java.sun.com/docs/books/jls/html/">Java Language
      * Specification</a>
      *
+     * @param value 
      * @return  a string that has the same contents as this string, but is
      *          guaranteed to be from a pool of unique strings.
      */
@@ -1381,8 +1391,8 @@ public final class Isolate implements Runnable {
             klass.main(new String[] {wasFirstInitialized?"false":"true"});
         }
         
+/*if[ENABLE_SDA_DEBUGGER]*/
         // Notify debugger of event:
-        Debugger debugger = this.getDebugger();
         if (debugger != null) {
             debugger.notifyEvent(new Debugger.Event(Debugger.Event.VM_INIT, VMThread.currentThread()));
 
@@ -1390,7 +1400,8 @@ public final class Isolate implements Runnable {
             // initial thread in an isolate
 //            debugger.notifyEvent(new Debugger.Event(Debugger.Event.THREAD_START, Thread.currentThread()));
         }
-
+/*end[ENABLE_SDA_DEBUGGER]*/
+        
         // Find the main class and call it's main().
         Klass klass = null;
         try {
@@ -1550,11 +1561,13 @@ public final class Isolate implements Runnable {
             exitCode = code;
         }
 
+/*if[ENABLE_SDA_DEBUGGER]*/
         // Notify debugger of event:
-        Debugger debugger = VM.getCurrentIsolate().getDebugger();
+        //Debugger debugger = VM.getCurrentIsolate().getDebugger();
         if (debugger != null) { // debugger always sends this event
             debugger.notifyEvent(new Debugger.Event(Debugger.Event.VM_DEATH, this));
         }
+/*end[ENABLE_SDA_DEBUGGER]*/
         
         try {
             hibernate(false, EXITED, doExitHooks);
@@ -1571,8 +1584,7 @@ public final class Isolate implements Runnable {
      * @param  dos       the DataOutputStream to which the serialized isolate should be written
      * @param  uri       a URI identifying the serialized isolate
      *
-     * @throws OutOfMemoryError if there was insufficient memory to do the save
-     * @throws IOException if there was some IO problem while writing the output
+     * @throws java.io.IOException 
      * @throws IllegalStateException if this isolate is not currently hibernated or exited
      */
     public void save(DataOutputStream dos, String uri) throws java.io.IOException {
@@ -1586,8 +1598,7 @@ public final class Isolate implements Runnable {
      * @param  uri       a URI identifying the serialized isolate
      * @param  bigEndian the endianess to be used when serializing this isolate
      *
-     * @throws OutOfMemoryError if there was insufficient memory to do the save
-     * @throws IOException if there was some IO problem while writing the output
+     * @throws java.io.IOException 
      * @throws IllegalStateException if this isolate is not currently hibernated or exited
      */
     public void save(DataOutputStream dos, String uri, boolean bigEndian) throws java.io.IOException {
@@ -1616,6 +1627,7 @@ public final class Isolate implements Runnable {
      *
      * @param dis  the data input stream to load from
      * @param uri  a URI identifying the serialized isolate
+     * @return isolate that was stored in dis
      */
     public static Isolate load(DataInputStream dis, String uri) {
         ObjectMemory om = ObjectMemoryLoader.load(dis, uri, false).objectMemory;
@@ -1725,9 +1737,9 @@ public final class Isolate implements Runnable {
             /*
              * Serialize the underlying context if this is not an exiting isolate
              */
-            int channelContext = getChannelContext();
-            if (hibernateIO && channelContext > 0) {
-                hibernatedChannelContext = VM.hibernateChannelContext(channelContext);
+            int channelContextToSave = getChannelContext();
+            if (hibernateIO && channelContextToSave > 0) {
+                hibernatedChannelContext = VM.hibernateChannelContext(channelContextToSave);
             }
 
             changeState(newState);
@@ -1735,8 +1747,8 @@ public final class Isolate implements Runnable {
             /*
              * Close the channel I/O
              */
-            if (channelContext > 0) {
-                VM.deleteChannelContext(channelContext);
+            if (channelContextToSave > 0) {
+                VM.deleteChannelContext(channelContextToSave);
                 this.channelContext = 0;
             }
             
@@ -1874,6 +1886,7 @@ public final class Isolate implements Runnable {
     
     /**
      * Return true if this isolate was created to run a midlet.
+     * @return true if a midlet
      */
     public boolean isMidlet() {
         return mainClassName.equals(MIDLET_WRAPPER_CLASS);
@@ -2514,6 +2527,8 @@ public final class Isolate implements Runnable {
 
         /**
          * Constructor.
+         * @param mp
+         * @param ip 
          */
         public Breakpoint(Object mp, int ip) {
             this.mp = mp;
@@ -2522,6 +2537,7 @@ public final class Isolate implements Runnable {
 
         /**
          * {@inheritDoc}
+         * @param o 
          */
         public boolean equals(Object o) {
             if (o instanceof Breakpoint) {

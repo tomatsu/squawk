@@ -181,7 +181,7 @@ public class ObjectMemoryLoader {
      * @return the ObjectMemoryFile instance encapsulating the loaded/resolved object memory
      * @throws java.io.IOException 
      */
-    public static ObjectMemoryFile load(String uri, boolean loadIntoReadOnlyMemory) throws IOException{
+    public static ObjectMemoryFile load(String uri, boolean loadIntoReadOnlyMemory) throws IOException {
         String url;
         if (VM.isHosted()) {
             url = convertURIHosted(uri);

@@ -40,7 +40,7 @@ public class DebuggerSupport {
     /**
      * Return the JDWP.ThreadStatus value for the given thread's internal state.
      *
-     * @param thread VMThread
+     * @param vmThread VMThread
      * @return the JDWP.ThreadStatus value
      */
     public static int getThreadJDWPState(VMThread vmThread) {
@@ -358,6 +358,7 @@ public class DebuggerSupport {
     /**
      * Determines if the current hit breakpoint (if any) is an exception breakpoint.
      *
+     * @param vmThread thread to check
      * @return true if the given thread is at an exception breakpoint.
      */
     public static boolean isAtExceptionBreakpoint(VMThread vmThread) {
@@ -374,6 +375,8 @@ public class DebuggerSupport {
     /**
      * Get execution state of non-running thread. This is different from the saved execution point recorded by breakpoints, stepping,
      * exception handling, etc.
+     * @param thread
+     * @return current execution point
      */
     public static ExecutionPoint getThreadCurrentExecutionPoint(VMThread thread) {
         Assert.that(VMThread.currentThread() != thread, "can't visit frames of the current thread");
@@ -742,7 +745,7 @@ public class DebuggerSupport {
     /**
      * Count the number of frames on the stack, while <code>thread</code> is temporarily suspended.
      *
-     * @param thread     the thread to count the frames of
+     * @param vmThread     the thread to count the frames of
      * @param from       the location in the call stack of the thread at which to start inspecting.
      *                   If null, then inspection starts at the inner most frame.
      * @return number of frames
@@ -758,7 +761,7 @@ public class DebuggerSupport {
      * Prints stack trace of <code>thread</code> to the VM debug output stream.
      * The thread must be suspended.
      *
-     * @param thread   the thread to display
+     * @param vmThread   the thread to display
      */
     public static void printStackTrace(VMThread vmThread) {
         Assert.that(vmThread.getDebuggerSuspendCount() > 0);
@@ -806,5 +809,9 @@ public class DebuggerSupport {
 
         inspectStack(inspector, null, -1);
     }
+
 /*end[DEBUG_CODE_ENABLED]*/
+    
+    private DebuggerSupport() {
+    }
 }
