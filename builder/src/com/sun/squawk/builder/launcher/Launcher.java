@@ -125,7 +125,7 @@ public class Launcher {
         if (!toolsJar.exists()) {
         	throw new RuntimeException("Unable to locate tools.jar. Expected to find it in " + toolsJar.getPath());
         }
-        System.out.println("Launcher: Found tools.har in " + toolsJar.getPath() + ", by popping up a level from jre.");
+        System.out.println("Launcher: Found tools.jar in " + toolsJar.getPath() + ", by popping up a level from jre.");
         return toolsJar.toURL();
     }
     

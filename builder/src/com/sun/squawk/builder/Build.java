@@ -753,6 +753,7 @@ public class Build {
         	toolsJarPath = toolsJarURL.getPath().substring(1);
         	toolsJarPathEntry = toolsJarPath + ":";
         }
+        System.out.println("For vm2c tools.jar=" + toolsJarPath);
         Target vm2c = addTarget(false,  "vm2c", null, toolsJarPath);
         vm2c.version = "1.5";
 
