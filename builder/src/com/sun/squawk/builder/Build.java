@@ -750,7 +750,9 @@ public class Build {
         	toolsJarPath = "";
         	toolsJarPathEntry = "";
         } else {
-        	toolsJarPath = toolsJarURL.getPath().substring(1);
+// Find out why dave is having a problem here and why it fails on some Windows
+//        	toolsJarPath = toolsJarURL.getPath().substring(1);
+        	toolsJarPath = toolsJarURL.getPath();
         	toolsJarPathEntry = toolsJarPath + ":";
         }
         System.out.println("For vm2c tools.jar=" + toolsJarPath);
