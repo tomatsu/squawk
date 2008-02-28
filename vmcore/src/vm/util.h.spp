@@ -135,18 +135,31 @@ void fatalVMError(char *msg) {
     stopVM(-1);
 }
 
+#define shouldNotReachHere() { fprintf(stderr, "shouldNotReachHere -- %s:%d\n", __FILE__, __LINE__); fatalVMError(""); }
+
 #if defined(ASSUME) && ASSUME != 0
 #define assume(x) if (!(x))  { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #x, __FILE__, __LINE__); fatalVMError(""); }
-#define shouldNotReachHere() { fprintf(stderr, "shouldNotReachHere -- %s:%d\n", __FILE__, __LINE__); fatalVMError(""); }
 #else
 #define assume(x) /**/
-#define shouldNotReachHere() /**/
 #endif /* ASSUME */
 
 /**
  * version of assume that is always enabled.
  */
 #define assumeAlways(x) if (!(x))  { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #x, __FILE__, __LINE__); fatalVMError(""); }
+
+void fatalInterpreterError0(char *msg, int opcode, ByteAddress _ip, UWordAddress _fp, UWordAddress _sp, char* file, int line);
+
+/**
+ * Exits the VM with an error message including various interpreter state.
+ */
+#if defined(ASSUME) && ASSUME != 0
+#define fatalInterpreterError(_msg) \
+    fatalInterpreterError0(_msg, opcode, ip, fp, sp, __FILE__, __LINE__)
+#else
+#define fatalInterpreterError(_msg) \
+    fatalInterpreterError0(_msg, opcode, ip, fp, sp, "<some file>", __LINE__)
+#endif
 
 #ifndef FLASH_MEMORY
 #include <signal.h>

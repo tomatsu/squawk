@@ -1081,7 +1081,7 @@ static int             MethodBody_minfoValue3_L(Address);
 /*MAC*/ void callNoReset(Address $mth) {
             assume($mth != 0);
             assume(com_sun_squawk_Klass_id(getClass($mth)) == CID_BYTECODE_ARRAY);
-			assumeInCode($mth);
+            assume(inCode($mth));
             checkReferenceSlots();
             downPushAddress(ip);
             ip = $mth;
@@ -1186,7 +1186,7 @@ static int             MethodBody_minfoValue3_L(Address);
                 ipOffset = getUWord(ss, SC_lastBCI);
                 resetStackPointer();
                 ip = (ByteAddress)getMP() + ipOffset;
-				assumeInCode(ip);
+                assume(inCode(ip));
 
                 if (!runningOnServiceThread &&
                     (hbp = com_sun_squawk_VMThread_hitBreakpoint(newThread)) != null &&
@@ -1333,7 +1333,7 @@ static int             MethodBody_minfoValue3_L(Address);
                         break;
                     }
                     default: {
-                        fatalVMError("sda_checkStep(): Should not reach here\n");
+                        fatalInterpreterError("sda_checkStep(): Should not reach here\n");
                     }
                 }
            }
@@ -1525,7 +1525,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
 /*fprintf(stderr, format("Hit breakpoint #%d: in method: %A, currentBCI: %O ip: %A currentFO: %O fp: %A\n"),  i, mp, currentBCI, $actual_ip, currentFO, $actual_fp);*/
 
                                 if (!sda_isOperandStackEmpty($actual_fp, $actual_sp)) {
-                                    fatalVMError("Tried to report a breakpoint when operand stack was not empty.\n");
+                                    fatalInterpreterError("Tried to report a breakpoint when operand stack was not empty.\n");
                                 }
 
                                 pushWord(currentFO);
@@ -2383,6 +2383,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
             }
             if ($oop == 0) {
 /*if[MACROIZE]*/
+/*              --- TEST: fatalInterpreterError("NPE, time to freak out!");*/
                 goto throw_nullPointerException;
 /*else[MACROIZE]*/
 //              resetStackPointerIfRevParms();
@@ -3245,10 +3246,10 @@ foundSlot:
                                           );
                 }
                 if (usingServiceStack()) {
-                    fatalVMError("cannot extend service stack");
+                    fatalInterpreterError("cannot extend service stack");
                 }
                 if (!com_sun_squawk_VM_extendsEnabled) {
-                    fatalVMError("trying to extend stack when extension disabled");
+                    fatalInterpreterError("trying to extend stack when extension disabled");
                 }
 
                 /* Pass the minimum amount (in words) by which the stack must grow. */
@@ -3289,7 +3290,7 @@ foundSlot:
                     if (isOop) {
                         UWord wd = peekLocal(i);
                         if (wd == (UWord)0xDEAFBEEF) {
-                            fatalVMError("0xDEAFBEEF found");
+                            fatalInterpreterError("0xDEAFBEEF found");
                         }
                     }
                 }
@@ -3366,7 +3367,7 @@ foundSlot:
                 int res = popInt();
                 ip = (ByteAddress)getObject(fp, FP_returnIP);
                 fp = (UWordAddress)getObject(fp, FP_returnFP);
-				assumeInCode(ip);
+                assume(inCode(ip));
                 resetStackPointer();
                 pushInt(res);
             }
@@ -3385,7 +3386,7 @@ foundSlot:
                 jlong res = popLong();
                 ip = (ByteAddress)getObject(fp, FP_returnIP);
                 fp = (UWordAddress)getObject(fp, FP_returnFP);
-				assumeInCode(ip);
+                assume(inCode(ip));
                 resetStackPointer();
                 pushLong(res);
             }
@@ -3402,7 +3403,7 @@ foundSlot:
             Address res = popAddress();
             ip = (ByteAddress)getObject(fp, FP_returnIP);
             fp = (UWordAddress)getObject(fp, FP_returnFP);
-			assumeInCode(ip);
+            assume(inCode(ip));
             resetStackPointer();
             pushAddress(res);
         }
@@ -3417,7 +3418,7 @@ foundSlot:
 /*MAC*/ void do_return_v() {
             ip = (ByteAddress)getObject(fp, FP_returnIP);
             fp = (UWordAddress)getObject(fp, FP_returnFP);
-			assumeInCode(ip);
+            assume(inCode(ip));
             resetStackPointer();
         }
 
@@ -3550,13 +3551,13 @@ foundSlot:
                         if (SQUAWK_64) {
                             /* this catches a (false) assumption that a given offset won't loose its sign or magnitude when converted to a long */
                             if (ASSUME && (jlong)value != value) {
-                                fatalVMError("cast to long changes sign and/or magnitude");
+                                fatalInterpreterError("cast to long changes sign and/or magnitude");
                             }
                             pushLong(value);
                         } else {
                             /* this catches a (false) assumption that a given offset won't loose its sign or magnitude when converted to an int */
                             if (ASSUME && (int)value != value) {
-                                fatalVMError("cast to int changes sign and/or magnitude");
+                                fatalInterpreterError("cast to int changes sign and/or magnitude");
                             }
                             pushInt(value);
                         }
@@ -3570,7 +3571,7 @@ foundSlot:
                         UWord value = popWord();
                         /* this catches a (false) assumption that a given offset won't loose its sign or magnitude when converted to an int */
                         if (ASSUME && (int)value != value) {
-                            fatalVMError("cast to int changes sign and/or magnitude");
+                            fatalInterpreterError("cast to int changes sign and/or magnitude");
                         }
                         pushInt((int)value);
                     }
@@ -4133,7 +4134,7 @@ foundSlot:
                 case Native_com_sun_squawk_VM_setPreviousIP: {
                     Address pip = popAddress();
                     Address afp = popAddress();
-					assumeInCode(pip);
+                    assume(inCode(ip));
                     setObject(afp, FP_returnIP, pip);
                     break;
                 }
@@ -4230,7 +4231,7 @@ foundSlot:
                 }
 
                 case Native_com_sun_squawk_VM_fatalVMError: {
-                    fatalVMError("com_sun_squawk_VM_fatalVMError");
+                    fatalInterpreterError("com_sun_squawk_VM_fatalVMError");
                     break;
                 }
 
@@ -4244,7 +4245,7 @@ foundSlot:
                     iparm = MethodOffsets_virtual_java_lang_Object_finalize;
                     do_invokevirtual();
 /*else[FINALIZATION]*/
-//                  fatalVMError("no finalization support");
+//                  fatalInterpreterError("no finalization support");
 /*end[FINALIZATION]*/
                     break;
                 }
@@ -4833,7 +4834,7 @@ foundSlot:
             int l = popInt();
 /*
 if (l != 0 && r > (java_lang_Integer_MAX_VALUE/l)) {
-    fatalVMError("int mult overflow");
+    fatalInterpreterError("int mult overflow");
 }
 */
             pushInt(l*r);
@@ -4851,7 +4852,7 @@ if (l != 0 && r > (java_lang_Integer_MAX_VALUE/l)) {
             jlong l = popLong();
 /*
 if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
-    fatalVMError("int mult overflow");
+    fatalInterpreterError("int mult overflow");
 }
 */
             pushLong(l*r);
@@ -5410,14 +5411,14 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
          */
 /*MAC*/ void do_throw() {
             if(usingServiceStack()) {
-                fatalVMError("do_throw on service stack");
+                fatalInterpreterError("do_throw on service stack");
             } else {
                 UWord oldip = (UWord)ip;
                 Address exception = popAddress();
                 nullCheck((Address)exception);
                 PRINTSTACK();
                 if (com_sun_squawk_ServiceOperation_pendingException != 0) {
-                    fatalVMError("do_throw with pending exception");
+                    fatalInterpreterError("do_throw with pending exception");
                 }
                 com_sun_squawk_ServiceOperation_pendingException = exception;
                 threadSwitchFor(com_sun_squawk_ServiceOperation_THROW);

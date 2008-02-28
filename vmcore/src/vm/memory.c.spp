@@ -72,45 +72,24 @@ INLINE boolean setArrayLength(Address _oop, int _size);
          *                               Assertions                               *
         \*-----------------------------------------------------------------------*/
 
-/*MAC*/ void assumeInRAM(Address $ea) {
+/*MAC*/ int inRAM(Address $ea) {
             Address addr = $ea;
-	        assume(addr >= com_sun_squawk_GC_ramStart && addr < com_sun_squawk_GC_ramEnd);
+	    return addr >= com_sun_squawk_GC_ramStart && addr < com_sun_squawk_GC_ramEnd;
         }
 
-/*MAC*/ void assumeInROM(Address $ea) {
+/*MAC*/ int inROM(Address $ea) {
             Address addr = $ea;
-	        assume(addr >= com_sun_squawk_VM_romStart && addr < com_sun_squawk_VM_romEnd);
-        }
-
-#ifdef FLASH_MEMORY
-/*MAC*/ void assumeInCode(Address $ea) {
-	        assumeInROM($ea);
-        }
-#else
-/*MAC*/ void assumeInCode(Address $ea) {
-            Address addr = $ea;
-	        assume(addr >= com_sun_squawk_VM_romStart && addr < com_sun_squawk_GC_ramEnd);
-        }
-#endif
-
-/*MAC*/ void assumeInRAMAlways(Address $ea) {
-            Address addr = $ea;
-	        assumeAlways(addr >= com_sun_squawk_GC_ramStart && addr < com_sun_squawk_GC_ramEnd);
-        }
-
-/*MAC*/ void assumeInROMAlways(Address $ea) {
-            Address addr = $ea;
-	        assumeAlways(addr >= com_sun_squawk_VM_romStart && addr < com_sun_squawk_VM_romEnd);
+	    return addr >= com_sun_squawk_VM_romStart && addr < com_sun_squawk_VM_romEnd;
         }
 
 #ifdef FLASH_MEMORY
-/*MAC*/ void assumeInCodeAlways(Address $ea) {
-	        assumeInROMAlways($ea);
+/*MAC*/ int inCode(Address $ea) {
+	        return inROM($ea);
         }
 #else
-/*MAC*/ void assumeInCodeAlways(Address $ea) {
+/*MAC*/ int inCode(Address $ea) {
             Address addr = $ea;
-	        assumeAlways(addr >= com_sun_squawk_VM_romStart && addr < com_sun_squawk_GC_ramEnd);
+	    return addr >= com_sun_squawk_VM_romStart && addr < com_sun_squawk_GC_ramEnd;
         }
 #endif
 

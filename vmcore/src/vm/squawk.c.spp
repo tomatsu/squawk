@@ -48,6 +48,11 @@
 
 #ifndef IODOTC
 #define IODOTC "io.c"
+#else
+/*
+ * IODOTC was defined in os.c, so we are in FLASH_MEMORY mode.
+ * There is no OS or Java VM to talk to, so don't bother with code in io.c.
+ */ 
 #endif
 
 #if defined(TYPEMAP) && TYPEMAP != 0
@@ -1396,11 +1401,17 @@ Address Squawk_setup(int argc, char *argv[]) {
  * Implements the OPC.PAUSE bytecode. This must be a macro as it
  * executes a return from the main interpreter loop.
  */
+#if KERNEL_SQUAWK
 #define do_pause() {        \
 fprintf(stderr, format("VM.pause called after %L branches (kernelMode %d)\n"), getBranchCount(), inKernelMode()); \
     saveContextRegisters(); \
     return;                 \
 }
+#else KERNEL_SQUAWK
+#define do_pause() {        \
+    fatalInterpreterError("Illegal Squawk bytecode (OPC.PAUSE = 0xFF)"); \
+}
+#endif /* KERNEL_SQUAWK */
 
 /**
  * Continues execution of the VM from the last OPC.PAUSE.
@@ -1509,14 +1520,80 @@ void Squawk_continue(Globals *gp) {
             continue;
         }
 
-		/* no longer called:
-        throw_abstractMethodError: {
-            resetStackPointer();
-            call(com_sun_squawk_VM_abstractMethodError);
-            continue;
-        }
-		*/
 #endif /* MACROIZE */
+    }
+}
+
+extern int printValueInRange(Address value, char* valueName, Address low, Address high, char* rangeName);
+extern void printStrSafely(Address value, char* valueName, Address low, Address high, char* rangeName);
+
+/**
+ * Exits the VM with an error message including various interpreter state.
+ */
+extern  void fatalInterpreterError0(char *msg, int opcode, ByteAddress _ip, UWordAddress _fp, UWordAddress _sp, char* file, int line) {
+    fprintf(stderr, "fatalInterpreterError %s -- %s:%d\n", msg, file, line);
+    fprintf(stderr, "    opcode: %x\n", opcode);
+    if (opcode != (opcode & 0xFF)) {
+           fprintf(stderr, "    opcode overflowed!\n");
+    }
+#ifdef FLASH_MEMORY
+    printValueInRange(_ip, "ip", com_sun_squawk_VM_romStart, com_sun_squawk_VM_romEnd, "code");
+#else
+    printValueInRange(_ip, "ip", com_sun_squawk_VM_romStart, com_sun_squawk_GC_ramEnd, "code");
+#endif
+
+    printValueInRange(ss,  "stack", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
+    Address stackHigh = com_sun_squawk_GC_ramEnd;
+    bool userStack = FALSE;
+    if (ss == com_sun_squawk_VMThread_serviceStack) {
+         fprintf(stderr, "    current stack is service stack\n");
+         stackHigh = Address_add(ss, getArrayLength(ss) * HDR_BYTES_PER_WORD);
+    } else if (inRAM(ss)) {
+         stackHigh = Address_add(ss, getArrayLength(ss) * HDR_BYTES_PER_WORD);
+         int cid = com_sun_squawk_Klass_id(getClass(ss));
+         if (cid == CID_LOCAL_ARRAY) {
+             userStack = TRUE;
+         } else {
+              fprintf(stderr, "        current stack has bad class id: %x\n", cid);
+         }
+    }
+
+    printValueInRange(_sp, "sp", sl, stackHigh, "current stack");
+    printValueInRange(_fp, "fp", sl, stackHigh, "current stack");
+
+    if (userStack) {
+        Address thread = getObject(ss, SC_owner);
+        if (printValueInRange(thread, "thread", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM")) {
+            printStrSafely(com_sun_squawk_VMThread_name(thread), "thread name", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
+
+            Address isolate = com_sun_squawk_VMThread_isolate(thread);
+            if (printValueInRange(isolate, "isolate", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM")) {
+                printStrSafely(com_sun_squawk_Isolate_mainClassName(isolate), "isolate main class: ", 
+                    com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
+                printStrSafely(com_sun_squawk_Isolate_args(isolate), "isolate args: ", 
+                    com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
+            }
+        }
+    }
+    fatalVMError("");
+}
+
+int printValueInRange(Address value, char* valueName, Address low, Address high, char* rangeName) {
+    int result = (value >= low && value < high);
+    fprintf(stderr, "    %s : %x. Is %sin %s range %x .. %x\n", valueName, value, (result ? "" : "NOT "), rangeName, low, high);
+    return result;
+}
+
+void printStrSafely(Address value, char* valueName, Address low, Address high, char* rangeName) {
+    int result = (value >= low && value < high);
+    fprintf(stderr, "    %s : ", valueName);
+    if (value == 0) {
+        fprintf(stderr, "NULL.\n");
+    } else if (result) {
+            printJavaString(value, stderr, null, 0);
+            fprintf(stderr, "\n");
+    } else {
+        fprintf(stderr, "%x is NOT in %s range %x .. %x\n", value, rangeName, low, high);
     }
 }
 

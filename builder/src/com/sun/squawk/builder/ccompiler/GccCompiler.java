@@ -49,7 +49,10 @@ public class GccCompiler extends CCompiler {
         if (!disableOpts) {
             if (options.o1)                 { buf.append("-O1 ");               }
             if (options.o2)                 { buf.append("-O2 ");               }
+//          if (options.o2)                 { buf.append(" -Os  -finline-functions -finline-limit=50 -Winline  ");               }
+            // think about -frtl-abstract-sequences, not in gcc 4.0.1 though.
             if (options.o3)                 { buf.append("-DMAXINLINE -O3 ");   }
+//          if (options.o3)                 { buf.append("-DMAXINLINE -O3 -Winline ");   }
         }
         if (options.tracing)            { buf.append("-DTRACE ");           }
         if (options.profiling)          { buf.append("-DPROFILING ");       }

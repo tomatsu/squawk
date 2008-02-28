@@ -22,6 +22,9 @@
  * information or have any questions.
  */
 
+
+/*************** NOTE: this file is not included when running on bare metal **************************/
+
 #ifdef IOPORT
 #include "ioport.c"
 #endif

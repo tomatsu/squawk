@@ -64,8 +64,11 @@ typedef struct globalsStruct {
     FILE       *_streams[MAX_STREAMS];       /* The file streams to which the VM printing directives sent. */
     int         _currentStream;              /* The currently selected stream */
     int         _internalLowResult;          /* Value for INTERNAL_LOW_RESULT */
+
+#ifndef FLASH_MEMORY
     jclass      _channelIO_clazz;            /* JNI handle to com.sun.squawk.vm.ChannelIO. */
     jmethodID   _channelIO_execute;          /* JNI handle to com.sun.squawk.vm.ChannelIO.execute(...) */
+#endif
 
 #if KERNEL_SQUAWK
     /* Nothing yet... */
@@ -80,22 +83,22 @@ typedef struct globalsStruct {
     int         _io_ops_count;
 #endif
 
-    FILE       *_traceFile;                  /* The trace file name */
-    boolean     _traceFileOpen;              /* Specifies if the trace file has been opened. */
-    boolean     _traceServiceThread;         /* Specifies if execution on the service thread is to be traced. */
-    int         _traceLastThreadID;          /* Specifies the thread ID at the last call to trace() */
-
 #ifdef PROFILING
     int         _sampleFrequency;            /* The profile sample frequency */
     jlong       _instructionCount;
 #endif /* PROFILING */
 
 #if TRACE
+    FILE       *_traceFile;                  /* The trace file name */
+    boolean     _traceFileOpen;              /* Specifies if the trace file has been opened. */
+    boolean     _traceServiceThread;         /* Specifies if execution on the service thread is to be traced. */
+    int         _traceLastThreadID;          /* Specifies the thread ID at the last call to trace() */
+    
     int         _total_extends;              /* Total number of extends */
     int         _total_slots;                /* Total number of slots cleared */
-#endif /* TRACE */
-
+    
     int         _statsFrequency;             /* The statistics output frequency */
+#endif /* TRACE */
 
     Address     _cachedClassState[CLASS_CACHE_SIZE > 0 ? CLASS_CACHE_SIZE : 1];
     Address     _cachedClass     [CLASS_CACHE_SIZE > 0 ? CLASS_CACHE_SIZE : 1];
@@ -134,9 +137,11 @@ boolean     isCalledFromJava;           /* Flags whether or not Squawk was launc
 #else
 #define     isCalledFromJava 0      /* disabled */
 #endif /* ENABLE_INVOKE_FROM_JAVA */
+
 jmp_buf     vmStartScope;               /* The frame in which the Squawk VM was started from Java. */
 JavaVM     *jvm;                        /* Handle to the JVM created via the Invocation API. This will be null if Squawk was called from Java code. */
 
+#ifdef OLD_IIC_MESSAGES
 Address     freeMessages;               /* The pool of unused message structures */
 Address     freeMessageBuffers;         /* The pool of unused message buffers */
 Address     toServerMessages;           /* The list of active messages for server code */
@@ -144,13 +149,16 @@ Address     toServerWaiters;            /* The list of threads waiting for serve
 Address     toClientMessages;           /* The list of active messages for client code */
 Address     toClientWaiters;            /* The list of threads waiting for client messages */
 Address     messageEvents;              /* The list of message events that are ready */
+#endif /* OLD_IIC_MESSAGES */
+
 int         interruptsDisabled;         /* Depth-count:  for correct interrupt state changes */
+
 #if KERNEL_SQUAWK
 boolean     kernelMode;                 /* If true, kernel support for interrupts is enabled */
 int         kernelSignal;               /* Signal number used for entering kernel mode */
 int         kernelSignalCounter;        /* Count for number of signals received and not yet processed. */
 boolean     kernelSendNotify;           /* Control whether to notify potential (user) waiters on return */
-#endif
+#endif /* KERNEL_SQUAWK */
 
 
 /*=======================================================================*\
@@ -189,10 +197,6 @@ boolean     kernelSendNotify;           /* Control whether to notify potential (
 // #define JNI_env                             defineGlobal(JNI_env)
 // #define isCalledFromJava                    defineGlobal(isCalledFromJava)
 // #define vmStartScope                        defineGlobal(vmStartScope)
-#define traceFile                           defineGlobal(traceFile)
-#define traceFileOpen                       defineGlobal(traceFileOpen)
-#define traceServiceThread                  defineGlobal(traceServiceThread)
-#define traceLastThreadID                   defineGlobal(traceLastThreadID)
 // #define jvm                                 defineGlobal(jvm)
 
 #if KERNEL_SQUAWK
@@ -221,13 +225,18 @@ boolean     kernelSendNotify;           /* Control whether to notify potential (
 #define streams                             defineGlobal(streams)
 #define currentStream                       defineGlobal(currentStream)
 
+#ifndef FLASH_MEMORY
 #define channelIO_clazz                     defineGlobal(channelIO_clazz)
 #define channelIO_execute                   defineGlobal(channelIO_execute)
-#define channelIO_notifyWaiters             defineGlobal(channelIO_notifyWaiters)
+#endif
 
 #define STREAM_COUNT                        (sizeof(Streams) / sizeof(FILE*))
 
 #if TRACE
+#define traceFile                           defineGlobal(traceFile)
+#define traceFileOpen                       defineGlobal(traceFileOpen)
+#define traceServiceThread                  defineGlobal(traceServiceThread)
+#define traceLastThreadID                   defineGlobal(traceLastThreadID)
 #define setLongCounter(high, low, x)        { high = (int)(x >> 32); low = (int)(x);}
 #define getLongCounter(high, low)           ((((ujlong)(unsigned)high) << 32) | ((unsigned)low))
 #define getBranchCount()                    getLongCounter(branchCountHigh, branchCountLow)
