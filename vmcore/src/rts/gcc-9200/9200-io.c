@@ -78,12 +78,14 @@ static void doDeepSleep(long long targetMillis, int remain_powered) {
 static void doShallowSleep(long long targetMillis) {
 	long long start_time;
 	long long last_time;
+	int cpsr;
 	int main_clock_sleep = FALSE;
 	start_time = getMilliseconds();
 	last_time = start_time;
 	if ((shallow_sleep_clock_mode != SHALLOW_SLEEP_CLOCK_MODE_NORMAL) && (targetMillis - start_time > SHALLOW_SLEEP_CLOCK_SWITCH_THRESHOLD)) {
 		main_clock_sleep = TRUE;
 		setupClocks(peripheral_bus_speed[shallow_sleep_clock_mode]);
+		cpsr = disableARMInterrupts();
 		switch (shallow_sleep_clock_mode) {
 			case SHALLOW_SLEEP_CLOCK_MODE_45_MHZ:
 				select_45_clock();
@@ -98,6 +100,7 @@ static void doShallowSleep(long long targetMillis) {
 				error("Ignoring invalid clock mode", shallow_sleep_clock_mode);
 				break;
 		}
+		setARMInterruptBits(cpsr);
 	}
 	while (1) {
 		if (checkForEvents()) break;
@@ -109,6 +112,7 @@ static void doShallowSleep(long long targetMillis) {
 		stopProcessor();
 	}
 	if (main_clock_sleep) {
+		cpsr = disableARMInterrupts();
 		switch (shallow_sleep_clock_mode) {
 			case SHALLOW_SLEEP_CLOCK_MODE_45_MHZ:
 				select_normal_clock_from_plla();
@@ -118,6 +122,7 @@ static void doShallowSleep(long long targetMillis) {
 				select_normal_clock_from_main();
 				break;
 		}
+		setARMInterruptBits(cpsr);
 		setupClocks(MASTER_CLOCK_FREQ);
 	}
 	totalShallowSleepTime += (last_time - start_time);
