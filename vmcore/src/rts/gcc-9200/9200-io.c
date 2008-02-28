@@ -52,6 +52,11 @@ long long minimumDeepSleepMillis = 0x7FFFFFFFFFFFFFFFLL;
  		// minimum time we're prepared to deep sleep for: avoid deep sleeping initially.
 long long totalShallowSleepTime; // total time the SPOT has been shallow sleeping
 
+#define SHALLOW_SLEEP_CLOCK_SWITCH_THRESHOLD 20
+static const int peripheral_bus_speed[] = {PERIPHERAL_BUS_SPEEDS};
+int shallow_sleep_clock_mode = SHALLOW_SLEEP_CLOCK_MODE_NORMAL;
+
+
 /*
  * Enter deep sleep
  */
@@ -73,8 +78,27 @@ static void doDeepSleep(long long targetMillis, int remain_powered) {
 static void doShallowSleep(long long targetMillis) {
 	long long start_time;
 	long long last_time;
+	int main_clock_sleep = FALSE;
 	start_time = getMilliseconds();
 	last_time = start_time;
+	if ((shallow_sleep_clock_mode != SHALLOW_SLEEP_CLOCK_MODE_NORMAL) && (targetMillis - start_time > SHALLOW_SLEEP_CLOCK_SWITCH_THRESHOLD)) {
+		main_clock_sleep = TRUE;
+		setupClocks(peripheral_bus_speed[shallow_sleep_clock_mode]);
+		switch (shallow_sleep_clock_mode) {
+			case SHALLOW_SLEEP_CLOCK_MODE_45_MHZ:
+				select_45_clock();
+				break;
+			case SHALLOW_SLEEP_CLOCK_MODE_18_MHZ:
+				select_18_clock();
+				break;
+			case SHALLOW_SLEEP_CLOCK_MODE_9_MHZ:
+				select_9_clock();
+				break;
+			default:
+				error("Ignoring invalid clock mode", shallow_sleep_clock_mode);
+				break;
+		}
+	}
 	while (1) {
 		if (checkForEvents()) break;
 #ifdef OLD_IIC_MESSAGES
@@ -83,6 +107,18 @@ static void doShallowSleep(long long targetMillis) {
 		last_time = getMilliseconds();
 		if (last_time > targetMillis) break;
 		stopProcessor();
+	}
+	if (main_clock_sleep) {
+		switch (shallow_sleep_clock_mode) {
+			case SHALLOW_SLEEP_CLOCK_MODE_45_MHZ:
+				select_normal_clock_from_plla();
+				break;
+			case SHALLOW_SLEEP_CLOCK_MODE_18_MHZ:
+			case SHALLOW_SLEEP_CLOCK_MODE_9_MHZ:
+				select_normal_clock_from_main();
+				break;
+		}
+		setupClocks(MASTER_CLOCK_FREQ);
 	}
 	totalShallowSleepTime += (last_time - start_time);
 }
@@ -554,6 +590,11 @@ int avr_low_result = 0;
         	
         case ChannelConstants_SET_MINIMUM_DEEP_SLEEP_TIME:
     		minimumDeepSleepMillis = rebuildLongParam(i1, i2);
+    		res = 0;
+        	break;
+        	
+        case ChannelConstants_SET_SHALLOW_SLEEP_CLOCK_MODE:
+        	shallow_sleep_clock_mode = i1;
     		res = 0;
         	break;
         	

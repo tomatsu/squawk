@@ -321,6 +321,7 @@ public final class ChannelConstants {
     public static final int SET_MINIMUM_DEEP_SLEEP_TIME = 336;
     public static final int TOTAL_SHALLOW_SLEEP_TIME_MILLIS_HIGH = 337;
     public static final int TOTAL_SHALLOW_SLEEP_TIME_MILLIS_LOW = 338;
+    public static final int SET_SHALLOW_SLEEP_CLOCK_MODE = 339;
 
     public static final int GET_SERIAL_CHARS = 341;
     public static final int WRITE_SERIAL_CHARS = 342;
