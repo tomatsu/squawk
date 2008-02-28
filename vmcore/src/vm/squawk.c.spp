@@ -1407,7 +1407,7 @@ fprintf(stderr, format("VM.pause called after %L branches (kernelMode %d)\n"), g
     saveContextRegisters(); \
     return;                 \
 }
-#else KERNEL_SQUAWK
+#else /* KERNEL_SQUAWK */
 #define do_pause() {        \
     fatalInterpreterError("Illegal Squawk bytecode (OPC.PAUSE = 0xFF)"); \
 }
@@ -1544,7 +1544,7 @@ extern  void fatalInterpreterError0(char *msg, int opcode, ByteAddress _ip, UWor
 
     printValueInRange(ss,  "stack", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
     Address stackHigh = com_sun_squawk_GC_ramEnd;
-    bool userStack = FALSE;
+    boolean userStack = FALSE;
     if (ss == com_sun_squawk_VMThread_serviceStack) {
          fprintf(stderr, "    current stack is service stack\n");
          stackHigh = Address_add(ss, getArrayLength(ss) * HDR_BYTES_PER_WORD);
