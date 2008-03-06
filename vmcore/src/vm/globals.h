@@ -339,10 +339,12 @@ int setStream(int stream) {
     currentStream = stream;
     if (streams[currentStream] == null) {
         switch (currentStream) {
+#ifndef FLASH_MEMORY
             case com_sun_squawk_VM_STREAM_SYMBOLS: {
                 streams[currentStream] = fopen("squawk_dynamic.sym", "w");
                 break;
             }
+#endif /* FLASH_MEMORY */
             default: {
                 void fatalVMError(char *msg);
                 fatalVMError("Bad INTERNAL_SETSTREAM");
@@ -361,9 +363,11 @@ void finalizeStreams() {
         FILE *file = streams[i];
         if (file != null) {
             fflush(file);
+#ifndef FLASH_MEMORY
             if (file != stdout && file != stderr) {
                 fclose(file);
             }
+#endif /* FLASH_MEMORY */
         }
     }
 }
