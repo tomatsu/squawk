@@ -294,14 +294,15 @@ public class JavaApplicationManager {
      * @param arg the argument
      */
     private static void processVMOption(String arg) {
-        if (arg.startsWith("-cp:")) {
-            // Fix up the class path with respect to the system dependant separator characters
-            classPath = ArgsUtilities.toPlatformPath(arg.substring("-cp:".length()), true);
-        } else if (arg.startsWith("-suite:")) {
+        if (arg.startsWith("-suite:")) {
             parentSuiteURI = "file://" + arg.substring(7) + Suite.FILE_EXTENSION;
 /*if[FLASH_MEMORY]*/
         } else if (arg.startsWith("-spotsuite:")) {
             parentSuiteURI = arg.substring(1);
+/*else[FLASH_MEMORY]*/
+//        } else if (arg.startsWith("-cp:")) {
+//            // Fix up the class path with respect to the system dependant separator characters
+//            classPath = ArgsUtilities.toPlatformPath(arg.substring("-cp:".length()), true);
 /*end[FLASH_MEMORY]*/
         } else if (arg.equals("-egc")) {
             GC.setExcessiveGC(true);
@@ -342,7 +343,7 @@ public class JavaApplicationManager {
         } else if (arg.equals("-testoms")) {
             testoms = true;
 /*end[DEBUG_CODE_ENABLED]*/
-        } else if (arg.startsWith("-trace")) {
+        } else if (Klass.TRACING_ENABLED && arg.startsWith("-trace")) {
             if (arg.startsWith("-tracefilter:")) {
                 Tracer.setFilter(arg.substring("-tracefilter:".length()));
             } else {
@@ -351,7 +352,7 @@ public class JavaApplicationManager {
                 if (arg.equals("-traceconverting")) {
                     Tracer.enableFeature("loading"); // -traceconverting subsumes -traceloading
                 }
-            } 
+            }
         } else if (arg.equals("-stats")) {
             displayExecutionStatistics = true;
         } else if (arg.startsWith("-sampleStatData:")) {
@@ -411,9 +412,10 @@ public class JavaApplicationManager {
                 "\n" +
                 "if there is no class specified, then try MIDlet-1 property to find a MIDlet\n" +
                 "where options include:\n" +
+/*if[!FLASH_MEMORY]*/
                 "    -cp:<directories and jar/zip files separated by ':' (Unix) or ';' (Windows)>\n" +
                 "                          paths where classes, suites and sources can be found\n" +
-                
+/*end[FLASH_MEMORY]*/
                 "    -suite:<name>         suite name (without \"" + Suite.FILE_EXTENSION + "\") to load\n" +
 /*if[FLASH_MEMORY]*/
                 "    -spotsuite:<name>     suite name (without \"" + Suite.FILE_EXTENSION + "\") to load\n" +
