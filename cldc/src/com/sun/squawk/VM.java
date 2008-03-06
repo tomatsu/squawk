@@ -221,6 +221,10 @@ public class VM implements GlobalStaticFields {
     
     /*=======================================================================*\
      *                          VM callback routines                         *
+     *                                                                       *
+     * These methods are only to be called by the interpreter loop, not      *
+     * by user code. All "InterpreterInvoked" methods are stripped.          *
+     *                                                                       *
     \*=======================================================================*/
 
     /**
@@ -1086,6 +1090,8 @@ public class VM implements GlobalStaticFields {
      * The zeroth element of the array represents the top of the stack, which is the frame of the caller's
      * method. The last element of the array represents the bottom of the stack, which is the first method
      * invocation in the sequence.
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @param count  how many frames from the stack to reify, starting from the frame
      *               of the method that called this one. A negative value specifies that
@@ -2484,6 +2490,8 @@ hbp.dumpState();
      * access nonexistent memory.  If the virtual machine aborts then no
      * guarantee can be made about whether or not any shutdown hooks will be
      * run. <p>
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @param   iso the isolate context to run the hook in.
      * @param   hook
@@ -2512,6 +2520,8 @@ hbp.dumpState();
     
     /**
      * De-registers a previously-registered virtual-machine shutdown hook. <p>
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @param   iso the isolate context the hook was registered with.
      * @param hook the hook to remove
@@ -2756,6 +2766,9 @@ hbp.dumpState();
     /**
      * VM-private version of System.arraycopy for arrays of primitives that does little error checking.
      * <p>
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
+     *
      * Impose the following restrictions on the input arguments:
      * <ul>
      * <li><code>dst</code> is not <code>null</code>.
@@ -2815,6 +2828,9 @@ hbp.dumpState();
     /**
      * VM-private version of System.arraycopy for arrays of objects that does little error checking.
      * <p>
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
+     *
      * Impose the following restrictions on the input arguments:
      * <ul>
      * <li><code>dst</code> is not <code>null</code>.
@@ -2873,6 +2889,70 @@ hbp.dumpState();
         }
 /*end[WRITE_BARRIER]*/
         arraycopy0(src, src_position, dst, dst_position, length, HDR.BYTES_PER_WORD);
+    }
+    
+     /**
+     * Do actual copy from memory at address + boffset to array
+     *
+     * Copy from memory to byte array.
+     * Copy <code>number</code> bytes from the memory location specified by the address <code>dst</code> and byte offset <code>boffset</code> to 
+     * the byte array <code>bytes</code> starting at position <code>low</code>.
+     *
+     * @param src the base memory address
+     * @param boffset the byte offset to add to the base memory address
+     * @param dst the destination array
+     * @param low the offset in the destination array
+     * @param number the number of elements to copy into the dst array
+     * @param elementSize the size of the array elements
+     * @throws ArrayIndexOutOfBoundsException if the range specified by low and number does not fit within the dst array
+     */
+    public static void getData(Address src, int boffset, Object dst, int low, int number, int elementSize) {
+        if (dst == null) {
+            throw new NullPointerException();
+        }
+        if (low < 0) {
+            throw new ArrayIndexOutOfBoundsException(low);
+        }
+        if (number < 0) {
+            throw new ArrayIndexOutOfBoundsException(number);
+        }
+
+        if (low > GC.getArrayLength(dst) - number) {
+            throw new ArrayIndexOutOfBoundsException(low + number);
+        }
+        
+        VM.copyBytes(src, boffset, Address.fromObject(dst), low * elementSize, number * elementSize, false);
+    }
+    
+    /**
+     * Do actual copy from array to memory at address + boffset
+     * 
+     * Copy <code>number</code> bytes from byte array <code>bytes</code> starting at position <code>low</code>.to the memory location specified
+     * by the address <code>dst</code> and byte offset <code>boffset</code>.
+     *
+     * @param dst the base memory address
+     * @param boffset the byte offset to add to the base memory address
+     * @param src the src byte array
+     * @param low the offset in the src array
+     * @param number the number of bytes to copy
+     * @param elementSize the size of the array elements
+     * @throws ArrayIndexOutOfBoundsException if the range specified by low and number does not fit within the src array
+     */
+    public static void setData(Address dst, int boffset, Object src, int low, int number, int elementSize) {
+        if (low < 0) {
+            throw new ArrayIndexOutOfBoundsException(low);
+        }
+        if (number < 0) {
+            throw new ArrayIndexOutOfBoundsException(number);
+        }
+        if (src == null) {
+            throw new NullPointerException();
+        }
+        if (low > GC.getArrayLength(src) - number) {
+            throw new ArrayIndexOutOfBoundsException(low + number);
+        }
+        
+        VM.copyBytes(Address.fromObject(src), low * elementSize, dst, boffset, number * elementSize, false);
     }
     
     /**
@@ -2949,6 +3029,8 @@ hbp.dumpState();
 
     /**
      * Get the sentinal OutOfMemoryException object
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @return the object
      */
@@ -2960,6 +3042,8 @@ hbp.dumpState();
      * Print thread name as safely as possible. 
      * 
      * Called by error reporting code, so doesn't assert, or intentionally throw exceptions!
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @param thr the thread to print
      */
@@ -3499,6 +3583,8 @@ hbp.dumpState();
 
     /**
      * Gets a new IO channel.
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @param type the channel type
      * @return the identifier for the newly created channel
@@ -3514,6 +3600,8 @@ hbp.dumpState();
 
     /**
      * Frees a channel.
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @param channel the identifier of the channel to free
      * @throws java.io.IOException 
@@ -3937,6 +4025,8 @@ hbp.dumpState();
 
     /**
      * Gets the next available hashcode.
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @return the hashcode
      */
@@ -4034,6 +4124,8 @@ hbp.dumpState();
 
     /**
      * Determines if the threading system is initialized.
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @return true if the threading system is initialized.
      */
@@ -4078,6 +4170,8 @@ hbp.dumpState();
 
     /**
      * Gets the identifier for a native method.
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @param name   the fully qualified name of the native method
      * @return the identifier for the method or -1 if the method does not exist or cannot be dynamically bound to
@@ -4198,6 +4292,8 @@ hbp.dumpState();
 
     /**
      * Register named mailbox with the system.
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @param name the public name of the mailboz
      * @param mailbox the mailbox to use with that name.
@@ -4216,6 +4312,8 @@ hbp.dumpState();
     
     /**
      * Unregister named mailbox with the system.
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @param name the public name of the mailboz
      * @param mailbox the mailbox to use with that name.
@@ -4229,7 +4327,10 @@ hbp.dumpState();
         registeredMailboxes.remove(name);
 
     }
-    
+
+    /*
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
+     */
     public static Mailbox lookupMailbox(String name) {
         if (registeredMailboxes != null) {
             return (Mailbox)registeredMailboxes.get(name);

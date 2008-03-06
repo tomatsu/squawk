@@ -315,27 +315,6 @@ public final class Unsafe {
 //    }
     
     /**
-     * Do actual copy from memory at address + boffset to array
-     */
-    private static void getData(Address base, int boffset, Object array, int low, int number, int elementSize) {
-        if (array == null) {
-            throw new NullPointerException();
-        }
-        if (low < 0) {
-            throw new ArrayIndexOutOfBoundsException(low);
-        }
-        if (number < 0) {
-            throw new ArrayIndexOutOfBoundsException(number);
-        }
-
-        if (low > GC.getArrayLength(array) - number) {
-            throw new ArrayIndexOutOfBoundsException(low + number);
-        }
-        
-        VM.copyBytes(base, boffset, Address.fromObject(array), low * elementSize, number * elementSize, false);
-    }
-    
-    /**
      * Copy from memory to byte array.
      * Copy <code>number</code> bytes from the memory location specified by the address <code>dst</code> and byte offset <code>boffset</code> to 
      * the byte array <code>bytes</code> starting at position <code>low</code>.
@@ -348,7 +327,7 @@ public final class Unsafe {
      * @throws ArrayIndexOutOfBoundsException if the range specified by low and number does not fit within the dst array
      */
     public static void getBytes(Address src, int boffset, byte[] bytes, int low, int number) {
-        getData(src, boffset, bytes, low, number, 1);
+        VM.getData(src, boffset, bytes, low, number, 1);
     }
     
     /**
@@ -364,7 +343,7 @@ public final class Unsafe {
      * @throws ArrayIndexOutOfBoundsException if the range specified by low and number does not fit within the dst array
      */
     public static void getShorts(Address src, int boffset, short[] shorts, int low, int number) {
-        getData(src, boffset, shorts, low, number, 2);
+        VM.getData(src, boffset, shorts, low, number, 2);
     }
     
     /**
@@ -380,7 +359,7 @@ public final class Unsafe {
      * @throws ArrayIndexOutOfBoundsException if the range specified by low and number does not fit within the dst array
      */
     public static void getInts(Address src, int boffset, int[] ints, int low, int number) {
-        getData(src, boffset, ints, low, number, 4);
+        VM.getData(src, boffset, ints, low, number, 4);
     }
     
     /**
@@ -396,27 +375,7 @@ public final class Unsafe {
      * @throws ArrayIndexOutOfBoundsException if the range specified by low and number does not fit within the dst array
      */
     public static void getLongs(Address src, int boffset, long[] longs, int low, int number) {
-        getData(src, boffset, longs, low, number, 8);
-    }
-    
-    /**
-     * Do actual copy from array to memory at address + boffset
-     */
-    private static void setData(Address base, int boffset, Object array, int low, int number, int elementSize) {
-        if (low < 0) {
-            throw new ArrayIndexOutOfBoundsException(low);
-        }
-        if (number < 0) {
-            throw new ArrayIndexOutOfBoundsException(number);
-        }
-        if (array == null) {
-            throw new NullPointerException();
-        }
-        if (low > GC.getArrayLength(array) - number) {
-            throw new ArrayIndexOutOfBoundsException(low + number);
-        }
-        
-        VM.copyBytes(Address.fromObject(array), low * elementSize, base, boffset, number * elementSize, false);
+        VM.getData(src, boffset, longs, low, number, 8);
     }
     
     /**
@@ -432,7 +391,7 @@ public final class Unsafe {
      * @throws ArrayIndexOutOfBoundsException if the range specified by low and number does not fit within the src array
      */
     public static void setBytes(Address dst, int boffset, byte[] bytes, int low, int number) {
-        setData(dst, boffset, bytes, low, number, 1);
+        VM.setData(dst, boffset, bytes, low, number, 1);
     }
     
     /**
@@ -448,7 +407,7 @@ public final class Unsafe {
      * @throws ArrayIndexOutOfBoundsException if the range specified by low and number does not fit within the src array
      */
     public static void setShorts(Address dst, int boffset, short[] shorts, int low, int number) {
-        setData(dst, boffset, shorts, low, number, 2);
+        VM.setData(dst, boffset, shorts, low, number, 2);
     }
     
     /**
@@ -464,7 +423,7 @@ public final class Unsafe {
      * @throws ArrayIndexOutOfBoundsException if the range specified by low and number does not fit within the src array
      */
     public static void setInts(Address dst, int boffset, int[] ints, int low, int number) {
-        setData(dst, boffset, ints, low, number, 4);
+        VM.setData(dst, boffset, ints, low, number, 4);
     }
     
     /**
@@ -480,7 +439,7 @@ public final class Unsafe {
      * @throws ArrayIndexOutOfBoundsException if the range specified by low and number does not fit within the src array
      */
     public static void setLongs(Address dst, int boffset, long[] longs, int low, int number) {
-        setData(dst, boffset, longs, low, number, 8);
+        VM.setData(dst, boffset, longs, low, number, 8);
     }
     
     

@@ -627,6 +627,41 @@ public class GC implements GlobalStaticFields {
         return true;
     }
 
+     private static boolean inRange(Address ptr, Address start, Address end) {
+         if (ptr.loeq(ramStart)) {
+                return false;
+            } else if (ptr.hi(ramEnd)) {
+                return false;
+            }
+          return true;
+    }
+    
+    /**
+     * Determines if any part of the range is in RAM.
+     *
+     * @param start 
+     * @param end
+     * @return true if any part of the range start..end overlaps with the heap
+     */
+    public static boolean inRam(Address start, Address end) {
+        Offset userRangeSize = end.diff(start);
+        Assert.always(userRangeSize.ge(Offset.zero()));
+        if (userRangeSize.ge(ramEnd.diff(ramStart))) {
+            // user range is larger - it may contain part of heap:
+            if (inRange(ramStart, start, end) ||
+                    inRange(ramEnd, start, end)) {
+                return true;
+            }
+        } else {
+            // heap is larger - it may contain part of user range:
+            if (inRange(start, ramStart, ramEnd) ||
+                    inRange(end, ramStart, ramEnd)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     /**
      * Enable or disable memory allocation.
      *

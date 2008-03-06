@@ -17,7 +17,7 @@ GC=com.sun.squawk.CheneyCollector              com.sun.squawk.Lisp2*
 ###############################################
 # Classes that don't need to be on device, but on desktop (move to seperate suite):
 ###############################################
-#FLASH_MEMORY=true                              com.sun.squawk.io.j2me.channel.*
+FLASH_MEMORY=true                              com.sun.squawk.io.j2me.channel.*
 
 ###############################################
 # Classes on the way out. No known users:

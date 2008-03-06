@@ -209,6 +209,19 @@ public class Build {
      * The most recent date that the file(s) from which the properties are loaded was modified.
      */
     private long propertiesLastModified;
+    
+    private String specfifiedBuildDotOverrideFileName;
+    
+    /**
+     * Gets the name of the build.override file specified by the -override: arg. Or null if no
+     * -override: arg was specified.
+     *
+     * @return String or null
+     */
+    public String getspecfifiedBuildDotOverrideFileName() {
+        return specfifiedBuildDotOverrideFileName;
+    }
+
 
     /**
      * The interface to run a Java source compiler.
@@ -1319,6 +1332,8 @@ public class Build {
             properties = loadProperties(defaultProperties, null);
             if (buildDotOverrideFileName == null) {
             	buildDotOverrideFileName = "build.override";
+            } else {
+                specfifiedBuildDotOverrideFileName = buildDotOverrideFileName;
             }
             File overideProperties = new File(buildDotOverrideFileName);
             if (overideProperties.exists()) {
@@ -1468,7 +1483,8 @@ public class Build {
         out.println("    -nodeps             do not check dependencies (default for commands)");
         out.println("    -deps               check dependencies (default for targets)");
         out.println("    -plugins:<file>     load commands from properties in 'file'");
-        out.println("    -override:<file>     file to use to override the build.properties file found locally, defaults to build.override");
+        out.println("    -override:<file>    file to use to override the build.properties file found locally, defaults to build.override");
+        out.println("                        MUST BE SPECIFIED AS FIRST BUILD-OPTION");
         out.println("    -D<name>=<value>    sets a builder property");
         out.println("    -h                  show this usage message and exit");
         out.println();

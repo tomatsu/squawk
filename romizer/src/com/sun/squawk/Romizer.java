@@ -47,6 +47,8 @@ public class Romizer {
      * The "build.properties" file.
      */
     protected static Properties buildProperties;
+    
+    private static String buildDotOverrideFileName;
 
     static String getBuildProperty(String key) {
         if (buildProperties == null) {
@@ -61,7 +63,7 @@ public class Romizer {
         }
         return buildProperties.getProperty(key, ifNotThereValue);
     }
-    
+            
     /**
      * Reads the contents of the build properties.
      */
@@ -80,9 +82,19 @@ public class Romizer {
             }
         }
         try {
-            inputStream = new FileInputStream("build.override");
-            buildProperties.load(inputStream);
-        } catch(IOException ex) {
+            if (buildDotOverrideFileName == null) {
+                buildDotOverrideFileName = "build.override";
+            }
+            File overideProperties = new File(buildDotOverrideFileName);
+            if (overideProperties.exists()) {
+
+                // Make it very clear to the user which properties in the standard properties
+                // file are potentially being overridden
+                System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Using build override file: " + overideProperties.getPath() + " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                inputStream = new FileInputStream(overideProperties);
+                buildProperties.load(inputStream);
+            }
+        } catch (IOException ex) {
         } finally {
             if (inputStream != null) {
                 try {inputStream.close();} catch (IOException e) {}
@@ -220,6 +232,7 @@ public class Romizer {
         out.println("    -endian:<value>     endianess ('big' or 'little') for generated suite (required)");
         out.println("    -arch:<name>        base name for dynamic compiler. Full name will be");
         out.println("                        \"com.sun.squawk.compiler.<name>Compiler\"");
+        out.println("    -override:<file>     file to use to override the build.properties file found locally, defaults to build.override");
         protoTranslator.printOptionProperties(out, true);
         out.println("    -strip:<t>          strip symbolic information according to <t>:");
         out.println("                           'd' - debug: retain all symbolic info");
@@ -533,7 +546,15 @@ public class Romizer {
                 ObjectMemoryLoader.setFilePath(path);
                 
             } else if (arg.startsWith("-nobuildproperties")) {
+                if (buildDotOverrideFileName != null) {
+                    throw new RuntimeException("Can't specify both -nobuildproperties and -override:");
+                }
                 buildProperties = new Properties();
+            } else if (arg.startsWith("-override:")) {
+                if (buildProperties != null) {
+                    throw new RuntimeException("Can't specify both -nobuildproperties and -override:");
+                }
+	        	buildDotOverrideFileName = arg.substring("-override:".length());
             } else if (arg.startsWith("-key:")) {
             	key = arg.substring("-key:".length());
             } else if (arg.startsWith("-value:")) {

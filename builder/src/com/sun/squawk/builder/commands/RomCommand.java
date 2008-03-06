@@ -130,6 +130,10 @@ public class RomCommand extends Command {
             }
             argc++;
         }
+        
+        if (env.getspecfifiedBuildDotOverrideFileName() != null) {
+             romizerArgs.add("-override:" + env.getspecfifiedBuildDotOverrideFileName()); 
+        }
 
         // The remaining args are the modules making up one or more suites
         boolean isBootstrapSuite = parentSuite == null;
@@ -426,7 +430,6 @@ public class RomCommand extends Command {
     
     public String[] runRomizer(String... args) {
         bootstrapSuiteName = "squawk";
-
         // Only run the romizer if there are arguments passed to this command
         if (args.length > 0) {
             CCompiler ccompiler = env.getCCompiler();
