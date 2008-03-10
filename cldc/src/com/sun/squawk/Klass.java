@@ -1953,6 +1953,10 @@ public class Klass {
             Klass type = field.getType();
             String fieldname = klass.getInternalName() + "." + field.getName();
             java.util.Hashtable table;
+            if (Modifier.hasConstant(fieldModifiers) && Modifier.isFinal(fieldModifiers)) {
+                // skip constant static fields
+                continue;
+            }
             switch (type.getSystemID()) {
 /*if[!FLOATS]*/
 //                case CID.FLOAT:  // fall through ...
@@ -1971,10 +1975,6 @@ public class Klass {
                 case CID.FLOAT:   // fall through ...
 /*end[FLOATS]*/
                 case CID.INT: {
-                    if (Modifier.hasConstant(fieldModifiers) && Modifier.isFinal(fieldModifiers)) {
-                        // skip constant static fields
-                        continue;
-                    }
                     table      = intGlobals;
                     break;
                 }
