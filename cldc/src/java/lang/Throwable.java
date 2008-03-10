@@ -148,20 +148,24 @@ public class Throwable {
      *
      * The format of the backtrace information depends on the implementation.
      */
-    public void printStackTrace() {
+public void printStackTrace() {
         PrintStream stream = System.err;
         String message = getMessage();
-        stream.print(GC.getKlass(this).getName());
-        if (message != null) {
-            stream.print(": ");
-            stream.print(message);
-        }
-        stream.println();
-        if (this != VM.getOutOfMemoryError() && trace != null) {
-            for (int i = 0; i != trace.length; ++i) {
-                stream.print("    ");
-                trace[i].print(stream);
-                stream.println();
+        if (stream == null) {
+            VM.printExceptionAndTrace(this, "exception thrown while System.err misconfigured", false);
+        } else {
+            stream.print(GC.getKlass(this).getName());
+            if (message != null) {
+                stream.print(": ");
+                stream.print(message);
+            }
+            stream.println();
+            if (this != VM.getOutOfMemoryError() && trace != null) {
+                for (int i = 0; i != trace.length; ++i) {
+                    stream.print("    ");
+                    trace[i].print(stream);
+                    stream.println();
+                }
             }
         }
     }

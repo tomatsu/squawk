@@ -3091,7 +3091,7 @@ hbp.dumpState();
      * @param message the exception's message
      */
     private static void printVMStackTrace(Throwable exc, String origExcName, String message) {
-        VM.println(origExcName);
+        VM.print(origExcName);
         if (message != null) {
             VM.print(": ");
             VM.println(message);
@@ -3116,6 +3116,21 @@ hbp.dumpState();
      * @return Secondary exception, or null if none.
      */
     public static Throwable printExceptionAndTrace(Throwable exc, String msg) {
+        return printExceptionAndTrace(exc, msg, true);
+    }
+    
+    /**
+     * Safely print exception and stack trace to System.err. Handles exceptions in 
+     * Throwable.toString and printStackTrace, including OutOfMemoryExceptions.
+     *
+     * In all cases, this should print the message, the thread name, and the orginal exception (cclass name or toString).
+     *
+     * @param exc excption to report
+     * @param msg message to print before exception.
+     * @param printUsingThrowable if true, try to use Throwable.printStackTrace(), otherwise use VM routines...
+     * @return Secondary exception, or null if none.
+     */
+    public static Throwable printExceptionAndTrace(Throwable exc, String msg, boolean printUsingThrowable) {
         String origExcName = "unknown";
         
         // print preamble. Should never fail:
@@ -3131,7 +3146,7 @@ hbp.dumpState();
             VM.println("Error in VM.printExceptionAndTrace");
             VM.fatalVMError();
         }
-        
+
         try {
            /* 
             * Try to print stack trace normally, via streams. If that fails, try to print to
@@ -3140,7 +3155,11 @@ hbp.dumpState();
             String excMesg = "error calling Throwable.getMessage()";
             try {
                 excMesg = exc.getMessage(); // get this in "try", in case it throws error
-                exc.printStackTrace();
+                if (printUsingThrowable) {
+                    exc.printStackTrace();
+                } else {
+                    printVMStackTrace(exc, origExcName, excMesg);
+                }
                 return null;
             } catch (OutOfMemoryError exc2) {
                 VM.println("Uncaught out of memory error while printing stack trace ");
