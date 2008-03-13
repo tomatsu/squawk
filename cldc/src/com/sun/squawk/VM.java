@@ -3900,6 +3900,32 @@ hbp.dumpState();
         }
         
         /**
+         * Pre-create all data structures used in heap stats, so heap walking won't allocate more memory.
+         */
+        public static void initHeapStats() {
+            GC.initHeapStats();
+        }
+
+        /**
+         * Enable heap statistics data structures to be GCed.
+         */
+        static void clearHeapStats() {
+            GC.clearHeapStats();
+        }
+
+        /**
+         * Do heap walk from start object (or whole heap is startObj is null).
+         * Count how many instances, and how many bytes are used, by all objects that are the same age or youngre than
+         * startObj. Print out statistics of each class that has at least one instance in the set found in the heap walk.
+         * Statistics are NOT sorted.
+         * 
+         * @param startObj the object to start walking from , or null
+         */
+        public static void printHeapStats(Object startObj) {
+            GC.printHeapStats(startObj);
+        }
+        
+        /**
          * tag for data sent by sendStatData()
          */
         public static final int STAT_WALL_TIME               = 0;

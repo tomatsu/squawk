@@ -30,6 +30,7 @@ import javax.microedition.io.*;
 import com.sun.squawk.pragma.*;
 import com.sun.squawk.util.*;
 import com.sun.squawk.vm.*;
+import java.util.Enumeration;
 
 
 
@@ -347,6 +348,36 @@ public class GC implements GlobalStaticFields {
 
         if (VM.isVeryVerbose()) {
 	        System.out.println("[removed read only object memory: " + om.getURI() +"]");
+        }
+    }
+    
+    /**
+     * Look through the registered read-only memories and collect all of the Suites.
+     * 
+     * @return array of Suites, or null if no registered suites in read-only memory
+     */
+    static Suite[] getSuites() {
+        if (readOnlyObjectMemories == null) {
+            return null;
+        } else {
+            int suiteCount = 0;
+            
+            for (int i = 0; i != readOnlyObjectMemories.length; ++i) {
+                ObjectMemory om = readOnlyObjectMemories[i];
+                if (om.getRoot() instanceof Suite) {
+                    suiteCount++;
+                }
+            }
+            
+            Suite[] result = new Suite[suiteCount];
+            suiteCount = 0;
+            for (int i = 0; i != readOnlyObjectMemories.length; ++i) {
+                ObjectMemory om = readOnlyObjectMemories[i];
+                if (om.getRoot() instanceof Suite) {
+                    result[suiteCount++] = (Suite)om.getRoot();
+                }
+            }
+            return result;
         }
     }
 
@@ -1910,9 +1941,10 @@ public class GC implements GlobalStaticFields {
         }
 
         int percent = 0;
-        if (VM.isVeryVerbose()) {
+        if (GC.GC_TRACING_SUPPORTED && VM.isVeryVerbose()) {
             VM.print("Building String intern table from read-only memory");
         }
+        
         while (parent != null) {
             Address end = parent.getStart().add(parent.getSize());
             for (Address block = parent.getStart(); block.lo(end); ) {
@@ -1920,7 +1952,8 @@ public class GC implements GlobalStaticFields {
                 if (object.toObject() instanceof String) {
                     strings.put(object.toObject(), object.toObject());
                 }
-                if (VM.isVeryVerbose()) {
+              
+                if (GC.GC_TRACING_SUPPORTED && VM.isVeryVerbose()) {
                     Address start = parent.getStart();
                     Offset size = end.diff(start);
                     int percentNow = (int)((block.diff(start).toPrimitive() * 100) / size.toPrimitive());
@@ -1929,12 +1962,143 @@ public class GC implements GlobalStaticFields {
                         percent = percentNow;
                     }
                 }
+                
                 block = object.add(GC.getBodySize(GC.getKlass(object), object));
             }
             parent = parent.getParent();
         }
-        if (VM.isVeryVerbose()) {
+        if (GC.GC_TRACING_SUPPORTED && VM.isVeryVerbose()) {
             VM.println(" done");
         }
     }
+    
+    /*---------------------------------------------------------------------------*\
+     *                               Heap Statistics                             *
+    \*---------------------------------------------------------------------------*/
+    
+    private static SquawkHashtable heapstats;
+    
+    private final static String DYNAMIC_CLASSES = "Any dynamically created class, such as array classes";
+    
+    /**
+     * Pre-create all data structures used in heap stats, so heap walking won't allocate more memory.
+     */
+    public static void initHeapStats() {
+        if (heapstats == null) {
+            heapstats = new SquawkHashtable(500);
+            
+            Suite[] suites = getSuites();
+            for (int i = 0; i < suites.length; i++) {
+                Suite s = suites[i];
+                int classCount = s.getClassCount();
+                for (int j = 0; j < classCount; j++) {
+                    Assert.always(heapstats.get(s.getKlass(j)) == null);
+                    heapstats.put(s.getKlass(j), new ClassStat());
+                }
+            }
+            
+             heapstats.put(DYNAMIC_CLASSES, new ClassStat());
+        }
+    }
+    
+    public static class ClassStat {
+        public int count;
+        public int size;
+        
+        public final void clear() {
+            count = 0;
+            size = 0;
+        }
+        
+        public final void update(int objSize) {
+            count++;
+            size += objSize;
+        }
+    }
+    
+    /**
+     * Enable heap statistics data structures to be GCed.
+     */
+    static void clearHeapStats() {
+        heapstats = null;
+    }
+    
+    /**
+     * Do actual heap walk, from start object, or whole heap is startObj is null.
+     * Collect statistics in heapstats table.
+     * 
+     * @param startObj the object to start walking from , or null
+     */
+    static void collectHeapStats(Object startObj) {
+        Address start;
+        if (startObj == null) {
+            start = heapStart;
+        } else {
+            if (!inRam(startObj)) {
+                throw new IllegalArgumentException();
+            }
+            start = GC.oopToBlock(GC.getKlass(startObj), Address.fromObject(startObj));
+        }
+
+        int oldPartialCollectionCount = partialCollectionCount;
+        int oldFullCollectionCount = fullCollectionCount;
+
+        Address end = allocTop;
+
+        for (Address block = start; block.lo(end); ) {
+            Address object = GC.blockToOop(block);
+            Klass klass = GC.getKlass(object);
+            int objSize = GC.getBodySize(klass, object);
+            ClassStat cs = (ClassStat)heapstats.get(klass);
+            if (cs == null) {
+                // unknown class, must be dyanmic:
+                cs = (ClassStat)heapstats.get(DYNAMIC_CLASSES);
+                if (!klass.isArray()) {
+                    VM.print("collectHeapStats - unknown class: ");
+                    VM.println(klass.getInternalName());
+                }
+            }
+            cs.update(objSize + (klass.isArray() ? HDR.arrayHeaderSize : HDR.basicHeaderSize));
+            if ((oldPartialCollectionCount != partialCollectionCount) ||
+                (oldFullCollectionCount != fullCollectionCount)) {
+                throw new IllegalStateException("GC during heap walk");
+            }
+            block = object.add(objSize);
+        }
+    }
+    
+    /**
+     * Do actual heap walk, from start object, or whole heap is startObj is null.
+     * Count how many instances, and how many bytes are used, by all objects that are the same aage or youngre than
+     * startObj. Print out statistics of each class that has at least one instance in the set found in the heap walk.
+     * Statistics are NOT sorted.
+     * 
+     * @param startObj the object to start walking from , or null
+     */
+    public static void printHeapStats(Object startObj) {
+        initHeapStats();
+        
+        Enumeration e = heapstats.elements();
+        while (e.hasMoreElements()) {
+            ClassStat cs = (ClassStat) e.nextElement();
+            cs.clear();
+        }
+                
+        collectHeapStats(startObj);
+        
+        e = heapstats.keys();
+        while (e.hasMoreElements()) {
+            Object key = e.nextElement();
+            ClassStat cs = (ClassStat) heapstats.get(key);
+            if (cs.count > 0) {
+                System.out.print(key.toString());
+                System.out.print(": \t");
+                System.out.print(cs.count);
+                System.out.print(" \t");
+                System.out.print(cs.size);
+                System.out.println();
+            }
+        }
+    }
+    
 }
