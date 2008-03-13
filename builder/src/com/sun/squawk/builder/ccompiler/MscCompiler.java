@@ -91,7 +91,14 @@ public class MscCompiler extends CCompiler {
                 Runtime.getRuntime().exec(command);
                 clCommandString = command;
             } catch (IOException e) {
-                // If exception, then keep the original cl command set above
+                try {
+                    String vsCommonToolsDirectory = System.getenv("VS90COMNTOOLS");
+                    String command = "\"" + vsCommonToolsDirectory + "\\vsvars32.bat\" && cl";
+                    // Try the command to see if it works, if it does work then we want to use it
+                    Runtime.getRuntime().exec(command);
+                    clCommandString = command;
+                } catch (IOException e2) {
+                }
             }
         }
         return clCommandString;
