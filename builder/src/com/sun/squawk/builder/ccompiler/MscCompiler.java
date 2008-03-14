@@ -96,10 +96,11 @@ public class MscCompiler extends CCompiler {
             if (toolsDirectory == null) {
             	toolsDirectory = System.getenv(VISUAL_STUDIO_80_TOOLS_ENVIRONMENT_VARIABLE);
             }
-            if (toolsDirectory != null) {
+            if (toolsDirectory == null) {
+            	toolsDirectory = "";
             }
             try {
-                String command = "\"" + toolsDirectory + "vsvars32.bat\" && cl";
+                String command = "\"" + toolsDirectory + "vsvars32.bat\" && " + clCommandString;
             	env.log(env.verbose, "Trying to find propert compiler command with: " + command);
                 // Try the command to see if it works, if it does work then we want to use it
                 Runtime.getRuntime().exec(command);
