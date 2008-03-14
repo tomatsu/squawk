@@ -33,6 +33,8 @@ import java.io.IOException;
  * The interface for the "cl" MS Visual C++ compiler.
  */
 public class MscCompiler extends CCompiler {
+	public static final String VISUAL_STUDIO_80_TOOLS_ENVIRONMENT_VARIABLE = "VS80COMNTOOLS";
+	public static final String VISUAL_STUDIO_90_TOOLS_ENVIRONMENT_VARIABLE = "VS90COMNTOOLS";
     
     protected String clCommandString;
 
@@ -84,29 +86,30 @@ public class MscCompiler extends CCompiler {
     public String getClCommandString() {
         if (clCommandString == null) {
             clCommandString = "cl";
+            String toolsDirectory = System.getProperty(VISUAL_STUDIO_90_TOOLS_ENVIRONMENT_VARIABLE);
+            if (toolsDirectory == null) {
+            	toolsDirectory = System.getProperty(VISUAL_STUDIO_80_TOOLS_ENVIRONMENT_VARIABLE);
+            }
+            if (toolsDirectory == null) {
+            	toolsDirectory = System.getenv(VISUAL_STUDIO_90_TOOLS_ENVIRONMENT_VARIABLE);
+            }
+            if (toolsDirectory == null) {
+            	toolsDirectory = System.getenv(VISUAL_STUDIO_80_TOOLS_ENVIRONMENT_VARIABLE);
+            }
+            if (toolsDirectory != null) {
+            }
             try {
-                String vsCommonToolsDirectory = System.getenv("VS80COMNTOOLS");
-                String command = "\"" + vsCommonToolsDirectory + "vsvars32.bat\" && cl";
+                String command = "\"" + toolsDirectory + "vsvars32.bat\" && cl";
+            	env.log(env.verbose, "Trying to find propert compiler command with: " + command);
                 // Try the command to see if it works, if it does work then we want to use it
-System.out.println("Trying to find cl with: " + command);  
                 Runtime.getRuntime().exec(command);
                 clCommandString = command;
             } catch (IOException e) {
-System.out.println("   failed");  
-                try {
-                    String vsCommonToolsDirectory = System.getenv("VS90COMNTOOLS");
-                    String command = "\"" + vsCommonToolsDirectory + "vsvars32.bat\" && cl";
-System.out.println("Trying to find cl with: " + command);  
-                    // Try the command to see if it works, if it does work then we want to use it
-                    Runtime.getRuntime().exec(command);
-                    clCommandString = command;
-                } catch (IOException e2) {
-System.out.println("   failed");  
-                }
             }
         }
         return clCommandString;
     }
+    
     /**
      * {@inheritDoc}
      */
