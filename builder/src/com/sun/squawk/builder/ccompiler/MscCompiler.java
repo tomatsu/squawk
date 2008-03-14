@@ -88,16 +88,20 @@ public class MscCompiler extends CCompiler {
                 String vsCommonToolsDirectory = System.getenv("VS80COMNTOOLS");
                 String command = "\"" + vsCommonToolsDirectory + "vsvars32.bat\" && cl";
                 // Try the command to see if it works, if it does work then we want to use it
+System.out.println("Trying to find cl with: " + command);  
                 Runtime.getRuntime().exec(command);
                 clCommandString = command;
             } catch (IOException e) {
+System.out.println("   failed");  
                 try {
                     String vsCommonToolsDirectory = System.getenv("VS90COMNTOOLS");
                     String command = "\"" + vsCommonToolsDirectory + "vsvars32.bat\" && cl";
+System.out.println("Trying to find cl with: " + command);  
                     // Try the command to see if it works, if it does work then we want to use it
                     Runtime.getRuntime().exec(command);
                     clCommandString = command;
                 } catch (IOException e2) {
+System.out.println("   failed");  
                 }
             }
         }
