@@ -22,6 +22,9 @@
  * information or have any questions.
  */
 
+#define TRUE 1
+#define FALSE 0
+
 // Size of class to class state cache.
 #define CLASS_CACHE_SIZE 6
 
