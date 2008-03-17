@@ -458,12 +458,13 @@ public final class Isolate implements Runnable {
 
     /**
      * Makes a copy of a given string if it is not null and the current thread is not owned by this isolate.
+     * We don't have to copy string if it is in ROM.
      *
      * @param s   the string to conditionally copy
      * @return the original or copy of <code>s</code>
      */
     private String copyIfCurrentThreadIsExternal(String s) {
-        if (s != null && isCurrentThreadExternal()) {
+        if (s != null && GC.inRam(s) && isCurrentThreadExternal()) {
             return new String(s);
         } else {
             return s;
@@ -480,8 +481,7 @@ public final class Isolate implements Runnable {
         if (arr != null && isCurrentThreadExternal()) {
             String[] result = new String[arr.length];
             for (int i = 0; i != arr.length; ++i) {
-                String s = arr[i];
-                result[i] = s == null ? s : new String(s);
+                result[i] = copyIfCurrentThreadIsExternal(arr[i]);
             }
             return result;
         }
@@ -711,6 +711,39 @@ public final class Isolate implements Runnable {
         }
 
         return copyIfCurrentThreadIsExternal((String)properties.get(key));
+    }
+    
+    /**
+     * Enumeration wrapper over an isolate's property keys, that handles
+     * copying strings when needed (copyIfCurrentThreadIsExternal).
+     */
+    static class PropEnumeration implements Enumeration {
+        private Enumeration realEnum;
+        private Isolate iso;
+        
+        PropEnumeration(Isolate iso) {
+            this.iso = iso;
+            this.realEnum = iso.properties.keys();
+        }
+
+        public boolean hasMoreElements() {
+            return realEnum.hasMoreElements();
+        }
+
+        public Object nextElement() {
+            return iso.copyIfCurrentThreadIsExternal((String)realEnum.nextElement());
+        }
+        
+    }
+    
+    /**
+     * Get an enumeration of isolate property keys. These keys can be used with {@link Isolate#getProperty} to get the
+     * property values.
+     * 
+     * @return enumeration of property keys
+     */
+    public Enumeration getProperties() {
+        return new PropEnumeration(this);        
     }
 
     /*---------------------------------------------------------------------------*\
