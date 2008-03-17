@@ -350,7 +350,7 @@ public class ObjectGraphLoader {
         for (int i=0; i < klasses.length; i++) {
         	Klass klass = klasses[i];
         	initKlassInternals(klass);
-        	Assert.that(suite.getKlass(i) != klass);
+        	Assert.that(suite.getKlass(i) == klass);
 		}
         KlassMetadata[] metadatas = getKlassMetadatasAt(NativeUnsafe.getAddress(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Suite$metadatas)));
         for (KlassMetadata metadata : metadatas) {

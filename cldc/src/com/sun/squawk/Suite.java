@@ -371,7 +371,7 @@ public final class Suite {
         checkWrite();
         Klass klass = metadata.getDefinedClass();
         int suiteID = klass.getSuiteID();
-        Assert.that(suiteID < classes.length && classes[suiteID] == metadata.getDefinedClass(), klass + " not yet installed");
+//        Assert.that(suiteID < classes.length && classes[suiteID] == metadata.getDefinedClass(), klass + " not yet installed? suiteID: " + suiteID + ", classes.length: " + classes.length);
         if (suiteID < metadatas.length) {
             Assert.that(metadatas[suiteID] == null, "metadata for " + klass + "already installed");
         } else {
