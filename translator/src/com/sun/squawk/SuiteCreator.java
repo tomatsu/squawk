@@ -53,6 +53,8 @@ public class SuiteCreator {
     
     private final static String TRANSLATOR_SUITE_URI = "file://translator.suite";
     private final static String TRANSLATOR_CLASS_NAME = "com.sun.squawk.translator.Translator";
+    
+    private TranslatorInterface outerTranslator;
 
     /**
      * Prints the usage message.
@@ -82,15 +84,10 @@ public class SuiteCreator {
                 "    -translator:<uri>[#<name>] the URI of a suite containing the class <name> which implements\n" +
                 "                          (default=file://translator.suite#com.sun.squawk.translator.Translator)\n");
 
-        TranslatorInterface t = VM.getCurrentIsolate().getTranslator();
-        if (t == null) {
-            String[] result = scanForTranslatorArgs(args);
-            initializeTranslator(result[0], result[1], VM.getCurrentIsolate());
-            t = VM.getCurrentIsolate().getTranslator();
-        }
-        if (t != null) {
-            t.printOptionProperties(out, true);
-            t.printTraceFlags(out);
+        
+        if (outerTranslator != null) {
+            outerTranslator.printOptionProperties(out, true);
+            outerTranslator.printTraceFlags(out);
         }
        
         out.print(
@@ -262,6 +259,13 @@ public class SuiteCreator {
         String key = null;
         String keyHex = null;
         
+        outerTranslator = VM.getCurrentIsolate().getTranslator();
+        if (outerTranslator == null) {
+            String[] result = scanForTranslatorArgs(args);
+            initializeTranslator(result[0], result[1], VM.getCurrentIsolate());
+            outerTranslator = VM.getCurrentIsolate().getTranslator();
+        }
+                
         while (argc != args.length) {
             String arg = args[argc];
 
@@ -303,9 +307,8 @@ public class SuiteCreator {
                     return null;
                 }
             } else if (arg.startsWith("-translator:")
-            || arg.equals("-verbose") || arg.equals("-v")
-            || arg.startsWith("-optimizeConstantObjects:")
-            || arg.startsWith("-deadMethodElimination:")) {
+                       || arg.equals("-verbose") || arg.equals("-v")
+                       || outerTranslator.isOption(arg)) {
                 argVector.addElement(arg); // pass argument through to loader
             } else if (arg.equals("-debug")) {
                 debugger = true;
@@ -538,7 +541,7 @@ public class SuiteCreator {
                     } else {
                         throw new RuntimeException("invalid suite type: " + type);
                     }
-                } else if (!translator.processOptionProperties(arg)) {
+                } else if (!translator.processOption(arg)) {
                     break;
                 }
             }

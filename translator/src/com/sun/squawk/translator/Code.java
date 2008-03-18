@@ -287,7 +287,7 @@ public final class Code {
             IR ir = irBuilder.getIR();
             Frame frame = irBuilder.getFrame();
             
-            if (Translator.shouldDoDeadMethodElimination() &&
+            if ((Arg.get(Arg.DEAD_METHOD_ELIMINATION).getBool()) &&
                 !translator.dme.isMarkedUsed(method)) {
                 if (Translator.TRACING_ENABLED && Tracer.isTracing("converting", method.toString())) {
                     Tracer.traceln("Deleting code for uncalled method " + method);

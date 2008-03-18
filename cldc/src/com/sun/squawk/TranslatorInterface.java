@@ -140,12 +140,21 @@ public interface TranslatorInterface {
     
     /**
      * If <code>arg</code> represents a valid translator argument, then process it by parsing into property name and value, and set the property value.
-     * and return true. therwise return false.
+     * and return true. Otherwise return false.
      *
      * @param arg
      *
      * @retun true if this was a valid translator argument.
      */
-    public boolean processOptionProperties(String arg);
+    public boolean processOption(String arg);
   
+    /**
+     * If <code>arg</code> represents a valid translator argument, then return true. Otherwise return false.
+     *
+     * @param arg
+     *
+     * @retun true if this was a valid translator argument.
+     */
+    public boolean isOption(String arg);
+    
 }

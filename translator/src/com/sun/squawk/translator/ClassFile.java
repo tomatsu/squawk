@@ -29,6 +29,7 @@ import java.util.Vector;
 import com.sun.squawk.util.*;
 import com.sun.squawk.translator.ci.*;
 import com.sun.squawk.*;
+import java.util.Hashtable;
 
 /**
  * This represents a class that has not yet been loaded and linked.
@@ -81,6 +82,27 @@ public final class ClassFile {
      * The constant pool of this class file.
      */
     private ConstantPool constantPool;
+    
+    /**
+     * If true, try to do dead string elimination
+     */
+    private boolean safeToDoDeadStringElim;
+    
+    private final static String DEAD_STRING_ELIMINATION_MSG = "DEAD STRING ELIMINATION";
+    
+    private static Hashtable vm2cClasses;
+    
+    static {
+        // @todo: FIX VM2C so it doesn't depend on constant table for strings.
+        // We shouldn't do dead string elimination on vm2c classes as long as vm2c relies on 
+        // the constant table for string constants.
+        vm2cClasses = new Hashtable();
+        vm2cClasses.put("com.sun.squawk.VM", "VM2C Class");
+        vm2cClasses.put("com.sun.squawk.GarbageCollector", "VM2C Class");
+        vm2cClasses.put("com.sun.squawk.Lisp2GenerationalCollector", "VM2C Class");
+        vm2cClasses.put("com.sun.squawk.Lisp2GenerationalCollector$MarkingStack", "VM2C Class");
+    }
+    
 
 
     /*---------------------------------------------------------------------------*\
@@ -96,6 +118,9 @@ public final class ClassFile {
         this.definedClass = klass;
         this.staticMethods  = NO_METHODS;
         this.virtualMethods = NO_METHODS;
+        if (vm2cClasses.get(klass.getInternalName()) == null) {
+            safeToDoDeadStringElim = Arg.get(Arg.DEAD_STRING_ELIMINATION).getBool();
+        }
     }
 
 
@@ -284,8 +309,9 @@ public final class ClassFile {
      * Get the index of an object in the object table.
      *
      * @param object the object to index
+     * @param recordUse if true, count this as an "emmitted use"
      * @return the index
-     * @throws NoSuchElementException if the object table does not contain <code>object</code>
+     * @throws java.util.NoSuchElementException if the object table does not contain <code>object</code>
      */
     public int getConstantObjectIndex(Object object, boolean recordUse) {
         ObjectCounter counter = (ObjectCounter)objectTable.get(object);
@@ -304,7 +330,7 @@ public final class ClassFile {
         Enumeration e = objectTable.elements();
         while (e.hasMoreElements()) {
             ObjectCounter counter = (ObjectCounter)e.nextElement();
-            if (counter.getEmittedCounter() == 0) {
+            if (counter.getEmittedCounter() == 0 && !(counter.getObject() instanceof Klass)) {
                 if (firstTime) {
                     System.out.println("====== Object usage in class " + definedClass);
                     firstTime = false;
@@ -344,9 +370,22 @@ public final class ClassFile {
             }
         });
 //System.err.println(""+definedClass+" list = "+list.length);
+        boolean firstTime = true;
         for (int i = 0 ; i < list.length ; i++) {
 //System.err.println("    "+list[i]);
-            list[i] = ((ObjectCounter)list[i]).getObject();
+            ObjectCounter oc = ((ObjectCounter) list[i]);
+            if (!safeToDoDeadStringElim || !(oc.getObject() instanceof String) || (oc.getEmittedCounter() > 0)) {
+                list[i] = oc.getObject();
+            } else {
+                list[i] = DEAD_STRING_ELIMINATION_MSG;
+                if (Translator.TRACING_ENABLED && Tracer.isTracing("DSE", definedClass.getName())) {
+                    if (firstTime) {
+                        Tracer.traceln("Stripping objects from " + definedClass);
+                        firstTime = false;
+                    }
+                    Tracer.traceln("    " + oc.getObject());
+                }
+            }
         }
         return list;
     }
@@ -469,13 +508,16 @@ public final class ClassFile {
                 convertMethods(translator, true, 0, bodies);
                 convertMethods(translator, false, 0, bodies);
             } else {
-                if (Translator.shouldOptimizeConstantObjects()) {
+                if (Arg.get(Arg.OPTIMIZE_CONSTANT_OBJECTS).getBool()) {
                     sortObjectTable();
                 }
                 
                 // Now generate squawk code from IR.
                 convertMethods(translator, true, 2, bodies);
                 convertMethods(translator, false, 2, bodies);
+//                if (Arg.get(Arg.VERBOSE).getBool()) {
+//                    reportActualUsage();
+//                }
             }
         } catch (NoClassDefFoundError e) {
             definedClass.changeState(Klass.STATE_ERROR);

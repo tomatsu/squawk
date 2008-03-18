@@ -563,7 +563,7 @@ public class Romizer {
             	}
             	String value = arg.substring("-key:".length());
             	jadProperties.put(key, value);
-            } else if (!protoTranslator.processOptionProperties(arg)) {
+            } else if (!protoTranslator.processOption(arg)) {
                 usage("Unknown option "+arg);
                 throw new RuntimeException();
             }

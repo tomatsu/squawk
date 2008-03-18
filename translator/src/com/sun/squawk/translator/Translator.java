@@ -52,82 +52,151 @@ public final class Translator implements TranslatorInterface {
      *                      Translator options/optimization flags                *
     \*---------------------------------------------------------------------------*/
 
-    /**
-     * Property that turns on help about other translator properties.
-     */
-    private final static String HELP_PROPERTY = "translator.help";
-
-    /**
-     * Set to true if the translator should use as much memory as necessary to do a best effort translation.
-     *  (This used to be based on VM.isHosted().
-     */
-    private final static String OPTIMIZECONSTANTOBJECTS_PROPERTY = "translator.optimizeConstantObjects";
-    private final static boolean OPTIMIZECONSTANTOBJECTS = true;
-    private static boolean optimizeConstantObjects = OPTIMIZECONSTANTOBJECTS;
-
-    /**
-     * Returns true if the translator should use as much memory as necessary to do a best effort translation.
-     *  (This used to be based on VM.isHosted().
-     */
-    public static boolean shouldOptimizeConstantObjects() {
-        return optimizeConstantObjects;
-    }
+//    /**
+//     * Property that turns on help about other translator properties.
+//     */
+//    private final static String HELP_PROPERTY = "translator.help";
+//
+//    /**
+//     * Set to true if the translator should use as much memory as necessary to do a best effort translation.
+//     *  (This used to be based on VM.isHosted().
+//     */
+//    private final static String OPTIMIZECONSTANTOBJECTS_PROPERTY = "translator.optimizeConstantObjects";
+//    private final static boolean OPTIMIZECONSTANTOBJECTS = true;
+//    private static boolean optimizeConstantObjects = OPTIMIZECONSTANTOBJECTS;
+//
+//    /**
+//     * Returns true if the translator should use as much memory as necessary to do a best effort translation.
+//     *  (This used to be based on VM.isHosted().
+//     */
+//    public static boolean shouldOptimizeConstantObjects() {
+//        return optimizeConstantObjects;
+//    }
+//    
+//    /**
+//     * Set to true if the translator should delete uncalled methods
+//     */
+//    private final static String DEADMETHODELIMINATION_PROPERTY = "translator.deadMethodElimination";
+//    private final static boolean DEADMETHODELIMINATION = true;
+//    private static boolean deadMethodElimination = DEADMETHODELIMINATION;
+//
+//    /**
+//     * Returns true if the translator should eliminate dead methods
+//     */
+//    public static boolean shouldDoDeadMethodElimination() {
+//        return deadMethodElimination;
+//    }
+//
+//    /**
+//     * Set to true if the translator should delete uncalled private constructors
+//     */
+//    private final static String DELETEUNUSEDPRIVATECONSTRUCTORS_PROPERTY = "translator.deleteUnusedPrivateConstructors";
+//    private final static boolean DELETEUNUSEDPRIVATECONSTRUCTORS = true;
+//    private static boolean deleteUnusedPrivateConstructors = DELETEUNUSEDPRIVATECONSTRUCTORS;
+//
+//    /**
+//     * Returns true if the translator should eliminate uncalled private constructors
+//     */
+//    public static boolean shouldDeleteUnusedPrivateConstructors() {
+//        return deleteUnusedPrivateConstructors;
+//    }
+//    
+//    /** If true, start deleting USED methods, to test error handling (Should throw abstract method error, or exit with fatalVMError.
+//     */
+//    public final static boolean FORCE_DME_ERRORS = false;
+//    
+//     /**
+//     * Set to true if the translator should print verbose progress
+//     */
+//    private final static String VERBOSE_PROPERTY = "translator.verbose";
+//    private final static boolean VERBOSE = false;
+//    private static boolean verbose = VERBOSE;
+//    
+//    
+//    /**
+//     * Returns true if the translator should print verbose progress
+//     */
+//    public static boolean verbose() {
+//        return verbose;
+//    }
+//    
+//    private int progressCounter = 0;
+//    
+//    /**
+//     * Returns true if the translator should print verbose progress
+//     */
+//    public void traceProgress() {
+//        if (verbose) {
+//            progressCounter++;
+//            Tracer.trace(".");
+//            if (progressCounter % 40 == 0) {
+//                Tracer.trace("\n");
+//            }
+//        }
+//    }
     
-    /**
-     * Set to true if the translator should delete uncalled methods
-     */
-    private final static String DEADMETHODELIMINATION_PROPERTY = "translator.deadMethodElimination";
-    private final static boolean DEADMETHODELIMINATION = true;
-    private static boolean deadMethodElimination = DEADMETHODELIMINATION;
+    protected final Stack lastClassNameStack = new Stack();
 
-    /**
-     * Returns true if the translator should eliminate dead methods
-     */
-    public static boolean shouldDoDeadMethodElimination() {
-        return deadMethodElimination;
-    }
-
-    /**
-     * Set to true if the translator should delete uncalled private constructors
-     */
-    private final static String DELETEUNUSEDPRIVATECONSTRUCTORS_PROPERTY = "translator.deleteUnusedPrivateConstructors";
-    private final static boolean DELETEUNUSEDPRIVATECONSTRUCTORS = true;
-    private static boolean deleteUnusedPrivateConstructors = DELETEUNUSEDPRIVATECONSTRUCTORS;
-
-    /**
-     * Returns true if the translator should eliminate uncalled private constructors
-     */
-    public static boolean shouldDeleteUnusedPrivateConstructors() {
-        return deleteUnusedPrivateConstructors;
-    }
-    
-    /** If true, start deleting USED methods, to test error handling (Should throw abstract method error, or exit with fatalVMError.
-     */
     public final static boolean FORCE_DME_ERRORS = false;
-    
-     /**
-     * Set to true if the translator should print verbose progress
+
+    /**
+     * Returns true the translator should try to inline method calls.
      */
-    private final static String VERBOSE_PROPERTY = "translator.verbose";
-    private final static boolean VERBOSE = false;
-    private static boolean verbose = VERBOSE;
-    
-    protected final Stack lastClassNameStack = new Stack();;
-    
+    public static boolean shouldDoInlining() {
+        return false;
+//        return Arg.get(Arg.INLINE_METHOD_LIMIT).getInt() > 0;
+    }
+
     /**
      * Returns true if the translator should print verbose progress
      */
     public static boolean verbose() {
-        return verbose;
+        return Arg.get(Arg.VERBOSE).getBool();
+    }
+
+    public Translator() {
+        Arg.defineOptions();
     }
     
+    private boolean optimizeSuite;
+    
+    /**
+     * True if any optimization implies whole-suite optimization.
+     */
+    public boolean shouldOptimizeSuite() {
+        return optimizeSuite;
+    }
+    
+    /**
+     * Read translator properties and set corresponding options.
+     */
+    private void setOptions() {
+        Arg.setOptions();
+        
+        if (/*Arg.get(Arg.DEAD_CLASS_ELIMINATION).getBool() ||*/  Arg.get(Arg.DEAD_METHOD_ELIMINATION).getBool() /* || (Arg.get(Arg.INLINE_METHOD_LIMIT).getInt() > 0)*/) {
+            translationStrategy = BY_SUITE;
+        } else if (Arg.get(Arg.OPTIMIZE_CONSTANT_OBJECTS).getBool()) {
+            translationStrategy = BY_CLASS;
+        } else {
+            translationStrategy = BY_METHOD;
+        }
+        
+        if (translationStrategy >= BY_SUITE && (
+                (shouldDoInlining()
+                /*|| Arg.get(Arg.OPTIMIZE_BYTECODE).getBool()
+                || Arg.get(Arg.OPTIMIZE_BYTECODE_CONTROL).getBool()
+                || Arg.get(Arg.OPTIMIZE_DEADCODE).getBool()*/ ))) {
+            optimizeSuite = true;
+        }
+    }
+
     private int progressCounter = 0;
     
     /**
      * Returns true if the translator should print verbose progress
      */
     public void traceProgress() {
-        if (verbose) {
+        if (verbose()) {
             progressCounter++;
             Tracer.trace(".");
             if (progressCounter % 40 == 0) {
@@ -176,78 +245,78 @@ public final class Translator implements TranslatorInterface {
      */
      DeadMethodEliminator dme;
      
-    /**
-     * Parses the system property named <code>name</code> as a boolean. Use <code>defaultValue</code> if
-     * there is no system property by that name, or if the value is not a boolean.
-     *
-     * @param name  the name pf the property.
-     * @param defaultValue the default value to use.
-     * @return the specified property value or the default value.
-     */
-    private boolean getBooleanProperty(String name, boolean defaultValue) {
-        String result = System.getProperty(name);
-
-        if (result != null) {
-            result = result.toLowerCase();
-            if (result.equals("true")) {
-                return true;
-            } else if (result.equals("false")) {
-                return false;
-            } else {
-                System.err.println("Illformed boolean value " + result + "for translator property " + name + ". Using default value " + defaultValue);
-                // fall through to pick up default
-            }
-        }
-        return defaultValue;
-    }
-
-    /**
-     * Parses the system property named <code>name</code> as an int. Use <code>defaultValue</code> if
-     * there is no system property by that name, or if the value is not an int.
-     *
-     * @param name  the name pf the property.
-     * @param defaultValue the default value to use.
-     * @return the specified property value or the default value.
-     */
-    private int getIntProperty(String name, int defaultValue) {
-        String result = System.getProperty(name);
-
-        if (result != null) {
-            return Integer.parseInt(result);
-        }
-
-        return defaultValue;
-    }
-
-    /**
-     * Read translator properties and set corresponding options.
-     */
-    private void setOptions() {
-        boolean showHelp         = getBooleanProperty(HELP_PROPERTY,  false);
-        optimizeConstantObjects  = getBooleanProperty(OPTIMIZECONSTANTOBJECTS_PROPERTY,  OPTIMIZECONSTANTOBJECTS);
-	    deadMethodElimination    = getBooleanProperty(DEADMETHODELIMINATION_PROPERTY, DEADMETHODELIMINATION);
-        verbose                       = getBooleanProperty(VERBOSE_PROPERTY, VERBOSE);
-        verbose |= VM.isVerbose() | VM.isVeryVerbose() | Tracer.isTracing("converting");
-        
-        if (showHelp || verbose || VM.isVeryVerbose()) {
-            VM.println("Translator properties and current values:");
-            VM.println("    " + HELP_PROPERTY                                + "=" + showHelp);
-            VM.println("    " + VERBOSE_PROPERTY                           + "=" + verbose);
-            if (!getBooleanProperty(VERBOSE_PROPERTY, VERBOSE)) {
-                VM.println("        " + VERBOSE_PROPERTY  + " implicitly set by squawk -verbose, -veryverbose, or -traceconverting");
-            }
-            VM.println("    " + OPTIMIZECONSTANTOBJECTS_PROPERTY  + "=" + optimizeConstantObjects);
-            VM.println("    " + DEADMETHODELIMINATION_PROPERTY    + "=" + deadMethodElimination);
-        }
-        
-        if (deadMethodElimination) {
-            translationStrategy = BY_SUITE;
-        } else if (optimizeConstantObjects) {
-            translationStrategy = BY_CLASS;
-        } else {
-            translationStrategy = BY_METHOD;
-        }
-    }
+//    /**
+//     * Parses the system property named <code>name</code> as a boolean. Use <code>defaultValue</code> if
+//     * there is no system property by that name, or if the value is not a boolean.
+//     *
+//     * @param name  the name pf the property.
+//     * @param defaultValue the default value to use.
+//     * @return the specified property value or the default value.
+//     */
+//    private boolean getBooleanProperty(String name, boolean defaultValue) {
+//        String result = System.getProperty(name);
+//
+//        if (result != null) {
+//            result = result.toLowerCase();
+//            if (result.equals("true")) {
+//                return true;
+//            } else if (result.equals("false")) {
+//                return false;
+//            } else {
+//                System.err.println("Illformed boolean value " + result + "for translator property " + name + ". Using default value " + defaultValue);
+//                // fall through to pick up default
+//            }
+//        }
+//        return defaultValue;
+//    }
+//
+//    /**
+//     * Parses the system property named <code>name</code> as an int. Use <code>defaultValue</code> if
+//     * there is no system property by that name, or if the value is not an int.
+//     *
+//     * @param name  the name pf the property.
+//     * @param defaultValue the default value to use.
+//     * @return the specified property value or the default value.
+//     */
+//    private int getIntProperty(String name, int defaultValue) {
+//        String result = System.getProperty(name);
+//
+//        if (result != null) {
+//            return Integer.parseInt(result);
+//        }
+//
+//        return defaultValue;
+//    }
+//
+//    /**
+//     * Read translator properties and set corresponding options.
+//     */
+//    private void setOptions() {
+//        boolean showHelp         = getBooleanProperty(HELP_PROPERTY,  false);
+//        optimizeConstantObjects  = getBooleanProperty(OPTIMIZECONSTANTOBJECTS_PROPERTY,  OPTIMIZECONSTANTOBJECTS);
+//	    deadMethodElimination    = getBooleanProperty(DEADMETHODELIMINATION_PROPERTY, DEADMETHODELIMINATION);
+//        verbose                       = getBooleanProperty(VERBOSE_PROPERTY, VERBOSE);
+//        verbose |= VM.isVerbose() | VM.isVeryVerbose() | Tracer.isTracing("converting");
+//        
+//        if (showHelp || verbose || VM.isVeryVerbose()) {
+//            VM.println("Translator properties and current values:");
+//            VM.println("    " + HELP_PROPERTY                                + "=" + showHelp);
+//            VM.println("    " + VERBOSE_PROPERTY                           + "=" + verbose);
+//            if (!getBooleanProperty(VERBOSE_PROPERTY, VERBOSE)) {
+//                VM.println("        " + VERBOSE_PROPERTY  + " implicitly set by squawk -verbose, -veryverbose, or -traceconverting");
+//            }
+//            VM.println("    " + OPTIMIZECONSTANTOBJECTS_PROPERTY  + "=" + optimizeConstantObjects);
+//            VM.println("    " + DEADMETHODELIMINATION_PROPERTY    + "=" + deadMethodElimination);
+//        }
+//        
+//        if (deadMethodElimination) {
+//            translationStrategy = BY_SUITE;
+//        } else if (optimizeConstantObjects) {
+//            translationStrategy = BY_CLASS;
+//        } else {
+//            translationStrategy = BY_METHOD;
+//        }
+//    }
 
     /**
      * {@inheritDoc}
@@ -368,7 +437,7 @@ public final class Translator implements TranslatorInterface {
             }
             // bytecode optimizations and inlining go here
             
-            if (Translator.shouldDoDeadMethodElimination()) {
+            if (Arg.get(Arg.DEAD_METHOD_ELIMINATION).getBool()) {
                 dme = new DeadMethodEliminator(this);
                 dme.computeMethodsUsed();
             }
@@ -416,44 +485,28 @@ public final class Translator implements TranslatorInterface {
             out.println("    -tracefilter:<string> filter trace with simple string filter");
         }
     }
-    private void printOne(PrintStream out, String baseName, String rest, boolean asParameters) {
-        out.print("    -");
-        if (!asParameters) {
-            out.print("Dtranslator.");
-        }
-        out.print(baseName);
-         if (asParameters) {
-            out.print(":");
-        } else {
-            out.print("=");
-        }
-        out.println(rest);
-    }
     
-    /**
+   /**
      * {@inheritDoc}
      */
     public void printOptionProperties(PrintStream out, boolean asParameters) {
-        printOne(out, "optimizeConstantObjects", "<bool> Reorder class objects to allow small indexes for common objects.\n" +
-                "                          <bool> must be true or false (default is true)", asParameters);
-        printOne(out, "deadMethodElimination", "<bool> Remove uncalled (and uncallable) methods.\n." +
-                "                         <bool> must be true or false (default is true)", asParameters);
+        for (int i = 0; i < Arg.translatorArgs.length; i++) {
+           Arg.translatorArgs[i].printOne(out, asParameters);
+        }
     }
     
-    /**
-     * If "arg" match the  option with the basic name "baseName" then set the option to 
-     * the appropriate value, and return true.
-     *
-     * @param arg the argument on the command line "-foo:value"
-     * @param baseName the basic name of the option: "foo"
-     * @return true if "arg" is the option that matches baseName.
-     */
-    private boolean processOptionAs(String arg, String baseName) {
-        String optionStr = "-" + baseName + ":";
-        if (arg.startsWith(optionStr)) {
-            String val = arg.substring(optionStr.length()).toUpperCase();
-            VM.setProperty("translator." + baseName, val);
-            return true;
+
+    public boolean processOption(String arg) {
+        if (arg.startsWith("-")) {
+            for (int i = 0; i < Arg.translatorArgs.length; i++) {
+                Arg translatorArg = Arg.translatorArgs[i];
+                String optionStr = translatorArg.getOptionName();
+                if (arg.startsWith(optionStr)) {
+                    String val = arg.substring(optionStr.length()).toUpperCase();
+                    VM.setProperty(translatorArg.getPropertyName(), val);
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -461,11 +514,67 @@ public final class Translator implements TranslatorInterface {
     /**
      * {@inheritDoc}
      */
-    public boolean processOptionProperties(String arg) {
-        return arg.startsWith("-") &&
-                (processOptionAs(arg, "optimizeConstantObjects")
-                || processOptionAs(arg, "deadMethodElimination"));
+    public boolean isOption(String arg) {
+        if (arg.startsWith("-")) {
+            for (int i = 0; i < Arg.translatorArgs.length; i++) {
+                if (arg.startsWith(Arg.translatorArgs[i].getOptionName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
+    
+//    private void printOne(PrintStream out, String baseName, String rest, boolean asParameters) {
+//        out.print("    -");
+//        if (!asParameters) {
+//            out.print("Dtranslator.");
+//        }
+//        out.print(baseName);
+//         if (asParameters) {
+//            out.print(":");
+//        } else {
+//            out.print("=");
+//        }
+//        out.println(rest);
+//    }
+    
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public void printOptionProperties(PrintStream out, boolean asParameters) {
+//        printOne(out, "optimizeConstantObjects", "<bool> Reorder class objects to allow small indexes for common objects.\n" +
+//                "                          <bool> must be true or false (default is true)", asParameters);
+//        printOne(out, "deadMethodElimination", "<bool> Remove uncalled (and uncallable) methods.\n." +
+//                "                         <bool> must be true or false (default is true)", asParameters);
+//    }
+//    
+//    /**
+//     * If "arg" match the  option with the basic name "baseName" then set the option to 
+//     * the appropriate value, and return true.
+//     *
+//     * @param arg the argument on the command line "-foo:value"
+//     * @param baseName the basic name of the option: "foo"
+//     * @return true if "arg" is the option that matches baseName.
+//     */
+//    private boolean processOptionAs(String arg, String baseName) {
+//        String optionStr = "-" + baseName + ":";
+//        if (arg.startsWith(optionStr)) {
+//            String val = arg.substring(optionStr.length()).toUpperCase();
+//            VM.setProperty("translator." + baseName, val);
+//            return true;
+//        }
+//        return false;
+//    }
+//    
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public boolean processOptionProperties(String arg) {
+//        return arg.startsWith("-") &&
+//                (processOptionAs(arg, "optimizeConstantObjects")
+//                || processOptionAs(arg, "deadMethodElimination"));
+//    }
 
     /*---------------------------------------------------------------------------*\
      *                                   Misc                                    *

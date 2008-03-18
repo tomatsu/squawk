@@ -111,7 +111,7 @@ public class DeadMethodEliminator {
                 // Don't preserve uncalled private constructors.
                 // This means that the unlikely call of ClassFoo.newInstance() while within 
                 // ClassFoo will fail when it shouldn't.
-                if (Translator.shouldDeleteUnusedPrivateConstructors() && (m.isPrivate())) {
+                if (Arg.get(Arg.DELETE_UNUSED_PRIVATE_CONSTRUCTORS).getBool() && (m.isPrivate())) {
                     return false;
                 }
                /* if (VM.stripSymbols(m.getDefiningClass())) {

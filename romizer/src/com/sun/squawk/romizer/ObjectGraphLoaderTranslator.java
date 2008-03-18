@@ -67,10 +67,14 @@ public class ObjectGraphLoaderTranslator implements TranslatorInterface {
 
 	}
 
-	public boolean processOptionProperties(String arg) {
+	public boolean processOption(String arg) {
 		return false;
 	}
-	
+
+    public boolean isOption(String arg) {
+        return false;
+    }
+
 	public void setInKlassInit(boolean inKlassInit) {
 		this.inKlassInit = inKlassInit;
 	}
