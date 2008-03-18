@@ -496,6 +496,7 @@ public final class CheneyCollector extends GarbageCollector {
         }
 /*end[DEBUG_CODE_ENABLED]*/
 
+/*if[!FLASH_MEMORY]*/
         if (VM.isVerbose() && Klass.getSystemID(klass) == CID.BYTECODE_ARRAY) {
             int old = VM.setStream(VM.STREAM_SYMBOLS);
             if (!copyingObjectGraph) {
@@ -513,6 +514,7 @@ public final class CheneyCollector extends GarbageCollector {
             }
             VM.setStream(old);
         }
+/*end[FLASH_MEMORY]*/        
 
         /*
          * Return the new object pointer.

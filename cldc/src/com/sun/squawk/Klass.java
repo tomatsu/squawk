@@ -2818,9 +2818,9 @@ public class Klass {
         Assert.that(getState() >= Klass.STATE_CONVERTED);
         Assert.that(method.getOffset() != ILLEGAL_METHOD_OFFSET);
         Object[] table = (method.isStatic() ? staticMethods : virtualMethods);
-        if (method.getOffset() < 0 || method.getOffset() >= table.length) {
-            VM.println("method " + method.getName() + " has wierd offset " + method.getOffset() + " in " + this);
-        }
+//        if (method.getOffset() < 0 || method.getOffset() >= table.length) {
+//            VM.println("method " + method.getName() + " has wierd offset " + method.getOffset() + " in " + this);
+//        }
         return table[method.getOffset()];
     }
     
@@ -3123,20 +3123,20 @@ public class Klass {
                 methods[i] = GC.newMethod(body.getDefiningClass(), body);
             }
 /*
-            boolean isStatic = methods == staticMethods;
-            VM.print(name);
-            VM.print(isStatic ? ".smethod[" : ".vmethod[");
-            VM.print(i);
-            VM.print("] = ");
-            VM.printAddress(Address.asAddress(methods[i]));
-
-            Object methodBody = methods[i];
-            Klass definingClass = VM.asKlass(NativeUnsafe.getObject(methodBody, HDR.methodDefiningClass));
-            Method method = definingClass.findMethod(methodBody);
-            VM.print("  ");
-            VM.print(method);
-
-            VM.println("");
+//            boolean isStatic = methods == staticMethods;
+//            VM.print(name);
+//            VM.print(isStatic ? ".smethod[" : ".vmethod[");
+//            VM.print(i);
+//            VM.print("] = ");
+//            VM.printAddress(Address.asAddress(methods[i]));
+//
+//            Object methodBody = methods[i];
+//            Klass definingClass = VM.asKlass(NativeUnsafe.getObject(methodBody, HDR.methodDefiningClass));
+//            Method method = definingClass.findMethod(methodBody);
+//            VM.print("  ");
+//            VM.print(method);
+//
+//            VM.println("");
 */
         }
     }

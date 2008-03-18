@@ -795,7 +795,7 @@ public class GC implements GlobalStaticFields {
          * Trace.
          */
         if (oop != null) {
-            if (isTracing(TRACE_ALLOCATION)) {
+            if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_ALLOCATION)) {
                 VM.print("[Allocated object: block = ");
                 VM.printUWord(GC.oopToBlock(VM.asKlass(klass), Address.fromObject(oop)).toUWord());
                 VM.print(" oop = ");
@@ -809,7 +809,7 @@ public class GC implements GlobalStaticFields {
                 VM.println("]");
             }
         } else {
-            if (isTracing(TRACE_BASIC)) {
+            if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_BASIC)) {
                 VM.print("[Failed allocation of ");
                 VM.print(size);
                 VM.print(" bytes, klass = ");
@@ -867,8 +867,8 @@ public class GC implements GlobalStaticFields {
         if (isTracing(TRACE_BASIC)) {
             VM.print("** Collecting garbage ** (collection count: ");
             VM.print(getCollectionCount());
-            VM.print(", backward branch count:");
-            VM.print(VM.getBranchCount());
+//            VM.print(", backward branch count:");
+//            VM.print(VM.getBranchCount());
             VM.print(", free memory:");
             VM.print(free);
             VM.println(" bytes)");
@@ -953,7 +953,7 @@ public class GC implements GlobalStaticFields {
         /*
          * Trace.
          */
-        if (isTracing(TRACE_OBJECT_GRAPH_COPYING)) {
+        if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_OBJECT_GRAPH_COPYING)) {
             VM.print("** Copying object graph rooted by ");
             VM.print(GC.getKlass(object).getName());
             VM.print(" instance @ ");
@@ -1203,7 +1203,7 @@ public class GC implements GlobalStaticFields {
      */
      static void stackCopy(Object srcChunk, Object dstChunk) {
 
-         if (isTracing(TRACE_BASIC)) {
+         if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_BASIC)) {
              VM.print("GC::stackCopy - srcChunk = ");
              VM.printAddress(srcChunk);
              VM.print(" dstChunk = ");
@@ -1428,6 +1428,7 @@ public class GC implements GlobalStaticFields {
         /*
          * Write the symbol table entries.
          */
+/*if[!FLASH_MEMORY]*/
         if (isHosted || VM.isVerbose() || VM.getCurrentIsolate().getMainClassName().equals("com.sun.squawk.SuiteCreator")) {
             Method method = body.getDefiningMethod();
             String name = method.toString();
@@ -1453,7 +1454,8 @@ public class GC implements GlobalStaticFields {
 
             VM.setStream(old);
         }
-
+/*end[FLASH_MEMORY]*/
+        
         /*
          * Return the method object.
          */

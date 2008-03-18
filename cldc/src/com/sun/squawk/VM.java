@@ -218,6 +218,11 @@ public class VM implements GlobalStaticFields {
      */
     private static int throwCount;
     
+    /**
+     * If VM.outPrint() ever fails to print to System.err, then set to true, and print to VM.print.
+     */
+    private static boolean safePrintToVM;
+    
     
     /*=======================================================================*\
      *                          VM callback routines                         *
@@ -1684,7 +1689,11 @@ hbp.dumpState();
      * @return the current stream used for VM printing
      */
     public static int setStream(int stream) {
-        Assert.always(stream >= STREAM_STDOUT && stream <= STREAM_SYMBOLS, "invalid stream specifier");
+/*if[FLASH_MEMORY]*/
+        Assert.always(stream >= STREAM_STDOUT && stream <= STREAM_STDERR, "invalid stream specifier");
+/*else[FLASH_MEMORY]*/
+//        Assert.always(stream >= STREAM_STDOUT && stream <= STREAM_SYMBOLS, "invalid stream specifier");
+/*end[FLASH_MEMORY]*/
         return setStream0(stream);
     }
 
@@ -3049,7 +3058,7 @@ hbp.dumpState();
      */
     public static void printThread(VMThread thr) {
         if (thr == null) {
-            VM.print("VM.printThread(thr == null)");
+            VM.print("(thr == null)");
             return;
         }
         try {
@@ -3069,16 +3078,46 @@ hbp.dumpState();
     }
     
     /**
+     * Print thread name as safely as possible, to System.err, or VM.print if that fails.
+     * 
+     * Called by error reporting code, so doesn't assert, or intentionally throw exceptions!
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
+     *
+     * @param thr the thread to print
+     */
+    public static void outPrintThread(VMThread thr) {
+        if (thr == null) {
+            VM.outPrint("(thr == null)");
+            return;
+        }
+        try {
+            String thrName = thr.getName();
+            if (thrName != null) {
+                VM.outPrint(thrName);
+                return;
+            }
+        } catch (OutOfMemoryError e) {
+            VM.print("Uncaught out of memory error while printing thread name ");
+        } catch (Throwable exc2) {
+             VM.print("Uncaught exception while printing thread name ");
+        }
+        // backup case:
+        VM.outPrint("Thread-");
+        VM.outPrint(thr.getThreadNumber());
+    }
+    
+    /**
      * Print branch count as safely as possible. 
      * 
      * Called by error reporting code, so doesn't assert, or intentionally throw exceptions!
      */
-    public static void printBC() {
+    public static void outPrintBC() {
         long bc = VM.branchCount(); // if vmcore compiled with tracing, this will work.
         if (bc >= 0) {
-            VM.print("after ");
-            VM.print(bc);
-            VM.print(" branches ");
+            VM.outPrint("after ");
+            VM.outPrint(bc);
+            VM.outPrint(" branches ");
         }
     }
     
@@ -3119,6 +3158,60 @@ hbp.dumpState();
         return printExceptionAndTrace(exc, msg, true);
     }
     
+    
+    /**
+     * Print str safely to System.err, or to VM.print if that fails.
+     * 
+     * @param str string to print
+     */
+    public static void outPrint(String str) {
+        if (!safePrintToVM) {
+            try {
+                System.err.print(str);
+                return;
+            } catch (Throwable t) {
+                safePrintToVM = true;
+            }
+        }
+        VM.print(str);
+    }
+    
+    /**
+     * Print str safely to System.err, or to VM.print if that fails.
+     * 
+     * @param str string to print
+     */
+    public static void outPrintln(String str) {
+        outPrint(str);
+        outPrintln();
+    }
+    
+    /**
+     * Print new line safely to System.err, or to VM.print if that fails.
+     * 
+     */
+    public static void outPrintln() {
+        outPrint("\n");
+    }
+
+
+    /**
+     * Print val safely to System.err, or to VM.print if that fails.
+     * 
+     * @param val long to print
+     */
+    public static void outPrint(long val) {
+        if (!safePrintToVM) {
+            try {
+                System.err.print(val);
+                return;
+            } catch (Throwable t) {
+                safePrintToVM = true;
+            }
+        }
+        VM.print(val);
+    }
+    
     /**
      * Safely print exception and stack trace to System.err. Handles exceptions in 
      * Throwable.toString and printStackTrace, including OutOfMemoryExceptions.
@@ -3135,12 +3228,12 @@ hbp.dumpState();
         
         // print preamble. Should never fail:
         try {
-            VM.println(msg);
-            VM.print("    ");
-            VM.printBC();
-            VM.print("on thread ");
-            VM.printThread(VMThread.currentThread());
-            VM.println();
+            VM.outPrintln(msg);
+            VM.outPrint("    ");
+            VM.outPrintBC();
+            VM.outPrint("on thread ");
+            VM.outPrintThread(VMThread.currentThread());
+            VM.outPrintln();
             origExcName = GC.getKlass(exc).getInternalName();
         } catch (Throwable e) {
             VM.println("Error in VM.printExceptionAndTrace");

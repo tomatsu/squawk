@@ -737,7 +737,7 @@ public final class Isolate implements Runnable {
     }
     
     /**
-     * Get an enumeration of isolate property keys. These keys can be used with {@link Isolate#getProperty} to get the
+     * Get an enumeration of isolate property keys. These keys can be used with {@link Isolate#getProperty(String)} to get the
      * property values.
      * 
      * @return enumeration of property keys
@@ -1683,6 +1683,7 @@ public final class Isolate implements Runnable {
         isolate.savedStackChunks = null;
         VM.registerIsolate(isolate);
 
+/*if[!FLASH_MEMORY]*/
         if (VM.isVerbose()) {
             int old = VM.setStream(VM.STREAM_SYMBOLS);
             VM.print("UNHIBERNATED_ISOLATE.RELOCATION=");
@@ -1690,6 +1691,7 @@ public final class Isolate implements Runnable {
             VM.println();
             VM.setStream(old);
         }
+/*end[FLASH_MEMORY]*/
 
         return isolate;
     }
@@ -2224,7 +2226,7 @@ public final class Isolate implements Runnable {
             try {
                 mos.add(url, Connector.openOutputStream(url));
             } catch (IOException e) {
-                VM.println(mainClassName + ": IO error opening standard stream to " + url + ": " + e);
+                VM.println("IO error opening standard stream to " + url + ": " + e);
             }
         }
     }

@@ -1368,15 +1368,15 @@ VM.println();
         int size = GC.getArrayLengthNoCheck(stack);
         Address stackEnd = Address.fromObject(stack).add(size * HDR.BYTES_PER_WORD);
 /*
-if (!(fp.hi(Address.fromObject(stack)) && fp.loeq(stackEnd))) {
-    VM.print("fp=");
-    VM.printAddress(fp);
-    VM.print(" stack=");
-    VM.printAddress(stack);
-    VM.print(" stackEnd=");
-    VM.printAddress(stackEnd);
-    VM.println();
-}
+//if (!(fp.hi(Address.fromObject(stack)) && fp.loeq(stackEnd))) {
+//    VM.print("fp=");
+//    VM.printAddress(fp);
+//    VM.print(" stack=");
+//    VM.printAddress(stack);
+//    VM.print(" stackEnd=");
+//    VM.printAddress(stackEnd);
+//    VM.println();
+//}
 */
         Assert.that(fp.hi(Address.fromObject(stack)) && fp.loeq(stackEnd));
         return stackEnd.diff(fp);
@@ -1513,10 +1513,10 @@ if (!(fp.hi(Address.fromObject(stack)) && fp.loeq(stackEnd))) {
                 VM.printExceptionAndTrace(ex, "Uncaught exception in Thread.run():");
             }
 /*
-VM.print("killing thread ");
-VM.print(threadNumber);
-VM.print(", bcount = ");
-VM.println(VM.branchCount());
+//VM.print("killing thread ");
+//VM.print(threadNumber);
+//VM.print(", bcount = ");
+//VM.println(VM.branchCount());
 */
             killThread(!didAbort, uncaughtException);
              // Never returns unless exception is thrown. Ordinarily switches to another thread.
@@ -1533,7 +1533,6 @@ VM.println(VM.branchCount());
             VM.print("Uncaught ");
             VM.print(GC.getKlass(e).getInternalName());
             VM.print(" while aborting isolate [");
-            VM.printBC();
             VM.println("]");
         }
         killThread(!true, uncaughtException);
@@ -2024,14 +2023,14 @@ VM.println(VM.branchCount());
 //traceMonitor("monitorEnter: Must wait for lock: ", monitor, object);
 
 /* 
-   if (!monitor.owner.isAlive()) {
-        VM.println("Error in monitorEnter by " + currentThread);
-        VM.println("The owner of monitor " + monitor + " is not alive " + monitor.owner);
-    } else if (runnableThreads.size() == 0) {
-         VM.println("Error in monitorEnter by " + currentThread);
-         VM.println("The owner of monitor " + monitor + " is not runnable:");
-         monitor.owner.printState();
-    }
+//   if (!monitor.owner.isAlive()) {
+//        VM.println("Error in monitorEnter by " + currentThread);
+//        VM.println("The owner of monitor " + monitor + " is not alive " + monitor.owner);
+//    } else if (runnableThreads.size() == 0) {
+//         VM.println("Error in monitorEnter by " + currentThread);
+//         VM.println("The owner of monitor " + monitor + " is not runnable:");
+//         monitor.owner.printState();
+//    }
 */
             contendedEnterCount++;
             /*

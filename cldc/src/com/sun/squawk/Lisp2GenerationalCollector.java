@@ -2318,6 +2318,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
                     VM.println();
                 }
 
+/*if[!FLASH_MEMORY]*/                
                 if (VM.isVerbose() && Klass.getSystemID(klass) == CID.BYTECODE_ARRAY) {
                     int old = VM.setStream(VM.STREAM_SYMBOLS);
                     if (!copyingObjectGraph) {
@@ -2335,6 +2336,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
                     }
                     VM.setStream(old);
                 }
+/*end[FLASH_MEMORY]*/
 
                 if (!copyingObjectGraph) {
                     if (firstDeadBlock.isZero()) {
