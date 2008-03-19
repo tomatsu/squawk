@@ -45,6 +45,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -527,27 +528,92 @@ public class Build {
         }
     }
 
+    protected File[] getSiblingBuilderDotPropertiesFiles() {
+    	List<File> dotPropertiesFiles = new ArrayList<File>();
+    	File[] siblingDirs = new File(".").listFiles();
+    	for (File siblingDir: siblingDirs) {
+    		File dotPropertiesFile = new File(siblingDir, "builder.properties");
+    		if (dotPropertiesFile.canRead()) {
+    			dotPropertiesFiles.add(dotPropertiesFile);
+    		}
+    	}
+    	return dotPropertiesFiles.toArray(new File[dotPropertiesFiles.size()]);
+    }
+    
+    protected void processBuilderDotPropertiesFiles(File[] dotPropertiesFiles) {
+    	for (File dotProperties: dotPropertiesFiles) {
+    		processBuilderDotPropertiesFile(dotProperties);
+    	}
+    }
+    
+    protected void processBuilderDotPropertiesFile(File dotPropertiesFile) {
+    	log(verbose, "Reading commands from: " + dotPropertiesFile.getPath());
+    	Properties properties = new Properties();
+    	InputStream in = null;
+    	try {
+        	in = new FileInputStream(dotPropertiesFile);
+    		properties.load(in);
+    	} catch (IOException e) {
+    	}
+    	if (in != null) {
+    		try {in.close();} catch (IOException e) {};
+    		in = null;
+    	}
+    	int propertyIndex = 0;
+    	String currentType = "";
+    	String currentName = "";
+    	HashMap<String, String> attributes = new HashMap<String, String>();
+    	for (Entry<Object, Object> entry: properties.entrySet()) {
+    		propertyIndex++;
+    		String propertyName = (String) entry.getKey();
+    		StringTokenizer tokenizer = new StringTokenizer(propertyName, ".");
+    		try {
+	    		String type = tokenizer.nextToken();
+	    		String name = tokenizer.nextToken();
+	    		String attribute = tokenizer.nextToken();
+	    		if (!type.equals(currentType) && !name.equals(currentName)) {
+	    			if (!attributes.isEmpty()) {
+	    				processBuilderDotPropertiesFile(currentType, currentName, dotPropertiesFile, propertyIndex, attributes);
+	    			}
+	    			attributes.clear();
+	    			currentType = type;
+	    			currentName = name;
+	    		}
+    			attributes.put(attribute, (String) entry.getValue());
+    		} catch (NoSuchElementException e) {
+    			throw new BuildException("Bad format on property at index " + propertyIndex + " in file " + dotPropertiesFile.getPath());
+    		}
+    	}
+    	if (!attributes.isEmpty()) {
+			processBuilderDotPropertiesFile(currentType, currentName, dotPropertiesFile, propertyIndex, attributes);
+    	}
+    }
+    
+    protected void processBuilderDotPropertiesFile(String type, String name, File dotPropertiesFile, int propertyIndex, HashMap<String, String> attributes) {
+		if (type.equals("Target")) {
+			Target target = addTarget(Boolean.valueOf(attributes.get("j2me")), dotPropertiesFile.getParentFile().getName(), attributes.get("dependsOn"), attributes.get("extraClassPath"), attributes.get("extraSourceDirs"));
+			String triggers = attributes.get("triggers");
+			if (triggers != null) {
+				target.triggers(triggers);
+			}
+		} else {
+			throw new BuildException("Unsupported type " + type + " on property at index " + propertyIndex + " in file " + dotPropertiesFile.getPath());
+		}
+    }
+    
     /**
      * Installs the built-in commands.
      */
     private void installBuiltinCommands() {
+    	
+    	File[] siblingBuilderDotPropertiesFiles = getSiblingBuilderDotPropertiesFiles();
+    	processBuilderDotPropertiesFiles(siblingBuilderDotPropertiesFiles);
 
         addGen("OPC",                "cldc/src");
         addGen("OperandStackEffect", "translator/src");
         addGen("Mnemonics",          "translator/src");
         addGen("Verifier",           "translator/src");
         addGen("SwitchDotC",         "vmcore/src");
-
-        addTarget(true,  "cldc",              null, null, "cldc/phoneme").dependsOn("OPC");
-        addTarget(true,  "imp",               "cldc", null, "imp/phoneme");
-        addTarget(true,  "translator",        "cldc").dependsOn("OperandStackEffect Mnemonics Verifier");
-        addTarget(false, "hosted-support",              "cldc translator").triggers("squawk.jar");
-        addTarget(false, "romizer",           "cldc translator hosted-support");
-        addTarget(false, "mapper",            "cldc translator hosted-support");
-        addTarget(true,  "debugger",          "cldc");
-        addTarget(false, "debugger-proxy",               "cldc translator hosted-support debugger");
-        addTarget(true,  "javatest-device",               "cldc", "javatest-device/lib/agent.jar:javatest-device/lib/client.jar");
-
 
         // Add the "clean" command
         addCommand(new Command(this, "clean") {

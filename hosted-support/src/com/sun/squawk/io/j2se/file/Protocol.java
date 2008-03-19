@@ -107,7 +107,8 @@ public class Protocol extends ConnectionBase implements StreamConnection {
                         boolean found = false;
                         for (String path : p.path) {
                             try {
-                                fis = new FileInputStream(new File(path, fileName));
+                            	File file = new File(path, fileName);
+                                fis = new FileInputStream(file);
                                 found = true;
                                 break;
                             } catch (IOException e) {
