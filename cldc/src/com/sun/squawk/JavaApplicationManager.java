@@ -387,6 +387,9 @@ public class JavaApplicationManager {
             String val = propAndValue.substring(seperator+1);
             newProps.put(prop, val);
             // System properties are not "global global"
+        } else if (arg.startsWith("-suitepath:")) {
+            String path = arg.substring("-suitepath:".length());
+            ObjectMemoryLoader.setFilePath(path);
         } else if (arg.equals("-h")) {
             usage("");
             VM.stopVM(0);
@@ -417,6 +420,7 @@ public class JavaApplicationManager {
                 "                          paths where classes, suites and sources can be found\n" +
 /*end[FLASH_MEMORY]*/
                 "    -suite:<name>         suite name (without \"" + Suite.FILE_EXTENSION + "\") to load\n" +
+                "    -suitepath:<path>   host path to look for suite's in\n" +
 /*if[FLASH_MEMORY]*/
                 "    -spotsuite:<name>     suite name (without \"" + Suite.FILE_EXTENSION + "\") to load\n" +
 /*end[FLASH_MEMORY]*/

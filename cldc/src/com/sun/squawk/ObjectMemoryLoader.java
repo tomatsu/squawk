@@ -188,6 +188,9 @@ public class ObjectMemoryLoader {
         } else {
             url = uri;
         }
+        if (url.startsWith("file://") && filePathelements != null) {
+        	url += ";" + filePathelements;
+        }
         DataInputStream dis = Connector.openDataInputStream(url);
         ObjectMemoryFile result = load(dis, uri, loadIntoReadOnlyMemory);
         dis.close();
@@ -513,9 +516,6 @@ public class ObjectMemoryLoader {
             if (result == null) {
                 result = "file://squawk.suite";
             }
-        }
-        if (result.startsWith("file://") && filePathelements != null) {
-            result += ";" + filePathelements;
         }
         return result;
     }
