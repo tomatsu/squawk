@@ -317,8 +317,8 @@ int reprogram_mmu(int ignore_obsolete_files) {
 						is_obsolete = flags & OBSOLETE_FLAG_MASK;
 						virtual_address = read_number(fat_ptr+7, 4);
 						sector_count = read_number(fat_ptr+11, 2);
-						for (j = 0; j < sector_count; ++j) {
-							int sector_number = read_number(fat_ptr+13+(j*2), 2);
+							for (j = 0; j < sector_count; ++j) {
+								int sector_number = read_number(fat_ptr+13+(j*2), 2);
 							if (virtual_address != 0 && !(is_obsolete && ignore_obsolete_files)) {
 								map_level_2_entry_using_addresses(virtual_address, get_sector_address(sector_number));
 								virtual_address += SECTOR_SIZE;
@@ -340,4 +340,10 @@ int reprogram_mmu(int ignore_obsolete_files) {
 		}
 		recordStatus = recordStatus = read_number(fat_ptr, 2);
 	}
+	
+	// invalidate data cache
+	data_cache_disable();
+	invalidate_data_tlb();
+	data_cache_enable();
+	return TRUE;
 }
