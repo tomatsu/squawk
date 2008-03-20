@@ -93,15 +93,13 @@ public class Protocol extends ConnectionBase implements StreamConnection {
         Parameters p = new Parameters();
         fileName = p.parse(fileName.substring(2));
 
-//System.err.println("opening " + name);
 
         try {
-//System.out.println("file: " + new File(name).getAbsolutePath());
             if (mode == Connector.READ) {
                 if (fileName.endsWith("/")) {
                     fis = getListingFor(fileName);
                 } else {
-                    if (p.path.size() == 0) {
+                    if (p.path.size() == 0 || new File(fileName).isAbsolute()) {
                         fis = new FileInputStream(fileName);
                     } else {
                         boolean found = false;
@@ -120,7 +118,7 @@ public class Protocol extends ConnectionBase implements StreamConnection {
                     }
                 }
             } else if (mode == Connector.WRITE) {
-                if (p.path.size() == 0) {
+                if (p.path.size() == 0 || new File(fileName).isAbsolute()) {
                     fos = new FileOutputStream(fileName, p.append);
                 } else {
                     boolean found = false;
