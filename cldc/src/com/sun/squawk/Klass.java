@@ -1353,21 +1353,21 @@ public class Klass {
      * @return the interface slot of this method in the interface, or -1.
      */
     final int findISlot(int vslot, Object[] results) {
-        int icount = interfaces.length;
+        int icount = interfaceVTableMaps.length;
         for (int i = 0; i < icount; i++) {
             short[] islots = interfaceVTableMaps[i];
             int scount = islots.length;
             for (int j = 0; j < scount; j++) {
                 if (islots[j] == vslot) {
                     Klass iKlass = interfaces[i];
-					//VM.print(this.getInternalName());
-					//VM.print("#");
-					//VM.print(vslot);
-					//VM.print(" is defined in interface ");
-					//VM.print(iKlass.getInternalName());
-					//VM.print("#");
-					//VM.print(j);
-					//VM.println();
+//					VM.print(this.getInternalName());
+//					VM.print("#");
+//					VM.print(vslot);
+//					VM.print(" is defined in interface ");
+//					VM.print(iKlass.getInternalName());
+//					VM.print("#");
+//					VM.print(j);
+//					VM.println();
                     results[0] = iKlass;
                     return j;
                 }
