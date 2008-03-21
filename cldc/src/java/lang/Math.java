@@ -25,6 +25,7 @@
 package java.lang;
 import com.sun.squawk.vm.MathOpcodes;
 import com.sun.squawk.*;
+import com.sun.squawk.util.Assert;
 
 /**
  * The class <code>Math</code> contains methods for performing basic
@@ -430,8 +431,8 @@ public final strictfp class Math {
 
 /*if[DEBUG_CODE_ENABLED]*/
     static {
-        com.sun.squawk.util.Assert.that(Float.floatToIntBits(-0.0f)  == negativeZeroFloatBits);
-        com.sun.squawk.util.Assert.that(Double.doubleToLongBits(-0.0d) == negativeZeroDoubleBits);
+        Assert.that(Float.floatToIntBits(-0.0f)  == negativeZeroFloatBits);
+        Assert.that(Double.doubleToLongBits(-0.0d) == negativeZeroDoubleBits);
     }
 /*end[DEBUG_CODE_ENABLED]*/
 

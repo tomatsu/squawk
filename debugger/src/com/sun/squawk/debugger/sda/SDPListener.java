@@ -201,7 +201,7 @@ class SDPListener extends JDWPListener {
                     if (writeTag) {
                         out.writeByte(tag, "tag");
                     }
-                    out.writeLong(NativeUnsafe.getLong(base, offset), msg);
+                    out.writeLong(NativeUnsafe.getLongAtWord(base, offset), msg);
                     break;
                 case JDWP.Tag_OBJECT:
                 case JDWP.Tag_STRING:
@@ -353,6 +353,7 @@ class SDPListener extends JDWPListener {
          * Implements <a href="http://java.sun.com/j2se/1.5.0/docs/guide/jpda/jdwp/jdwp-protocol.html#JDWP_VirtualMachine_Dispose">Dispose</a>.
          */
         private void Dispose() throws IOException {
+            sda.getListener().quit();
             sda.resumeIsolate(true);
         }
 
@@ -797,6 +798,42 @@ class SDPListener extends JDWPListener {
         }
 
         /**
+         * Return true if the tag is a valid <a href="http://java.sun.com/j2se/1.5.0/docs/guide/jpda/jdwp/jdwp-protocol.html#JDWP_TAG">JDWP Tag</a> value.
+         * Tags are a sparse set that doesn't include zero, so it's a good value to
+         * validate.
+         *
+         * @param tag int
+         * @return boolean
+         */
+        private Klass getTagKlass(int tag) {
+            switch (tag) {
+                case JDWP.Tag_OBJECT:
+                case JDWP.Tag_ARRAY:
+                case JDWP.Tag_STRING:
+                case JDWP.Tag_THREAD:
+                case JDWP.Tag_THREAD_GROUP:
+                case JDWP.Tag_CLASS_LOADER:
+                case JDWP.Tag_CLASS_OBJECT:
+                    return Klass.OBJECT;
+
+                case JDWP.Tag_BYTE:
+                case JDWP.Tag_CHAR:
+                case JDWP.Tag_FLOAT:
+                case JDWP.Tag_INT:
+                case JDWP.Tag_SHORT:
+                case JDWP.Tag_BOOLEAN:
+                    return Klass.INT;
+
+                case JDWP.Tag_LONG:
+                case JDWP.Tag_DOUBLE:
+                    return Klass.LONG;
+                default:
+                    Assert.always(false, "Unknown slot type tag: " + tag);
+                    return null;
+            }
+        }
+
+        /**
          * Implements <a href="http://java.sun.com/j2se/1.5.0/docs/guide/jpda/jdwp/jdwp-protocol.html#JDWP_StackFrame_ThisObject ">ThisObject</a>
          */
         private void ThisObject() throws SDWPException, IOException {
@@ -956,6 +993,38 @@ class SDPListener extends JDWPListener {
                                 exception = e;
                             }
                         }
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Klass[] getTypeMap(int thisFrame, Object mp, int parameterCount) {
+                    Klass[] defaults = super.getTypeMap(thisFrame, mp, parameterCount);
+                    if (frameNo == thisFrame) {
+                        Klass[] result = new Klass[defaults.length];
+                        for (int i = 0; i < defaults.length; i++) {
+                            result[i] = defaults[i];
+                        }
+
+                        for (int i = 0; i < defaults.length; i++) {
+                            int tag = getTagForSelectedSlot(i);
+                            if (tag != -1) {
+                                result[i] = getTagKlass(tag);
+                                if (result[i].isDoubleWord()) {
+                                    if (i <= parameterCount) {
+                                        Assert.always(result[i + 1] == defaults[i + 1], "result[i + 1] : " + result[i + 1]  + " defaults[i + 1]: " + defaults[i + 1]);
+                                        result[i + 1] = Klass.LONG2;
+                                    } else {
+                                        Assert.always(result[i - 1] == defaults[i - 1]);
+                                        result[i - 1] = Klass.LONG2;
+                                    }
+                                }
+                            }
+                        }
+                        return result;
+                    } else {
+                        return defaults;
                     }
                 }
 

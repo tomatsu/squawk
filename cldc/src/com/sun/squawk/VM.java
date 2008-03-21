@@ -1080,7 +1080,7 @@ public class VM implements GlobalStaticFields {
                 }
             } catch (Throwable e) {
                 if (VM.isVerbose()) {
-                    printVMStackTrace(e, "***", "Exception thrown in StackTraceElement.toString:");
+                    printVMStackTrace(e, "***", "Exception thrown in StackTraceElement.print():");
                 }
                 VM.print("*** Error decoding this StackTraceElement:\n    ");
                 printToVM(); // print it the simple way

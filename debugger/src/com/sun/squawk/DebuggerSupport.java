@@ -451,7 +451,16 @@ public class DebuggerSupport {
 
                     int localCount = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp);
                     int parameterCount = MethodBody.decodeParameterCount(mp);
-                    Klass[] typeMap = MethodBody.decodeTypeMap(mp);
+                    Klass[] typeMap = inspector.getTypeMap(thisFrame, mp, parameterCount);
+//VM.print("localCount: ");
+//    VM.println(localCount);
+//VM.print("parameterCount: ");
+//    VM.println(parameterCount);
+//VM.println("Typemap:");
+//for (int i = 0; i < typeMap.length; i++) {
+//    VM.print("    ");
+//    VM.println(typeMap[i].toString());
+//}
 
                     // Visit the parameters
                     int slot = 0;
@@ -527,10 +536,10 @@ public class DebuggerSupport {
      * @param vmThread   the thread
      * @param fo         the frame pointer as an offset (in bytes) from the top of the stack
      * @param inspector  the StackInspector object
-     * @param parameters specifies if the slots being traversed by this call hold the parameters
+     * @param isParameter specifies if the slots being traversed by this call hold the parameters
      * @return the logical index of the slot one past the last slot visited by this call
      */
-    private static int inspectSlots(int count, int offset, int slot, Klass[] typeMap, VMThread vmThread, Offset fo, StackInspector inspector, boolean parameters) {
+    private static int inspectSlots(int count, int offset, int slot, Klass[] typeMap, VMThread vmThread, Offset fo, StackInspector inspector, boolean isParameter) {
         Object stack = vmThread.getStack();
         SlotSetter setter = null;
         if (inspector instanceof SlotSetter) {
@@ -538,18 +547,18 @@ public class DebuggerSupport {
         }
         while (count-- > 0) {
             Klass type = typeMap[slot];
-            int varOffset = vmThread.frameOffsetAsPointer(fo).diff(Address.fromObject(stack)).bytesToWords().toInt() + (parameters ? offset : -offset);
+            int varOffset = vmThread.frameOffsetAsPointer(fo).diff(Address.fromObject(stack)).bytesToWords().toInt() + (isParameter ? offset : -offset);
             if (type.isReferenceType()) {
                 Object value = NativeUnsafe.getObject(stack, varOffset);
                 if (DEBUG_STACK_INSPECTION) {
-                    VM.print("    slot " + slot + ": type = " + type.getInternalName() + " isParameter = " + parameters + ", value = ");
+                    VM.print("    slot " + slot + ": type = " + type.getInternalName() + " isParameter = " + isParameter + ", value = ");
                     VM.printAddress(value);
                     if (value != null) {
                         VM.print(", real type = " + GC.getKlass(value).getInternalName());
                     }
                     VM.println();
                 }
-                inspector.inspectSlot(parameters, slot, value);
+                inspector.inspectSlot(isParameter, slot, value);
                 if (setter != null && setter.shouldSetSlot(slot, type)) {
                     Object newVal = setter.newObjValue();
                     NativeUnsafe.setObject(stack, varOffset, newVal);
@@ -564,17 +573,17 @@ public class DebuggerSupport {
                 boolean skipSlot = false;
                 boolean isTwoWordLongLocal = false;
                 if (!Klass.SQUAWK_64 && type.isDoubleWord()) {
-                    value = NativeUnsafe.getLongAtWord(stack, parameters ? varOffset : varOffset - 1);
+                    value = NativeUnsafe.getLongAtWord(stack, isParameter ? varOffset : varOffset - 1);
                     skipSlot = true;
-                    isTwoWordLongLocal = !parameters;
+                    isTwoWordLongLocal = !isParameter;
                 } else {
                     value = NativeUnsafe.getAsUWord(stack, varOffset).toPrimitive();
                 }
 
                 if (DEBUG_STACK_INSPECTION) {
-                    VM.println("   slot " + (isTwoWordLongLocal ? slot + 1 : slot) + ": type = " + type.getInternalName() + " isParameter = " + parameters + ", value = " + value);
+                    VM.println("   slot " + (isTwoWordLongLocal ? slot + 1 : slot) + ": type = " + type.getInternalName() + " isParameter = " + isParameter + ", value = 0x" + Long.toString(value, 16));
                 }
-                inspector.inspectSlot(parameters, (isTwoWordLongLocal ? slot + 1 : slot), type, value);
+                inspector.inspectSlot(isParameter, (isTwoWordLongLocal ? slot + 1 : slot), type, value);
                 
                 if (setter != null && setter.shouldSetSlot(slot, type)) {
                     long newVal = setter.newPrimValue();
@@ -582,7 +591,7 @@ public class DebuggerSupport {
                         if (DEBUG_STACK_INSPECTION) {
                             VM.println("   setting long " + newVal);
                         }
-                        NativeUnsafe.setLongAtWord(stack, (parameters ? varOffset : varOffset - 1), newVal);
+                        NativeUnsafe.setLongAtWord(stack, (isParameter ? varOffset : varOffset - 1), newVal);
                     } else {
                         if (DEBUG_STACK_INSPECTION) {
                             VM.println("   setting UWord " + newVal);
@@ -703,6 +712,22 @@ public class DebuggerSupport {
          */
         public Object getResult() {
             return null;
+        }
+        
+        /**
+         * Figure out the type map for the given frameNo and method pointer.
+         * 
+         * The default implemention decodes the typemap in the method object, but that only includes
+         * ref/prim types (Object vs int). The debugger agent (SDA) gets more specific type info from the 
+         * the debugger proxy.
+         * 
+         * @param frameNo
+         * @param mp
+         * @param parameterCount 
+         * @return a klass array with one klass per physical word (eg. longs and doubles will have two entries)
+         */
+        public Klass[] getTypeMap(int frameNo, Object mp, int parameterCount) {
+            return MethodBody.decodeTypeMap(mp);
         }
     }
 
