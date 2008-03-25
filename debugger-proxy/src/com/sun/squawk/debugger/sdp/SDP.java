@@ -61,6 +61,12 @@ public class SDP {
      * The URL of the channel to the debugger client.
      */
     private String debugger_url = "serversocket://:2900";
+    
+    /**
+     * This is a unique name of the proxy. Typically it is the port number in the debugger_url,
+     * so the default name is "2900";
+     */
+    private String proxyName;
 
     /**
      * The connection to the JPDA compliant debugger (e.g. jdb).
@@ -99,14 +105,26 @@ public class SDP {
     /**
      * @see getSDP()
      */
-     private static SDP sdp;
+     private static Hashtable sdpTable = new Hashtable();
      
-      /**
-     * The current SDP instance. 
+    /**
+     * Return the active SDP instance named proxyNameThe current SDP instance. 
      * Used when running SDP embedded in the same Java process as controller, as in Solarium
+     * 
+     * @return the SDP instance named proxyName, or null if no active proxy by the name.
      */
-     public static SDP getSDP() {
-         return sdp;
+     public static SDP getSDP(String proxyName) {
+         return (SDP)sdpTable.get(proxyName);
+     }
+     
+    /**
+     * Return the unique name of the proxy. Typically it is the port number in the debugger_url,
+     * so the default name is "2900";
+     * 
+     * @return the proxy name
+     */
+     public String getProxyName() {
+         return proxyName;
      }
     
     /**
@@ -314,7 +332,13 @@ public class SDP {
         if (logURL != null) {
             System.setProperty("squawk.debugger.log.url", logURL);
         }
-
+        
+        if (debugger_url.indexOf("serversocket://:") == 0) {
+            proxyName = debugger_url.substring("serversocket://:".length());
+        } else {
+            proxyName = debugger_url;
+        }
+        
         return true;
     }
 
@@ -368,6 +392,7 @@ public class SDP {
             jdb.quit();
         }
     }
+    
     /**
      * Starts a single debug session between a VM and a debug client. Returns
      * when the session is closed from either end.
@@ -460,14 +485,16 @@ public class SDP {
     }
 
     public static void main(String args[]) throws IOException {
-        sdp = new SDP();
+        SDP sdp = new SDP();
         try {
+
             Thread.currentThread().setName("SDP");
 
             if (!sdp.parseArgs(args)) {
                 System.exit(1);
             }
 
+            sdpTable.put(sdp.getProxyName(), sdp);
             do {
                 if (sdp.sniffOnly) {
                     sdp.goSniff();
@@ -476,7 +503,7 @@ public class SDP {
                 }
             } while (!sdp.singleSession);
         } finally {
-            sdp = null;
+            sdpTable.remove(sdp.getProxyName());
         }
     }
     
