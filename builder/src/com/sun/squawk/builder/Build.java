@@ -452,82 +452,6 @@ public class Build {
         }
     }
 
-    /**
-     * Installs commands from a properties file.
-     *
-     * @param pluginsFile  the properties file to load from
-     */
-    private void loadPlugins(File pluginsFile) {
-        try {
-            if (!pluginsFile.exists()) {
-                throw new IOException("plugin properties file: " + pluginsFile.getAbsolutePath() + " does not seem to exist");
-            }
-            Properties plugins = new Properties();
-            plugins.load(new FileInputStream(pluginsFile));
-
-            ClassLoader loader = Build.class.getClassLoader();
-            if (plugins.containsKey("classpath")) {
-                URL[] urls = null;
-                String[] classpath = Build.toPlatformPath(plugins.getProperty("classpath"), true).split(File.pathSeparator);
-                try {
-                    urls = new URL[classpath.length];
-                    for(int i = 0; i < classpath.length; i++) {
-                        File f = new File (classpath[i]);
-                        String url = f.getAbsolutePath();
-
-                        // Make sure the url class loader recognises directories
-                        if (f.isDirectory()) {
-                            url += "/";
-                        }
-                        url = "file://" + fixURL(url);
-                        urls[i] = new URL(url);
-                    }
-                } catch (MalformedURLException e) {
-                    throw new BuildException("badly formed plugins path", e);
-                }
-                plugins.remove("classpath");
-                loader = new URLClassLoader(urls, loader) {
-                    protected String findLibrary(String libname) {
-                        String mappedName = System.mapLibraryName(libname);
-                        URL url = findResource(mappedName);
-                        try {
-                            File file = new File(url.toURI());
-                            return file.getAbsolutePath();
-                        } catch (URISyntaxException e) {
-                        }
-                        return null;
-                    }
-                };
-            }
-
-            for (Enumeration<?> names = plugins.propertyNames(); names.hasMoreElements(); ) {
-                String name = (String)names.nextElement();
-                String className = plugins.getProperty(name);
-
-                try {
-                    Class<?> pluginClass = loader.loadClass(className);
-                    Constructor<?> cons = pluginClass.getConstructor(new Class[] {Build.class});
-                    Command command = (Command)cons.newInstance(new Object[] {this});
-                    addCommand(command);
-                } catch (InvocationTargetException e) {
-                    throw new BuildException("error creating " + name + " plugin: ", e);
-                } catch (IllegalArgumentException e) {
-                    throw new BuildException("error creating " + name + " plugin: ", e);
-                } catch (IllegalAccessException e) {
-                    throw new BuildException("error creating " + name + " plugin: ", e);
-                } catch (InstantiationException e) {
-                    throw new BuildException("error creating " + name + " plugin: ", e);
-                } catch (NoSuchMethodException e) {
-                    throw new BuildException("error creating " + name + " plugin: ", e);
-                } catch (ClassNotFoundException e) {
-                    throw new BuildException("error creating " + name + " plugin: ", e);
-                }
-            }
-        } catch (IOException e) {
-            throw new BuildException("error while loading plugins from " + pluginsFile + ": " + e);
-        }
-    }
-
     protected File[] getSiblingBuilderDotPropertiesFiles() {
     	List<File> dotPropertiesFiles = new ArrayList<File>();
     	File[] siblingDirs = new File(".").listFiles();
@@ -546,6 +470,11 @@ public class Build {
     	}
     }
     
+    /**
+     * Installs commands from a properties file.
+     *
+     * @param pluginsFile  the properties file to load from
+     */
     protected void processBuilderDotPropertiesFile(File dotPropertiesFile) {
     	log(verbose, "Reading commands from: " + dotPropertiesFile.getPath());
     	Properties properties = new Properties();
@@ -563,25 +492,91 @@ public class Build {
     	String currentType = "";
     	String currentName = "";
     	HashMap<String, String> attributes = new HashMap<String, String>();
-    	for (Entry<Object, Object> entry: properties.entrySet()) {
+        ClassLoader loader = Build.class.getClassLoader();
+        final String classpathKey = "classpath";
+        if (properties.containsKey(classpathKey)) {
+        	String value = properties.getProperty(classpathKey);
+        	properties.remove(classpathKey);
+        	// handle classpath=path1:path2
+            URL[] urls = null;
+            String[] classpath = Build.toPlatformPath(value, true).split(File.pathSeparator);
+            try {
+                urls = new URL[classpath.length];
+                for(int i = 0; i < classpath.length; i++) {
+                    File f = new File (classpath[i]);
+                    String url = f.getAbsolutePath();
+
+                    // Make sure the url class loader recognises directories
+                    if (f.isDirectory()) {
+                        url += "/";
+                    }
+                    url = "file://" + fixURL(url);
+                    urls[i] = new URL(url);
+                }
+            } catch (MalformedURLException e) {
+                throw new BuildException("badly formed plugins path", e);
+            }
+            loader = new URLClassLoader(urls, loader) {
+                protected String findLibrary(String libname) {
+                    String mappedName = System.mapLibraryName(libname);
+                    URL url = findResource(mappedName);
+                    try {
+                        File file = new File(url.toURI());
+                        return file.getAbsolutePath();
+                    } catch (URISyntaxException e) {
+                    }
+                    return null;
+                }
+            };
+        }
+        // Sort the properties to process them in a decent order
+        ArrayList<String> sortedPropertyNames = new ArrayList<String>(properties.size());
+        for (Enumeration<?> names = properties.propertyNames(); names.hasMoreElements(); ) {
+        	sortedPropertyNames.add((String) names.nextElement());
+        }
+        Collections.sort(sortedPropertyNames);
+    	for (String propertyName: sortedPropertyNames) {
     		propertyIndex++;
-    		String propertyName = (String) entry.getKey();
-    		StringTokenizer tokenizer = new StringTokenizer(propertyName, ".");
-    		try {
-	    		String type = tokenizer.nextToken();
-	    		String name = tokenizer.nextToken();
-	    		String attribute = tokenizer.nextToken();
-	    		if (!type.equals(currentType) && !name.equals(currentName)) {
-	    			if (!attributes.isEmpty()) {
-	    				processBuilderDotPropertiesFile(currentType, currentName, dotPropertiesFile, propertyIndex, attributes);
-	    			}
-	    			attributes.clear();
-	    			currentType = type;
-	    			currentName = name;
+            String value = properties.getProperty(propertyName);
+            if (propertyName.indexOf('.') == -1) {
+            	// handle command name=command class
+                try {
+                    Class<?> pluginClass = loader.loadClass(value);
+                    Constructor<?> cons = pluginClass.getConstructor(new Class[] {Build.class});
+                    Command command = (Command)cons.newInstance(new Object[] {this});
+                    addCommand(command);
+                } catch (InvocationTargetException e) {
+                    throw new BuildException("error creating " + value + " plugin: ", e);
+                } catch (IllegalArgumentException e) {
+                    throw new BuildException("error creating " + value + " plugin: ", e);
+                } catch (IllegalAccessException e) {
+                    throw new BuildException("error creating " + value + " plugin: ", e);
+                } catch (InstantiationException e) {
+                    throw new BuildException("error creating " + value + " plugin: ", e);
+                } catch (NoSuchMethodException e) {
+                    throw new BuildException("error creating " + value + " plugin: ", e);
+                } catch (ClassNotFoundException e) {
+                    throw new BuildException("error creating " + value + " plugin: ", e);
+                }
+    		} else {
+    			// handle command type.name.attribute=value
+	    		StringTokenizer tokenizer = new StringTokenizer(propertyName, ".");
+	    		try {
+		    		String type = tokenizer.nextToken();
+		    		String name = tokenizer.nextToken();
+		    		String attribute = tokenizer.nextToken();
+		    		if (!type.equals(currentType) && !name.equals(currentName)) {
+		    			if (!attributes.isEmpty()) {
+		    				processBuilderDotPropertiesFile(currentType, currentName, dotPropertiesFile, propertyIndex, attributes);
+		    			}
+		    			attributes.clear();
+		    			currentType = type;
+		    			currentName = name;
+		    		}
+	    			attributes.put(attribute, value);
+	    		} catch (NoSuchElementException e) {
+	    			throw new BuildException("Bad format on property at index " + propertyIndex + " in file " + dotPropertiesFile.getPath());
 	    		}
-    			attributes.put(attribute, (String) entry.getValue());
-    		} catch (NoSuchElementException e) {
-    			throw new BuildException("Bad format on property at index " + propertyIndex + " in file " + dotPropertiesFile.getPath());
     		}
     	}
     	if (!attributes.isEmpty()) {
@@ -1752,7 +1747,7 @@ public class Build {
                 cOptions.macroize = true;
             } else if (arg.startsWith("-plugins:")) {
                 File pluginsFile = new File(arg.substring("-plugins:".length()));
-                loadPlugins(pluginsFile);
+                processBuilderDotPropertiesFile(pluginsFile);
             } else if (arg.startsWith("-cflags:")) {
                 cOptions.cflags += " " + arg.substring("-cflags:".length());
             } else if (arg.startsWith("-jpda:")) {
