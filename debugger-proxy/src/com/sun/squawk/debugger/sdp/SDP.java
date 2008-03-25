@@ -96,6 +96,24 @@ public class SDP {
      */
     boolean quitOnError = true;
     
+    /**
+     * @see getSDP()
+     */
+     private static SDP sdp;
+     
+      /**
+     * The current SDP instance. 
+     * Used when running SDP embedded in the same Java process as controller, as in Solarium
+     */
+     public static SDP getSDP() {
+         return sdp;
+     }
+    
+    /**
+     * set to true if sdp.quit() was called.
+     */
+    private boolean quitSDP;
+    
 
     ThreadProxiesManager getTPM() {
         return tpm;
@@ -339,6 +357,18 @@ public class SDP {
     }
 
     /**
+     * Quit this proxy
+     */
+    public void quit() {
+        quitSDP = true;
+        if (sda != null) {
+            sda.quit();
+        }
+        if (jdb != null) {
+            jdb.quit();
+        }
+    }
+    /**
      * Starts a single debug session between a VM and a debug client. Returns
      * when the session is closed from either end.
      */
@@ -358,6 +388,9 @@ public class SDP {
                 ptm.setVM(sda);
                 break;
             } catch (IOException e) {
+                if (quitSDP) {
+                    return;
+                }
                 System.out.println("Failed to establish connection with VM: " + e.getMessage() + " - trying again in " + retry + " seconds...");
 
                 // Sleep and try again
@@ -427,20 +460,24 @@ public class SDP {
     }
 
     public static void main(String args[]) throws IOException {
-        SDP sdp = new SDP();
-        Thread.currentThread().setName("SDP");
+        sdp = new SDP();
+        try {
+            Thread.currentThread().setName("SDP");
 
-        if (!sdp.parseArgs(args)) {
-            System.exit(1);
-        }
-
-        do {
-            if (sdp.sniffOnly) {
-                sdp.goSniff();
-            } else {
-                sdp.go();
+            if (!sdp.parseArgs(args)) {
+                System.exit(1);
             }
-        } while (!sdp.singleSession);
+
+            do {
+                if (sdp.sniffOnly) {
+                    sdp.goSniff();
+                } else {
+                    sdp.go();
+                }
+            } while (!sdp.singleSession);
+        } finally {
+            sdp = null;
+        }
     }
     
     /**
