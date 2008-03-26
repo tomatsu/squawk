@@ -79,12 +79,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      *  the raw memory into virtual memory.
      * <p>
      *  The run time environment is allowed to choose the virtual address where
-     *  the raw memory area corresponding to this object will be mapped.  The
-     *  attributes of the mapping operation are controlled by the vMFlags and
-     *  vMAttributes of the <code>PhysicalMemoryTypeFilter</code> objects
-     *  that matched this object's <code>type</code> parameter.  (See
-     *  {@link PhysicalMemoryTypeFilter#getVMAttributes}
-     *  and {@link PhysicalMemoryTypeFilter#getVMFlags}.
+     *  the raw memory area corresponding to this object will be mapped.
      *
      * @param type An instance of <code>Object</code> representing the type of
      *        memory required (e.g., <em>dma, shared</em>) - used to define the base address
@@ -103,9 +98,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      *            extends into an invalid range of memory.
      *
      * @exception UnsupportedPhysicalMemoryException Thrown if the underlying
-     *            hardware does not support the given type, or if no matching
-     *          {@link PhysicalMemoryTypeFilter} has been registered with
-     *          the {@link PhysicalMemoryManager}.
+     *            hardware does not support the given type.
      *
      * @exception MemoryTypeConflictException Thrown if the specified base does not point to
      *            memory that matches the request type, or if <code>type</code> specifies
@@ -114,8 +107,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      * @exception OutOfMemoryError  Thrown if the requested type of memory exists, but there is not
      *      enough of it free to satisfy the request.
      */
-    public RawMemoryFloatAccess(Object type,
-            long size) {
+    public RawMemoryFloatAccess(Object type, long size) {
         super(type, size);
     }
 
@@ -126,12 +118,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      *  the raw memory into virtual memory.
      * <p>
      *  The run time environment is allowed to choose the virtual address where
-     *  the raw memory area corresponding to this object will be mapped.  The
-     *  attributes of the mapping operation are controlled by the vMFlags and
-     *  vMAttributes of the <code>PhysicalMemoryTypeFilter</code> objects
-     *  that matched this object's <code>type</code> parameter.  (See
-     *  {@link PhysicalMemoryTypeFilter#getVMAttributes}
-     *  and {@link PhysicalMemoryTypeFilter#getVMFlags}.
+     *  the raw memory area corresponding to this object will be mapped.
      *
      * @param type An instance of <code>Object</code> representing the type of
      *        memory required (e.g., <em>dma, shared</em>) - used to define the base address
@@ -154,9 +141,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      *            extends into an invalid range of memory.
      *
      * @exception UnsupportedPhysicalMemoryException Thrown if the underlying
-     *            hardware does not support the given type, or if no matching
-     *          {@link PhysicalMemoryTypeFilter} has been registered with
-     *          the {@link PhysicalMemoryManager}.
+     *            hardware does not support the given type.
      *
      * @exception MemoryTypeConflictException Thrown if the specified base does not point to
      *            memory that matches the request type, or if <code>type</code> specifies
@@ -165,9 +150,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      * @exception OutOfMemoryError  Thrown if the requested type of memory exists, but there is not
      *
      */
-    public RawMemoryFloatAccess(Object type,
-            long base,
-            long size) {
+    public RawMemoryFloatAccess(Object type, long base, long size) {
         super(type, base, size);
     }
 
@@ -243,10 +226,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void getDoubles(long offset,
-            double[] doubles,
-            int low,
-            int number) {
+    public void getDoubles(long offset, double[] doubles, int low, int number) {
         int off = (int) offset;
         checkMultiRead(off, number, 8);
         VM.getData(vbase, off, doubles, low, number, 8);
@@ -333,10 +313,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void getFloats(long offset,
-            float[] floats,
-            int low,
-            int number) {
+    public void getFloats(long offset, float[] floats, int low, int number) {
         int off = (int) offset;
         checkMultiRead(off, number, 4);
         VM.getData(vbase, off, floats, low, number, 4);
@@ -370,8 +347,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void setDouble(long offset,
-            double value) {
+    public void setDouble(long offset, double value) {
         setLong(offset, VM.doubleToLongBits(value));
     }
 
@@ -417,10 +393,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void setDoubles(long offset,
-            double[] doubles,
-            int low,
-            int number) {
+    public void setDoubles(long offset, double[] doubles, int low, int number) {
         int off = (int) offset;
         checkMultiWrite(off, number, 8);
         VM.setData(vbase, off, doubles, low, number, 8);
@@ -454,8 +427,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void setFloat(long offset,
-            float value) {
+    public void setFloat(long offset, float value) {
         setInt(offset, VM.floatToIntBits(value));
     }
 
@@ -501,10 +473,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void setFloats(long offset,
-            float[] floats,
-            int low,
-            int number) {
+    public void setFloats(long offset, float[] floats, int low, int number) {
         int off = (int) offset;
         checkMultiWrite(off, number, 4);
         VM.setData(vbase, off, floats, low, number, 4);

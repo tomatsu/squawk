@@ -12,6 +12,7 @@ import com.sun.squawk.NativeUnsafe;
 
 //import com.sun.rtsjx.PhysicalMemoryRequest;
 import com.sun.squawk.Offset;
+import com.sun.squawk.UWord;
 import com.sun.squawk.VM;
 import com.sun.squawk.util.Assert;
 
@@ -21,18 +22,6 @@ import com.sun.squawk.util.Assert;
  * methods allow the contents of the physical area to be accessed through
  * offsets from the base, interpreted as byte, short, int, or long data
  * values or as arrays of these types.
- * <p>
- * Whether the offset addresses the high-order or low-order byte is normally
- *  based on the
- *  value of the {@link RealtimeSystem#BYTE_ORDER} static byte variable in
- *  class {@link RealtimeSystem}.  If the type of memory used for this
- *  <code>RawMemoryAccess</code> region implements non-standard byte ordering,
- *  accessor methods in this class continue to select bytes
- *  starting at <code>offset</code> from the base address and continuing toward
- *  greater addresses.  The memory type may control the mapping of these bytes into
- *  the primitive data type.  The memory type could even select bytes that are not
- *  contiguous.  In each case the documentation for the {@link PhysicalMemoryTypeFilter}
- *  must document any mapping other than the "normal" one specified above.
  * <p>
  * The <code>RawMemoryAccess</code> class allows a real-time program to implement device
  * drivers, memory-mapped I/O, flash memory, battery-backed RAM, and similar
@@ -167,12 +156,7 @@ public class RawMemoryAccess {
      *  the raw memory into virtual memory.
      * <p>
      *  The run time environment is allowed to choose the virtual address where
-     *  the raw memory area corresponding to this object will be mapped.  The
-     *  attributes of the mapping operation are controlled by the vMFlags and
-     *  vMAttributes of the <code>PhysicalMemoryTypeFilter</code> objects
-     *  that matched this object's <code>type</code> parameter.  (See
-     *  {@link PhysicalMemoryTypeFilter#getVMAttributes}
-     *  and {@link PhysicalMemoryTypeFilter#getVMFlags}.
+     *  the raw memory area corresponding to this object will be mapped. 
      *
      * @param type An instance of <code>Object</code> representing the type of
      *        memory required (e.g., <em>dma, shared</em>) - used to define the base address
@@ -191,9 +175,7 @@ public class RawMemoryAccess {
      *            extends into an invalid range of memory.
      *
      * @exception UnsupportedPhysicalMemoryException Thrown if the underlying
-     *            hardware does not support the given type, or if no matching
-     *          {@link PhysicalMemoryTypeFilter} has been registered with
-     *          the {@link PhysicalMemoryManager}.
+     *            hardware does not support the given type.
      *
      * @exception MemoryTypeConflictException Thrown if the specified base does not point to
      *            memory that matches the request type, or if <code>type</code> specifies
@@ -203,11 +185,16 @@ public class RawMemoryAccess {
      *      enough of it free to satisfy the request.
      *
      */
-    public RawMemoryAccess(Object type,
-            long size)
+    public RawMemoryAccess(Object type, long size)
             throws SizeOutOfBoundsException {
-        
-        throw new UnsupportedPhysicalMemoryException("malloc memory not yet implemented");
+        int sz = (int)size;
+        if (sz < 0) {
+            throw new SizeOutOfBoundsException();
+        }
+        vbase = NativeUnsafe.malloc(UWord.fromPrimitive(sz));
+        if (vbase.isZero()) {
+            throw new OutOfMemoryError("malloc failed in RawMemoryAccess");
+        }
     }
 
     /**
@@ -217,12 +204,7 @@ public class RawMemoryAccess {
      *  the raw memory into virtual memory.
      * <p>
      *  The run time environment is allowed to choose the virtual address where
-     *  the raw memory area corresponding to this object will be mapped.  The
-     *  attributes of the mapping operation are controlled by the vMFlags and
-     *  vMAttributes of the <code>PhysicalMemoryTypeFilter</code> objects
-     *  that matched this object's <code>type</code> parameter.  (See
-     *  {@link PhysicalMemoryTypeFilter#getVMAttributes}
-     *  and {@link PhysicalMemoryTypeFilter#getVMFlags}.
+     *  the raw memory area corresponding to this object will be mapped. 
      *
      * @param type An instance of <code>Object</code> representing the type of
      *        memory required (e.g., <em>dma, shared</em>) - used to define the base address
@@ -245,9 +227,7 @@ public class RawMemoryAccess {
      *            extends into an invalid range of memory.
      *
      * @exception UnsupportedPhysicalMemoryException Thrown if the underlying
-     *            hardware does not support the given type, or if no matching
-     *          {@link PhysicalMemoryTypeFilter} has been registered with
-     *          the {@link PhysicalMemoryManager}.
+     *            hardware does not support the given type.
      *
      * @exception MemoryTypeConflictException Thrown if the specified base does not point to
      *            memory that matches the request type, or if <code>type</code> specifies
@@ -257,12 +237,9 @@ public class RawMemoryAccess {
      *      enough of it free to satisfy the request.
      *
      */
-    public RawMemoryAccess(Object type,
-            long base,
-            long size)
+    public RawMemoryAccess(Object type, long base, long size)
             throws SizeOutOfBoundsException,
-            OffsetOutOfBoundsException {
-
+                   OffsetOutOfBoundsException {
 /*if[!SQUAWK_64]*/
         int bs = (int) base;
         int sz = (int) size;
@@ -439,10 +416,7 @@ public class RawMemoryAccess {
      * not permitted by the security manager.
      *
      */
-    public void getBytes(long offset,
-            byte[] bytes,
-            int low,
-            int number) {
+    public void getBytes(long offset, byte[] bytes, int low, int number) {
         int off = (int)offset;
         checkMultiRead(off, number, 1);
         VM.getData(vbase, off, bytes, low, number, 1);
@@ -481,8 +455,7 @@ public class RawMemoryAccess {
     public int getInt(long offset) {
         int off = (int)offset;
         checkRead(off, 4);
-        // @todo handle misaligned data!
-        return NativeUnsafe.getInt(vbase, off / 4);
+        return NativeUnsafe.getUnalignedInt(vbase, off);
     }
 
     /**
@@ -531,10 +504,7 @@ public class RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void getInts(long offset,
-            int[] ints,
-            int low,
-            int number) {
+    public void getInts(long offset, int[] ints, int low, int number) {
         int off = (int)offset;
         checkMultiRead(off, number, 4);
         VM.getData(vbase, off, ints, low, number, 4);
@@ -566,10 +536,9 @@ public class RawMemoryAccess {
      * @return The long from raw memory.
      */
     public long getLong(long offset) {
-                int off = (int)offset;
-        checkRead(off, 4);
-        // @todo handle misaligned data!
-        return NativeUnsafe.getLong(vbase, off / 8);
+        int off = (int)offset;
+        checkRead(off, 8);
+        return NativeUnsafe.getUnalignedLong(vbase, off);
     }
 
     /**
@@ -613,11 +582,8 @@ public class RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void getLongs(long offset,
-            long[] longs,
-            int low,
-            int number) {
-                int off = (int)offset;
+    public void getLongs(long offset, long[] longs, int low, int number) {
+        int off = (int)offset;
         checkMultiRead(off, number, 8);
         VM.getData(vbase, off, longs, low, number, 4);
     }
@@ -669,10 +635,9 @@ public class RawMemoryAccess {
      * @return The short loaded from raw memory.
      */
     public short getShort(long offset) {
-                int off = (int)offset;
+        int off = (int)offset;
         checkRead(off, 2);
-        // @todo handle misaligned data!
-        return (short) NativeUnsafe.getShort(vbase, off / 2);
+        return (short) NativeUnsafe.getUnalignedShort(vbase, off);
     }
 
     /**
@@ -722,11 +687,8 @@ public class RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void getShorts(long offset,
-            short[] shorts,
-            int low,
-            int number) {
-                int off = (int)offset;
+    public void getShorts(long offset, short[] shorts, int low, int number) {
+        int off = (int)offset;
         checkMultiRead(off, number, 2);
         VM.getData(vbase, off, shorts, low, number, 2);
     }
@@ -736,12 +698,7 @@ public class RawMemoryAccess {
      * doesn't support virtual memory.
      * <p>
      *  The run time environment is allowed to choose the virtual address where
-     *  the raw memory area corresponding to this object will be mapped.  The
-     *  attributes of the mapping operation are controlled by the vMFlags and
-     *  vMAttributes of the <code>PhysicalMemoryTypeFilter</code> objects
-     *  that matched this object's <code>type</code> parameter.  (See
-     *  {@link PhysicalMemoryTypeFilter#getVMAttributes}
-     *  and {@link PhysicalMemoryTypeFilter#getVMFlags}.
+     *  the raw memory area corresponding to this object will be mapped. 
      * <p>
      *  If the object is already mapped into virtual memory, this method
      *  does not change anything.
@@ -758,13 +715,6 @@ public class RawMemoryAccess {
     /**
      * Maps the physical memory range into virtual memory at the specified
      * location. No-op if the system doesn't support virtual memory.
-     * <p>
-     *  The
-     *  attributes of the mapping operation are controlled by the vMFlags and
-     *  vMAttributes of the <code>PhysicalMemoryTypeFilter</code> objects
-     *  that matched this object's <code>type</code> parameter.  (See
-     *  {@link PhysicalMemoryTypeFilter#getVMAttributes}
-     *  and {@link PhysicalMemoryTypeFilter#getVMFlags}.
      * <p>
      *  If the object is already mapped into virtual memory at a different
      *  address, this method remaps it to <code>base</code>.
@@ -792,12 +742,6 @@ public class RawMemoryAccess {
      * Maps the physical memory range into virtual memory. No-op if the system
      * doesn't support virtual memory.
      * <p>
-     *  The attributes of the mapping operation are controlled by the vMFlags and
-     *  vMAttributes of the <code>PhysicalMemoryTypeFilter</code> objects
-     *  that matched this object's <code>type</code> parameter.  (See
-     *  {@link PhysicalMemoryTypeFilter#getVMAttributes}
-     *  and {@link PhysicalMemoryTypeFilter#getVMFlags}.
-     * <p>
      *  If the object is already mapped into virtual memory at a different
      *  address, this method remaps it to <code>base</code>.
      * <p>
@@ -821,8 +765,7 @@ public class RawMemoryAccess {
      *      <code>base</code> is not a
      *      legal value for a virtual address.
      */
-    public long map(long base,
-            long size) {
+    public long map(long base, long size) {
         return -1;
     }
     
@@ -889,7 +832,7 @@ public class RawMemoryAccess {
         }
         
         if (offset < 0 ||
-                offset > (reachable_size.toPrimitive() - bsize)) {
+            offset > (reachable_size.toPrimitive() - bsize)) {
             throw new OffsetOutOfBoundsException();
         }
     }
@@ -924,9 +867,8 @@ public class RawMemoryAccess {
      * not permitted by the security manager.
      *
      */
-    public void setByte(long offset,
-            byte value) {
-                int off = (int)offset;
+    public void setByte(long offset, byte value) {
+        int off = (int)offset;
         checkWrite(off, 1);
         NativeUnsafe.setByte(vbase, off, value);
     }
@@ -975,11 +917,8 @@ public class RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void setBytes(long offset,
-            byte[] bytes,
-            int low,
-            int number) {
-                int off = (int)offset;
+    public void setBytes(long offset, byte[] bytes, int low, int number) {
+        int off = (int)offset;
         checkMultiWrite(off, number, 1);
         VM.setData(vbase, off, bytes, low, number, 1);
     }
@@ -1016,12 +955,10 @@ public class RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void setInt(long offset,
-            int value) {
-                int off = (int)offset;
+    public void setInt(long offset, int value) {
+        int off = (int)offset;
         checkWrite(off, 4);
-        // @todo handle misaligned data!
-        NativeUnsafe.setInt(vbase, off / 4, value);
+        NativeUnsafe.setUnalignedInt(vbase, off, value);
     }
 
     /**
@@ -1070,11 +1007,8 @@ public class RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void setInts(long offset,
-            int[] ints,
-            int low,
-            int number) {
-                int off = (int)offset;
+    public void setInts(long offset, int[] ints, int low, int number) {
+        int off = (int)offset;
         checkMultiWrite(off, number, 4);
         VM.setData(vbase, off, ints, low, number, 4);
     }
@@ -1111,12 +1045,11 @@ public class RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void setLong(long offset,
-            long value) {
-                int off = (int)offset;
+    public void setLong(long offset, long value) {
+        int off = (int)offset;
         checkWrite(off, 8);
         // @todo handle misaligned data!
-        NativeUnsafe.setLong(vbase, off / 8, value);
+        NativeUnsafe.setUnalignedLong(vbase, off, value);
 
     }
 
@@ -1166,11 +1099,8 @@ public class RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void setLongs(long offset,
-            long[] longs,
-            int low,
-            int number) {
-                int off = (int)offset;
+    public void setLongs(long offset, long[] longs, int low, int number) {
+        int off = (int)offset;
         checkMultiWrite(off, number, 8);
         VM.setData(vbase, off, longs, low, number, 8);
     }
@@ -1204,12 +1134,11 @@ public class RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void setShort(long offset,
-            short value) {
-                int off = (int)offset;
+    public void setShort(long offset, short value) {
+        int off = (int)offset;
         checkWrite(off, 2);
         // @todo handle misaligned data!
-        NativeUnsafe.setShort(vbase, off / 2, value);
+        NativeUnsafe.setUnalignedShort(vbase, off, value);
     }
 
     /**
@@ -1256,11 +1185,8 @@ public class RawMemoryAccess {
      * @throws java.lang.SecurityException Thrown if this access is
      * not permitted by the security manager.
      */
-    public void setShorts(long offset,
-            short[] shorts,
-            int low,
-            int number) {
-                int off = (int)offset;
+    public void setShorts(long offset, short[] shorts, int low, int number) {
+        int off = (int)offset;
         checkMultiWrite(off, number, 2);
         VM.setData(vbase, off, shorts, low, number, 2);
     }

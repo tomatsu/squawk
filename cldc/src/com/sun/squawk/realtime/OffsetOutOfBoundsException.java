@@ -8,8 +8,7 @@
 package com.sun.squawk.realtime;
 
 /**
- * Thrown if the constructor of an {@link ImmortalPhysicalMemory},
- * {@link LTPhysicalMemory}, {@link VTPhysicalMemory}, {@link RawMemoryAccess}, or
+ * Thrown if the constructor of a {@link RawMemoryAccess}, or
  * {@link RawMemoryFloatAccess} is given an invalid address.
  *
  * @since 1.0.1 Becomes unchecked

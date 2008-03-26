@@ -14,9 +14,6 @@ package com.sun.squawk.realtime;
  *
  * @see RawMemoryAccess
  * @see RawMemoryFloatAccess
- * @see ImmortalPhysicalMemory
- * @see LTPhysicalMemory
- * @see VTPhysicalMemory
  * 
  * 
  * @since 1.0.1 Becomes unchecked

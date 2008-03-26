@@ -701,6 +701,110 @@ INLINE boolean setArrayLength(Address _oop, int _size);
         }
 
         /**
+         * Sets a 16 bit value in memory.
+         *
+         * @param base   the base address
+         * @param offset the offset (in 16 bit words) from 'base' at which to write
+         * @param value  the value to write
+         */
+        void setUnalignedShort(Address base, Offset offset, int value) {
+            signed char *ea = &((signed char *)base)[offset];
+
+            if (PLATFORM_UNALIGNED_LOADS || isAligned((UWord)ea, 2)) {
+                 setShortTyped(ea, 0, AddressType_SHORT, (short)value);
+            } else {
+                int b0 =  value       & 0xFF;
+                int b1 = (value >> 8) & 0xFF;
+
+                if (PLATFORM_BIG_ENDIAN) {
+                    setByteTyped(ea, 0, AddressType_ANY, (char)b1);
+                    setByteTyped(ea, 1, AddressType_ANY, (char)b0);
+                } else {
+                    setByteTyped(ea, 0, AddressType_ANY, (char)b0);
+                    setByteTyped(ea, 1, AddressType_ANY, (char)b1);
+                }
+            }
+            setAssume((value & 0xFFFF) == getUnalignedShort(base, offset));
+        }
+
+        /**
+         * Sets a 32 bit value in memory.
+         *
+         * @param base   the base address
+         * @param offset the offset (in 32 bit words) from 'base' at which to write
+         * @param value  the value to write
+         */
+        void setUnalignedInt(Address base, Offset offset, int value) {
+            signed char *ea = &((signed char *)base)[offset];
+            if (PLATFORM_UNALIGNED_LOADS || isAligned((UWord)ea, 4)) {
+                 setIntTyped(ea, 0, AddressType_INT, value);
+            } else {
+                int b0 =  value        & 0xFF;
+                int b1 = (value >> 8)  & 0xFF;
+                int b2 = (value >> 16) & 0xFF;
+                int b3 = (value >> 24) & 0xFF;
+                if (PLATFORM_BIG_ENDIAN) {
+                    setByteTyped(ea, 0, AddressType_ANY, (char)b3);
+                    setByteTyped(ea, 1, AddressType_ANY, (char)b2);
+                    setByteTyped(ea, 2, AddressType_ANY, (char)b1);
+                    setByteTyped(ea, 3, AddressType_ANY, (char)b0);
+                } else {
+                    setByteTyped(ea, 0, AddressType_ANY, (char)b0);
+                    setByteTyped(ea, 1, AddressType_ANY, (char)b1);
+                    setByteTyped(ea, 2, AddressType_ANY, (char)b2);
+                    setByteTyped(ea, 3, AddressType_ANY, (char)b3);
+                }
+            }
+            setAssume(value == getUnalignedInt(base, offset));
+        }
+
+        /**
+         * Sets a 64 bit value in memory.
+         *
+         * @param base   the base address
+         * @param offset the offset (in 64 bit words) from 'base' at which to write
+         * @param value  the value to write
+         */
+        void setUnalignedLong(Address base, Offset offset, jlong value) {
+            signed char *ea = &((signed char *)base)[offset];
+            if (PLATFORM_UNALIGNED_LOADS || isAligned((UWord)ea, 8)) {
+                setLongTyped(ea, 0, AddressType_LONG, value);
+            } else {
+                /* optimize for 32-bit registers */
+                unsigned int hi = value >> 32;
+                unsigned int lo = value & 0xFFFFFFFF;
+                unsigned int b0 =  hi        & 0xFF;
+                unsigned int b1 = (hi >> 8)  & 0xFF;
+                unsigned int b2 = (hi >> 16) & 0xFF;
+                unsigned int b3 = (hi >> 24) & 0xFF;
+                unsigned int b4 = (lo >> 0) & 0xFF;
+                unsigned int b5 = (lo >> 8) & 0xFF;
+                unsigned int b6 = (lo >> 16) & 0xFF;
+                unsigned int b7 = (lo >> 24) & 0xFF;
+                if (PLATFORM_BIG_ENDIAN) {
+                    setByteTyped(ea, 0, AddressType_ANY, (char)b7);
+                    setByteTyped(ea, 1, AddressType_ANY, (char)b6);
+                    setByteTyped(ea, 2, AddressType_ANY, (char)b5);
+                    setByteTyped(ea, 3, AddressType_ANY, (char)b4);
+                    setByteTyped(ea, 4, AddressType_ANY, (char)b3);
+                    setByteTyped(ea, 5, AddressType_ANY, (char)b2);
+                    setByteTyped(ea, 6, AddressType_ANY, (char)b1);
+                    setByteTyped(ea, 7, AddressType_ANY, (char)b0);
+                } else {
+                    setByteTyped(ea, 0, AddressType_ANY, (char)b0);
+                    setByteTyped(ea, 1, AddressType_ANY, (char)b1);
+                    setByteTyped(ea, 2, AddressType_ANY, (char)b2);
+                    setByteTyped(ea, 3, AddressType_ANY, (char)b3);
+                    setByteTyped(ea, 4, AddressType_ANY, (char)b4);
+                    setByteTyped(ea, 5, AddressType_ANY, (char)b5);
+                    setByteTyped(ea, 6, AddressType_ANY, (char)b6);
+                    setByteTyped(ea, 7, AddressType_ANY, (char)b7);
+                }
+            }
+            setAssume(value == getLong(base, offset));
+        }
+
+        /**
          * Gets a signed 8 bit value from memory.
          *
          * @param base   the base address
@@ -827,6 +931,86 @@ INLINE boolean setArrayLength(Address _oop, int _size);
         }
 #endif
 
+        /**
+         * Gets a signed 16 bit value from memory.
+         *
+         * @param base   the base address
+         * @param offset the offset (in bytes) from 'base' from which to load
+         * @return the value
+         */
+        int getUnalignedShort(Address base, Offset offset) {
+            signed char *ea = &((signed char *)base)[offset];
+            if (PLATFORM_UNALIGNED_LOADS || isAligned((UWord)ea, 2)) {
+                 return getShortTyped(ea, 0, AddressType_ANY);
+            } else {
+                if (PLATFORM_BIG_ENDIAN) {
+                    int b1 = getByteTyped(ea, 0, AddressType_ANY);
+                    int b2 = getUByteTyped(ea, 1, AddressType_ANY);
+                    return (b1 << 8) | b2;
+                } else {
+                    int b1 = getUByteTyped(ea, 0, AddressType_ANY);
+                    int b2 = getByteTyped(ea,  1, AddressType_ANY);
+                    return (b2 << 8) | b1;
+                }
+            }
+        }
+
+        /**
+         * Gets a signed 32 bit value from memory.
+         *
+         * @param base   the base address
+         * @param offset the offset (in bytes) from 'base' from which to load
+         * @return the value
+         */
+        int getUnalignedInt(Address base, Offset offset) {
+            signed char *ea = &((signed char *)base)[offset];
+            if (PLATFORM_UNALIGNED_LOADS || isAligned((UWord)ea, 4)) {
+                return getIntTyped(ea, 0, AddressType_ANY);
+            } else {
+                int b1 = getUByteTyped(ea, 0, AddressType_ANY);
+                int b2 = getUByteTyped(ea, 1, AddressType_ANY);
+                int b3 = getUByteTyped(ea, 2, AddressType_ANY);
+                int b4 = getUByteTyped(ea, 3, AddressType_ANY);
+                if (PLATFORM_BIG_ENDIAN) {
+                    return (b1 << 24) | (b2 << 16) | (b3 << 8) | b4;
+                } else {
+                    return (b4 << 24) | (b3 << 16) | (b2 << 8) | b1;
+                }
+            }
+        }
+
+        /**
+         * Gets a 64 bit value from memory using a byte offset.
+         *
+         * @param base   the base address
+         * @param offset the offset (in bytes) from 'base' from which to load
+         * @return the value
+         */
+        jlong getUnalignedLong(Address base, Offset offset) {
+            signed char *ea = &((signed char *)base)[offset];
+            if (PLATFORM_UNALIGNED_LOADS || isAligned((UWord)ea, 8)) {
+                return getLongTyped(ea, 0, AddressType_ANY);
+            } else {
+                unsigned int b1 = getUByteTyped(ea, 0, AddressType_ANY);
+                unsigned int b2 = getUByteTyped(ea, 1, AddressType_ANY);
+                unsigned int b3 = getUByteTyped(ea, 2, AddressType_ANY);
+                unsigned int b4 = getUByteTyped(ea, 3, AddressType_ANY);
+                unsigned int b5 = getUByteTyped(ea, 4, AddressType_ANY);
+                unsigned int b6 = getUByteTyped(ea, 5, AddressType_ANY);
+                unsigned int b7 = getUByteTyped(ea, 6, AddressType_ANY);
+                unsigned int b8 = getUByteTyped(ea, 7, AddressType_ANY);
+                if (PLATFORM_BIG_ENDIAN) {
+                    unsigned int lo =  (b5 << 24) | (b6 << 16) | (b7 << 8) | b8;
+                    unsigned int hi =  (b1 << 24) | (b2 << 16) | (b3 << 8) | b4;
+                    return ((jlong)hi << 32) | lo;
+                } else {
+                    unsigned int lo =  (b4 << 24) | (b3 << 16) | (b2 << 8) | b1;
+                    unsigned int hi =  (b8 << 24) | (b7 << 16) | (b6 << 8) | b5;
+                    return ((jlong)hi << 32) | lo;
+                }
+            }
+        }
+
         /*-----------------------------------------------------------------------*\
          *                           Endianess swapping                          *
         \*-----------------------------------------------------------------------*/
@@ -858,26 +1042,26 @@ INLINE boolean setArrayLength(Address _oop, int _size);
          *
          * @param address   the address of the value
          */
-/*MAC*/ void swap4(Address $address) {
-            char type = (TYPEMAP ? getType($address) : AddressType_UNDEFINED);
-            if (!isAligned((UWord)$address, 4)) {
-                int b0 = getUByteTyped($address, 0, AddressType_ANY) & 0xff;
-                int b1 = getUByteTyped($address, 1, AddressType_ANY) & 0xff;
-                int b2 = getUByteTyped($address, 2, AddressType_ANY) & 0xff;
-                int b3 = getUByteTyped($address, 3, AddressType_ANY) & 0xff;
-                setByteTyped($address, 0, AddressType_ANY, (char)b3);
-                setByteTyped($address, 1, AddressType_ANY, (char)b2);
-                setByteTyped($address, 2, AddressType_ANY, (char)b1);
-                setByteTyped($address, 3, AddressType_ANY, (char)b0);
+        void swap4(Address address) {
+            char type = (TYPEMAP ? getType(address) : AddressType_UNDEFINED);
+            if (!isAligned((UWord)address, 4)) {
+                int b0 = getUByteTyped(address, 0, AddressType_ANY) & 0xff;
+                int b1 = getUByteTyped(address, 1, AddressType_ANY) & 0xff;
+                int b2 = getUByteTyped(address, 2, AddressType_ANY) & 0xff;
+                int b3 = getUByteTyped(address, 3, AddressType_ANY) & 0xff;
+                setByteTyped(address, 0, AddressType_ANY, (char)b3);
+                setByteTyped(address, 1, AddressType_ANY, (char)b2);
+                setByteTyped(address, 2, AddressType_ANY, (char)b1);
+                setByteTyped(address, 3, AddressType_ANY, (char)b0);
 
             } else {
-                int value = getIntTyped($address, 0, AddressType_ANY);
+                int value = getIntTyped(address, 0, AddressType_ANY);
                 int b0 = value         & 0xFF;
                 int b1 = (value >> 8)  & 0xFF;
                 int b2 = (value >> 16) & 0xFF;
                 int b3 = (value >> 24) & 0xFF;
                 value = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
-                setIntTyped($address, 0, type, value);
+                setIntTyped(address, 0, type, value);
             }
         }
 
@@ -886,38 +1070,45 @@ INLINE boolean setArrayLength(Address _oop, int _size);
          *
          * @param address   the address of the value
          */
-/*MAC*/ void swap8(Address $address) {
-            char type = (TYPEMAP ? getType($address) : AddressType_UNDEFINED);
-            if (!isAligned((UWord)$address, 8)) {
-                int b0 = getUByteTyped($address, 0, AddressType_ANY) & 0xff;
-                int b1 = getUByteTyped($address, 1, AddressType_ANY) & 0xff;
-                int b2 = getUByteTyped($address, 2, AddressType_ANY) & 0xff;
-                int b3 = getUByteTyped($address, 3, AddressType_ANY) & 0xff;
-                int b4 = getUByteTyped($address, 4, AddressType_ANY) & 0xff;
-                int b5 = getUByteTyped($address, 5, AddressType_ANY) & 0xff;
-                int b6 = getUByteTyped($address, 6, AddressType_ANY) & 0xff;
-                int b7 = getUByteTyped($address, 7, AddressType_ANY) & 0xff;
-                setByteTyped($address, 0, AddressType_ANY, (char)b7);
-                setByteTyped($address, 1, AddressType_ANY, (char)b6);
-                setByteTyped($address, 2, AddressType_ANY, (char)b5);
-                setByteTyped($address, 3, AddressType_ANY, (char)b4);
-                setByteTyped($address, 4, AddressType_ANY, (char)b3);
-                setByteTyped($address, 5, AddressType_ANY, (char)b2);
-                setByteTyped($address, 6, AddressType_ANY, (char)b1);
-                setByteTyped($address, 7, AddressType_ANY, (char)b0);
-
+        void swap8(Address address) {
+            char type = (TYPEMAP ? getType(address) : AddressType_UNDEFINED);
+            if (!isAligned((UWord)address, 8)) {
+                /*
+                 * Is "& 0xff" necessary? getUByteTyped is already unsigned...
+                 * It's OK, gcc did the right thing (other compilers prob. do too).
+                 */
+                int b0 = getUByteTyped(address, 0, AddressType_ANY) & 0xff;
+                int b1 = getUByteTyped(address, 1, AddressType_ANY) & 0xff;
+                int b2 = getUByteTyped(address, 2, AddressType_ANY) & 0xff;
+                int b3 = getUByteTyped(address, 3, AddressType_ANY) & 0xff;
+                int b4 = getUByteTyped(address, 4, AddressType_ANY) & 0xff;
+                int b5 = getUByteTyped(address, 5, AddressType_ANY) & 0xff;
+                int b6 = getUByteTyped(address, 6, AddressType_ANY) & 0xff;
+                int b7 = getUByteTyped(address, 7, AddressType_ANY) & 0xff;
+                setByteTyped(address, 0, AddressType_ANY, (char)b7);
+                setByteTyped(address, 1, AddressType_ANY, (char)b6);
+                setByteTyped(address, 2, AddressType_ANY, (char)b5);
+                setByteTyped(address, 3, AddressType_ANY, (char)b4);
+                setByteTyped(address, 4, AddressType_ANY, (char)b3);
+                setByteTyped(address, 5, AddressType_ANY, (char)b2);
+                setByteTyped(address, 6, AddressType_ANY, (char)b1);
+                setByteTyped(address, 7, AddressType_ANY, (char)b0);
             } else {
-                jlong value = getLongTyped($address, 0, AddressType_ANY);
-                jlong b0 =  value        & 0xFF;
-                jlong b1 = (value >> 8)  & 0xFF;
-                jlong b2 = (value >> 16) & 0xFF;
-                jlong b3 = (value >> 24) & 0xFF;
-                jlong b4 = (value >> 32) & 0xFF;
-                jlong b5 = (value >> 40) & 0xFF;
-                jlong b6 = (value >> 48) & 0xFF;
-                jlong b7 = (value >> 56) & 0xFF;
-                value = (b0 << 56) | (b1 << 48) | (b2 << 40) | (b3 << 32) | (b4 << 24) | (b5 << 16) | (b6 << 8) | b7;
-                setLongTyped($address, 0, type, value);
+                /* optimize for 32-bit registers */
+                unsigned int hi = getIntTyped(address, 0, AddressType_ANY);
+                unsigned int lo = getIntTyped(address, 1, AddressType_ANY);
+                unsigned int b0 =  hi        & 0xFF;
+                unsigned int b1 = (hi >> 8)  & 0xFF;
+                unsigned int b2 = (hi >> 16) & 0xFF;
+                unsigned int b3 = (hi >> 24) & 0xFF;
+                unsigned int b4 = (lo >> 0) & 0xFF;
+                unsigned int b5 = (lo >> 8) & 0xFF;
+                unsigned int b6 = (lo >> 16) & 0xFF;
+                unsigned int b7 = (lo >> 24) & 0xFF;
+                unsigned int lo2 =  (b4 << 24) | (b5 << 16) | (b6 << 8) | b7;
+                unsigned int hi2 =  (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
+                setIntTyped(address, 0, type, lo2);
+                setIntTyped(address, 1, type, hi2);
             }
         }
 

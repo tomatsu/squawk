@@ -2105,6 +2105,9 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
             int high;
 
             /*
+             @TODO: FIX to not use mod (%). Very slow on ARM.
+             */
+            /*
              * Skip the padding.
              */
             while ((((UWord)ip) % $size) != 0) {
@@ -3771,6 +3774,39 @@ foundSlot:
                     break;
                 }
 
+                case Native_com_sun_squawk_NativeUnsafe_getUnalignedInt: {
+                    int     off = popInt();
+                    Address base = popAddress();
+                    pushInt(getUnalignedInt(base, off));
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_getUnalignedLong: {
+                    int     off = popInt();
+                    Address base = popAddress();
+                    pushLong(getUnalignedLong(base, off));
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_getUnalignedShort: {
+                    int     off = popInt();
+                    Address base = popAddress();
+                    pushInt(getUnalignedShort(base, off));
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_malloc: {
+                    int     size = popInt();
+                    pushAddress(malloc(size));
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_free: {
+                    Address base = popAddress();
+                    free(base);
+                    break;
+                }
+
                 case Native_com_sun_squawk_NativeUnsafe_getAsInt: {
                     int     off = popInt();
                     Address base = popAddress();
@@ -3837,6 +3873,30 @@ foundSlot:
                     int     off = popInt();
                     Address base = popAddress();
                     setLongAtWord(base,  off, val);
+                    break;
+                }
+
+                 case Native_com_sun_squawk_NativeUnsafe_setUnalignedInt: {
+                    int     val = popInt();
+                    int     off = popInt();
+                    Address base = popAddress();
+                    setUnalignedInt(base,  off, val);
+                    break;
+                }
+
+               case Native_com_sun_squawk_NativeUnsafe_setUnalignedLong: {
+                    jlong   val = popLong();
+                    int     off = popInt();
+                    Address base = popAddress();
+                    setUnalignedLong(base,  off, val);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_setUnalignedShort: {
+                    int     val = popInt();
+                    int     off = popInt();
+                    Address base = popAddress();
+                    setUnalignedShort(base,  off, val);
                     break;
                 }
 

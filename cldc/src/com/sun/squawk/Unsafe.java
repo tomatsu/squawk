@@ -442,5 +442,99 @@ public final class Unsafe {
         VM.setData(dst, boffset, longs, low, number, 8);
     }
     
+    /**
+     * Gets the <code>short</code> at the given <b>byte</b> offset in the memory, starting from base.
+     *  If the short is aligned on a "natural"
+     *  boundary it is always loaded from memory
+     *  in a single atomic operation.  If it is not on a natural boundary it may not be loaded atomically, and
+     *  the number and order of the load operations is unspecified.
+     *
+     * @param base address of to region of memory
+     * @param boffset The offset in bytes from base to the short to be loaded
+     *
+     * @return The short from raw memory.
+     */
+    public static int getUnalignedShort(Address base, int boffset) {
+        return NativeUnsafe.getUnalignedShort(base, boffset);
+    }
+
+    /**
+     * Gets the <code>int</code> at the given <b>byte</b> offset in the memory, starting from base.
+     *  If the integer is aligned on a "natural"
+     *  boundary it is always loaded from memory
+     *  in a single atomic operation.  If it is not on a natural boundary it may not be loaded atomically, and
+     *  the number and order of the load operations is unspecified.
+     *
+     * @param base address of to region of memory
+     * @param boffset The offset in bytes from base to the int to be loaded
+     *
+     * @return The integer from raw memory.
+     */
+    public static int getUnalignedInt(Address base, int boffset) {
+        return NativeUnsafe.getUnalignedInt(base, boffset);
+    }
+
+    /**
+     * Gets the <code>long</code> at the given <b>byte</b> offset in the memory, starting from base.
+     *  If the long is aligned on a "natural"
+     *  boundary it is always loaded from memory
+     *  in a single atomic operation.  If it is not on a natural boundary it may not be loaded atomically, and
+     *  the number and order of the load operations is unspecified.
+     *
+     * @param base address of to region of memory
+     * @param boffset The offset in bytes from base to the long to be loaded
+     *
+     * @return The long from raw memory.
+     */
+    public static long getUnalignedLong(Address base, int boffset) {
+        return NativeUnsafe.getUnalignedLong(base, boffset);
+    }
+
+    /**
+     * Sets the <code>short</code> at the given <b>byte</b> offset in the memory, starting from base.
+     *  If the short is aligned on a "natural"
+     *  boundary it is always stored to memory
+     *  in a single atomic operation.  If it is not on a natural boundary it may not be stored atomically, and
+     *  the number and order of the store operations is unspecified.
+     *
+     * @param base address of to region of memory
+     * @param boffset The offset in bytes from base to the location to be stored
+     * @param value 
+     */
+    public static void setUnalignedShort(Address base, int boffset, int value) {
+        NativeUnsafe.setUnalignedShort(base, boffset, value);
+    }
+
+    /**
+     * Gets the <code>int</code> at the given <b>byte</b> offset in the memory, starting from base.
+     *  If the integer is aligned on a "natural"
+     *  boundary it is always stored to memory
+     *  in a single atomic operation.  If it is not on a natural boundary it may not be stored atomically, and
+     *  the number and order of the store operations is unspecified.
+     *
+     * @param base address of to region of memory
+     * @param boffset The offset in bytes from base to the location to be stored
+     * @param value 
+     */
+    public static void setUnalignedInt(Address base, int boffset, int value) {
+        NativeUnsafe.setUnalignedInt(base, boffset, value);
+    }
+
+    /**
+     * Gets the <code>long</code> at the given <b>byte</b> offset in the memory, starting from base.
+     *  If the long is aligned on a "natural"
+     *  boundary it is always stored to memory
+     *  in a single atomic operation.  If it is not on a natural boundary it may not be stored atomically, and
+     *  the number and order of the store operations is unspecified.
+     *
+     * @param base address of to region of memory
+     * @param boffset The offset in bytes from base to the location to be stored
+     * @param value 
+     */
+    public static void setUnalignedLong(Address base, int boffset, long value) {
+        NativeUnsafe.setUnalignedLong(base, boffset, value);
+    }
+
+    
     
 }

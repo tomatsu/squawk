@@ -393,7 +393,13 @@ public final class NativeUnsafe {
     }
 
     /**
-     * @see Unsafe#getAsUWord
+     * Gets a UWord value from memory ignoring any recorded type of the value at the designated location.
+     * This operation is equivalent to {@link #getUWord(Object, int)} when {@link VM#usingTypeMap() runtime type checking}
+     * is disabled.
+     *
+     * @param base   the base address
+     * @param offset the offset (in words) from <code>base</code> from which to load
+     * @return the value
      *
      * @vm2c code( return getUWordTyped(base, offset, AddressType_ANY); )
      */
@@ -402,16 +408,28 @@ public final class NativeUnsafe {
     }
 
     /**
-     * @see Unsafe#getAsByte
+     * Gets a signed 8 bit value from memory ignoring any recorded type of the value at the designated location.
+     * This operation is equivalent to {@link #getByte(Object, int)} when {@link VM#usingTypeMap() runtime type checking}
+     * is disabled.
      *
+     * @param base   the base address
+     * @param offset the offset (in 8 bit words) from <code>base</code> from which to load
+     * @return the value
+     * 
      * @vm2c code( return getByteTyped(base, offset, AddressType_ANY); )
      */
     public static int getAsByte(Object base, int offset) throws NativePragma {
         return getByte(base, offset);
     }
 
-    /**
-     * @see Unsafe#getAsShort
+     /**
+     * Gets a signed 16 bit value from memory ignoring any recorded type of the value at the designated location.
+     * This operation is equivalent to {@link #getShort(Object, int)} when {@link VM#usingTypeMap() runtime type checking}
+     * is disabled.
+     *
+     * @param base   the base address
+     * @param offset the offset (in 16 bit words) from <code>base</code> from which to load
+     * @return the value
      *
      * @vm2c code( return getShortTyped(base, offset, AddressType_ANY); )
      */
@@ -420,7 +438,13 @@ public final class NativeUnsafe {
     }
 
     /**
-     * @see Unsafe#getAsInt
+     * Gets a signed 32 bit value from memory ignoring any recorded type of the value at the designated location.
+     * This operation is equivalent to {@link #getInt(Object, int)} when {@link VM#usingTypeMap() runtime type checking}
+     * is disabled.
+     *
+     * @param base   the base address
+     * @param offset the offset (in 32 bit words) from <code>base</code> from which to load
+     * @return the value
      *
      * @vm2c code( return getIntTyped(base, offset, AddressType_ANY); )
      */
@@ -446,6 +470,123 @@ public final class NativeUnsafe {
         return str.charAt(index);
     }
 
+    
+    /*-----------------------------------------------------------------------*\
+     *               Raw (byte-orietened) memory support                     *
+    \*-----------------------------------------------------------------------*/
+    
+    /**
+     * Allocate a block of memory outside of the Java heap.<p>
+     * 
+     * Memory may be be very restricted on some platforms. Callers shouldn't rely on 
+     * this memory unless they have a good understanding of the memory resvered for malloc
+     * on a particular platform.
+     * 
+     * @param size
+     * @return address of memory block, or zero
+     * @throws com.sun.squawk.pragma.NativePragma
+     */
+    public static Address malloc(UWord size) throws NativePragma {
+         throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+    
+    public static void free(Address ptr) throws NativePragma {
+         Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+ 
+   /**
+     * Gets the <code>short</code> at the given <b>byte</b> offset in the memory, starting from base.
+     *  If the short is aligned on a "natural"
+     *  boundary it is always loaded from memory
+     *  in a single atomic operation.  If it is not on a natural boundary it may not be loaded atomically, and
+     *  the number and order of the load operations is unspecified.
+     *
+     * @param base address of to region of memory
+     * @param boffset The offset in bytes from base to the short to be loaded
+     *
+     * @return The integer from raw memory.
+     */
+    public static int getUnalignedShort(Address base, int boffset) throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    /**
+     * Gets the <code>int</code> at the given <b>byte</b> offset in the memory, starting from base.
+     *  If the integer is aligned on a "natural"
+     *  boundary it is always loaded from memory
+     *  in a single atomic operation.  If it is not on a natural boundary it may not be loaded atomically, and
+     *  the number and order of the load operations is unspecified.
+     *
+     * @param base address of to region of memory
+     * @param boffset The offset in bytes from base to the int to be loaded
+     *
+     * @return The integer from raw memory.
+     */
+    public static int getUnalignedInt(Address base, int boffset) throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    /**
+     * Gets the <code>long</code> at the given <b>byte</b> offset in the memory, starting from base.
+     *  If the long is aligned on a "natural"
+     *  boundary it is always loaded from memory
+     *  in a single atomic operation.  If it is not on a natural boundary it may not be loaded atomically, and
+     *  the number and order of the load operations is unspecified.
+     *
+     * @param base address of to region of memory
+     * @param boffset The offset in bytes from base to the long to be loaded
+     *
+     * @return The integer from raw memory.
+     */
+    public static long getUnalignedLong(Address base, int boffset) throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    /**
+     * Sets the <code>short</code> at the given <b>byte</b> offset in the memory, starting from base.
+     *  If the short is aligned on a "natural"
+     *  boundary it is always stored to memory
+     *  in a single atomic operation.  If it is not on a natural boundary it may not be stored atomically, and
+     *  the number and order of the store operations is unspecified.
+     *
+     * @param base address of to region of memory
+     * @param boffset The offset in bytes from base to the location to be stored
+     * @param value 
+     */
+    public static void setUnalignedShort(Address base, int boffset, int value) throws NativePragma {
+        Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    /**
+     * Gets the <code>int</code> at the given <b>byte</b> offset in the memory, starting from base.
+     *  If the integer is aligned on a "natural"
+     *  boundary it is always stored to memory
+     *  in a single atomic operation.  If it is not on a natural boundary it may not be stored atomically, and
+     *  the number and order of the store operations is unspecified.
+     *
+     * @param base address of to region of memory
+     * @param boffset The offset in bytes from base to the location to be stored
+     * @param value 
+     */
+    public static void setUnalignedInt(Address base, int boffset, int value) throws NativePragma {
+        Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    /**
+     * Gets the <code>long</code> at the given <b>byte</b> offset in the memory, starting from base.
+     *  If the long is aligned on a "natural"
+     *  boundary it is always stored to memory
+     *  in a single atomic operation.  If it is not on a natural boundary it may not be stored atomically, and
+     *  the number and order of the store operations is unspecified.
+     *
+     * @param base address of to region of memory
+     * @param boffset The offset in bytes from base to the location to be stored
+     * @param value 
+     */
+    public static void setUnalignedLong(Address base, int boffset, long value) throws NativePragma {
+        Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+    
     /*-----------------------------------------------------------------------*\
      *                      Endianess swapping                               *
     \*-----------------------------------------------------------------------*/

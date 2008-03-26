@@ -1044,6 +1044,22 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     com_sun_squawk_GC_ramStart = (Address)roundUp((UWord)com_sun_squawk_GC_nvmEnd, pageSize);
     com_sun_squawk_GC_ramEnd = Address_add(com_sun_squawk_GC_ramStart, ramSize);
 
+/*setUnalignedLong(com_sun_squawk_GC_ramStart, 0, 0x1122334455667788LL);
+jlong val = getUnalignedLong(com_sun_squawk_GC_ramStart, 0);
+fprintf(stderr, "&&&& Special long val = %llx\n", val);
+swap8(com_sun_squawk_GC_ramStart);
+val = getUnalignedLong(com_sun_squawk_GC_ramStart, 0);
+fprintf(stderr, "&&&& Special long val2 = %llx\n", val);
+
+setUnalignedInt(com_sun_squawk_GC_ramStart, 0, 0x55667788);
+int val2 = getUnalignedInt(com_sun_squawk_GC_ramStart, 0);
+fprintf(stderr, "&&&& Special int val = %lx\n", val2);
+swap4(com_sun_squawk_GC_ramStart);
+val2 = getUnalignedInt(com_sun_squawk_GC_ramStart, 0);
+fprintf(stderr, "&&&& Special int val2 = %lx\n", val2);
+*/
+
+
     // The stack for the service thread starts on the next page after the end of RAM.
     // The length of the stack in logical slots is written into the first word of the
     // block allocate for the stack. This length is later used in Thread.initializeThreading()
@@ -1568,16 +1584,16 @@ extern  void fatalInterpreterError0(char *msg, int opcode, ByteAddress _ip, UWor
 
     if (userStack) {
         Address thread = getObject(ss, SC_owner);
-        if (printValueInRange(thread, "thread", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM")) {
-            Address isolate = com_sun_squawk_VMThread_isolate(thread);
-            printStrSafely(com_sun_squawk_VMThread_name(thread), "thread name", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
+        Address isolate = com_sun_squawk_VMThread_isolate(thread);
 
-            if (printValueInRange(isolate, "isolate", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM")) {
-                printStrSafely(com_sun_squawk_Isolate_mainClassName(isolate), "isolate main class: ", 
-                    com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
-                printStrSafely(com_sun_squawk_Isolate_args(isolate), "isolate args: ", 
-                    com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
-            }
+        printValueInRange(thread, "thread", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
+        printStrSafely(com_sun_squawk_VMThread_name(thread), "thread name", com_sun_squawk_VM_romStart, com_sun_squawk_GC_ramEnd, "RAM or ROM");
+
+        if (printValueInRange(isolate, "isolate", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM")) {
+            printStrSafely(com_sun_squawk_Isolate_mainClassName(isolate), "isolate main class", 
+                com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
+            printStrSafely(com_sun_squawk_Isolate_args(isolate), "isolate args", 
+                com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
         }
     }
 
@@ -1586,18 +1602,18 @@ extern  void fatalInterpreterError0(char *msg, int opcode, ByteAddress _ip, UWor
 
 int printValueInRange(Address value, char* valueName, Address low, Address high, char* rangeName) {
     int result = (value >= low && value < high);
-    fprintf(stderr, "    %s : %x. Is %sin %s range %x .. %x\n", valueName, value, (result ? "" : "NOT "), rangeName, low, high);
+    fprintf(stderr, "    %s: %x. Is %sin %s range %x .. %x\n", valueName, value, (result ? "" : "NOT "), rangeName, low, high);
     return result;
 }
 
 void printStrSafely(Address value, char* valueName, Address low, Address high, char* rangeName) {
     int result = (value >= low && value < high);
-    fprintf(stderr, "    %s : ", valueName);
+    fprintf(stderr, "    %s: ", valueName);
     if (value == 0) {
         fprintf(stderr, "NULL.\n");
     } else if (result) {
-            printJavaString(value, stderr, null, 0);
-            fprintf(stderr, "\n");
+        printJavaString(value, stderr, null, 0);
+        fprintf(stderr, "\n");
     } else {
         fprintf(stderr, "%x is NOT in %s range %x .. %x\n", value, rangeName, low, high);
     }
