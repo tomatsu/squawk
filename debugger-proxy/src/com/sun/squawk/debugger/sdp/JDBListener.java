@@ -32,7 +32,6 @@ import com.sun.squawk.debugger.DataType.*;
 import com.sun.squawk.debugger.EventRequest.*;
 import com.sun.squawk.util.*;
 import com.sun.squawk.*;
-import com.sun.squawk.vm.CID;
 
 /**
  * A JDBListener implements the Squawk Debugger Proxy side of the JDWP protocol

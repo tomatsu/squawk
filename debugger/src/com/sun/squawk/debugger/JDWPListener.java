@@ -196,6 +196,7 @@ public abstract class JDWPListener implements Runnable {
      * the current thread blocks until the reply has been received.
      *
      * @param command   the command packet to send
+     * @return reply to the command
      * @throws IOException if there was an IO error while sending the packet
      * @throws IllegalStateException if called before the listener has set up a connection and waited for connection to be ready for packets.
      * @throws SDWPException if the received reply has a non-zero error code

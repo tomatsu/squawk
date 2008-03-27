@@ -107,10 +107,10 @@ final class SDAListener extends JDWPListener {
      * VM indicating that at least one thread is running.
      */
     void waitForEvent() {
-        Event eventHandler = (Event)commandSets.get(JDWP.Event_COMMAND_SET);
-        synchronized (eventHandler) {
+        Event evtHandler = (Event)commandSets.get(JDWP.Event_COMMAND_SET);
+        synchronized (evtHandler) {
             try {
-                eventHandler.wait();
+                evtHandler.wait();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -142,7 +142,7 @@ final class SDAListener extends JDWPListener {
         /**
          * The bootstrap classes that have yet to be processed.
          */
-        private List bootstrapClasses;
+        private List<ProxyType> bootstrapClasses;
 
         private boolean vmDeath;
 
@@ -150,7 +150,7 @@ final class SDAListener extends JDWPListener {
          * Event queue of ForwardedComposite events. Can't be sent to debugger until
          * debugger has found out idsizes.
          */
-        private LinkedList forwardedEventQueue = new LinkedList();
+        private LinkedList<ForwardedComposite> forwardedEventQueue = new LinkedList<ForwardedComposite>();
     
         /**
          * {@inheritDoc}
@@ -207,7 +207,7 @@ final class SDAListener extends JDWPListener {
         private void Composite() throws IOException {
             int suspendPolicy = in.readByte("suspendPolicy");
             int eventCount = in.readInt("events");
-            List events = new ArrayList(eventCount);
+            List<ForwardedEvent> events = new ArrayList<ForwardedEvent>(eventCount);
             for (int i = 0; i != eventCount; ++i) {
                 int eventKind = in.readByte("eventKind");
                 int requestID = in.readInt("requestID");
@@ -275,7 +275,7 @@ final class SDAListener extends JDWPListener {
                         // suite chain against which the application is bound).
                         int classes = in.readInt("classes");
                         String lastName = "";
-                        bootstrapClasses = new ArrayList();
+                        bootstrapClasses = new ArrayList<ProxyType>();
                         for (int j = 0; j != classes; ++j) {
                             ReferenceTypeID typeID = in.readReferenceTypeID("typeID");
                             int commonPrefix = in.readByte("commonPrefix") & 0xFF;
@@ -383,7 +383,7 @@ final class SDAListener extends JDWPListener {
                                 
                             }
                         } else {
-                            ForwardedComposite composite = (ForwardedComposite)forwardedEventQueue.removeFirst();
+                            ForwardedComposite composite = forwardedEventQueue.removeFirst();
                             List events = composite.events;
                             
                             if (Log.info()) {
@@ -406,7 +406,9 @@ final class SDAListener extends JDWPListener {
                                 // This is an asynchronous send without a reply
                                 Assert.shouldNotReachHere();
                             } catch (IOException e) {
-                                e.printStackTrace();
+                                if (sdaListener == null || sdaListener.otherHost == null || (!sdaListener.hasQuit() && !sdaListener.otherHost.hasQuit())) {
+                                    e.printStackTrace();
+                                }
                             }
                             
                             // Notify any threads waiting for an event to have been received and passed through to the debugger
