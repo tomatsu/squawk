@@ -1999,7 +1999,7 @@ public class GC implements GlobalStaticFields {
                 }
             }
             
-             heapstats.put(DYNAMIC_CLASSES, new ClassStat());
+            heapstats.put(DYNAMIC_CLASSES, new ClassStat());
         }
     }
     
@@ -2026,12 +2026,59 @@ public class GC implements GlobalStaticFields {
     }
     
     /**
+     * Print represenation of obj to VM.print stream using as little memory as possible.
+     * Currently only handles strings, string buffers, and some arrays.
+     * 
+     * @param obj
+     */
+    static void printObject(Object obj, Klass klass, int size) {
+        if (obj instanceof String) {
+            VM.print("String size: ");
+            VM.print(size);
+            VM.print(", ");
+            VM.print((String) obj);
+        } else if (obj instanceof StringBuffer) {
+            StringBuffer sb = (StringBuffer) obj;
+            VM.print("StringBuffer size: ");
+            VM.print(size);
+            VM.print(", ");
+            for (int i = 0; i < sb.length(); i++) {
+                VM.print(sb.charAt(i));
+            }
+        } else if (klass.isArray()) {
+            VM.print(klass.getInternalName());
+            VM.print(" size: ");
+            VM.print(size);
+            VM.print(", length: ");
+            VM.print(GC.getArrayLength(obj));
+
+            if (obj instanceof char[]) {
+                char[] cha = (char[]) obj;
+                VM.print(", ");
+                for (int i = 0; i < cha.length; i++) {
+                    VM.print(cha[i]);
+                }
+            } else {
+                VM.print(" @");
+                VM.printAddress(obj);
+            }
+        } else {
+            VM.print(klass.getInternalName());
+            VM.print(" size: ");
+            VM.print(size);
+            VM.print(", @");
+            VM.printAddress(obj);
+        }
+        VM.println();
+    }
+    
+    /**
      * Do actual heap walk, from start object, or whole heap is startObj is null.
      * Collect statistics in heapstats table.
      * 
      * @param startObj the object to start walking from , or null
      */
-    static void collectHeapStats(Object startObj) {
+    static void collectHeapStats(Object startObj, boolean printInstances) {
         Address start;
         if (startObj == null) {
             start = heapStart;
@@ -2050,8 +2097,9 @@ public class GC implements GlobalStaticFields {
         for (Address block = start; block.lo(end); ) {
             Address object = GC.blockToOop(block);
             Klass klass = GC.getKlass(object);
-            int objSize = GC.getBodySize(klass, object);
-            ClassStat cs = (ClassStat)heapstats.get(klass);
+            int blkSize = GC.getBodySize(klass, object);
+            int objSize = blkSize + (klass.isArray() ? HDR.arrayHeaderSize : HDR.basicHeaderSize);
+            ClassStat cs = (ClassStat) heapstats.get(klass);
             if (cs == null) {
                 // unknown class, must be dyanmic:
                 cs = (ClassStat)heapstats.get(DYNAMIC_CLASSES);
@@ -2059,13 +2107,15 @@ public class GC implements GlobalStaticFields {
                     VM.print("collectHeapStats - unknown class: ");
                     VM.println(klass.getInternalName());
                 }
+            } else if (printInstances) {
+                printObject(object.toObject(), klass, objSize);
             }
-            cs.update(objSize + (klass.isArray() ? HDR.arrayHeaderSize : HDR.basicHeaderSize));
+            cs.update(objSize);
             if ((oldPartialCollectionCount != partialCollectionCount) ||
                 (oldFullCollectionCount != fullCollectionCount)) {
                 throw new IllegalStateException("GC during heap walk");
             }
-            block = object.add(objSize);
+            block = object.add(blkSize);
         }
     }
     
@@ -2076,8 +2126,9 @@ public class GC implements GlobalStaticFields {
      * Statistics are NOT sorted.
      * 
      * @param startObj the object to start walking from , or null
+     * @param printInstances if true, print information about each object before printing statistics
      */
-    public static void printHeapStats(Object startObj) {
+    public static void printHeapStats(Object startObj, boolean printInstances) {
         initHeapStats();
         
         Enumeration e = heapstats.elements();
@@ -2085,9 +2136,14 @@ public class GC implements GlobalStaticFields {
             ClassStat cs = (ClassStat) e.nextElement();
             cs.clear();
         }
-                
-        collectHeapStats(startObj);
+
+        if (printInstances) {
+            VM.println("Instances in heap:");
+        }
+        collectHeapStats(startObj, printInstances);
         
+
+        VM.println("Class:\t Count: \t Bytes:");
         e = heapstats.keys();
         while (e.hasMoreElements()) {
             Object key = e.nextElement();

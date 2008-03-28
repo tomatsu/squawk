@@ -24,10 +24,11 @@
 
 package java.lang;
 
-import java.io.*;
+import java.io.UnsupportedEncodingException;
 
 import com.sun.cldc.i18n.*;
 import com.sun.squawk.GC;
+import com.sun.squawk.Isolate;
 import com.sun.squawk.Klass;
 import com.sun.squawk.NativeUnsafe;
 import com.sun.squawk.VM;
@@ -73,10 +74,10 @@ import com.sun.squawk.util.Assert;
  * String conversions are implemented through the method
  * <code>toString</code>, defined by <code>Object</code> and
  * inherited by all classes in Java. For additional information on
- * string concatenation and conversion, see Gosling, Joy, and Steele,
+ * string concatenation and conversion, see
  * <i>The Java Language Specification</i>.
  *
- * @version 1.121, 10/06/99 (CLDC 1.0, Spring 2000)
+ * @version 12/17/01 (CLDC 1.1)
  * @see     java.lang.Object#toString()
  * @see     java.lang.StringBuffer
  * @see     java.lang.StringBuffer#append(boolean)
@@ -87,7 +88,7 @@ import com.sun.squawk.util.Assert;
  * @see     java.lang.StringBuffer#append(long)
  * @see     java.lang.StringBuffer#append(java.lang.Object)
  * @see     java.lang.StringBuffer#append(java.lang.String)
- * @since   JDK1.0
+ * @since   JDK1.0, CLDC 1.0
  */
 public final class String {
 
@@ -185,6 +186,48 @@ public final class String {
     }
 
     /**
+     * Initializes a newly created <code>String</code> object so that it
+     * represents an empty character sequence.
+     */
+    public String() {
+        VM.fatalVMError();
+    }
+    static String _init(String self) throws ReplacementConstructorPragma {
+        return init(new char[0], 0, 0, true);
+    }
+
+    /**
+     * Initializes a newly created <code>String</code> object so that it
+     * represents the same sequence of characters as the argument; in other
+     * words, the newly created string is a copy of the argument string.
+     *
+     * @param   value   a <code>String</code>.
+     */
+    public String(String value) {
+        VM.fatalVMError();
+    }
+    static String _init_(String self, String value) throws ReplacementConstructorPragma {
+        return init(value, 0, value.length(), value.isEightBit());
+    }
+
+    /**
+     * Allocates a new <code>String</code> so that it represents the
+     * sequence of characters currently contained in the character array
+     * argument. The contents of the character array are copied; subsequent
+     * modification of the character array does not affect the newly created
+     * string.
+     *
+     * @param  value   the initial value of the string.
+     * @throws NullPointerException if <code>value</code> is <code>null</code>.
+     */
+    public String(char value[]) {
+        VM.fatalVMError();
+    }
+    static String _init_(String self, char value[]) throws ReplacementConstructorPragma {
+        return init(value, 0, value.length);
+    }
+
+    /**
      * Allocates a new <code>String</code> that contains characters from
      * a subarray of the character array argument. The <code>offset</code>
      * argument is the index of the first character of the subarray and
@@ -228,48 +271,6 @@ public final class String {
     }
     static String _init_(String self, String str, int offset, int count) throws ReplacementConstructorPragma {
         return init(str, offset, count, str.isEightBit());
-    }
-
-    /**
-     * Initializes a newly created <code>String</code> object so that it
-     * represents an empty character sequence.
-     */
-    public String() {
-        VM.fatalVMError();
-    }
-    static String _init(String self) throws ReplacementConstructorPragma {
-        return init(new char[0], 0, 0, true);
-    }
-
-    /**
-     * Initializes a newly created <code>String</code> object so that it
-     * represents the same sequence of characters as the argument; in other
-     * words, the newly created string is a copy of the argument string.
-     *
-     * @param   value   a <code>String</code>.
-     */
-    public String(String value) {
-        VM.fatalVMError();
-    }
-    static String _init_(String self, String value) throws ReplacementConstructorPragma {
-        return init(value, 0, value.length(), value.isEightBit());
-    }
-
-    /**
-     * Allocates a new <code>String</code> so that it represents the
-     * sequence of characters currently contained in the character array
-     * argument. The contents of the character array are copied; subsequent
-     * modification of the character array does not affect the newly created
-     * string.
-     *
-     * @param  value   the initial value of the string.
-     * @throws NullPointerException if <code>value</code> is <code>null</code>.
-     */
-    public String(char value[]) {
-        VM.fatalVMError();
-    }
-    static String _init_(String self, char value[]) throws ReplacementConstructorPragma {
-        return init(value, 0, value.length);
     }
 
     /**
@@ -404,7 +405,7 @@ public final class String {
 
     /**
      * Returns the character at the specified index. An index ranges
-     * from <code>0</code> to <code>_length() - 1</code>. The first character
+     * from <code>0</code> to <code>length() - 1</code>. The first character
      * of the sequence is at index <code>0</code>, the next at index
      * <code>1</code>, and so on, as for array indexing.
      *
@@ -510,6 +511,7 @@ public final class String {
      * @return  <code>true</code> if the <code>String </code>are equal;
      *          <code>false</code> otherwise.
      * @see     java.lang.String#compareTo(java.lang.String)
+     * @see     java.lang.String#equalsIgnoreCase(java.lang.String)
      */
     public boolean equals(Object anObject) {
         if (this == anObject) {
@@ -592,7 +594,7 @@ public final class String {
      * whose character at position <i>k</i> has the smaller value, as
      * determined by using the < operator, lexicographically precedes the
      * other string. In this case, <code>compareTo</code> returns the
-     * difference of the two character values at position <code>k</code> in
+     * difference of the two character values at position <i>k</i> in
      * the two string -- that is, the value:
      * <blockquote><pre>
      * this.charAt(k)-anotherString.charAt(k)
@@ -602,7 +604,7 @@ public final class String {
      * <code>compareTo</code> returns the difference of the lengths of the
      * strings -- that is, the value:
      * <blockquote><pre>
-     * this._length()-anotherString._length()
+     * this.length()-anotherString.length()
      * </pre></blockquote>
      *
      * @param   anotherString   the <code>String</code> to be compared.
@@ -691,8 +693,9 @@ public final class String {
         while (len-- > 0) {
             char c1 = NativeUnsafe.charAt(this, to++);
             char c2 = NativeUnsafe.charAt(other, po++);
-            if (c1 == c2)
+            if (c1 == c2) {
                 continue;
+            }
             if (ignoreCase) {
                 /*
                  * If characters don't match but case may be ignored,
@@ -722,7 +725,7 @@ public final class String {
 
     /**
      * Tests if this string starts with the specified prefix beginning
-     * a specified index.
+     * at the specified index.
      *
      * @param   prefix    the prefix.
      * @param   toffset   where to begin looking in the string.
@@ -769,7 +772,7 @@ public final class String {
      *          {@link #equals(Object)} method.
      * @exception java.lang.NullPointerException if <code>prefix</code> is
      *          <code>null</code>.
-     * @since   JDK1. 0
+     * @since   JDK1.0
      */
     public boolean startsWith(String prefix) {
         return startsWith(prefix, 0);
@@ -905,7 +908,7 @@ public final class String {
      * index. That is, the index returned is the largest value <i>k</i>
      * such that:
      * <blockquote><pre>
-     * this.charAt(k) == ch) && (k <= fromIndex)
+     * (this.charAt(k) == ch) && (k <= fromIndex)
      * </pre></blockquote>
      * is true.
      *
@@ -1180,7 +1183,7 @@ public final class String {
     }
 
     /**
-     * Converts all of the characters in this String to lower case.
+     * Converts all of the characters in this <code>String</code> to lower case.
      *
      * @return the String, converted to lowercase.
      * @see Character#toLowerCase
@@ -1196,7 +1199,7 @@ public final class String {
     }
 
     /**
-     * Converts all of the characters in this String to upper case.
+     * Converts all of the characters in this <code>String</code> to upper case.
      *
      * @return the String, converted to uppercase.
      * @see Character#toLowerCase
@@ -1387,16 +1390,32 @@ public final class String {
 
 /*if[FLOATS]*/
     /**
-     * Returns a String object that represents the value of the specified float.
-     * @param f the float
+     * Returns the string representation of the <code>float</code> argument.
+     * <p>
+     * The representation is exactly the one returned by the
+     * <code>Float.toString</code> method of one argument.
+     *
+     * @param   f   a <code>float</code>.
+     * @return  a newly allocated string containing a string representation of
+     *          the <code>float</code> argument.
+     * @see     java.lang.Float#toString(float)
+     * @since   CLDC 1.1
      */
     public static String valueOf(float f) {
         return Float.toString(f);
     }
 
     /**
-     * Returns a String object that represents the value of the specified double.
-     * @param d the double
+     * Returns the string representation of the <code>double</code> argument.
+     * <p>
+     * The representation is exactly the one returned by the
+     * <code>Double.toString</code> method of one argument.
+     *
+     * @param   d   a <code>double</code>.
+     * @return  a newly allocated string containing a string representation of
+     *          the <code>double</code> argument.
+     * @see     java.lang.Double#toString(double)
+     * @since   CLDC 1.1
      */
     public static String valueOf(double d) {
         return Double.toString(d);
@@ -1460,7 +1479,7 @@ public final class String {
      * @since   CLDC 1.1
      */
     public String intern() {
-        return VM.getCurrentIsolate().intern(this);
+        return Isolate.intern(this);
     }
 
 }

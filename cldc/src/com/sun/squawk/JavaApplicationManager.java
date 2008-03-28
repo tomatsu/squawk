@@ -31,6 +31,7 @@ import javax.microedition.io.Connector;
 
 import com.sun.squawk.util.Tracer;
 import com.sun.squawk.util.ArgsUtilities;
+import com.sun.squawk.util.Assert;
 import com.sun.squawk.util.StringTokenizer;
 
 /**
@@ -80,11 +81,6 @@ public class JavaApplicationManager {
      private static String testMIDletClass;
      
     /**
-     * new isolate's properties.
-     */
-    private static Hashtable newProps;
-
-    /**
      * Main routine.
      *
      * @param args the command line argument array
@@ -130,10 +126,10 @@ public class JavaApplicationManager {
             Isolate isolate;
             if (mainClassName != null) {
                 // create raw isolate
-                isolate = new Isolate(newProps, mainClassName, javaArgs, classPath, parentSuiteURI);
+                isolate = new Isolate(null, mainClassName, javaArgs, classPath, parentSuiteURI);
             } else {
                 // create midlet
-                isolate = new Isolate(newProps, midletPropertyNum, classPath, parentSuiteURI);
+                isolate = new Isolate(null, midletPropertyNum, classPath, parentSuiteURI);
             }
 
             /*
@@ -210,6 +206,7 @@ public class JavaApplicationManager {
      */
     private static String[] processVMOptions(String[] args) {
         int offset = 0;
+        Assert.that(VM.getCommandLineProperties().isEmpty());
         while (offset != args.length) {
             String arg = args[offset];
             if (arg.charAt(0) == '-') {
@@ -378,14 +375,11 @@ public class JavaApplicationManager {
                 System.err.println("Ignoring -sampleStatData option");
             }
         } else if (arg.startsWith("-D")) {
-            if (newProps == null) {
-                newProps = new Hashtable();
-            }
             String propAndValue = arg.substring("-D".length());
             int seperator = propAndValue.indexOf('=');
             String prop = propAndValue.substring(0, seperator);
             String val = propAndValue.substring(seperator+1);
-            newProps.put(prop, val);
+            VM.getCommandLineProperties().put(prop, val);
             // System properties are not "global global"
         } else if (arg.startsWith("-suitepath:")) {
             String path = arg.substring("-suitepath:".length());

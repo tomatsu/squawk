@@ -847,6 +847,22 @@ public class VM implements GlobalStaticFields {
         isolates = head;
 //VM.println("VM::pruneIsolateList --- start --");
     }
+    
+    /**
+     * The squawk parameters specified on the command line (-Dfoo.bar=true).
+     * Set by JavaApplicationManager
+     */
+    private static Hashtable commandLineProperties;
+    
+    /**
+     * The squawk parameters specified on the command line (-Dfoo.bar=true).
+     */
+    static Hashtable getCommandLineProperties() {
+        if (commandLineProperties == null) {
+            commandLineProperties = new Hashtable();
+        }
+        return commandLineProperties;
+    }
 
     /*-----------------------------------------------------------------------*\
      *                      Thread stack operations                          *
@@ -4014,8 +4030,8 @@ hbp.dumpState();
          * 
          * @param startObj the object to start walking from , or null
          */
-        public static void printHeapStats(Object startObj) {
-            GC.printHeapStats(startObj);
+        public static void printHeapStats(Object startObj, boolean printInstances) {
+            GC.printHeapStats(startObj, printInstances);
         }
         
         /**

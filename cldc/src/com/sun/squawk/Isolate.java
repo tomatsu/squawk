@@ -93,7 +93,8 @@ import com.sun.squawk.vm.*;
  *
  * The properties parameter to the Isolate constructor provides another way to set the system properties of the new isolate. If this parameter is not specified, the child 
  * isolate starts with the same set of system properties that it would have if initiated as a standalone application. If this parameter is specified, this default set of
- * properties is augmented with those specified in the parameter, in the same way as if they had been specified with -D on a command line invocation.
+ * properties is augmented with those specified in the parameter, in the same way as if they had been specified with -D on a command line invocation. In addition, all isolate's
+ * inherit the properties defined on the Squawk command line using the -D option.
  *
  * <h3>OtherDetails</h3>
  * Each Isolate has independent output streams for {@link System#out} and  {@link System#err}. These output streams can be attached to instances of
@@ -350,9 +351,27 @@ public final class Isolate implements Runnable {
     }
 
     /**
+     * Add the properties in the hashtable to this isolate, copying strings
+     * when nededed to ensure isolate hygene.
+     * 
+     * @param properties
+     */
+    private void addProperties(Hashtable properties) {
+        if (properties != null) {
+            Enumeration e = properties.keys();
+            while (e.hasMoreElements()) {
+                String key = (String) e.nextElement();
+                String value = (String) properties.get(key);
+                setProperty(key, value);
+            }
+        }
+    }
+    
+    /**
      * Creates an new isolate. {@link Isolate#start()} will create a new execution context, and start executing the <code>main</code> method of the class
      * specified by <code>mainClassName</code>. System properties can be set for the isolate by passing in a hashtable where the keys are strings of property names
-     * and the values are strings containing property values.
+     * and the values are strings containing property values. The passed in property values will override any property values that the isolate inherits 
+     * from the command line properties.
      *
      * <p> Note that system properties are disjoint from manifest properties.
      *
@@ -369,10 +388,10 @@ public final class Isolate implements Runnable {
         if (mainClassName == null || args == null) {
             throw new NullPointerException();
         }
-        this.mainClassName        = mainClassName;
-        this.args                 = args;
-        this.classPath            = classPath;
-        this.parentSuiteSourceURI = parentSuiteSourceURI;
+        this.mainClassName        = copyIfCurrentThreadIsExternal(mainClassName);
+        this.args                 = copyIfCurrentThreadIsExternal(args);
+        this.classPath            = copyIfCurrentThreadIsExternal(classPath);
+        this.parentSuiteSourceURI = copyIfCurrentThreadIsExternal(parentSuiteSourceURI);
         this.state                = NEW;
         this.id                   = VM.allocateIsolateID();
 
@@ -385,14 +404,17 @@ public final class Isolate implements Runnable {
         // is required sometime between now and 'updateLeafSuite'.
         //leafSuite = bootstrapSuite;
         
-        if (properties != null) {
-            Enumeration e = properties.keys();
-            while (e.hasMoreElements()) {
-                String key = (String)e.nextElement();
-                String value = (String)properties.get(key);
-                setProperty(key,value);
-            }
-        }
+        /*
+         * Copy in command line properties and passed in properties now.
+         * Do this eagerly instead of at getProeprty() time to preserve
+         * isolate hygene - we need to create copies of "external" strings that are
+         * in RAM. We can safely share Strings in ROM though.
+         */
+        // add in properties from the command line:
+        addProperties(VM.getCommandLineProperties());
+        // now add in specified properties (may override the command line properties)
+        addProperties(properties);
+        
         
         try {
            updateLeafSuite(true); // TO DO: Also updated in run, but that is too late to find the main class
@@ -423,7 +445,8 @@ public final class Isolate implements Runnable {
     /**
      * Creates an new isolate. {@link Isolate#start()} will create a new execution context, and start executing the <code>startApp</code> method of the MIDlet
      * specified by the manifest property named <code>MIDlet-</code><i>midletNum</i>. System properties can be set for the isolate by passing in a hashtable where 
-     * the keys are strings of property names and the values are strings containing property values.
+     * the keys are strings of property names and the values are strings containing property values.  The passed in property values will override any property 
+     * values that the isolate inherits from the command line properties.
      *
      * <p> Note that system properties are disjoint from manifest properties.
      *
@@ -458,14 +481,21 @@ public final class Isolate implements Runnable {
 
     /**
      * Makes a copy of a given string if it is not null and the current thread is not owned by this isolate.
-     * We don't have to copy string if it is in ROM.
+     * <p>
+     * Make sure that all strings handed outside of <code>this</code> isolate are "hygenic" - either unshared copies of the original,
+     * or Strings in ROM that are safe to share.
      *
      * @param s   the string to conditionally copy
      * @return the original or copy of <code>s</code>
      */
     private String copyIfCurrentThreadIsExternal(String s) {
         if (s != null && GC.inRam(s) && isCurrentThreadExternal()) {
-            return new String(s);
+            String s2 = Isolate.lookupInterned(s); // try to find version in ROM
+            if (s2 == null || GC.inRam(s2)) {
+                return new String(s);
+            } else {
+                return s2;
+            }
         } else {
             return s;
         }
@@ -701,6 +731,10 @@ public final class Isolate implements Runnable {
 
     /**
      * Gets a named property of this isolate.
+     * <p>
+     * Isolate properties include those passed into the isolate's constructor, 
+     * properties inhertited from the squawk command line, and properties set
+     * by {@link Isolate#setProperty()}.
      *
      * @param key  the name of the property to get
      * @return the value of the property named by 'key' or null if there is no such property
@@ -739,6 +773,10 @@ public final class Isolate implements Runnable {
     /**
      * Get an enumeration of isolate property keys. These keys can be used with {@link Isolate#getProperty(String)} to get the
      * property values.
+     * <p>
+     * Isolate properties include those passed into the isolate's constructor, 
+     * properties inhertited from the squawk command line, and properties set
+     * by {@link Isolate#setProperty()}.
      * 
      * @return enumeration of property keys
      */
@@ -1178,7 +1216,44 @@ public final class Isolate implements Runnable {
     \*---------------------------------------------------------------------------*/
 
     /**
-     * Returns a canonical representation for the string object.
+     * Returns a canonical representation for the string object from the current isolate.
+     *
+     * @param value 
+     * @return  a string that has the same contents as this string, but is
+     *          guaranteed to be from a pool of unique strings.
+     *
+     * @see #intern
+     */
+    private String intern0(String value) {
+        String internedString = lookupInterned(value);
+        if (internedString == null) {
+            internedStrings.put(value, value);
+            internedString = value;
+        }
+        return internedString;
+    }
+    
+    /**
+     * Returns a previously interened version for the string object, or null.
+     *
+     * @param value a string to lookup
+     * @return  a previously interned string that has the same contents as this string, or null
+     *
+     * @see #lookupInterned
+     */
+    private String lookupInterned0(String value) {
+        Assert.that(this == VM.getCurrentIsolate() && this.isAlive());
+        if (internedStrings == null) {
+            internedStrings = new SquawkHashtable();
+            if (!VM.isHosted()) {
+                GC.getStrings(internedStrings); // depends on current isolate
+            }
+        }
+        return (String)internedStrings.get(value);
+    }
+    
+    /**
+     * Returns a canonical representation for the string object from the current isolate.
      * <p>
      * A pool of strings, initially empty, is maintained privately by the
      * class <code>Isolate</code>.
@@ -1202,19 +1277,35 @@ public final class Isolate implements Runnable {
      * @return  a string that has the same contents as this string, but is
      *          guaranteed to be from a pool of unique strings.
      */
-    public String intern(String value) {
-        if (internedStrings == null) {
-            internedStrings = new SquawkHashtable();
-            if (!VM.isHosted()) {
-                GC.getStrings(internedStrings);
-            }
-        }
-        String internedString = (String)internedStrings.get(value);
-        if (internedString == null) {
-            internedStrings.put(value, value);
-            internedString = value;
-        }
-        return internedString;
+    public static String intern(String value) {
+        return VM.getCurrentIsolate().intern0(value);
+    }
+    
+    /**
+     * Returns a previously interened version for the string object, or null.
+     * <p>
+     * A pool of strings, initially empty, is maintained privately by the
+     * class <code>Isolate</code>.
+     * <p>
+     * When the lookupInterned method is invoked, if the pool already contains a
+     * string equal to this <code>String</code> object as determined by
+     * the {@link #equals(Object)} method, then the string from the pool is
+     * returned. Otherwise, return null.
+     * <p>
+     * It follows that for any two strings <code>s</code> and <code>t</code>,
+     * <code>s.intern() == t.intern()</code> is <code>true</code>
+     * if and only if <code>s.equals(t)</code> is <code>true</code>.
+     * <p>
+     * All literal strings and string-valued constant expressions are
+     * interned. String literals are defined in &sect;3.10.5 of the
+     * <a href="http://java.sun.com/docs/books/jls/html/">Java Language
+     * Specification</a>
+     *
+     * @param value a string to lookup
+     * @return  a previously interned string that has the same contents as this string, or null
+     */
+    public static String lookupInterned(String value) {
+        return VM.getCurrentIsolate().lookupInterned0(value);
     }
 
 

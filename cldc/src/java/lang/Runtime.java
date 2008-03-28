@@ -35,7 +35,7 @@ import com.sun.squawk.util.Assert;
  * <p>
  * An application cannot create its own instance of this class.
  *
- * @version 1.53, 12/04/99 (CLDC 1.0, Spring 2000)
+ * @version 12/17/01 (CLDC 1.1)
  * @see     java.lang.Runtime#getRuntime()
  * @since   JDK1.0
  */
