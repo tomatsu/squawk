@@ -1338,6 +1338,7 @@ hbp.dumpState();
      *                      Floating point operations                        *
     \*-----------------------------------------------------------------------*/
 
+/*if[FLOATS]*/
     /**
      * Performs a math operation.
      *
@@ -1379,6 +1380,7 @@ hbp.dumpState();
      * @return the result
      */
     public native static double longBitsToDouble(long value);
+/*end[FLOATS]*/
     
 
     /*=======================================================================*\
