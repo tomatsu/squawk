@@ -781,9 +781,72 @@
          * @param mp     the pointer to the method
          * @return the value
          */
+/*if[VM2C]*/
 static int             MethodBody_minfoValue1_L(Address);
 static int             MethodBody_minfoValue2_L(Address);
 static int             MethodBody_minfoValue3_L(Address);
+/*else[VM2C]*/
+//static int NativeUnsafe_getByte_LI(Address base, int offset) {
+//    return getByte(base, offset);
+//}
+//
+//static int MethodBody_minfoValue1_L(Address oop) {
+//    int p;
+//    int val;
+//    p = -13 - 1;
+//   
+//    
+//    val = NativeUnsafe_getByte_LI(oop, p--) & 255;
+//    if (val > 127) {
+//        val = val & 127;
+//        val = sll(val, 8);
+//        val = val | (NativeUnsafe_getByte_LI(oop, p) & 255);
+//    }
+//    
+//    return val;
+//}
+//
+//static int MethodBody_minfoValue2_L(Address oop) {
+//    int p;
+//    int val;
+//    p = -13 - 1;
+//    
+//    
+//    if (NativeUnsafe_getByte_LI(oop, p--) < 0) {
+//        p--;
+//    }
+//    val = NativeUnsafe_getByte_LI(oop, p--) & 255;
+//    if (val > 127) {
+//        val = val & 127;
+//        val = sll(val, 8);
+//        val = val | (NativeUnsafe_getByte_LI(oop, p) & 255);
+//    }
+//    
+//    return val;
+//}
+//
+//static int MethodBody_minfoValue3_L(Address oop) {
+//    int p;
+//    int val;
+//    p = -13 - 1;
+//    
+//    
+//    if (NativeUnsafe_getByte_LI(oop, p--) < 0) {
+//        p--;
+//    }
+//    if (NativeUnsafe_getByte_LI(oop, p--) < 0) {
+//        p--;
+//    }
+//    val = NativeUnsafe_getByte_LI(oop, p--) & 255;
+//    if (val > 127) {
+//        val = val & 127;
+//        val = sll(val, 8);
+//        val = val | (NativeUnsafe_getByte_LI(oop, p) & 255);
+//    }
+//    
+//    return val;
+//}
+/*end[VM2C]*/
 
         /**
          * Gets the b0 byte of the method header.
