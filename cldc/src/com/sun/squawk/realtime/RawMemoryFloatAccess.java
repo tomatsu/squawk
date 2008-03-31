@@ -1,3 +1,4 @@
+//if[FLOATS]
 /*
  * @(#)RawMemoryFloatAccess.java	1.2 05/10/20
  *

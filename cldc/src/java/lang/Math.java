@@ -41,6 +41,7 @@ public final strictfp class Math {
      */
     private Math() {}
 
+/*if[FLOATS]*/
     /**
      * The <code>double</code> value that is closer than any other to
      * <code>e</code>, the base of the natural logarithms.
@@ -177,6 +178,7 @@ public final strictfp class Math {
      * @since   CLDC 1.1
      */
     public static double floor(double a)                     { return VM.math(MathOpcodes.FLOOR, a, 0);        }
+/*end[FLOATS]*/
 
     /**
      * Returns the absolute value of an <code>int</code> value.

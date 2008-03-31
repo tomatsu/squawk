@@ -217,7 +217,8 @@ public class TestApp extends Base {
     static int f9b() {
         return 11;
     }
-    
+
+/*if[FLOATS]*/
     public static class Ball {
         /**
          * The veolicty of the ball, roughly in units of LEDs / msec.
@@ -296,6 +297,7 @@ public class TestApp extends Base {
         v = v + aX * dt;
         x = x + v * dt + 0.5 * aX * dt * dt;
     }
+/*end[FLOATS]*/
     
       public static class LongBall {
 
@@ -333,7 +335,9 @@ public class TestApp extends Base {
         int count = 0;
         System.err.println("Entering test loop...");
         
+/*if[FLOATS]*/
         testDoubles(3.5);
+/*end[FLOATS]*/
         testLongs(0x1122334455667788L);
 
         while (true) {
