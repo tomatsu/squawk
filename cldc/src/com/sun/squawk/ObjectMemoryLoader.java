@@ -33,8 +33,10 @@ import java.io.OutputStream;
 import javax.microedition.io.Connector;
 
 import com.sun.squawk.pragma.HostedPragma;
+/*if[VERIFY_SIGNATURES]*/
 import com.sun.squawk.security.verifier.SignatureVerifier;
 import com.sun.squawk.security.verifier.SignatureVerifierException;
+/*end[VERIFY_SIGNATURES]*/
 import com.sun.squawk.util.Arrays;
 import com.sun.squawk.util.Assert;
 import com.sun.squawk.util.BitSet;
@@ -52,7 +54,7 @@ import com.sun.squawk.vm.HDR;
  */
 public class ObjectMemoryLoader {
  
-/*if[FLASH_MEMORY]*/
+/*if[VERIFY_SIGNATURES]*/
     private static boolean signatureVerifierInitialised = false;
     private static boolean noPublicKeyInstalled = false;
     
@@ -79,7 +81,7 @@ public class ObjectMemoryLoader {
             }
         }
     }
-/*end[FLASH_MEMORY]*/
+/*end[VERIFY_SIGNATURES]*/
     
     /**
      * Calculates the hash of an array of bytes.
@@ -208,7 +210,7 @@ public class ObjectMemoryLoader {
      */
     private static ObjectMemoryFile load0(DataInputStream dis, String uri, boolean loadIntoReadOnlyMemory, boolean headerOnly) {
         ObjectMemoryLoader loader;
-/*if[FLASH_MEMORY]*/
+/*if[VERIFY_SIGNATURES]*/
         if (uri.startsWith("spotsuite:")) {
         	ensurePublicKeyInitialised();
             InputStream suiteIn;
@@ -245,7 +247,7 @@ public class ObjectMemoryLoader {
             ObjectMemoryReader reader = new FlashObjectMemoryReader(dis, uri);
             loader = new FlashObjectMemoryLoader(reader, loadIntoReadOnlyMemory);
         } else
-/*end[FLASH_MEMORY]*/
+/*end[VERIFY_SIGNATURES]*/
         {
             ObjectMemoryReader reader = new ObjectMemoryReader(dis, uri);
             loader = new ObjectMemoryLoader(reader, loadIntoReadOnlyMemory);
