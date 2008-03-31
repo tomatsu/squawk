@@ -1280,7 +1280,7 @@ public class InstructionEmitter implements InstructionVisitor {
                 case CID.DOUBLE:  opcode = OPC.INVOKENATIVE_D; break;
 /*else[FLOATS]*/
 //              case CID.FLOAT:
-//              case CID.DOUBLE:  Assert.shouldNotReachHere();
+//              case CID.DOUBLE:  Assert.shouldNotReachHere("Native ID: " + identifier);
 /*end[FLOATS]*/
                 case CID.LONG:    opcode = OPC.INVOKENATIVE_L; break;
                 case CID.OFFSET:  // fall through
