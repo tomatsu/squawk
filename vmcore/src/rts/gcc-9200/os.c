@@ -105,8 +105,9 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
 
 	lowLevelSetup();
 //	diagnostic("low level setup complete");
-    
-    avrSetOutstandingStatus(outstandingAvrStatus);
+
+	// Record status bits from bootloader that may require processing by Java.
+	avrSetOutstandingStatus(outstandingAvrStatus & ((1<<BATTERY_POWER_EVENT) | (1<<STATUS_LOW_BATTERY_EVENT) | (1<<STATUS_EXTERNAL_POWER_EVENT)));
 
     iprintf("\n");
     iprintf("Squawk VM Starting (");
