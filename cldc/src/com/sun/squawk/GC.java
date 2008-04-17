@@ -844,6 +844,11 @@ public class GC implements GlobalStaticFields {
             if (gcEnabled) {
                 VM.collectGarbage(false);
                 oop = allocatePrim(size, klass, arrayLength);
+                if (oop == null) {
+                    // try harder!
+                    VM.collectGarbage(true);
+                    oop = allocatePrim(size, klass, arrayLength);
+                }
             }
             if (oop == null) {
                 throw VM.getOutOfMemoryError();
