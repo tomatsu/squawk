@@ -263,7 +263,7 @@ void cioExecute(void) {
                 void Squawk_enterKernel();
                 Squawk_enterKernel();
             }
-#endif
+#endif /* KERNEL_SQUAWK */
             break;
         }
 
@@ -307,7 +307,7 @@ void cioExecute(void) {
             break;
         }
 
-#else
+#else /* OLD_IIC_MESSAGES */
 
 	 /* case ChannelConstants_GLOBAL_WAITFOREVENT:
         case ChannelConstants_GLOBAL_GETEVENT:

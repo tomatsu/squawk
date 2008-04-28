@@ -32,7 +32,7 @@ public final class ChannelConstants {
     private ChannelConstants() {}
 
     /**
-     * The channel identifier for the GUI input channel.
+     * The channel identifier for the generic IO channel.
      */
     public final static int CHANNEL_GENERIC     = 1;
 

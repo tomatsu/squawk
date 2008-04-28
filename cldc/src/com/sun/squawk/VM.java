@@ -4031,6 +4031,7 @@ hbp.dumpState();
          * Statistics are NOT sorted.
          * 
          * @param startObj the object to start walking from , or null
+         * @param printInstances 
          */
         public static void printHeapStats(Object startObj, boolean printInstances) {
             GC.printHeapStats(startObj, printInstances);
@@ -4247,7 +4248,7 @@ hbp.dumpState();
      * @return hashtable of properties from manifest
      */
     public static Hashtable getManifestPropertiesOfSuite(String uri) {
-    	Hashtable properties = new Hashtable();
+     	Hashtable properties = new Hashtable();
     	Suite suite = Suite.getSuite(uri);
     	Enumeration additions = suite.getManifestPropertyNames();
     	while (additions.hasMoreElements()) {
