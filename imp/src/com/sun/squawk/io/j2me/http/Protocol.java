@@ -213,8 +213,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             String te = (String)headerFields.get("transfer-encoding");
             if (te != null && te.equals("chunked")) {
                 chunked = true;
-                bytesleft = readChunkSize();
-                eof = (bytesleft == 0);
+                readChunkSize();
             }
         }
 
@@ -227,9 +226,19 @@ public class Protocol extends ConnectionBase implements HttpConnection {
          * chunked response from an HTTP 1.1 server.
          */
         public int available() throws IOException {
-
+            if (eof) {
+                return 0;
+            }
             if (connected) {
-                return bytesleft ;
+                if (bytesleft > 0) {
+                    return bytesleft;
+                } else if (bytesleft <= 0 && chunked) {
+                    readCRLF();    // Skip trailing \r\n
+                    readChunkSize();
+                    return bytesleft;
+                } else {
+                    return streamInput.available();
+                }
             } else {
                 throw new IOException("connection is not open");
             }
@@ -262,10 +271,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
              */
             if (bytesleft <= 0 && chunked) {
                 readCRLF();    // Skip trailing \r\n
-
-                bytesleft = readChunkSize();
-                if (bytesleft == 0) {
-                    eof = true;
+                if (readChunkSize() == 0) {
                     return -1;
                 }
             }
@@ -340,7 +346,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             } catch (NumberFormatException e) {
                 throw new IOException("Bogus chunk size");
             }
-
+            bytesleft = size;
+            eof = (size == 0);
             return size;
         }
 
