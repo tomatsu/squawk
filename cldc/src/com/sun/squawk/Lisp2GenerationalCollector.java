@@ -877,7 +877,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         for (block = start; block.lo(end) && movedOopMaps != 0; ) {
             Address object = GC.blockToOop(block);
             if (GC.getKlass(object).getSystemID() == CID.KLASS) {
-                Klass klass = VM.asKlass(object);
+                Klass klass = VM.asKlass(object.toObject());
                 if (!klass.isInterface() && !klass.isArray() && !klass.isSynthetic() && klass.getInstanceSize() > HDR.BITS_PER_WORD) {
                     if (NativeUnsafe.getUWord(klass, (int)FieldOffsets.com_sun_squawk_Klass$oopMapWord).ne(UWord.zero())) {
                         if (GC.GC_TRACING_SUPPORTED && tracing()) {
@@ -1354,7 +1354,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
                     }
                     
                     if (visitor == MARK_VISITOR) {
-                        CS.check(object);
+                        CS.check(object.toObject());
                     }
                     // All the pointer static fields precede the non-pointer fields
                     int end = CS.firstVariable + Klass.getRefStaticFieldsSize(gaklass);
@@ -1532,7 +1532,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
      * @param header   specifies if the header part of the stack chunk should be traversed
      */
     private void traverseOopsInStackChunk(Address chunk, int visitor, boolean header) {
-        GC.checkSC(chunk);
+        GC.checkSC(chunk.toObject());
         Address fp = NativeUnsafe.getAddress(chunk, SC.lastFP);
 
         // Trace.
@@ -1552,16 +1552,16 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 
                 // A copied stack chunk must always be accessible from the list of copied stack chunks
                 if (copyingObjectGraph) {
-                    Assert.always(visitor != UPDATE_VISITOR || findStackChunk(copiedStackChunks, chunk));
+                    Assert.always(visitor != UPDATE_VISITOR || findStackChunk(copiedStackChunks, chunk.toObject()));
                 }
 
-                visitOop(visitor, Address.fromObject(chunk), SC.next);
+                visitOop(visitor, chunk, SC.next);
             } else {
                 // The 'next' pointer is a weak reference and is
                 // only explicitly traversed during marking
                 // in 'markStackChunks()' if necessary
             }
-            visitOop(visitor, Address.fromObject(chunk), SC.owner);
+            visitOop(visitor, chunk, SC.owner);
         }
 
         /*
@@ -1627,9 +1627,9 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         /*
          * Get the method pointer and setup to go through the parameters and locals.
          */
-        int localCount     = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp);
-        int parameterCount = MethodBody.decodeParameterCount(mp);
-        int mapOffset      = MethodBody.decodeOopmapOffset(mp);
+        int localCount     = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp.toObject());
+        int parameterCount = MethodBody.decodeParameterCount(mp.toObject());
+        int mapOffset      = MethodBody.decodeOopmapOffset(mp.toObject());
         int bitOffset      = -1;
         int byteOffset     = 0;
 
@@ -2237,7 +2237,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
             VM.println();
         }
 
-        Address free = !copyingObjectGraph ? collectionStart : Address.fromObject(copiedObjects);
+        Address free = !copyingObjectGraph ? collectionStart : copiedObjects;
         Address object;
         Address returnValue = Address.zero();
 
@@ -2435,7 +2435,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         boolean isInnerMostActivation = true;
         while (!fp.isZero()) {
 
-            Address mp = NativeUnsafe.getAddress(fp, FP.method);
+            Object mp = NativeUnsafe.getObject(fp, FP.method);
             int localCount = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp);
             int stackCount = MethodBody.decodeStackCount(mp);
             int reserved = (localCount + stackCount + FP.FIXED_FRAME_SIZE)  * HDR.BYTES_PER_WORD;
@@ -2826,7 +2826,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         if (isForwarded(klassAddress)) {
             VM.printAddress(klassAddress);
         } else {
-            String name = Klass.getInternalName(VM.asKlass(klassAddress));
+            String name = Klass.getInternalName(VM.asKlass(klass));
             Assert.that(!GC.inRam(klassAddress) || Address.fromObject(name).lo(klassAddress));
             VM.print(name);
         }
@@ -2931,7 +2931,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
                         VM.println();
                     }
 
-                    VM.setGlobalOop(destination, i);
+                    VM.setGlobalOop(destination.toObject(), i);
                 }
             }
         }
@@ -3603,7 +3603,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 
                 // The 'self' pointer must be dereferenced in the old copy of the ObjectAssociation
                 // as the new copy will be made during a subsequent iteration of this loop
-                klass = VM.asKlass(NativeUnsafe.getAddress(classOrAssociation, (int)FieldOffsets.com_sun_squawk_Klass$self));
+                klass = VM.asKlass(NativeUnsafe.getObject(classOrAssociation, (int)FieldOffsets.com_sun_squawk_Klass$self));
 
                 // Now get the address to which the ObjectAssociation will be moved
                 classOrAssociation = getForwardedObject(classOrAssociation);

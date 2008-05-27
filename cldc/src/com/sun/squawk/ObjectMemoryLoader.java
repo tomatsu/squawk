@@ -610,7 +610,7 @@ public class ObjectMemoryLoader {
 
         // Set up the address at which the object memory will finally reside
         final Address bufferAddress = VM.isHosted() ? canonicalStart : Address.fromObject(buffer);
-        final Address relocatedBufferAddress = (loadIntoReadOnlyMemory) ? Address.fromObject(GC.allocateNvmBuffer(size)) : bufferAddress;
+        final Address relocatedBufferAddress = (loadIntoReadOnlyMemory) ? GC.allocateNvmBuffer(size) : bufferAddress;
 
         // Null the buffer object as there is no need for the relocation to test whether
         // or not the relocated buffer has moved which it won't have if it is in read-only

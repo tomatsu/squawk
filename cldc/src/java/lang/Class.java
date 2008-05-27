@@ -118,7 +118,7 @@ public final class Class {
             throw new InstantiationException();
         }
 
-        VM.StackTraceElement[] trace = VM.reifyCurrentStack(2);
+        ExecutionPoint[] trace = VM.reifyCurrentStack(2);
         Assert.always(trace.length == 2);
         Klass callersClass = trace[1].getKlass();
 

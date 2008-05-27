@@ -869,244 +869,6 @@ public class VM implements GlobalStaticFields {
     \*-----------------------------------------------------------------------*/
 
     /**
-     * Represents the method and bytecode index of the execution point in a
-     * frame on a thread's call stack.
-     */
-    public final static class StackTraceElement {
-
-        /**
-         * The method body (a Klass.BYTECODE_ARRAY instance).
-         */
-        private final Object mp;
-
-        /**
-         * The bytecode index.
-         */
-        private final int bci;
-
-        StackTraceElement(Object mp, int bci) {
-            this.mp = mp;
-            this.bci = bci;
-        }
-
-        /**
-         * {@inheritDoc}
-         * @param o 
-         */
-        public boolean equals(Object o) {
-            if (o instanceof StackTraceElement) {
-                StackTraceElement ste = (StackTraceElement)o;
-                return mp == ste.mp && bci == ste.bci;
-            }
-            return false;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public int hashCode() {
-            return bci;
-        }
-
-        /**
-         * @return the class containing the execution point represented by this stack trace element
-         */
-        public Klass getKlass() {
-            return VM.asKlass(NativeUnsafe.getObject(mp, HDR.methodDefiningClass));
-        }
-
-        /**
-         * @return  the method containing the execution point represented by this
-         *          stack trace element , or null if this information is unavailable
-         */
-        public Method getMethod() {
-            return getKlass().findMethod(mp);
-        }
-
-        private void printKnownMethod(PrintStream out, Klass klass, String methodName, int[] lnt) {
-            out.print("at ");
-            out.print(klass.getName());
-            out.print('.');
-            out.print(methodName);
-            out.print('(');
-            
-            String src = klass.getSourceFileName();
-            if (src != null) {
-                out.print(src);
-                out.print(':');
-            }
-            
-            if (lnt != null) {
-                int lno = Method.getLineNumber(lnt, bci);
-                out.print(lno);
-            } else {
-                out.print("bci=");
-                out.print(bci);
-            }
-            out.print(')');
-        }
-        
-        private void printUnknownMethod(PrintStream out, Klass klass, String methodKind, int index) {
-            out.print("in ");
-            out.print(methodKind);
-            out.print(" method #");
-            out.print(index);
-            out.print(" of ");
-            out.print(klass.getName());
-            out.print("(bci=");
-            out.print(bci);
-            out.print(')');
-        }
-        
-        /**
-         *  Can we guess the method name?
-         */
-        private String calcStaticMethodName(Klass klass, int index) {
-            if (index == klass.getClinitIndex()) {
-                return "<clinit>";
-            } else if (index == klass.getDefaultConstructorIndex()) {
-                return "<init>";
-            } else if (index == klass.getMainIndex()) {
-                return"main";
-            }
-            return null;
-        }
-        
-        /**
-         *  Can we guess the method name? Scheme is to look for metadata for original
-         *  method in superclass (or interface if we can figure it out).
-         */
-        private String calcVirtualMethodName(Klass klass, int index, Object[] temp) {
-            if (klass != null) {
-                Method method = klass.lookupVirtualMethod(index);
-                if (method != null) {
-                    Assert.that(method.getOffset() == index);
-                    return method.getName();
-                } else {
-                    int islot = klass.findISlot(index, temp);
-                    if (islot >= 0) {
-                        Klass iKlass = (Klass)temp[0];
-                        method = iKlass.getMethod(islot, false);
-                        if (method != null) {
-                            return method.getName();
-                        } else {
-                            return null; // found the interface definition, but no name. give up!
-                        }
-                    }
-                }
-                return calcVirtualMethodName(klass.getSuperclass(), index, temp);
-            }
-            return null;
-        }
-        
-        private void printToVM(Klass klass, String methodName, int[] lnt) {
-            VM.print("at ");
-            VM.print(klass.getInternalName());
-            VM.print('.');
-            VM.print(methodName);
-            VM.print('(');
-            String src = klass.getSourceFileName();
-            if (src != null) {
-                VM.print(src);
-                VM.print(':');
-            }
-            
-            if (lnt != null) {
-                int lno = Method.getLineNumber(lnt, bci);
-                VM.print(lno);
-            } else {
-                VM.print("bci=");
-                VM.print(bci);
-            }
-            VM.println(')');
-        }
-        
-        private void printToVM(Klass klass, String methodKind, int index) {
-            VM.print("in ");
-            VM.print(methodKind);
-            VM.print(" method #");
-            VM.print(index);
-            VM.print(" of ");
-            VM.print(klass.getInternalName());
-            VM.print("(bci=");
-            VM.print(bci);
-            VM.println(')');
-        }
-        
-        /**
-         * {@inheritDoc}
-         */
-        void printToVM() {
-            // make this code fail-safe, since it's used for printing stack traces, and could cascade errors.
-            try {
-                Klass klass = getKlass();
-                Method method = klass.findMethod(mp);
-                if (method == null) {
-                    int index = klass.getMethodIndex(mp, true); // check static methods first
-                    if (index >= 0) {
-                        String methodName = calcStaticMethodName(klass, index);
-                        if (methodName != null) {
-                            printToVM(klass, methodName, null);
-                        } else {
-                            printToVM(klass, "static", index);
-                        }
-                    } else {
-                        index = klass.getMethodIndex(mp, false);
-                        if (index >= 0) {
-                            // Virtual Method. Note that 0-9 are from java.lang.Object.
-                            printToVM(klass, "virtual", index);
-                        }
-                    }
-                } else {
-                    printToVM(klass, method.getName(), method.getLineNumberTable());
-                }
-            } catch (Throwable e) {
-                VM.println("Exception thrown in StackTraceElement.printToVM()");
-            }
-        }
-        
-        public void print(PrintStream out) {
-             // make this code fail-safe, since it's used for printing stack traces, and could cascade errors.
-            try {
-                Klass klass = getKlass();
-                Method method = klass.findMethod(mp);
-                if (method == null) {
-                    int index = klass.getMethodIndex(mp, true); // check static methods first
-                    if (index >= 0) {
-                       String methodName = calcStaticMethodName(klass, index);
-                        if (methodName != null) {
-                            printKnownMethod(out, klass, methodName, null);
-                        } else {
-                            printUnknownMethod(out, klass, "static", index);
-                        }
-                    } else {
-                        index = klass.getMethodIndex(mp, false);
-                        if (index >= 0) {
-                            // Virtual Method. Note that 0-9 are from java.lang.Object.
-                            String methodName = calcVirtualMethodName(klass, index, new Object[1]);
-                            if (methodName != null) {
-                                printKnownMethod(out, klass, methodName, null);
-                            } else {
-                                printUnknownMethod(out, klass, "virtual", index);
-                            }
-                        }
-                    }
-                } else {
-                    printKnownMethod(out, klass, method.getName(), method.getLineNumberTable());
-                }
-            } catch (Throwable e) {
-                if (VM.isVerbose()) {
-                    printVMStackTrace(e, "***", "Exception thrown in StackTraceElement.print():");
-                }
-                VM.print("*** Error decoding this StackTraceElement:\n    ");
-                printToVM(); // print it the simple way
-                out.print("------");
-            }
-        }
-        
-    } /* StackTraceElement */
-    
-    /**
      * Returns an array of stack trace elements, each representing one stack frame in the current call stack.
      * The zeroth element of the array represents the top of the stack, which is the frame of the caller's
      * method. The last element of the array represents the bottom of the stack, which is the first method
@@ -1119,10 +881,10 @@ public class VM implements GlobalStaticFields {
      *               all frames are to be reified.
      * @return the reified call stack
      */
-    public static StackTraceElement[] reifyCurrentStack(int count) {
+    public static ExecutionPoint[] reifyCurrentStack(int count) {
         Address ip;
         if (!VMThread.currentThread().isAlive()) {
-            return new StackTraceElement[0];
+            return new ExecutionPoint[0];
         }
         
         /*
@@ -1146,10 +908,10 @@ public class VM implements GlobalStaticFields {
         }
 
         if (frames <= 0) {
-            return new StackTraceElement[0];
+            return new ExecutionPoint[0];
         }
 
-        StackTraceElement[] trace = new StackTraceElement[frames];
+        ExecutionPoint[] trace = new ExecutionPoint[frames];
 
         fp = VM.getFP();
         for (int i = 0; i != frames; ++i) {
@@ -1157,13 +919,13 @@ public class VM implements GlobalStaticFields {
             fp = VM.getPreviousFP(fp);
             Assert.always(!fp.isZero());
             Object mp = VM.getMP(fp);
-            int bci = ip.diff(Address.fromObject(mp)).toInt();
+            Offset bci = ip.diff(Address.fromObject(mp));
 
-            // The allocation of the StackTraceElement object may cause
+            // The allocation of the ExecutionPoint object may cause
             // a collection and so the fp need's to be saved as a
             // stack offset and restored after the allocation
             Offset fpOffset = fp.diff(Address.fromObject(stack));
-            trace[i] = new StackTraceElement(mp, bci);
+            trace[i] = new ExecutionPoint(fpOffset, bci, mp);
             fp = Address.fromObject(stack).addOffset(fpOffset);
         }
         return trace;
@@ -1551,6 +1313,18 @@ hbp.dumpState();
      */
     //native static int lcmp(long value1, long value2);
 
+    /**
+     * Casts an object to class Klass without using <i>checkcast</i>.
+     *
+     * @param object the object to be cast
+     * @return the object cast to be a Klass
+     *
+     * @vm2c code( return object; )
+     */
+    static Klass asKlass(Address object) {
+        return VM.asKlass(object.toObject());
+    }
+    
     /*-----------------------------------------------------------------------*\
      *                       Access to global memory                         *
     \*-----------------------------------------------------------------------*/
@@ -1840,6 +1614,19 @@ hbp.dumpState();
      */
     public static void printAddress(Object val) {
         executeCIO(-1, ChannelConstants.INTERNAL_PRINTADDRESS, -1, 0, 0, 0, 0, 0, 0, val, null);
+    }
+
+    /**
+     * Prints an address to the VM stream. This will be formatted as an unsigned 32 bit or 64 bit
+     * value depending on the underlying platform.
+     *
+     * @param val     the address to print
+     *
+     * @vm2c code( fprintf(streams[currentStream], format("%A"), val);
+     *             fflush(streams[currentStream]); )
+     */
+    public static void printAddress(Address val) {
+        printAddress(val.toObject());
     }
 
     /**
@@ -3141,19 +2928,19 @@ hbp.dumpState();
     
     /**
      * Prints the backtrace using VM.print(). This code should not throw an exception unless VM.print()
-     * or VM.StackTraceElement.printToVM() is broken.
+     * or ExecutionPoint.printToVM() is broken.
      *
      * @param exc exception to report
      * @param origExcName klass name of exception to report
      * @param message the exception's message
      */
-    private static void printVMStackTrace(Throwable exc, String origExcName, String message) {
+    static void printVMStackTrace(Throwable exc, String origExcName, String message) {
         VM.print(origExcName);
         if (message != null) {
             VM.print(": ");
             VM.println(message);
         }
-        VM.StackTraceElement[] trace = (VM.StackTraceElement[])NativeUnsafe.getObject(exc, (int)FieldOffsets.java_lang_Throwable$trace);
+        ExecutionPoint[] trace = (ExecutionPoint[])NativeUnsafe.getObject(exc, (int)FieldOffsets.java_lang_Throwable$trace);
         if (exc != VM.getOutOfMemoryError() && trace != null) {
             for (int i = 0; i != trace.length; ++i) {
                 VM.print("    ");

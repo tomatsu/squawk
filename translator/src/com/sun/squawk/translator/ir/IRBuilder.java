@@ -848,6 +848,48 @@ public final class IRBuilder {
          return newParms;
      }
 
+    /**
+     * Make sure actualType is NOT a Squawk Priomitive (Address, UWord, etc) being passed as a parameter of tyep Object.
+     * 
+     * @param callee
+     * @param actualType
+     * @param expectedType
+     */
+    private void verifyNonSquawkPrimitive(Method callee, Klass actualType, Klass expectedType) {
+        if (actualType.isSquawkPrimitive() && (actualType != expectedType)) {
+            Klass definingClass = callee.getDefiningClass();
+            if (expectedType.getSystemID() == CID.OBJECT 
+                    && (definingClass.getSystemID() == CID.NATIVEUNSAFE || definingClass.getInternalName().equals("com.sun.squawk.GC"))) {
+                return; // NATIVEUNSAFE and GC methods are passed objects and addresses interchangably.
+            }
+            
+            System.err.println("name: " + definingClass.getInternalName());
+            String type = actualType.getName();
+            throw codeParser.verifyError("In call to " + callee + ", " + type + " values can only be passsed as parameters of type " +
+                    type + " not as type " + expectedType.getName());
+        }
+    }
+    
+     /**
+      * Verifies that a Squawk Primitive "instance" is not being passed as an object to an unsuspecting method...
+      * 
+      * @param  callee         the non-static method being invoked
+      * @param  parameters         the actual parameters to the method
+      */
+    private void verifyNonSquawkPrimitiveParameters(Method callee, StackProducer[] parameters) {
+        Klass[] expectedTypes = callee.getParameterTypes();
+        int extra = 0;
+        if (!callee.isStatic() || callee.isConstructor()) {
+            verifyNonSquawkPrimitive(callee, parameters[0].getType(), callee.getDefiningClass());
+            extra = 1;
+        }
+        
+        for (int i = 0; i < expectedTypes.length; i++) {
+            Klass actualType = parameters[i + extra].getType();
+            verifyNonSquawkPrimitive(callee,actualType, expectedTypes[i]);
+        }
+    }
+             
      /**
       * Verifies that type of the parameter for <code>this</code> in a
       * non-static method is correct.
@@ -1702,6 +1744,7 @@ public final class IRBuilder {
             }
             StackProducer[] parameters = popInvokeParameters(callee);
             verifyThisParameter(callee, parameters[0]);
+            verifyNonSquawkPrimitiveParameters(callee, parameters);
             InvokeVirtual instruction = new InvokeVirtual(callee, parameters);
             append(instruction);
         }
@@ -1775,6 +1818,8 @@ public final class IRBuilder {
         frame.growMaxStack(1); // for the class object
         StackProducer[] parameters = popInvokeParameters(callee);
         final boolean trace = Translator.TRACING_ENABLED && Tracer.isTracing("jvmverifier", method.toString());
+
+        verifyNonSquawkPrimitiveParameters(callee, parameters);
 
         /*
          * Update the type of 'this' if the enclosing method is a constructor and this a
@@ -1911,6 +1956,7 @@ public final class IRBuilder {
         frame.growMaxStack(1); // for the class object
         StackProducer[] parameters = popInvokeParameters(callee);
         verifyThisParameter(callee, parameters[0]);
+        verifyNonSquawkPrimitiveParameters(callee, parameters);
         InvokeSuper instruction = new InvokeSuper(callee, parameters);
         append(instruction);
         frame.resetMaxStack();
@@ -1959,6 +2005,7 @@ public final class IRBuilder {
             }
             frame.growMaxStack(1); // for the class object
             StackProducer[] parameters = popInvokeParameters(callee);
+            verifyNonSquawkPrimitiveParameters(callee, parameters);
             InvokeStatic instruction = new InvokeStatic(callee, parameters);
             append(instruction);
             frame.resetMaxStack();
@@ -2003,6 +2050,7 @@ public final class IRBuilder {
         StackProducer receiver = parameters[0];
 
         verifyThisParameter(callee, receiver);
+        verifyNonSquawkPrimitiveParameters(callee, parameters);
 
         /*
          * Build a FindSlot instruction

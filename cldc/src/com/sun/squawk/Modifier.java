@@ -661,6 +661,13 @@ public final class Modifier {
      *       A Squawk primitive value of type T cannot be assigned to or compared with
      *       values of any other type (including <code>null</code>) than T.
      *   </li>
+     *   <li>
+     *       A Squawk primitive value of type T cannot be passed as a parameter
+     *       values of any other type than T. For example, you cannot
+     *       call T.toString(), or String.valueOf(T). The methods of the classes NativeUnsafe and GC
+     *       have a special permission to allow Squawk primitive values to passed in place of 
+     *       parameters of type Object.
+     *   </li>
      * </ul>
      */
     public static final int SQUAWKPRIMITIVE     = 0x00800000;

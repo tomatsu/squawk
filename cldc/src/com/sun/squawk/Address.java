@@ -39,9 +39,34 @@ import com.sun.squawk.vm.*;
  * of the variable. In general, variables of type address should not be used outside of
  * the garbage collector.</b>
  * <p>
- * This class is known specially by the translator as a {@link Modifier#SQUAWKPRIMITIVE}
+ * This class is known specially by the translator as a <code>SQUAWKPRIMITIVE</code>
  * and programming with it requires adhering to the restrictions implied by this
- * attribute.
+ * attribute. Some of these constraints are imposed to keep the job of the
+ * translator simple. All of these constraints are currently enforced by the
+ * translator. The constraints are:
+ * <ul>
+ *   <li>
+ *       A local variable slot allocated by javac for a Squawk primitive variable
+ *       must never be used for a value of any other type (including a different
+ *       Squawk primitive type). This is required as the translator cannot currently
+ *       de-multiplex reference type slots into disjoint typed slots. This restriction
+ *       on javac is achieved by declaring all Squawk primitive local variables at
+ *       the outer most scope (as javac using lexical based scoping for register
+ *       allocation liveness).
+ *   </li>
+ *   <li>
+ *       A Squawk primitive value of type T cannot be assigned to or compared with
+ *       values of any other type (including <code>null</code>) than T.
+ *   </li>
+ *   <li>
+ *       A Squawk primitive value of type T cannot be passed as a parameter
+ *       values of any other type than T. For example, you cannot
+ *       call T.toString(), or String.valueOf(T). The methods of the classes NativeUnsafe and GC
+ *       have a special permission to allow Squawk primitive values to passed in place of 
+ *       parameters of type Object.
+ *   </li>
+ * </ul>
+ *
  * <p>
  * Only the public methods of this class which do not override any of the
  * methods in java.lang.Object will be available in a {@link VM#isHosted() non-hosted}

@@ -489,7 +489,7 @@ public final class Frame {
 //                if (type1.getClassID() + type2.getClassID() != CID.UWORD + CID.OFFSET) {
                     String type = type1.getName();
                     throw codeParser.verifyError(type + " values can only be written to or compared with other " +
-                                                 type + "values, not with " + type2.getName());
+                                                 type + " values, not with " + type2.getName());
 //                }
             }
         }

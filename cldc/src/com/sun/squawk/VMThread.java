@@ -159,6 +159,7 @@ public final class VMThread implements GlobalStaticFields {
     
     /**
      * Return the number of Thread objects allocated during the lifetime of this JVM.
+     * @return threads allocated
      */
     public static int getThreadsAllocatedCount() {
         return nextThreadNumber;
@@ -170,6 +171,7 @@ public final class VMThread implements GlobalStaticFields {
      * Note that this counts the initial contention. A thread may be released to aquire the lock,
      * but another thread (potentially higher priority) runs first, and actually acquires the lock.
      * The first thread will then have to wait again.
+     * @return monitor contention count
      */
     public static int getContendedMontorEnterCount() {
         return contendedEnterCount;
@@ -182,6 +184,7 @@ public final class VMThread implements GlobalStaticFields {
      * cache is full, or there is contention, or Object.wait() is used, or a threadd is switched out while 
      * holding a virtual monitor, then a real monitor has to be allocated for an object. It is possible for 
      * the monitor for an object to come and go, so there is the possibility of "monitor object thrashing".
+     * @return  numbor of monitors allocated
      */
     public static int getMonitorsAllocatedCount() {
         return monitorsAllocatedCount;
@@ -191,6 +194,7 @@ public final class VMThread implements GlobalStaticFields {
      * Return count of thread context switching.
      *
      * This does not inlucde system-level switches that occur for GC, exception throwing, etc.
+     * @return user-level thread switches
      */
     public static int getThreadSwitchCount() {
         return threadSwitchCount;
@@ -253,6 +257,8 @@ public final class VMThread implements GlobalStaticFields {
     /**
      * Sets the daemon state of the thread.
      * If this thread is alive, an IllegalThreadStateException is thrown.
+     * 
+     * @param value if true, set thread as a daemon
      */
     public void setDaemon(boolean value) {
        /*
@@ -840,49 +846,6 @@ public final class VMThread implements GlobalStaticFields {
     \*-----------------------------------------------------------------------*/
 
     /**
-     * An ExecutionPoint instance encapsulates the details of a point of execution
-     * including the thread, a frame offset, the method to which the
-     * frame pertains and the bytecode index of an instruction in the method.
-     */
-    public static class ExecutionPoint {
-
-        /**
-         * The offset (in bytes) from the top of the stack of this location.
-         */
-        public final Offset frame;
-
-        /**
-         * The bytecode index of this location.
-         */
-        public final Offset bci;
-
-        /**
-         * The method of this location.
-         */
-        public final Object mp;
-
-        public ExecutionPoint(Offset frame, Offset bci, Object mp) {
-            this.frame = frame;
-            this.bci = bci;
-            this.mp = mp;
-        }
-
-        /**
-         * Prevents use of ExecutionPoint instances as keys in a hash table.
-         */
-        public int hashCode() {
-            throw new RuntimeException("ExecutionPoints cannot be keys in a hashtable");
-        }
-
-/*if[DEBUG_CODE_ENABLED]*/
-        public String toString() {
-            return "frame=" + frame.toPrimitive() +
-                ",bci=" + bci.toPrimitive() + ",mp=" + Address.fromObject(mp).toUWord().toPrimitive() + "]";
-        }
-/*end[DEBUG_CODE_ENABLED]*/ 
-    }
-
-    /**
      * Debugger suspension is implemented by disallowing reschedule() from choosing to
      * run a thread that has a positive debugSuspendCount.
      *
@@ -958,7 +921,7 @@ public final class VMThread implements GlobalStaticFields {
     }
 
     /**
-     * Returns the step info object.
+     * @return Returns the step info object.
      */
     public final SingleStep getStep() {
         return step;
@@ -1406,6 +1369,7 @@ VM.println();
      * are created to replace the original stacks (typically at 2x the size of the original stack).
      * The default stack size is about 160 words.
      *
+     * @return total number of stacks ever allocated
      */
     public static int getStacksAllocatedCount() {
         return stacksAllocatedCount;
@@ -1413,6 +1377,7 @@ VM.println();
     
     /**
      * Return size of the largest stack ever allocated, in words.
+     * @return largest stack size ever allocated
      */
     public static int getMaxStackSize() {
         return maxStackSize;

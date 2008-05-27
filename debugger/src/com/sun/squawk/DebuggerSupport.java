@@ -24,7 +24,7 @@
 
 package com.sun.squawk;
 
-import com.sun.squawk.VMThread.ExecutionPoint;
+import com.sun.squawk.ExecutionPoint;
 
 import com.sun.squawk.debugger.*;
 import com.sun.squawk.debugger.DataType.*;

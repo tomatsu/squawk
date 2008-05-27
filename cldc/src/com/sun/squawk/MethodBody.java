@@ -929,13 +929,13 @@ public final class MethodBody {
      * @param oop the pointer to the method
      * @return the VM address of the header
      */
-    static Address oopToBlock(Object oop) {
-        int offset = decodeTypeTableOffset(oop);
+    static Address oopToBlock(Address oop) {
+        int offset = decodeTypeTableOffset(oop.toObject());
         while ((offset % HDR.BYTES_PER_WORD) != 0) {
             --offset;
         }
         offset -= HDR.BYTES_PER_WORD; // skip back the header length word
-        return Address.fromObject(oop).add(offset);
+        return oop.add(offset);
     }
 
 

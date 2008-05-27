@@ -612,7 +612,7 @@ public class GC implements GlobalStaticFields {
         for (Address block = heapStart; block.lo(end); ) {
             ++count;
             Address object = GC.blockToOop(block);
-            Klass klass = GC.getKlass(object);
+            Klass klass = GC.getKlass(object.toObject());
             block = object.add(GC.getBodySize(klass, object));
         }
         return count;
@@ -1057,8 +1057,9 @@ public class GC implements GlobalStaticFields {
         }
 /*end[DEBUG_CODE_ENABLED]*/
         Assert.that(!classOrAssociation.isZero());
-        Address klass = NativeUnsafe.getAddress(classOrAssociation, (int)FieldOffsets.com_sun_squawk_Klass$self);
-        Assert.that(!klass.isZero());
+        Object klass = NativeUnsafe.getObject(classOrAssociation, (int)FieldOffsets.com_sun_squawk_Klass$self);
+        //Assert.that(!klass.isZero());
+        Assert.that(klass != null);
         return VM.asKlass(klass);
     }
 
@@ -1290,7 +1291,7 @@ public class GC implements GlobalStaticFields {
         }
 
         // Deregister the old stack chunk from the collector.
-        collector.deregisterStackChunk(src);
+        collector.deregisterStackChunk(src.toObject());
     }
 
          

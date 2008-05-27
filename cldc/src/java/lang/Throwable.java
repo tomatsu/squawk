@@ -77,7 +77,7 @@ public class Throwable {
     /**
      * The trace of the call stack at the point this object was created.
      */
-    private final VM.StackTraceElement[] trace;
+    private final ExecutionPoint[] trace;
 
     /**
      * Constructs a new <code>Throwable</code> with <code>null</code> as

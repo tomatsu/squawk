@@ -87,7 +87,7 @@ public class Ref {
     }
 
     public String toString() {
-        return "referrent:" + referent;
+        return "referrent: " + referent.toUWord().toPrimitive();
     }
 
 /*if[DEBUG_CODE_ENABLED]*/
