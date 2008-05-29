@@ -160,11 +160,12 @@ public class VM implements GlobalStaticFields {
      */
     private static boolean usingTypeMap;
 
-/*if[OLD_IIC_MESSAGES]*/
-    /**
-     * The list of ServerConnectionHandlers. For JavaDriverManager
-     */
-    private static ServerConnectionHandler serverConnectionHandlers;
+/*if[!OLD_IIC_MESSAGES]*/
+/*else[OLD_IIC_MESSAGES]*/
+//    /**
+//     * The list of ServerConnectionHandlers. For JavaDriverManager
+//     */
+//    private static ServerConnectionHandler serverConnectionHandlers;
 /*end[OLD_IIC_MESSAGES]*/
 
     /**
@@ -882,17 +883,40 @@ public class VM implements GlobalStaticFields {
      * @return the reified call stack
      */
     public static ExecutionPoint[] reifyCurrentStack(int count) {
-        Address ip;
         if (!VMThread.currentThread().isAlive()) {
+            return new ExecutionPoint[0];
+        }
+        
+        return reifyStack0(VMThread.currentThread(), VM.getFP(), count);
+
+    }
+    
+    /**
+     * Returns an array of stack trace elements, each representing one stack frame in the current call stack.
+     * The zeroth element of the array represents the top of the stack, which is the frame of the caller's
+     * method. The last element of the array represents the bottom of the stack, which is the first method
+     * invocation in the sequence.
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
+     *
+     * @param thread the thread to inspect
+     * @param count  how many frames from the stack to reify, starting from the frame
+     *               of the method that called this one. A negative value specifies that
+     *               all frames are to be reified.
+     * @return the reified call stack
+     */
+    public static ExecutionPoint[] reifyStack0(VMThread thread, Address fpBase, int count) {
+        
+        if (fpBase.isZero()) {
             return new ExecutionPoint[0];
         }
         
         /*
          * Count the number of frames and allocate the array.
          */
-        Object stack = VMThread.currentThread().getStack();
+        Object stack = thread.getStack();
         int frames = 0;
-        Address fp = VM.getFP();
+        Address fp = fpBase;
 
         // Skip frame for this method
         fp = VM.getPreviousFP(fp);
@@ -913,9 +937,9 @@ public class VM implements GlobalStaticFields {
 
         ExecutionPoint[] trace = new ExecutionPoint[frames];
 
-        fp = VM.getFP();
+        fp = fpBase;
         for (int i = 0; i != frames; ++i) {
-            ip = VM.getPreviousIP(fp);
+            Address ip = VM.getPreviousIP(fp);
             fp = VM.getPreviousFP(fp);
             Assert.always(!fp.isZero());
             Object mp = VM.getMP(fp);
@@ -931,6 +955,43 @@ public class VM implements GlobalStaticFields {
         return trace;
     }
     
+    /**
+     * Returns an array of stack trace elements, each representing one stack frame in the call stack of the 
+     * specified thread.
+     * 
+     * The zeroth element of the array represents the top of the stack, which is the frame of the caller's
+     * method. The last element of the array represents the bottom of the stack, which is the first method
+     * invocation in the sequence.
+     * 
+     * NOTE: This may miss the top frame. See slightly different stack walking code
+     *       in the debugger's inspectStack() method.
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
+     *
+     * @param thread the thread to inspect
+     * @param count  how many frames from the stack to reify, starting from the frame
+     *               of the method that called this one. A negative value specifies that
+     *               all frames are to be reified.
+     * @return the reified call stack
+     */
+    public static ExecutionPoint[] reifyStack(VMThread thread, int count) {
+        if (thread == VMThread.currentThread()) {
+            return reifyCurrentStack(count);
+        }
+        
+        if (!thread.isAlive()) {
+            return new ExecutionPoint[0];
+        }
+
+        /*
+         * Count the number of frames and allocate the array.
+         */
+        Object stack = thread.getStack();
+        Address fp = NativeUnsafe.getAddress(stack, SC.lastFP);
+
+        return reifyStack0(thread, fp, count);
+    }
+
     /**
      * Throws an exception. This routine will search for a handler of the
      * exception being thrown, reset the return ip and fp of the activation record that
@@ -2963,16 +3024,16 @@ hbp.dumpState();
         return printExceptionAndTrace(exc, msg, true);
     }
     
-    
     /**
-     * Print str safely to System.err, or to VM.print if that fails.
+     * Print str safely to Stream, or to VM.print if that fails.
      * 
+     * @param stream stream to print on
      * @param str string to print
      */
-    public static void outPrint(String str) {
-        if (!safePrintToVM) {
+    public static void outPrint(PrintStream stream, String str) {
+        if (!safePrintToVM && stream != null) {
             try {
-                System.err.print(str);
+                stream.print(str);
                 return;
             } catch (Throwable t) {
                 safePrintToVM = true;
@@ -2980,25 +3041,70 @@ hbp.dumpState();
         }
         VM.print(str);
     }
-    
+
+    /**
+     * Print str safely to Stream, or to VM.print if that fails.
+     * 
+     * @param stream stream to print on
+     * @param str string to print
+     */
+    public static void outPrintln(PrintStream stream, String str) {
+        outPrint(stream, str);
+        outPrintln(stream);
+    }
+
+    /**
+     * Print new line safely to Stream, or to VM.print if that fails.
+     * 
+     * @param stream stream to print on
+     */
+    public static void outPrintln(PrintStream stream) {
+        outPrint(stream, "\n");
+    }
+
+    /**
+     * Print val safely to Stream, or to VM.print if that fails.
+     * 
+     * @param stream stream to print on
+     * @param val long to print
+     */
+    public static void outPrint(PrintStream stream, long val) {
+        if (!safePrintToVM && stream != null) {
+            try {
+                stream.print(val);
+                return;
+            } catch (Throwable t) {
+                safePrintToVM = true;
+            }
+        }
+        VM.print(val);
+    }
+
+    /**
+     * Print str safely to System.err, or to VM.print if that fails.
+     * 
+     * @param str string to print
+     */
+    public static void outPrint(String str) {
+        outPrint(System.err, str);
+    }
+
     /**
      * Print str safely to System.err, or to VM.print if that fails.
      * 
      * @param str string to print
      */
     public static void outPrintln(String str) {
-        outPrint(str);
-        outPrintln();
+        outPrintln(System.err, str);
     }
-    
+
     /**
      * Print new line safely to System.err, or to VM.print if that fails.
      * 
      */
     public static void outPrintln() {
-        outPrint("\n");
+        outPrintln(System.err);
     }
-
 
     /**
      * Print val safely to System.err, or to VM.print if that fails.
@@ -3006,15 +3112,7 @@ hbp.dumpState();
      * @param val long to print
      */
     public static void outPrint(long val) {
-        if (!safePrintToVM) {
-            try {
-                System.err.print(val);
-                return;
-            } catch (Throwable t) {
-                safePrintToVM = true;
-            }
-        }
-        VM.print(val);
+        outPrint(System.err, val);
     }
     
     /**
@@ -3312,34 +3410,37 @@ hbp.dumpState();
         }
     }
 
-    /**
-     * Executes a message I/O operation.
-     *
-     * @param op        the opcode
-     * @param key       the message key
-     * @param data      the message data or null
-     * @param status    the message status
-     * @return          the Address result or null
-     * @throws java.io.IOException 
-     */
-    public static Address execMessageIO(int op, Object key, Object data, int status) throws IOException {
-        for (; ; ) {
-            executeCIO( -1, op, ChannelConstants.CHANNEL_MESSAGEIO, status, 0, 0, 0, 0, 0, key, data);
-            int result = serviceResult();
-            if (result == ChannelConstants.RESULT_OK) {
-                return addressResult();
-            } else if (result < 0) {
-                if (result == ChannelConstants.RESULT_MALLOCFAILURE) {
-                    throw outOfMemoryError;
-                } else if (result == ChannelConstants.RESULT_BADPARAMETER) {
-                    throw new IOException("Bad parameter(s) to connection");
-                }
-                throw Assert.shouldNotReachHere("execMessageIO result = " + result);
-            } else {
-                VMThread.waitForEvent(result);
-            }
-        }
-    }
+/*if[!OLD_IIC_MESSAGES]*/
+/*else[OLD_IIC_MESSAGES]*/
+//    /**
+//     * Executes a message I/O operation.
+//     *
+//     * @param op        the opcode
+//     * @param key       the message key
+//     * @param data      the message data or null
+//     * @param status    the message status
+//     * @return          the Address result or null
+//     * @throws java.io.IOException 
+//     */
+//    public static Address execMessageIO(int op, Object key, Object data, int status) throws IOException {
+//        for (; ; ) {
+//            executeCIO( -1, op, ChannelConstants.CHANNEL_MESSAGEIO, status, 0, 0, 0, 0, 0, key, data);
+//            int result = serviceResult();
+//            if (result == ChannelConstants.RESULT_OK) {
+//                return addressResult();
+//            } else if (result < 0) {
+//                if (result == ChannelConstants.RESULT_MALLOCFAILURE) {
+//                    throw outOfMemoryError;
+//                } else if (result == ChannelConstants.RESULT_BADPARAMETER) {
+//                    throw new IOException("Bad parameter(s) to connection");
+//                }
+//                throw Assert.shouldNotReachHere("execMessageIO result = " + result);
+//            } else {
+//                VMThread.waitForEvent(result);
+//            }
+//        }
+//    }
+/*end[OLD_IIC_MESSAGES]*/
 
     /**
      * Executes an I/O operation that returns a <code>long</code> value.
@@ -3531,30 +3632,31 @@ hbp.dumpState();
         executeCIO(context, ChannelConstants.CONTEXT_FREECHANNEL, channel, 0, 0, 0, 0, 0, 0, null, null);
     }
 
-/*if[OLD_IIC_MESSAGES]*/
-    /**
-     * Adds a new ServerConnectionHandler to the list of active handlers.
-     *
-     * @param sch the ServerConnectionHandler to add
-     * @throws IllegalArgumentException if there is already a handler registered with the same name as <code>sch</code>
-     */
-    static void addServerConnectionHandler(ServerConnectionHandler sch) {
-        if (ServerConnectionHandler.lookup(serverConnectionHandlers, sch.getConnectionName()) != null) {
-            throw new IllegalArgumentException();
-        }
-        sch.setNext(serverConnectionHandlers);
-        serverConnectionHandlers = sch;
-    }
-
-    /**
-     * Finds the first ServerConnectionHandler in the list that has an active message waiting.
-     *
-     * @return the ServerConnectionHandler or null if none have a waiting message
-     */
-    static ServerConnectionHandler getNextServerConnectionHandler() throws IOException {
-        Address res = execMessageIO(ChannelConstants.INTERNAL_SEARCH_SERVER_HANDLERS, null, serverConnectionHandlers, 0);
-        return (ServerConnectionHandler)res.toObject();
-    }
+/*if[!OLD_IIC_MESSAGES]*/
+/*else[OLD_IIC_MESSAGES]*/
+//    /**
+//     * Adds a new ServerConnectionHandler to the list of active handlers.
+//     *
+//     * @param sch the ServerConnectionHandler to add
+//     * @throws IllegalArgumentException if there is already a handler registered with the same name as <code>sch</code>
+//     */
+//    static void addServerConnectionHandler(ServerConnectionHandler sch) {
+//        if (ServerConnectionHandler.lookup(serverConnectionHandlers, sch.getConnectionName()) != null) {
+//            throw new IllegalArgumentException();
+//        }
+//        sch.setNext(serverConnectionHandlers);
+//        serverConnectionHandlers = sch;
+//    }
+//
+//    /**
+//     * Finds the first ServerConnectionHandler in the list that has an active message waiting.
+//     *
+//     * @return the ServerConnectionHandler or null if none have a waiting message
+//     */
+//    static ServerConnectionHandler getNextServerConnectionHandler() throws IOException {
+//        Address res = execMessageIO(ChannelConstants.INTERNAL_SEARCH_SERVER_HANDLERS, null, serverConnectionHandlers, 0);
+//        return (ServerConnectionHandler)res.toObject();
+//    }
 /*end[OLD_IIC_MESSAGES]*/
 
 

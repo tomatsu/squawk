@@ -46,15 +46,22 @@ public final class ChannelConstants {
      */
     public final static int CHANNEL_GUIOUT      = 3;
 
-    /**
-     * The channel for message I/O.
-     */
-    public final static int CHANNEL_MESSAGEIO   = 4;
-
+/*if[!OLD_IIC_MESSAGES]*/
     /**
      * The last fixed channel number.
      */
-    public final static int CHANNEL_LAST_FIXED  = CHANNEL_MESSAGEIO;
+    public final static int CHANNEL_LAST_FIXED  = CHANNEL_GUIOUT;
+/*else[OLD_IIC_MESSAGES]*/
+//    /**
+//     * The channel for message I/O.
+//     */
+//    public final static int CHANNEL_MESSAGEIO   = 4;
+//
+//    /**
+//     * The last fixed channel number.
+//     */
+//    public final static int CHANNEL_LAST_FIXED  = CHANNEL_MESSAGEIO;
+/*end[OLD_IIC_MESSAGES]*/
 
     /**
      * The GUI input repaint message.

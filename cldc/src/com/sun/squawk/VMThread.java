@@ -28,7 +28,7 @@ import com.sun.squawk.Debugger.*;
 import com.sun.squawk.pragma.*;
 import com.sun.squawk.util.*;
 import com.sun.squawk.vm.*;
-import com.sun.squawk.VMThread.*;
+import java.io.PrintStream;
 import java.util.Enumeration;
 
 /**
@@ -1570,7 +1570,7 @@ VM.println();
                      * isolates are waiting for it to complete.
                      */
                     VM.println("=== DEAD-LOCK STATUS: ===");
-                    printAllWaitingThreads();
+                    Isolate.printAllIsolateStates(System.err);
                     Assert.shouldNotReachHere("Dead-locked system: no schedulable threads");
                 }
                 long waitTime = VM.getTimeMillis();
@@ -1595,41 +1595,25 @@ VM.println();
         return (waitTimeHi32 << 32) | waitTimeLo32;
     }
     
-    static void printWaitingThreads(Isolate iso) {
-        VM.println("--- " + iso + " status ---");
-        SquawkHashtable monitorTable = iso.getMonitorHashtable();
-        java.util.Enumeration lockedObjects = monitorTable.keys();
-        while (lockedObjects.hasMoreElements()) {
-            Object key = lockedObjects.nextElement();
-            Monitor mon = (Monitor)monitorTable.get(key);
-            mon.printWaitingThreads(key);
-        }
-        
-        printIsolatesThreadStates(iso);
-    }
-    
-    static void printAllWaitingThreads() {
-        Isolate[] isos = Isolate.getIsolates();
-        for (int i = 0; i < isos.length; i++) {
-            printWaitingThreads(isos[i]);
-        }
-    }
-    
-    static void printIsolatesThreadStates(Isolate iso) {
-        Enumeration e = iso.getChildThreads();
-        while (e.hasMoreElements()) {
-            VMThread thr = (VMThread)e.nextElement();
-            thr.printState();
-        }
-    }
-    
-    void printState() {
-        VM.print("    thread ");
-        VM.print(getName());
-        
-/*if[DEBUG_CODE_ENABLED]*/
-        String stateStr = "???";
-        String waitingStr = "RUNNING";
+    /**
+     * Print thread state one one line.
+     * 
+     * Will print on the stream <code>out</code> unless an error occurs while printing on that stream,
+     * such as a null stream, or IO error on the stream.
+     * 
+     * If a printing error occurs, this falls back on printing via VM.print(), etc.
+     * 
+     * @param out the stream to print on.
+     */
+    public void printState(PrintStream out) {
+        VM.outPrint(out, "thread ");
+        VM.outPrint(out, getName());
+        VM.outPrint(out, " priority: ");
+        VM.outPrint(out, getPriority());
+
+/*if[TRUE]*/
+        String stateStr = "NONE";
+        String waitingStr = "NONE";
         switch (state) {
             case NEW:
                 stateStr = "NEW";
@@ -1644,48 +1628,97 @@ VM.println();
         
         switch (inqueue) {
             case Q_MONITOR:
-                waitingStr = "Q_MONITOR";
+                waitingStr = "MONITOR";
                 break;
             case Q_CONDVAR:
-                waitingStr = "Q_CONDVAR";
+                waitingStr = "CONDVAR";
                 break;
             case Q_RUN:
-                waitingStr = "Q_RUN";
+                waitingStr = "RUNNABLE";
                 break;
             case Q_EVENT:
-                waitingStr = "Q_EVENT";
+                waitingStr = "EVENT";
                 break;
             case Q_JOIN:
-                waitingStr = "Q_JOIN";
+                waitingStr = "JOIN";
                 break;
             case Q_ISOLATEJOIN:
-                waitingStr = "Q_ISOLATEJOIN";
+                waitingStr = "ISOLATEJOIN";
                 break;
             case Q_HIBERNATEDRUN:
-                waitingStr = "Q_HIBERNATEDRUN";
+                waitingStr = "HIBERNATEDRUN";
                 break;
             case Q_TIMER:
-                waitingStr = "Q_TIMER";
+                waitingStr = "TIMER";
                 break;
         }
         
-        VM.print(" state: ");
-        VM.print(stateStr);
-        VM.print(" queue: ");
-        VM.print(waitingStr);
-/*end[DEBUG_CODE_ENABLED]*/
-
-        if (pendingInterrupt) {
-            VM.print(" pendingInterrupt! ");
-        }
+        VM.outPrint(out, " state: ");
+        VM.outPrint(out, stateStr);
+        VM.outPrint(out, " queue: ");
+        VM.outPrint(out, waitingStr);
+/*else[TRUE]*/
+//        VM.outPrint(out, " state: ");
+//        VM.outPrint(out, state);
+//        VM.outPrint(out, " queue: ");
+//        VM.outPrint(out, inqueue);
+/*end[TRUE]*/
         
         if (monitor != null) {
-            VM.print(" waiting on monitor ");
-            VM.printAddress(monitor);
-            VM.println();
-            VM.print("        for object " + monitor.object);
+            // in an Obejct.wait()...
+            VM.outPrint(out, " waiting on condvar for object " + monitor.object);
+        } else if (inqueue == Q_MONITOR) {
+            Monitor m = lookupROMMonitor();
+            if (m != null) {
+                VM.outPrint(out, " waiting to lock object " + m.object);
+            }
         }
-        VM.println();
+        
+        if (pendingInterrupt) {
+            VM.outPrint(out, " pendingInterrupt! ");
+        }
+        
+        VM.outPrintln(out);
+    }
+    
+    /**
+     * This is a (SLOW) method to try to find the monitor that a thread is trying to lock.
+     * @return the monitor that this thread is trying to lock, or null.
+     */
+    private Monitor lookupROMMonitor() {
+        Assert.that(inQueue(Q_MONITOR));
+        SquawkHashtable monitorTable = getIsolate().getMonitorHashtable();
+        Enumeration e = monitorTable.elements();
+        while (e.hasMoreElements()) {
+            Monitor m = (Monitor) e.nextElement();
+            VMThread thr = m.monitorQueue;
+            while (thr != null) {
+                if (thr == this) {
+                    return m;
+                }
+                thr = thr.nextThread;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Print a stack trace for this thread.<p>
+     * 
+     * Will print on the stream <code>out</code> unless an error occurs while printing on that stream,
+     * such as a null stream, or IO error on the stream.
+     * 
+     * If a printing error occurs, this falls back on printing via VM.print(), etc.
+     *
+     * @param stream
+     */
+    public void printStackTrace(PrintStream stream) {
+        ExecutionPoint[] trace = VM.reifyStack(this, -1);
+        for (int i = 0; i != trace.length; ++i) {
+            stream.print("    ");
+            trace[i].print(stream);
+            stream.println();
+        }
     }
 
     /**
@@ -2360,11 +2393,6 @@ VM.println();
         }
     }
     
-    void printStackTrace() {
-        VM.println(this.toString());
-        // @todo: we'd really like to call DebuggerSupport.printStackTrace(), but that is NOT in j2me (yet).
-    }
-    
     /**
      * Answer the time in millis until another thread is runnable. Will return
      * zero if another thread is already runnable, otherwise the delta until the
@@ -2392,7 +2420,80 @@ VM.println();
 		}
 		return result;
 	}
-}
+    
+//    /** debug code */
+//    public static void main(String[] args) {
+//        final Object lock = new Object();
+//        final String lock2 = "LOCK2";
+//        
+//        Thread t1 = new Thread(new Runnable() {
+//            public void run() {
+//                synchronized (lock) {
+//
+//                    System.err.println("Got lock (1)! Now wait");
+//                    try {
+//                        lock.wait(100);
+//                    } catch (InterruptedException ex) {
+//                    }
+//
+//                }
+//            }
+//        }, "foo-1");
+//        
+//        Thread t2 = new Thread(new Runnable() {
+//            public void run() {
+//                synchronized (lock) {
+//                    System.err.println("Got lock (2)!");
+//                    try {
+//                        Thread.sleep(100);
+//                    } catch (InterruptedException ex) {
+//                    }
+//
+//                }
+//            }
+//        }, "foo-2");
+//        
+//        Thread t3 = new Thread(new Runnable() {
+//            public void run() {
+//                synchronized (lock) {
+//                    System.err.println("Got lock(3)!");
+//                    try {
+//                        Thread.sleep(100);
+//                    } catch (InterruptedException ex) {
+//                    }
+//
+//                }
+//            }
+//        }, "foo-3");
+//
+//        Thread t4 = new Thread(new Runnable() {
+//            public void run() {
+//                synchronized (lock2) {
+//                    System.err.println("Got lock(4)!");
+//                    try {
+//                        Thread.sleep(100);
+//                    } catch (InterruptedException ex) {
+//                    }
+//
+//                }
+//            }
+//        }, "foo-4");
+//
+//        synchronized (lock2) {
+//            t1.start();
+//            t2.start();
+//            t3.start();
+//            t4.start();
+//
+//            try {
+//                Thread.sleep(1);
+//            } catch (InterruptedException ex) {
+//            }
+//            Isolate.printAllIsolateStates(System.err);
+//        }
+//    }
+    
+} /* VMThread */
 
 /*=======================================================================*\
  *                                Breakpoint                             *

@@ -25,6 +25,7 @@
 package com.sun.squawk;
 
 import com.sun.squawk.util.Assert;
+import java.io.PrintStream;
 
 /**
  * Squawk implementation of explicit monitors for synchronization
@@ -186,27 +187,27 @@ final class Monitor {
     }
     
  
-    void printWaitingThreads(Object o) {
+    void printWaitingThreads(PrintStream out, Object o) {
         VMThread thread = condvarQueue;
         if (condvarQueue != null || monitorQueue != null) {
-            VM.print("===== Monitor queues for ");
-            VM.printAddress(this);
-            VM.print(" for object ");
-            VM.println(o.toString());
+            VM.outPrint("===== Monitor queues for ");
+            VM.outPrint(Address.fromObject(this).toUWord().toPrimitive());
+            VM.outPrint(" for object ");
+            VM.outPrintln(o.toString());
         }
         if (thread != null) {
-            VM.println("Threads waiting for notify:");
+            VM.outPrintln("Threads waiting for notify:");
             while (thread != null) {
-                thread.printStackTrace();
+                thread.printStackTrace(out);
                 thread = thread.nextThread;
             }
         }
         
         thread = monitorQueue;
         if (thread != null) {
-            VM.println("Threads waiting for lock:");
+            VM.outPrintln("Threads waiting for lock:");
             while (thread != null) {
-                thread.printStackTrace();
+                thread.printStackTrace(out);
                 thread = thread.nextThread;
             }
         }

@@ -148,7 +148,7 @@ public class Throwable {
      *
      * The format of the backtrace information depends on the implementation.
      */
-public void printStackTrace() {
+    public void printStackTrace() {
         PrintStream stream = System.err;
         String message = getMessage();
         if (stream == null) {

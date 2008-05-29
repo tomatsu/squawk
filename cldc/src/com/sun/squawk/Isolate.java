@@ -616,6 +616,8 @@ public final class Isolate implements Runnable {
 
     /**
      * Gets the monitor hash table for the isolate
+     * 
+     * The monitorHashtable holds the monitors for objects that are in ROM.
      *
      * @return the hash table
      */
@@ -2635,6 +2637,37 @@ public final class Isolate implements Runnable {
     /*---------------------------------------------------------------------------*\
      *                            Debugger Support                               *
     \*---------------------------------------------------------------------------*/
+
+    /**
+     * Print out the thread state and stack trace for each thread belonging this isolate.
+     * 
+     * @param out stream to print on
+     */
+    public void printAllThreadStates(PrintStream out) {
+        Enumeration e = getChildThreads();
+        while (e.hasMoreElements()) {
+            VMThread thr = (VMThread)e.nextElement();
+            thr.printState(out);
+            if (thr.isAlive()) {
+                thr.printStackTrace(out);
+            }
+        }
+    }
+    
+    /**
+     * Print out the thread state and stack trace for each thread of each isolate
+     * in the system.
+     * 
+     * @param out stream to print on
+     */
+    public static void printAllIsolateStates(PrintStream out) {
+         Isolate[] isos = Isolate.getIsolates();
+        for (int i = 0; i < isos.length; i++) {
+            Isolate iso = isos[i];
+            VM.outPrintln(out, "--- " + iso + " status ---");
+            iso.printAllThreadStates(out);
+        }
+    }
 
     /**
      * A Breakpoint instance describes a point in a method at which a breakpoint has been set.
