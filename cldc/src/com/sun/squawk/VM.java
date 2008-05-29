@@ -896,8 +896,6 @@ public class VM implements GlobalStaticFields {
      * The zeroth element of the array represents the top of the stack, which is the frame of the caller's
      * method. The last element of the array represents the bottom of the stack, which is the first method
      * invocation in the sequence.
-     * 
-     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @param thread the thread to inspect
      * @param count  how many frames from the stack to reify, starting from the frame
@@ -905,7 +903,7 @@ public class VM implements GlobalStaticFields {
      *               all frames are to be reified.
      * @return the reified call stack
      */
-    public static ExecutionPoint[] reifyStack0(VMThread thread, Address fpBase, int count) {
+    private static ExecutionPoint[] reifyStack0(VMThread thread, Address fpBase, int count) {
         
         if (fpBase.isZero()) {
             return new ExecutionPoint[0];
@@ -965,8 +963,6 @@ public class VM implements GlobalStaticFields {
      * 
      * NOTE: This may miss the top frame. See slightly different stack walking code
      *       in the debugger's inspectStack() method.
-     * 
-     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
      *
      * @param thread the thread to inspect
      * @param count  how many frames from the stack to reify, starting from the frame
@@ -974,7 +970,7 @@ public class VM implements GlobalStaticFields {
      *               all frames are to be reified.
      * @return the reified call stack
      */
-    public static ExecutionPoint[] reifyStack(VMThread thread, int count) {
+    /*package*/ static ExecutionPoint[] reifyStack(VMThread thread, int count) {
         if (thread == VMThread.currentThread()) {
             return reifyCurrentStack(count);
         }
