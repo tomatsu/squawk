@@ -66,7 +66,7 @@
 
 #define LEVEL_2_PAGE_TABLE_ADDR				(STACK)
 // level 1 table in sectors 6 and 7
-#define LEVEL_1_PAGE_TABLE_ADDR				(FLASH_BASE_ADDR+0x00C000)
+#define LEVEL_1_PAGE_TABLE_ADDR				(FLASH_BASE_ADDR + 0x3F0000)
 
 #define NUMBER_OF_64K_PAGES_IN_1MB 16
 
