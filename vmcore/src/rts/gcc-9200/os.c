@@ -29,6 +29,7 @@
 #include "syscalls-impl.h"
 #include "spi.h"
 #include "avr.h"
+#include "9200-io.h"
 
 // Define the maximum number of user-supplied command line args we can accept
 #define SQUAWK_STARTUP_ARGS_MAX 20
@@ -89,6 +90,28 @@ void lowLevelSetup() {
 //	diagnostic("system timer inited");
 }
 
+static int get_available_memory() {
+	char* current;
+	int size = RAM_SIZE;
+	// malloc some heap to reserve it for interrupt event blocks etc.
+	char* reserved = malloc(4000);
+	// get info
+	do {
+		size -= 1024;
+		current = malloc(size);
+	} while (current == 0);
+	free(current);
+	free(reserved);
+	// check we *really* can allocate this space
+	reserved = malloc(size);
+	if (reserved == 0) {
+		error("Failed to reallocate memory", size);
+		exit(-1);
+	}
+	free(reserved);
+	return size;
+}
+
 /**
  * Program entrypoint (cold start).
  */
@@ -115,32 +138,54 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
 	iprintf(")...\n");
 	
 	char* startupArgs = (char*)cmdLineParamsAddr;
-	char *fakeArgv[SQUAWK_STARTUP_ARGS_MAX + 1];
-	fakeArgv[0] = "dummy"; // fake out the executable name
+	char *fakeArgv[SQUAWK_STARTUP_ARGS_MAX];
+	char xmx_buffer[20];
 
+	fakeArgv[0] = "dummy"; // fake out the executable name
 	int fakeArgc = 1;
 	int index = 0;
+	int xmx_seen = FALSE;
 	/* The startupArgs structure comprises a sequence of null-terminated string
 	 * with another null to indicate the end of the structure
 	 */
 	while (startupArgs[index] != 0) {
-		if (startsWith(&startupArgs[index], "-dma:")) {
+		if (startsWith(&startupArgs[index], "-Xmx:")) {
+			xmx_seen = TRUE;
+			break;
+		} else if (startsWith(&startupArgs[index], "-dma:")) {
 			dma_buffer_size = parseQuantity(&startupArgs[index+5], "-dma:");
 			dma_buffer_address = malloc(dma_buffer_size);
 			if (dma_buffer_address == NULL) {
-				fprintf(stderr, "Unable to allocate %i bytes for DMA\n", dma_buffer_size);
-            	stopVM(-1);
+				iprintf("Unable to allocate %i bytes for DMA\n", dma_buffer_size);
+            	exit(-1);
 			}
 			dma_buffer_address = (char*)(((int)dma_buffer_address & 0x000FFFFF) + UNCACHED_RAM_START_ADDDRESS);
 //			iprintf("Allocated %i bytes for DMA buffers at address 0x%x\n", dma_buffer_size, (int)dma_buffer_address);
-		} else {
-			fakeArgv[fakeArgc] = &startupArgs[index];
-			// iprintf("Parsed arg: %s\n", fakeArgv[fakeArgc]);
-			fakeArgc++;
-			if (fakeArgc > SQUAWK_STARTUP_ARGS_MAX + 1) {
+		}
+		
+		while (startupArgs[index] != 0) {
+			index++;
+		}
+		// skip over the terminating null
+		index++;
+	}
+	if (!xmx_seen) {
+		siprintf(xmx_buffer, "-Xmx:%i", get_available_memory());
+		fakeArgv[fakeArgc] = xmx_buffer;
+//		iprintf("Faking Xmx arg: %s\n", fakeArgv[fakeArgc]);
+		fakeArgc++;
+	}
+
+	index = 0;
+	while (startupArgs[index] != 0) {
+		if (!startsWith(&startupArgs[index], "-dma:")) {
+			if (fakeArgc >= SQUAWK_STARTUP_ARGS_MAX) {
 				iprintf("Number of startup args exceeds maximum permitted\n");
 				exit(-1);
 			}
+			fakeArgv[fakeArgc] = &startupArgs[index];
+//			iprintf("Parsed arg: %s\n", fakeArgv[fakeArgc]);
+			fakeArgc++;
 		}
 		while (startupArgs[index] != 0) {
 			index++;

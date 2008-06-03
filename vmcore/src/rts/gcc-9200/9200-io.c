@@ -25,6 +25,7 @@
 #include "spi.h"
 #include "flash.h"
 #include "avr.h"
+#include "9200-io.h"
 
 // Forward declarations
 int getEvent(int, int);
@@ -169,13 +170,6 @@ void usb_state_change()	{
 	java_irq_status |= (1<<11); // USB Device ID
 	setARMInterruptBits(cpsr);
 }
-
-struct irqRequest {
-        int eventNumber;
-        int irq_mask;
-        struct irqRequest *next;
-};
-typedef struct irqRequest IrqRequest;
 
 IrqRequest *irqRequests;
 

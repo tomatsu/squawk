@@ -985,7 +985,7 @@ int writeCStringArray(int length, char **array, int offset) {
  *    argv copy
  * Memory_end
  *
- * @param ramSize   the size (in bytes) requested for RAM
+ * @param ramSize   either the size (in bytes) requested for RAM or for the SPOT the total memory available
  * @param nvmSize   the size (in bytes) requested for NVM
  * @param argv      the command line options after the -X and -J options have been stripped
  * @param argc      the number of components in argv
@@ -1002,15 +1002,16 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     int offset;
 
 #ifdef FLASH_MEMORY
-    memorySize = 0;
+    memorySize = roundUp(ramSize - (pageSize-1), pageSize);
+    ramSize = memorySize - roundUp(serviceChunkSize, pageSize) - roundUp(argvTotalSize, pageSize) - roundUp(nvmSize, pageSize);
     assume(!TYPEMAP);
 #else
     memorySize = getFileSize(bootstrapSuiteFile);
-#endif /* FLASH_MEMORY */
     memorySize = roundUp(memorySize + ramSize, pageSize);
     memorySize = roundUp(memorySize + nvmSize, pageSize);
     memorySize = roundUp(memorySize + serviceChunkSize, pageSize);
     memorySize = roundUp(memorySize + argvTotalSize, pageSize);
+#endif /* FLASH_MEMORY */
 
      // Double the memory buffer to allocate the type map if necessary
     realMemorySize = TYPEMAP ? memorySize * 2 : memorySize;
