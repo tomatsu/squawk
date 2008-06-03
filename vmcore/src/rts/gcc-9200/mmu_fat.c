@@ -132,12 +132,14 @@ void page_table_init() {
 		level_1_table[i] = (i<<20) | 0xC12;
 	}
 
-	// turn on caching for RAM (512KB, but we're using 1MB MMU pages here)
-	level_1_table[0x200] |= 0xC; // enable write-back caching
+	// turn on caching for each 1Mb of RAM
+	for (i=0; i < ((get_ram_size() + (1024*1024) - 1) >> 20); i++) {
+		level_1_table[(RAM_BASE_ADDR>>20) + i] |= 0xC; // enable write-back caching
+	}
 
-	// All directly mapped flash areas
-	for (i=0; i<4; i++) {
-		level_1_table[0x100+i] |= 0x8; // write-through caching
+	// turn on caching for each 1Mb of flash
+	for (i=0; i < (get_flash_size() >> 20); i++) {
+		level_1_table[(FLASH_BASE_ADDR>>20)+i] |= 0x8; // write-through caching
 	}
 	
 	level_1_table[UNCACHED_RAM_START_ADDDRESS >> 20] = 0x20000000 | 0xC12;
