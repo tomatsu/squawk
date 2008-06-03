@@ -92,7 +92,7 @@ void lowLevelSetup() {
 
 static int get_available_memory() {
 	char* current;
-	int size = RAM_SIZE;
+	int size = get_ram_size();
 	// malloc some heap to reserve it for interrupt event blocks etc.
 	char* reserved = malloc(4000);
 	// get info
@@ -119,6 +119,13 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
 	int i;
 
 	diagnostic("in vm");
+//	error("ram size", get_ram_size());
+//	error("mmu ram", get_mmu_ram_space_address());
+//	error("mmu flash", get_mmu_flash_space_address());
+//	error("stack top", get_stack_top_address());
+//	error("stack bottom", get_stack_bottom_address());
+//	error("usart", get_usart_rx_buffer_address());
+//	error("heap end", get_heap_end_address());
 
 	page_table_init();
 	if (!reprogram_mmu(TRUE)) {

@@ -64,15 +64,15 @@
 // This must match the constant in FlashFileDescriptor.java
 #define OBSOLETE_FLAG_MASK					0x1
 
-#define LEVEL_2_PAGE_TABLE_ADDR				(STACK)
-// level 1 table in sectors 6 and 7
-#define LEVEL_1_PAGE_TABLE_ADDR				(FLASH_BASE_ADDR + 0x3F0000)
-
 #define NUMBER_OF_64K_PAGES_IN_1MB 16
+
+static unsigned int get_level1_page_table_address() {
+	return get_mmu_flash_space_address();
+}
 
 static unsigned int* get_address_of_level_2_table_containing(unsigned int virtual_address) {
 	unsigned int megabyte = (virtual_address - VIRTUAL_ADDRESS_SPACE_LOWER_BOUND) / (1024*1024);
-	return (unsigned int *)(LEVEL_2_PAGE_TABLE_ADDR+(LEVEL_2_TABLE_SIZE*megabyte));
+	return (unsigned int *)(get_mmu_ram_space_address()+(LEVEL_2_TABLE_SIZE*megabyte));
 }
 
 static void map_level_2_entry_using_addresses(int virtual_address, int physical_address) {
@@ -102,7 +102,7 @@ void mmu_enable(void) {
 	AT91_coprocessor15_3(0, 0xFFFFFFFF); 
 	
 	// set MMU translation table base address
-	AT91_coprocessor15_2(0xFFFFFFFF, LEVEL_1_PAGE_TABLE_ADDR); 
+	AT91_coprocessor15_2(0xFFFFFFFF, get_level1_page_table_address()); 
 	
 	// turn MMU on
 	AT91_coprocessor15_1(0, 1<<0); 
@@ -145,7 +145,7 @@ void page_table_init() {
 	// Set up tables for virtual files
 	for (j = 0; j < VIRTUAL_ADDRESS_FILE_COUNT; ++j) {
 		level_1_table[(VIRTUAL_ADDRESS_SPACE_LOWER_BOUND >> 20) + j] = 
-			(LEVEL_2_PAGE_TABLE_ADDR+(LEVEL_2_TABLE_SIZE*j)) | 0x11; // subdivide this 1Mb of flash
+			(get_mmu_ram_space_address()+(LEVEL_2_TABLE_SIZE*j)) | 0x11; // subdivide this 1Mb of flash
 		for (i=0; i<NUMBER_OF_64K_PAGES_IN_1MB; i++) {
 			// map to itself - will cause a memory access fault if not overwritten
 			map_level_2_entry_using_addresses(
@@ -154,7 +154,7 @@ void page_table_init() {
 		}
 	}
 	
-	unsigned int* level_1_table_in_flash = (unsigned int*)LEVEL_1_PAGE_TABLE_ADDR;
+	unsigned int* level_1_table_in_flash = (unsigned int*)get_level1_page_table_address();
 	int need_to_flash = FALSE;
 	for (i=0; i<4096; i++) {
 		if (level_1_table[i] != level_1_table_in_flash[i]) {
@@ -164,7 +164,7 @@ void page_table_init() {
 	}
 	if (need_to_flash) {
 		sysPrint("Updating MMU table\r\n");
-		flash_write_with_erase((unsigned char*)level_1_table, 4096*4, (Flash_ptr)LEVEL_1_PAGE_TABLE_ADDR);
+		flash_write_with_erase((unsigned char*)level_1_table, 4096*4, (Flash_ptr)get_level1_page_table_address());
 	}
 }
 
