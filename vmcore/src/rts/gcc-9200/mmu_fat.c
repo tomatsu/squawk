@@ -41,11 +41,10 @@
 #define VIRTUAL_ADDRESS_FILE_SPACING 		(1024*1024)
 #define VIRTUAL_ADDRESS_SPACE_LOWER_BOUND 	0x10800000
 #define VIRTUAL_ADDRESS_SPACE_UPPER_BOUND 	(VIRTUAL_ADDRESS_SPACE_LOWER_BOUND + (VIRTUAL_ADDRESS_FILE_COUNT*VIRTUAL_ADDRESS_FILE_SPACING))
-#define FAT_IDENTIFIER_V2					0x12345679
+#define FAT_IDENTIFIER_V3					0x1234567A
 
 // FAT V2 constants - must match the same constants in FATRecord.java
 #define FILE_FAT_RECORD_TYPE				0
-#define FREE_SECTORS_FAT_RECORD_TYPE		1
 #define UNUSED_FAT_RECORD_STATUS			0xFFFF
 #define DELETED_FAT_RECORD_STATUS			0x0000
 #define FAT_RECORD_HEADER_SIZE				4
@@ -182,7 +181,7 @@ static int read_number(unsigned char* ptr, int number_of_bytes) {
 static int is_FAT_valid() {
 	int fat_id = read_number((char*)get_sector_address(FAT_SECTOR), 4);
 	switch (fat_id) {
-		case FAT_IDENTIFIER_V2:
+		case FAT_IDENTIFIER_V3:
 			return TRUE;
 		default:
 			return FALSE;
@@ -219,8 +218,6 @@ int get_allocated_file_size(int required_virtual_address) {
 							sector_count = read_number(fat_ptr+11, 2);
 							return sector_count * SECTOR_SIZE;
 						}
-						break;
-					case FREE_SECTORS_FAT_RECORD_TYPE:
 						break;
 					default:
 						error("FAT contains bad record type ", recordType);
@@ -274,8 +271,6 @@ unsigned int get_file_virtual_address(int target_file_name_length, char* target_
 							}
 						}
 						break;
-					case FREE_SECTORS_FAT_RECORD_TYPE:
-						break;
 					default:
 						error("FAT contains bad record type ", recordType);
 				}
@@ -326,8 +321,6 @@ int reprogram_mmu(int ignore_obsolete_files) {
 								virtual_address += SECTOR_SIZE;
 							}
 						}
-						break;
-					case FREE_SECTORS_FAT_RECORD_TYPE:
 						break;
 					default:
 						error("FAT contains bad record type ", recordType);
