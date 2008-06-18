@@ -440,7 +440,7 @@ public class Klass {
      * Returns the modifiers for this class or interface.
      * @return int representing class modifiers
      */
-    public final int getModifiers() {
+    public final int getModifiers() throws AllowInlinedPragma {
         return modifiers;
     }
 
@@ -989,7 +989,7 @@ public class Klass {
      *
      * @return the system wide unique ID for this class or a negative value if it doesn't have one
      */
-    public final int getSystemID() {
+    public final int getSystemID() throws AllowInlinedPragma {
         return getSystemID(this);
     }
 
@@ -2849,6 +2849,7 @@ public class Klass {
      * @return the symbolic info for <code>body</code> or null if it is not available
      */
     Method findMethod(Object body) {
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
         if (body instanceof MethodBody) {
             MethodBody mbody = (MethodBody)body;
             if (mbody.getDefiningClass() == this) {
@@ -2857,6 +2858,7 @@ public class Klass {
                 return null;
             }
         }
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         KlassMetadata metadata = getMetadata();
         if (metadata == null) {
             return null;

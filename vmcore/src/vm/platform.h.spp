@@ -119,6 +119,22 @@
 #    define INLINE inline static
 #endif
 
+#ifdef __GNUC__
+#define NOINLINE __attribute__ ((noinline))
+#define NORETURN __attribute__ ((noreturn))
+#else 
+#define NOINLINE
+#define NORETURN
+#endif /* */
+
+#ifndef INLINE_JAVA_FP
+#    if ARM_FPA
+#        define INLINE_JAVA_FP 0
+#    else
+#        define INLINE_JAVA_FP 1
+#    endif
+#endif
+
 /*if[KERNEL_SQUAWK]*/
 #ifndef MAXSIG
 #    define MAXSIG 32

@@ -251,6 +251,24 @@ public class MethodConverter extends Tree.Visitor {
         assert tree.sym == method;
         List<ProcessedMethod> impls = conv.getImplementersOf(method);
 
+		List<Tree> thrown = tree.thrown;
+		boolean shouldInline = false;
+
+		if (thrown != null) {
+		    Iterator<Tree> iter = thrown.iterator();
+			while (iter.hasNext()) {
+				Tree.Ident t = (Tree.Ident)iter.next();
+				String name = t.name.toString();
+				if (name.equals("ForceInlinedPragma") ||
+                    name.equals("AllowInlinedPragma") ||
+					name.equals("NativePragma")) {
+					shouldInline = true;
+					// System.out.println("Auto inlining " + method);
+					break;
+				}
+			}
+		}
+
         String code = annotations.get("code");
         String proxy = annotations.get("proxy");
         String macro = annotations.get("macro");
@@ -275,7 +293,11 @@ public class MethodConverter extends Tree.Visitor {
             ccode.print("#define ");
             ccode.print(" " + conv.asString(method));
         } else {
-            ccode.print("static ");
+			if (proxy != null || shouldInline) {
+				ccode.print("INLINE ");
+			} else {
+				ccode.print("static ");
+			}
             ccode.print(conv.asString(tree.sym.type.restype()));
             ccode.print(" " + (isRoot ? cRoot : conv.asString(method)));
         }

@@ -1294,19 +1294,16 @@ public class GC implements GlobalStaticFields {
         collector.deregisterStackChunk(src.toObject());
     }
 
-         
-    static void checkSC(Address scAddress) {
 /*if[DEBUG_CODE_ENABLED]*/
+    static void checkSC(Address scAddress) {
         Assert.always(!scAddress.isZero());
         Assert.always(!scAddress.eq(Address.fromPrimitive(0xDEADBEEF)));
      //   Assert.always(VM.asKlass(getKlass(scAddress)).getSystemID() == CID.LOCAL_ARRAY);
         // if ownerless, make sure that we ignore activation records:
         Assert.always(NativeUnsafe.getObject(scAddress, SC.owner) != null || NativeUnsafe.getAddress(scAddress, SC.lastFP).isZero());
-/*end[DEBUG_CODE_ENABLED]*/
     }
         
     static void checkSC(Object sc) {
-/*if[DEBUG_CODE_ENABLED]*/
         Assert.always(sc != null);
         Assert.always(!Address.fromObject(sc).eq(Address.fromPrimitive(0xDEADBEEF)));
         Assert.always(GC.getKlass(sc).getSystemID() == CID.LOCAL_ARRAY);
@@ -1314,17 +1311,21 @@ public class GC implements GlobalStaticFields {
         Object owner = NativeUnsafe.getObject(sc, SC.owner);
         Address lastFP = NativeUnsafe.getAddress(sc, SC.lastFP);
         Assert.always(owner != null || lastFP.isZero());
-/*end[DEBUG_CODE_ENABLED]*/
     }
     
     static void checkSC(VMThread thr) {
-/*if[DEBUG_CODE_ENABLED]*/
         Object sc = thr.getStack();
         Object owner = NativeUnsafe.getObject(sc, SC.owner);
         Assert.always(owner == thr || thr.isServiceThread());
         checkSC(sc);
-/*end[DEBUG_CODE_ENABLED]*/
     }
+        
+/*else[DEBUG_CODE_ENABLED]*/
+//    static void checkSC(Address scAddress) throws ForceInlinedPragma { }
+//    static void checkSC(Object sc) throws ForceInlinedPragma { }
+//    static void checkSC(VMThread thr) throws ForceInlinedPragma { }
+/*end[DEBUG_CODE_ENABLED]*/
+
         
     /**
      * Create a new method.

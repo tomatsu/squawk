@@ -369,3 +369,7 @@
                 }
             }
         }
+
+
+static boolean collectGarbage(Address this, Address allocTop, boolean forceFullGC) NOINLINE;
+static Address copyObjectGraph(Address this, Address object, Address cb, Address allocTop) NOINLINE;

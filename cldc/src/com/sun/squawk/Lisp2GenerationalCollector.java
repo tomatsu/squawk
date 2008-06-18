@@ -26,6 +26,7 @@ package com.sun.squawk;
 
 import com.sun.squawk.util.*;
 import com.sun.squawk.vm.*;
+import com.sun.squawk.pragma.AllowInlinedPragma;
 
 
 /**
@@ -1864,8 +1865,9 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         }
     }
 
-    private void verifyStackChunks() {
+
 /*if[DEBUG_CODE_ENABLED]*/
+    private void verifyStackChunks() {
         Address sc = Address.fromObject(stackChunks);
         while (!sc.isZero()) {
             /*VM.print("verifyStackChunk: ");
@@ -1874,9 +1876,11 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
             GC.checkSC(sc);
             sc = NativeUnsafe.getAddress(sc, SC.next);
         }
-/*end[DEBUG_CODE_ENABLED]*/
     }
-    
+/*else[DEBUG_CODE_ENABLED]*/
+//    private void verifyStackChunks() throws AllowInlinedPragma {}
+/*end[DEBUG_CODE_ENABLED]*/
+
     /** 
      * Prune stack chunks that have been marked as unused. Cna be called in both partial; and ull collections.
      */
@@ -3757,14 +3761,14 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
          *
          * @return true if the stack has overflowed
          */
-        boolean hasOverflowed() {
+        boolean hasOverflowed() throws AllowInlinedPragma {
             return overflowed;
         }
 
         /**
          * Resets the overflow flag to false.
          */
-        void resetOverflow() {
+        void resetOverflow() throws AllowInlinedPragma {
             overflowed = false;
         }
 

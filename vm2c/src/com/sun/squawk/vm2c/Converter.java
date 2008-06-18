@@ -440,8 +440,8 @@ public class Converter {
 
         // Array length
         out.println();
-        out.println("int Array_length(Address oop) {");
-        out.println("    return (int)(getUWord(oop, HDR_length) >> 2);");
+        out.println("UWord Array_length(Address oop) {");
+        out.println("    return (getUWord(oop, HDR_length) >> 2);");
         out.println("}");
 
         // Null pointer check
@@ -460,10 +460,10 @@ public class Converter {
             // Array index out of bounds check (includes null pointer check)
             out.println();
             out.println("void arrayBoundsCheck(Address oop, int index) {");
-            out.println("    int length;");
+            out.println("    UWord length;");
             out.println("    nullPointerCheck(oop);");
-            out.println("    length = (int)Array_length(oop);");
-            out.println("    if (index < 0 || index >= length) {");
+            out.println("    length = Array_length(oop);");
+            out.println("    if (((UWord)index) >= length) {");
             out.println("        fatalVMError(\"array index out of bounds exception\");");
             out.println("    }");
             out.println("}");

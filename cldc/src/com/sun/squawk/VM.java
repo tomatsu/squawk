@@ -1307,7 +1307,7 @@ hbp.dumpState();
      * @param object the object to be cast
      * @return the object cast to be a Klass
      *
-     * @vm2c code( return object; )
+     * @vm2c macro( ((Address)object) )
      */
     native static Klass asKlass(Object object);
 
@@ -1376,7 +1376,7 @@ hbp.dumpState();
      * @param object the object to be cast
      * @return the object cast to be a Klass
      *
-     * @vm2c code( return object; )
+     * @vm2c macro( (object) )
      */
     static Klass asKlass(Address object) {
         return VM.asKlass(object.toObject());
@@ -1414,7 +1414,7 @@ hbp.dumpState();
      *
      * @return  the number of global integer variables
      *
-     * @vm2c code( return GLOBAL_INT_COUNT; )
+     * @vm2c macro( GLOBAL_INT_COUNT )
      */
     native static int getGlobalIntCount();
 
@@ -1424,7 +1424,7 @@ hbp.dumpState();
      * @param  index   index of the entry in the global integer table
      * @return the value of entry <code>index</code> in the global integer table
      *
-     * @vm2c code( return Ints[index]; )
+     * @vm2c macro( Ints[index] )
      */
     native static int getGlobalInt(int index);
 
@@ -1443,7 +1443,7 @@ hbp.dumpState();
      *
      * @return  the number of global pointer variables
      *
-     * @vm2c code( return GLOBAL_ADDR_COUNT; )
+     * @vm2c macro( GLOBAL_ADDR_COUNT )
      */
     native static int getGlobalAddrCount();
 
@@ -1453,7 +1453,7 @@ hbp.dumpState();
      * @param  index   index of the entry in the global pointer table
      * @return the value of entry <code>index</code> in the global pointer table
      *
-     * @vm2c code( return Addrs[index]; )
+     * @vm2c macro( Addrs[index] )
      */
     native static Address getGlobalAddr(int index);
 
@@ -1472,7 +1472,7 @@ hbp.dumpState();
      *
      * @return  the number of global object pointer variables
      *
-     * @vm2c code( return GLOBAL_OOP_COUNT; )
+     * @vm2c macro( GLOBAL_OOP_COUNT )
      */
     native static int getGlobalOopCount();
 
@@ -1482,7 +1482,7 @@ hbp.dumpState();
      * @param  index   index of the entry in the global object pointer table
      * @return the value of entry <code>index</code> in the global object pointer table
      *
-     * @vm2c code( return Oops[index]; )
+     * @vm2c macro(  Oops[index] )
      */
     native static Object getGlobalOop(int index);
 
@@ -2062,7 +2062,7 @@ hbp.dumpState();
      * @return the number of backward branch instructions the VM has executed or -1 if instruction
      *         profiling is disabled
      *
-     * @vm2c code( return getBranchCount(); )
+     * @vm2c proxy
      */
     public native static long getBranchCount();
 
