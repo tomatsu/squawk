@@ -765,18 +765,16 @@ public final class NativeUnsafe {
      * Do this little dance to avoid initializing static variables only used in a hosted environment.
      * Also used for testing.
      **/
-    public static void hostedInit() throws HostedPragma {
-        memorySize = 0;
-        memory = new byte[0];
+    public static synchronized void hostedInit() throws HostedPragma {
+        if (memory == null) {
+            memorySize = 0;
+            memory = new byte[0];
 /*if[TYPEMAP]*/
-        typeMap = new byte[0];
+            typeMap = new byte[0];
 /*end[TYPEMAP]*/
-        oopMap = new BitSet();
-        unresolvedClassPointers = new SquawkHashtable();
-    }
-    
-    static {
-       hostedInit();
+            oopMap = new BitSet();
+            unresolvedClassPointers = new SquawkHashtable();
+        }
     }
 
     /**
@@ -845,6 +843,7 @@ public final class NativeUnsafe {
      */
     public static void setMemorySize(int newSize) throws HostedPragma {
         Assert.always(newSize >= 0);
+        hostedInit();
         if (newSize > memorySize) {
             ensureCapacity(newSize);
         } else {

@@ -737,7 +737,9 @@ static void printCacheStats() {
     newCount = newHits = 0;
 
 #if TRACE
-    fprintf(stderr, format("Extends: %d (slots as %% of extends = %d.%02d%%)\n"), total_extends, AS_PERCENT(total_slots, total_extends));
+    if (total_extends > 0) {
+        fprintf(stderr, format("Extends: %d (slots as %% of extends = %d.%02d%%)\n"), total_extends, AS_PERCENT(total_slots, total_extends));
+	}
 #endif /* TRACE */
     fprintf(stderr, format("GCs: %d full, %d partial\n"), com_sun_squawk_GC_fullCollectionCount, com_sun_squawk_GC_partialCollectionCount);
 }

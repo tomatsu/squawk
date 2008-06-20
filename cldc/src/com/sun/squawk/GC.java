@@ -1046,7 +1046,7 @@ public class GC implements GlobalStaticFields {
         Assert.that(object != null);
         Address classOrAssociation = NativeUnsafe.getAddress(object, HDR.klass);
 /*if[DEBUG_CODE_ENABLED]*/
-        if ((classOrAssociation.hashCode() & 0x3) != 0) {
+        if (!isPointer(classOrAssociation)) {
             VM.print("object: ");
             VM.printAddress(object);
             VM.println();
@@ -1055,6 +1055,7 @@ public class GC implements GlobalStaticFields {
             VM.printAddress(classOrAssociation);
             VM.println();
         }
+        Assert.always(!classOrAssociation.isZero());
 /*end[DEBUG_CODE_ENABLED]*/
         Assert.that(!classOrAssociation.isZero());
         Object klass = NativeUnsafe.getObject(classOrAssociation, (int)FieldOffsets.com_sun_squawk_Klass$self);
@@ -1302,11 +1303,23 @@ public class GC implements GlobalStaticFields {
         // if ownerless, make sure that we ignore activation records:
         Assert.always(NativeUnsafe.getObject(scAddress, SC.owner) != null || NativeUnsafe.getAddress(scAddress, SC.lastFP).isZero());
     }
+    
+    /**
+     * GC may temporarily encode a ptrs's value so it os not a valid ptr.
+     * Try to dect this case.
+     * @param ptr
+     * @return true if ptr looks like a valid pointer
+     */
+    static boolean isPointer(Address ptr) {
+        return ptr.and(UWord.fromPrimitive(0x3)).isZero();
+    }
         
     static void checkSC(Object sc) {
         Assert.always(sc != null);
         Assert.always(!Address.fromObject(sc).eq(Address.fromPrimitive(0xDEADBEEF)));
-        Assert.always(GC.getKlass(sc).getSystemID() == CID.LOCAL_ARRAY);
+        if (isPointer(NativeUnsafe.getAddress(sc, HDR.klass))) {
+            Assert.always(GC.getKlass(sc).getSystemID() == CID.LOCAL_ARRAY);
+        }
         // if ownerless, make sure that we ignore activation records:
         Object owner = NativeUnsafe.getObject(sc, SC.owner);
         Address lastFP = NativeUnsafe.getAddress(sc, SC.lastFP);
