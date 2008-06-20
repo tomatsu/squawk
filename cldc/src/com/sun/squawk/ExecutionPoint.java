@@ -54,7 +54,7 @@ public final class ExecutionPoint {
 
 /*if[DEBUG_CODE_ENABLED]*/
     public String toString() {
-        return "frame=" + frame.toPrimitive() + ",bci=" + bci + ",mp=" + Address.fromObject(mp).toUWord().toPrimitive() + "]";
+        return "frame=" + frame.toPrimitive() + ",bci=" + bci.toPrimitive() + ",mp=" + Address.fromObject(mp).toUWord().toPrimitive() + "]";
     }
 /*end[DEBUG_CODE_ENABLED]*/
     

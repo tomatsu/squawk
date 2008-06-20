@@ -1286,7 +1286,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
             VM.print("Lisp2GenerationalCollector::traverseOopsInObject - object = ");
             VM.printAddress(object);
             VM.print(" class = ");
-            printKlassName(klass);
+            printKlassName(klass.toObject());
             VM.println();
         }
 
