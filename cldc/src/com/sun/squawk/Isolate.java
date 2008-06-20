@@ -1244,7 +1244,7 @@ public final class Isolate implements Runnable {
      * @see #lookupInterned
      */
     private String lookupInterned0(String value) {
-        Assert.that(this == VM.getCurrentIsolate() && this.isAlive());
+        Assert.that(VM.isHosted() || (this == VM.getCurrentIsolate() && this.isAlive());
         if (internedStrings == null) {
             internedStrings = new SquawkHashtable();
             if (!VM.isHosted()) {
