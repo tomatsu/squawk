@@ -971,7 +971,7 @@ public final class Lisp2Collector extends GarbageCollector {
             VM.print("Lisp2Collector::traverseOopsInObject - object = ");
             VM.printAddress(object);
             VM.print(" class = ");
-            printKlassName(klass);
+            printKlassName(klass.toObject());
             VM.println();
         }
 
@@ -1222,7 +1222,7 @@ public final class Lisp2Collector extends GarbageCollector {
          */
         if (header) {
             Assert.always(NativeUnsafe.getAddress(chunk, SC.next).isZero());
-            visitOop(visitor, Address.fromObject(chunk), SC.owner);
+            visitOop(visitor, chunk, SC.owner);
         }
 
         /*
@@ -1288,9 +1288,9 @@ public final class Lisp2Collector extends GarbageCollector {
         /*
          * Get the method pointer and setup to go through the parameters and locals.
          */
-        int localCount     = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp);
-        int parameterCount = MethodBody.decodeParameterCount(mp);
-        int mapOffset      = MethodBody.decodeOopmapOffset(mp);
+        int localCount     = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp.toObject());
+        int parameterCount = MethodBody.decodeParameterCount(mp.toObject());
+        int mapOffset      = MethodBody.decodeOopmapOffset(mp.toObject());
         int bitOffset      = -1;
         int byteOffset     = 0;
 
@@ -1675,7 +1675,7 @@ public final class Lisp2Collector extends GarbageCollector {
             VM.println();
         }
 
-        Address free = !copyingObjectGraph ? collectionStart : Address.fromObject(copiedObjects);
+        Address free = !copyingObjectGraph ? collectionStart : copiedObjects;
         Address object;
         Address returnValue = Address.zero();
 
@@ -1874,8 +1874,8 @@ public final class Lisp2Collector extends GarbageCollector {
         while (!fp.isZero()) {
 
             Address mp = NativeUnsafe.getAddress(fp, FP.method);
-            int localCount = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp);
-            int stackCount = MethodBody.decodeStackCount(mp);
+            int localCount = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp.toObject());
+            int stackCount = MethodBody.decodeStackCount(mp.toObject());
             int reserved = (localCount + stackCount + FP.FIXED_FRAME_SIZE)  * HDR.BYTES_PER_WORD;
             if (fp.sub(reserved).lo(lastReservedSlot)) {
                 lastReservedSlot = fp.sub(reserved);
@@ -2337,7 +2337,7 @@ public final class Lisp2Collector extends GarbageCollector {
                         VM.println();
                     }
 
-                    VM.setGlobalOop(destination, i);
+                    VM.setGlobalOop(destination.toObject(), i);
                 }
             }
         }

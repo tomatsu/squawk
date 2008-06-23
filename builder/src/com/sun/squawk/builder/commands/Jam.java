@@ -43,7 +43,6 @@ import java.util.Vector;
 
 import com.sun.squawk.builder.Build;
 import com.sun.squawk.builder.BuildException;
-import com.sun.squawk.builder.util.HexEncoding;
 
 public class Jam extends Thread {
 
@@ -183,6 +182,7 @@ public class Jam extends Thread {
      */
     protected ApplicationDescriptor getNextApplicationDescriptor() {
         boolean reportedError = false;
+        int timesWaitedForJavaTest = 0;
 
         while (true) {
             try {
@@ -192,7 +192,13 @@ public class Jam extends Thread {
                     reportedError = true;
                     if (suceededAtLeastOnceToGetNextApplicationDescriptor) {
                     	printPrefix();
-                        out.println("Seems JavaTest is no longer running, will keep trying.");
+                        timesWaitedForJavaTest++;
+                        if (timesWaitedForJavaTest > 10) {
+                            out.println("Seems JavaTest is no longer running - GIVING UP.");
+                            return null;
+                        } else {
+                            out.println("Seems JavaTest is no longer running, will keep trying.");
+                        }
                     } else {
                     	printPrefix();
                         out.println("Seems you have not yet started JavaTest, will keep trying.");
@@ -282,7 +288,6 @@ public class Jam extends Thread {
                 } catch (IOException e) {
                 }
             }
-            ;
             fileReader = null;
         }
     }
@@ -475,6 +480,9 @@ public class Jam extends Thread {
         		out.println("getNextApplicationDescriptor");
         	}
             descriptor = getNextApplicationDescriptor();
+            if (descriptor == null) {
+                return;
+            }
             File jarFile = null;
             String suitePath = null;
             final String jarExtension = ".jar";
