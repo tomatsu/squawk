@@ -536,7 +536,7 @@ public class MakeAPI extends Command {
         args.add("-taglet");
         args.add("com.sun.squawk.builder.ToDoTaglet");
         args.add("-tagletpath");
-        args.add("build.jar");
+        args.add("build.jar:build-commands.jar");
         // Standard doclet options
         args.add("-quiet");
         args.add("-d");
