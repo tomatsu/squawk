@@ -713,7 +713,7 @@ public class Build {
         });
 
         // Add the "genspec" command
-        addJavaCommand("genspec", "build.jar:cldc/classes", true, "", "com.sun.squawk.builder.bytecodespec.sbdocgen", "cldc").
+        addJavaCommand("genspec", "build.jar:build-commands.jar:cldc/classes", true, "", "com.sun.squawk.builder.bytecodespec.sbdocgen", "cldc").
             setDescription("generates the Squawk bytecode specification in doc/spec");
 
         // Add the "romize" command
@@ -778,7 +778,7 @@ public class Build {
             setDescription("hex file dump");
 
         // Add "systemproperties" command
-        addJavaCommand("systemproperties", "hosted-support/classes:cldc/classes", false, "", "com.sun.squawk.io.hosted-support.systemproperties.Protocol", "hosted-support").
+        addJavaCommand("systemproperties", "hosted-support/classes:cldc/classes", false, "", "com.sun.squawk.io.j2se.systemproperties.Protocol", "hosted-support").
             setDescription("shows the default system properties");
 
         // Add "squawk.jar" command
@@ -1958,7 +1958,7 @@ public class Build {
 
         javaCompiler.javadoc((" -d "+javadocDir+
              (classPath == null ? "" : " -classpath " + classPath) +
-             " -taglet com.sun.squawk.builder.ToDoTaglet -tagletpath build.jar " +
+             " -taglet com.sun.squawk.builder.ToDoTaglet -tagletpath build.jar:build-commands.jar " +
              linkOptions +
              (runJavadocAPI ? "" : " -private") +
              " -quiet" +

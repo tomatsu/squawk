@@ -182,34 +182,33 @@ public class Jam extends Thread {
      */
     protected ApplicationDescriptor getNextApplicationDescriptor() {
         boolean reportedError = false;
-        int timesWaitedForJavaTest = 0;
+        int timesToWaitForJavaTest = 10;
 
         while (true) {
             try {
                 return downloadApplicationDescriptor();
             } catch (BuildException e) {
-                if (!reportedError) {
-                    reportedError = true;
-                    if (suceededAtLeastOnceToGetNextApplicationDescriptor) {
-                    	printPrefix();
-                        timesWaitedForJavaTest++;
-                        if (timesWaitedForJavaTest > 10) {
-                            out.println("Seems JavaTest is no longer running - GIVING UP.");
-                            return null;
-                        } else {
-                            out.println("Seems JavaTest is no longer running, will keep trying.");
-                        }
+                if (suceededAtLeastOnceToGetNextApplicationDescriptor) {
+                    printPrefix();
+                    if (--timesToWaitForJavaTest <= 0) {
+                        out.println("Seems JavaTest is no longer running - GIVING UP.");
+                        return null;
                     } else {
-                    	printPrefix();
-                        out.println("Seems you have not yet started JavaTest, will keep trying.");
+                        out.println("Seems JavaTest is no longer running, will keep trying " + timesToWaitForJavaTest +  " more times.");
                     }
+                } else if (!reportedError) {
+                    printPrefix();
+                    out.println("Seems you have not yet started JavaTest, will keep trying.");
+                }
+				if (!reportedError) {
                     String urlString = getNextAppUrlString;
                     if (jamId != null) {
                         urlString += "/" + jamId;
                     }
-                	printPrefix();
+                    printPrefix();
                     out.println("   URL: " + urlString);
-                }
+                    reportedError = true;
+				}
                 try {
                     Thread.sleep(5 * 1000);
                 } catch (InterruptedException e1) {
