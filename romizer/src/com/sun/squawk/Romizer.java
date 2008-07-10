@@ -224,6 +224,7 @@ public class Romizer {
         out.println("    -o:<name>           name of suite to generate (required)");
         out.println("    -boot:<name>        name of suite to to use for references to " + ObjectMemory.BOOTSTRAP_URI + " suite URL (default=file://squawk.suite)");
         out.println("    -parent:<name>      name of suite to use as the parent of the suite being built");
+        out.println("    -metadata           create matching metadata suite");
         out.println("    -jars               create <suite_name>_classes.jar which contains the class files");
         out.println("                        from which the suite was built");
         out.println("    -exclude:<file>     excludes classes that match the class names or packages");
@@ -709,6 +710,10 @@ public class Romizer {
 	        // Compute the complete class closure.
 	        translator.close(suiteType);
 	        
+        } catch (com.sun.squawk.translator.VerifyError t) {
+            System.err.println(t);
+    		lastClassName = translator.getLastClassName();
+        	throw t;
         } catch (NoClassDefFoundError t) {
     		lastClassName = translator.getLastClassName();
         	throw t;
