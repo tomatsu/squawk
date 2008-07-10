@@ -47,7 +47,7 @@ shift
 if ""%1""=="""" goto doneGatherArgs
 set ARGS=%ARGS% %1
 shift
-goto setupArgs
+goto gatherArgs
 
 :doneGatherArgs
 java -jar build.jar %ARGS%
