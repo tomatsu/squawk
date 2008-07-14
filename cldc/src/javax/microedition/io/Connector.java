@@ -267,10 +267,11 @@ public class Connector {
     private static Connection openPrim(String protocolClassName, String protocolName, String name, int mode, boolean timeouts, String platform) throws IOException {
         try {
             ConnectionBase con;
-/*if[REUSEABLE_MESSAGES]*/
-            if (platform.equals("j2me") && protocolName.equals("msg")) {
-                con = MessageConector.allocateClientProtocol();
-            } else
+/*if[!REUSEABLE_MESSAGES]*/
+/*else[REUSEABLE_MESSAGES]*/
+//            if (platform.equals("j2me") && protocolName.equals("msg")) {
+//                con = MessageConector.allocateClientProtocol();
+//            } else
 /*end[REUSEABLE_MESSAGES]*/
             {
                 /*
@@ -402,17 +403,18 @@ public class Connector {
     }
 }
 
-/*if[OLD_IIC_MESSAGES]*/
-/**
- * This class exists so the above code will execute in a J2SE system where
- * com.sun.squawk.io.j2me.msg.MessageResourceManager is not availible.
- */
-class MessageConector {
-    /**
-     * Allocates a client protocol object
-     */
-    public static ConnectionBase allocateClientProtocol() {
-        return com.sun.squawk.io.j2me.msg.MessageResourceManager.allocateClientProtocol();
-    }
-}
+/*if[!OLD_IIC_MESSAGES]*/
+/*else[OLD_IIC_MESSAGES]*/
+///**
+// * This class exists so the above code will execute in a J2SE system where
+// * com.sun.squawk.io.j2me.msg.MessageResourceManager is not availible.
+// */
+//class MessageConector {
+//    /**
+//     * Allocates a client protocol object
+//     */
+//    public static ConnectionBase allocateClientProtocol() {
+//        return com.sun.squawk.io.j2me.msg.MessageResourceManager.allocateClientProtocol();
+//    }
+//}
 /*end[OLD_IIC_MESSAGES]*/

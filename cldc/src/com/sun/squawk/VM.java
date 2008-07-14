@@ -30,7 +30,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 
 /*if[OLD_IIC_MESSAGES]*/
-import com.sun.squawk.io.ServerConnectionHandler;
+//import com.sun.squawk.io.ServerConnectionHandler;
 /*end[OLD_IIC_MESSAGES]*/
 import com.sun.squawk.io.mailboxes.Mailbox;
 import com.sun.squawk.peripheral.PeripheralRegistry;
