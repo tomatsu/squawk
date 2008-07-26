@@ -1183,15 +1183,15 @@ Address processArgs(char *argv[], const int argc) {
     int ramSize = DEFAULT_RAM_SIZE;
 
 #ifdef PROFILING
-    printf("*************** Profiling version ***************\n");
+    fprintf(stderr, "*************** Profiling version ***************\n");
 #endif
 
 #ifdef DB_DEBUG
-    printf("*************** Debug version ***************\n");
+    fprintf(stderr, "*************** Debug version ***************\n");
 #endif
 
 #if TRACE
-    printf("*************** Tracing version ***************\n");
+    fprintf(stderr, "*************** Tracing version ***************\n");
 #endif
 
     while (oldIndex != argc) {
