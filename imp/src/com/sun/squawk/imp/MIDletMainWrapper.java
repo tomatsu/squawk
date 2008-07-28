@@ -58,6 +58,7 @@ public class MIDletMainWrapper {
      */
     public static void main(String[] args) throws Exception {
         String className;
+        Isolate iso = Isolate.currentIsolate();
          
         if (args.length == 2 && args[0].equals("-name")) {
             className = args[1];
@@ -82,6 +83,11 @@ public class MIDletMainWrapper {
             }
         }
         Klass klass;
+        
+        // Give the Isolate and thread sensible names...
+        iso.setName(className);
+        VMThread.currentThread().setName(className + " - main");
+        
         try {
             klass = Klass.forName(className);
         } catch (ClassNotFoundException e) {
@@ -91,6 +97,13 @@ public class MIDletMainWrapper {
             throw new IllegalArgumentException("Specified class, " + className + ", must be subclass of javax.microedition.midlet.MIDlet");
         }
         MIDlet midLet = (MIDlet) klass.newInstance();
+        
+/*if[ENABLE_SDA_DEBUGGER]*/
+        // Notify debugger of event:
+        if (iso.getDebugger() != null) {
+            iso.getDebugger().notifyEvent(new Debugger.Event(Debugger.Event.VM_INIT, VMThread.currentThread()));
+        }
+/*end[ENABLE_SDA_DEBUGGER]*/
 
         while (true) {
             try {
