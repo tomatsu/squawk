@@ -84,8 +84,12 @@ public class Log {
 /*if[DEBUG_CODE_ENABLED]*/
                 newlevel = DEBUG;
 /*else[DEBUG_CODE_ENABLED]*/
-//              System.err.println("NOTE: Log level \"debug\" only supported in debug builds. Setting log level to \"verbose\"");
-//              newlevel = VERBOSE;
+//              if(VM.isHosted()) {
+//                  newlevel = DEBUG;
+//              } else {
+//                  System.err.println("NOTE: Log level \"debug\" only supported in debug builds. Setting log level to \"verbose\"");
+//                  newlevel = VERBOSE;
+//              }
 /*end[DEBUG_CODE_ENABLED]*/
             } else {
                 System.err.println("logging disabled - invalid log level in squawk.debugger.log.level system property: " + prop);
@@ -129,21 +133,12 @@ public class Log {
     }
 
     /**
-     * The debug level of logging is only enabled in debug builds.
-     * In non-debug builds, this is a constant method, easily inlinable,
-     * allowing dead-code elimination in the callers 
-     * (once byte-code optimizer is enabled).
+     * @TODO: Make sure inliner can optimize this to "return false" when not hosted.
      * @return true if level >= DEBUG
      */
-/*if[DEBUG_CODE_ENABLED]*/
     public static boolean debug() {
-        return level >= DEBUG;
+        return VM.isHosted() && level >= DEBUG;
     }
-/*else[DEBUG_CODE_ENABLED]*/
-//    public static boolean debug() {
-//        return false;
-//    }
-/*end[DEBUG_CODE_ENABLED]*/
 
     /**
      * Logs a message as a line sent to the current logging stream.

@@ -27,7 +27,6 @@ package com.sun.squawk.debugger;
 import java.io.*;
 import javax.microedition.io.*;
 
-import com.sun.squawk.*;
 import com.sun.squawk.util.*;
 
 /**
@@ -83,14 +82,15 @@ public final class JDWPConnection {
      * Creates a connection based on a given URL and does a handshake with
      * the remote enity once the connection is established.
      *
-     * @param owner  the listener that will use the connection
      * @param url    the URL used to open the connection
      * @param handshake   the array of bytes that must be exchanged in each
      *                    direction to complete the handshake
      * @param initiate    true if the handshake is to be intiated by this host
+     * @param isJDB       if true, this is connection to Debugger
+     * @param delayer     code to run after connection but before handshake
      * @throws IOException if there is an error establising the connection
      */
-    public JDWPConnection(String url, byte[] handshake, boolean initiate, boolean isJDB) throws IOException {
+    public JDWPConnection(String url, byte[] handshake, boolean initiate, boolean isJDB, Runnable delayer) throws IOException {
         this.url = url;
         this.isJDB = isJDB;
         if (Log.info()) {
@@ -119,6 +119,9 @@ public final class JDWPConnection {
                 Log.log("Failed to establish connection with " + url + ": " + e);
             }
             throw e;
+        }
+        if (delayer != null) {
+            delayer.run(); 
         }
         byte[] buf = new byte[handshake.length];
         if (initiate) {
@@ -211,7 +214,8 @@ public final class JDWPConnection {
                 }
 
                 if (Log.debug()) {
-                    Log.log("read("+url+"): " + packet);
+                    Log.log("");
+//                    Log.log("read("+url+"): " + packet);
                 }
                 return packet;
             } catch (IOException e) {
@@ -231,7 +235,8 @@ public final class JDWPConnection {
         synchronized (out) {
             checkOpen();
             if (Log.debug()) {
-                Log.log("write("+url+"): " + packet);
+                Log.log("");
+//                Log.log("write("+url+"): " + packet);
             }
             packet.write(out);
             out.flush();

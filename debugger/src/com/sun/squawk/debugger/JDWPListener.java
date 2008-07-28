@@ -27,7 +27,6 @@ package com.sun.squawk.debugger;
 import java.io.*;
 import java.util.*;
 
-import com.sun.squawk.*;
 import com.sun.squawk.util.*;
 
 /**
@@ -62,7 +61,7 @@ public abstract class JDWPListener implements Runnable {
     /**
      * The thread that {@link #quit} this listener.
      */
-    private String quittingThread;
+    private volatile String quittingThread;
 
     /**
      * The connection used by this listener.
@@ -95,10 +94,12 @@ public abstract class JDWPListener implements Runnable {
      * @param handshake  an array of bytes that must be exchanged in each
      *                   direction to complete a handshake
      * @param initiate   true if the handshake is to be intiated by this host
+     * @param isJDB 
+     * @param delayer     code to run after connection but before handshake
      * @throws IOException if the connection could not be opened or if the handshake was not successful
      */
-    public void open(String url, byte[] handshake, boolean initiate, boolean isJDB) throws IOException {
-        connection = new JDWPConnection(url, handshake, initiate, isJDB);
+    public void open(String url, byte[] handshake, boolean initiate, boolean isJDB, Runnable delayer) throws IOException {
+        connection = new JDWPConnection(url, handshake, initiate, isJDB, delayer);
     }
 
     /**
@@ -279,34 +280,41 @@ public abstract class JDWPListener implements Runnable {
      * @return  true if this method had already been called (i.e. the listener has already
      *          been requested to quit)
      */
-    public synchronized boolean quit() {
-        boolean quitPreviously = (quittingThread != null);
-        quittingThread = Thread.currentThread().toString();
-        if (!quitPreviously) {
+    public boolean quit() {
+        boolean quitPreviously;
+        
+        // quit ourself with our lock held.
+        synchronized (this) {
+            quitPreviously = (quittingThread != null);
+            quittingThread = Thread.currentThread().toString();
+            if (!quitPreviously) {
 
-            if (Log.info()) {
-                Log.log("Initiating shutdown of " + this + "...");
-            }
+                if (Log.info()) {
+                    Log.log("Initiating shutdown of " + this + "...");
+                }
 
-            // Wake up all threads waiting for a reply
-            synchronized (sentCommands) {
-                Enumeration e = sentCommands.elements();
-                while (e.hasMoreElements()) {
-                    Object command = e.nextElement();
-                    synchronized(command) {
-                        command.notifyAll();
+                // Wake up all threads waiting for a reply
+                synchronized (sentCommands) {
+                    Enumeration e = sentCommands.elements();
+                    while (e.hasMoreElements()) {
+                        Object command = e.nextElement();
+                        synchronized (command) {
+                            command.notifyAll();
+                        }
                     }
                 }
-            }
 
-            if (connection != null) {
-                connection.close();
-            }
-
-            if (otherHost != null) {
-                otherHost.quit();
+                if (connection != null) {
+                    connection.close();
+                }
             }
         }
+        
+        // quit otherHost without our lock held.
+        if (!quitPreviously && otherHost != null) {
+            otherHost.quit();
+        }
+        
         return quitPreviously;
     }
 
@@ -361,6 +369,7 @@ public abstract class JDWPListener implements Runnable {
          * Handles a command packet by setting up the variables used to interpret and reply
          * to the command and then dispatching to the specific command handler.
          *
+         * @param listener the listener to reply through
          * @param command  the command to be handled
          * @return boolean true if the command was recognised and a reply was sent
          * @throws IOException if there was an IO error while sending a reply

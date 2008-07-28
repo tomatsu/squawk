@@ -47,7 +47,7 @@ final class SDAListener extends JDWPListener {
     /**
      * The debuggee's isolate name
      */
-    String isolateName;
+    private String isolateName;
 
     /**
      * The JDWP command set handlers.
@@ -58,6 +58,10 @@ final class SDAListener extends JDWPListener {
     
     private boolean forwarderStarted = false;
    
+    /** 
+     * Start forwarding events to debugger.
+     * Called by JDBListener when it's safe.
+     */
     public void enableForwardedEvents() {
         if (!forwarderStarted) {
             eventHandler.enableForwardedEvents();
@@ -87,7 +91,6 @@ final class SDAListener extends JDWPListener {
      * {@inheritDoc}
      */
     public void processCommand(CommandPacket command) throws IOException {
-
         try {
             SDPCommandSet handler = (SDPCommandSet) commandSets.get(command.set());
             if (handler == null || !handler.handle(sdp, this, otherHost, command)) {
@@ -98,21 +101,6 @@ final class SDAListener extends JDWPListener {
             if (command.needsReply()) {
                 ReplyPacket reply = command.createReply(JDWP.Error_INTERNAL);
                 sendReply(reply);
-            }
-        }
-    }
-
-    /**
-     * Blocks the current thread until an event is received from the
-     * VM indicating that at least one thread is running.
-     */
-    void waitForEvent() {
-        Event evtHandler = (Event)commandSets.get(JDWP.Event_COMMAND_SET);
-        synchronized (evtHandler) {
-            try {
-                evtHandler.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
         }
     }
@@ -138,11 +126,6 @@ final class SDAListener extends JDWPListener {
         Event(SDAListener sdaListener) {
             this.sdaListener = sdaListener;
         }
-
-        /**
-         * The bootstrap classes that have yet to be processed.
-         */
-        private List<ProxyType> bootstrapClasses;
 
         private boolean vmDeath;
 
@@ -180,6 +163,9 @@ final class SDAListener extends JDWPListener {
             }
         }
         
+        /**
+         *  A single event to be added to a ForwardedComposite.
+         */
         static class ForwardedEvent {
             final int eventKind;
             final int requestID;
@@ -237,22 +223,29 @@ final class SDAListener extends JDWPListener {
                         break;
                     }
                     
-                    // never sent?
+                    // Only sent if VM support dynamic class loading...
                     case JDWP.EventKind_CLASS_PREPARE: {
                         try {
-                            ObjectID threadID = in.readObjectID("thread");
-                            ProxyThread thread = sdp.getTPM().getThread(threadID);
-                            byte refTypeTag = in.readByte("refTypeTag");
-                            ReferenceTypeID typeID = in.readReferenceTypeID("typeID");
-                            String sig = in.readString("signature");
-                            int status = in.readInt("status");
+                            final ObjectID threadID = in.readObjectID("thread");
+                            final byte refTypeTag = in.readByte("refTypeTag");
+                            final ReferenceTypeID typeID = in.readReferenceTypeID("typeID");
+                            final String sig = in.readString("signature");
+                            final int status = in.readInt("status");
 
+                            sdp.getTPM().getThread(threadID); // sanity check
                             ProxyType type = sdp.getPTM().addClass(typeID, sig, true);
                             if (type != null && ProxyTypeManager.isDebuggableKlass(type.getKlass())) {
                                 int state = type.getKlass().getState();
-                                if (state == Klass.STATE_LOADED ||
-                                    state == Klass.STATE_CONVERTED) {
-                                    proposeClassPrepareEvent(type, thread);
+                                if (state == Klass.STATE_LOADED || state == Klass.STATE_CONVERTED) {
+                                    events.add(new ForwardedEvent(eventKind, requestID) {
+                                        void writeBody(PacketOutputStream out) throws IOException {
+                                            out.writeObjectID(threadID, "thread");
+                                            out.writeByte(refTypeTag, "refTypeTag");
+                                            out.writeReferenceTypeID(typeID, "typeID");
+                                            out.writeString(sig, "signature");
+                                            out.writeInt(status, "status");
+                                        }
+                                    });
                                 } else {
                                     // give up early:
                                    vmDeath = true;
@@ -266,7 +259,6 @@ final class SDAListener extends JDWPListener {
 
                     case JDWP.EventKind_VM_INIT: {
                         Assert.always(requestID == 0); // always automatic
-                        Assert.always(bootstrapClasses == null); // only execute once.
                         final ObjectID threadID = in.readObjectID("thread");
                         sdaListener.isolateName = in.readString("isolate name");
                         
@@ -274,9 +266,15 @@ final class SDAListener extends JDWPListener {
                         // to the application before it started (i.e. all the classes in the
                         // suite chain against which the application is bound).
                         int classes = in.readInt("classes");
+//                        int ndot = classes / 10;
+//                        System.out.print("Synchronizing debug state with VM for isolate " + sdaListener.isolateName + "...");
+//                        System.out.flush();
                         String lastName = "";
-                        bootstrapClasses = new ArrayList<ProxyType>();
                         for (int j = 0; j != classes; ++j) {
+//                            if (j % ndot == 0) {
+//                                System.out.print(".");
+//                                System.out.flush();
+//                            }
                             ReferenceTypeID typeID = in.readReferenceTypeID("typeID");
                             int commonPrefix = in.readByte("commonPrefix") & 0xFF;
                             String name = in.readString("name");
@@ -291,7 +289,6 @@ final class SDAListener extends JDWPListener {
                                 if (type.getKlass().isArray() ||
                                     state == Klass.STATE_LOADED ||
                                     state == Klass.STATE_CONVERTED) {
-                                    bootstrapClasses.add(type);
                                 } else {
                                     System.err.println("Can't find classfile for " + type.getKlass() + ". The debug proxy may be looking at the wrong set of jar files.");
                                     if (sdp.quitOnError) {
@@ -304,6 +301,9 @@ final class SDAListener extends JDWPListener {
                                 }
                             }
                         }
+                        // ok to ask questions about classes...
+                        sdp.setCanTalkToDebugger();
+//                        System.out.println("");
                         
                         events.add(new ForwardedEvent(eventKind, requestID) {
                             void writeBody(PacketOutputStream out) throws IOException {
@@ -356,14 +356,11 @@ final class SDAListener extends JDWPListener {
             }
 
             if (!events.isEmpty()) {
-                 // Notify any threads waiting for an event to have been received and passed through to the debugger
+                // Notify any threads waiting for an event to have been received and passed through to the debugger.
+                // We'll hold on to these until the debugger contacts us, and we start the CompositeEventForwarder.
                 synchronized (forwardedEventQueue) {
                     forwardedEventQueue.addLast(new ForwardedComposite(suspendPolicy, events));
                     forwardedEventQueue.notifyAll();
-                }
-                
-                synchronized (this) {
-                    this.notifyAll();
                 }
             }
         }
@@ -415,8 +412,6 @@ final class SDAListener extends JDWPListener {
                             synchronized (this) {
                                 this.notifyAll();
                             }
-                            
-                            Event.this.proposeBootstrapClassPrepareEvents();
                         }
                     }
                 }
@@ -427,69 +422,12 @@ final class SDAListener extends JDWPListener {
          * Once the debugger is ready to start receiving events, start up the EventForwarder
          * daemon.
          */
-        public void enableForwardedEvents() {
+        void enableForwardedEvents() {
             Thread forwarder = new Thread(new CompositeEventForwarder(), "EventForwarder");
             forwarder.setDaemon(true);
             forwarder.start();
         }
 
-        void proposeBootstrapClassPrepareEvents() {
-            if (bootstrapClasses == null || bootstrapClasses.isEmpty()) {
-                return;
-            }
-
-            // Generate CLASS_PREPARE events for the bootstrap classes that have
-            // yet to be processed. This stops at the first registered request
-            // that suspends one or more threads.
-            //
-            // These events will all be sent to the debugger before it receives
-            // a reply to any suspension command it sent after receiving the
-            // first event in the sequence. That is, the debugger should never
-            // be receiving events when it thinks the VM is suspended.
-            ProxyThread thread = sdp.getTPM().getSomeThread();
-            if (thread != null) {
-                Iterator iter = bootstrapClasses.iterator();
-                bootstrapClasses = null;
-                while (iter.hasNext()) {
-                    ProxyType type = (ProxyType)iter.next();
-                    boolean suspendedThread = proposeClassPrepareEvent(type, thread);
-                    if (suspendedThread) {
-                        if (Log.verbose()) {
-                            Log.log("suspended on class prepare for " + type);
-                        }
-                        // @todo: don't we need to actuall suspend the thread???'
-                        break;
-                    }
-                }
-            }
-        }
-
-        boolean proposeClassPrepareEvent(ProxyType type, ProxyThread thread) {
-            // Only send back classes that came from class files
-            Klass klass = type.getKlass();
-            Assert.that(ProxyTypeManager.isDebuggableKlass(klass));
-            
-            // This type may have already been sent to the debugger by VM.AllCasses, etc,
-            // so only send unknown classes.
-            if (!type.hasKlassBeenSent()) {
-                Debugger.Event event = new Debugger.Event(Debugger.Event.CLASS_PREPARE, type);
-                event.setThread(thread, thread.id);
-                EventManager.MatchedRequests mr = sdp.eventManager.matchRequests(event);
-                if (mr.requests != null) {
-                    try {
-                        sdp.eventManager.send(event, mr);
-                    } catch (SDWPException e) {
-                        System.out.println("Error while sending CLASS_PREPARE event to debugger: " + e.getMessage());
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        System.out.println("IO error while sending CLASS_PREPARE event to debugger: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                    return mr.suspendPolicy != JDWP.SuspendPolicy_NONE;
-                }
-            }
-            return false;
-        }
     }
 
     /*-----------------------------------------------------------------------*\
@@ -584,7 +522,6 @@ final class SDAListener extends JDWPListener {
          */
         private void ThreadStateChanged() throws IOException {
             sdp.getTPM().updateThreads(in);
-            event.proposeBootstrapClassPrepareEvents();
         }
     }
 }

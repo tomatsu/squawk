@@ -24,7 +24,6 @@
 
 package com.sun.squawk.debugger.sdp;
 
-import com.sun.squawk.debugger.*;
 import com.sun.squawk.debugger.DataType.FieldID;
 import com.sun.squawk.*;
 

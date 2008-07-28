@@ -33,7 +33,6 @@ import com.sun.squawk.debugger.EventRequest.*;
 import com.sun.squawk.debugger.EventRequestModifier.*;
 import com.sun.squawk.util.*;
 import com.sun.squawk.Debugger;
-import java.util.*;
 
 /**
  * Variant of proxy used for sniffing JDWP packets, to debug debugger interactions.

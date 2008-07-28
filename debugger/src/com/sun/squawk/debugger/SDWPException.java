@@ -24,8 +24,6 @@
 
 package com.sun.squawk.debugger;
 
-import com.sun.squawk.debugger.*;
-
 /**
  * A SDWPException is thrown when there is an error parsing or handling a JDWP/SDWP request.
  */

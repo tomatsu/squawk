@@ -44,12 +44,12 @@ class ProxyTypeManager {
     /**
      * The map from Klass instances to the corresponding ProxyType instances.
      */
-    private HashMap classToType = new HashMap(DEFAULT_NUM_REFS);
+    private HashMap<Klass, ProxyType> classToType = new HashMap<Klass, ProxyType>(DEFAULT_NUM_REFS);
 
     /**
      * The map from JDWP refTypeIDs to the corresponding ProxyType instances.
      */
-    private HashMap idToType = new HashMap(DEFAULT_NUM_REFS);
+    private HashMap<ReferenceTypeID, ProxyType>  idToType = new HashMap<ReferenceTypeID, ProxyType>(DEFAULT_NUM_REFS);
 
     private JDWPListener sda;
 
@@ -67,7 +67,7 @@ class ProxyTypeManager {
         if (klass.isInternalType()) {
             return null;
         }
-        ProxyType type = (ProxyType)classToType.get(klass);
+        ProxyType type = classToType.get(klass);
         if (type != null) {
             Assert.that(type.getID().equals(typeID));
             return type;
@@ -85,7 +85,7 @@ class ProxyTypeManager {
      * @throws SDWPException if the resolution fails
      */
     public ProxyType lookup(Klass klass, boolean resolve) throws SDWPException {
-        ProxyType type = (ProxyType)classToType.get(klass);
+        ProxyType type = classToType.get(klass);
         if (type == null) {
             if (!resolve || sda == null) {
                 throw new SDWPException(JDWP.Error_INVALID_CLASS, klass.getName());
@@ -126,7 +126,7 @@ class ProxyTypeManager {
      * @throws SDWPException   if the resolution fails
      */
     public ProxyType lookup(ReferenceTypeID typeID, boolean resolve) throws SDWPException {
-        ProxyType type = (ProxyType)idToType.get(typeID);
+        ProxyType type = idToType.get(typeID);
         if (type == null) {
             if (!resolve || sda == null) {
                 throw new SDWPException(JDWP.Error_INVALID_CLASS, typeID.toString());

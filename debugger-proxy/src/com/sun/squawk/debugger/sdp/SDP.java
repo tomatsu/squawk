@@ -103,14 +103,20 @@ public class SDP {
     boolean quitOnError = true;
     
     /**
+     *Set true once the VM and proxy have exchanged all info.
+     */
+    private boolean canTalkToDebugger;
+    
+    /**
      * @see getSDP()
      */
      private static Hashtable sdpTable = new Hashtable();
      
     /**
-     * Return the active SDP instance named proxyNameThe current SDP instance. 
+     * Return the active SDP instance named proxyName. 
      * Used when running SDP embedded in the same Java process as controller, as in Solarium
      * 
+     * @param proxyName name to look for
      * @return the SDP instance named proxyName, or null if no active proxy by the name.
      */
      public static SDP getSDP(String proxyName) {
@@ -142,12 +148,12 @@ public class SDP {
         /**
          * VM thread status mirrors of live threads.
          */
-        private Map liveThreads = new HashMap();
+        private Map<ObjectID, ProxyThread>  liveThreads = new HashMap<ObjectID, ProxyThread> ();
         
         /**
          * Also keep track of zombie threads debugger might ask about them.
          */
-        private Map zombieThreads = new HashMap();
+        private HashMap<ObjectID, ProxyThread> zombieThreads = new HashMap<ObjectID, ProxyThread>();
 
         synchronized void suspendAllThreads() {
             for (Iterator i = liveThreads.values().iterator(); i.hasNext(); ) {
@@ -180,9 +186,9 @@ public class SDP {
         /**
          * Gets all the mirrors.
          */
-        synchronized Collection getThreads() {
+        synchronized Collection<ProxyThread> getThreads() {
             Assert.that(!liveThreads.isEmpty());
-            return new ArrayList(liveThreads.values());
+            return new ArrayList<ProxyThread> (liveThreads.values());
         }
 
         /**
@@ -210,7 +216,7 @@ public class SDP {
          */
         synchronized void updateThreads(PacketInputStream in) throws IOException {
             int count = in.readInt("threads");
-            Map nowLive = new HashMap(count);
+            Map<ObjectID, ProxyThread>  nowLive = new HashMap<ObjectID, ProxyThread> (count);
             
             for (int i = 0; i != count; ++i) {
                 ObjectID id = in.readObjectID("thread");
@@ -394,57 +400,136 @@ public class SDP {
     }
     
     /**
+     * Set true once VM and proxy have exchanged info.
+     */
+    synchronized void setCanTalkToDebugger() {
+        canTalkToDebugger = true;
+        notifyAll();
+    }
+    
+    synchronized void waitTillReadyForDebugger0(boolean showProgress) throws SDWPException {
+        if (showProgress) {
+            // System.out.print("Synchronizing debug state with VM for isolate " + sdaListener.isolateName + "...");
+            System.out.print("Synchronizing debug state with VM...");
+            System.out.flush();
+        }
+        while (!canTalkToDebugger) {
+            if (Log.debug()) {
+                Log.log("Waiting for proxy types to be populated...");
+            }
+            try {
+                wait(500);
+            } catch (InterruptedException ex) {
+            }
+            if (showProgress) {
+                System.out.print(".");
+                System.out.flush();
+            }
+            if (sda.hasQuit()) {
+                throw new SDWPException();
+            }
+             if (Log.debug() && canTalkToDebugger) {
+                Log.log("...Proxy types are populated");
+            }
+        }
+        if (showProgress) {
+            System.out.println("");
+            System.out.flush();
+        }
+    }
+    
+    /**
+     * Wait until the VM and the proxy have synchronized before connecting to debugger.
+     * This can be called by threads external to the proxy to decide when to start up the Debugger.
+     * @return true if safe, false if some error orccurred.
+     */
+    public boolean waitTillReadyForDebugger() {
+        try {
+            waitTillReadyForDebugger0(false);
+            return true;
+        } catch (SDWPException e) {
+            System.err.println("Error while waiting for proxy to sync with VM: " + e);
+        }
+        return false;
+    }
+    
+    /**
+     * Connect to VM, either for debugging or sniffing.
+     * This is a static method to avoid sharing data unintentioanlly in the sniffing case...
+     * 
+     * @param sdp this proxy
+     * @param toVM if true, connect to VM, otherwise to debugger.
+     * @param sda the listener (SDAListener or sniffer)
+     * @param handshakeStr
+     * @param url
+     * @return true if connected
+     */
+    private static boolean connect(boolean toVM, final SDP sdp, JDWPListener listener, String handshakeStr, String url) {
+        byte[] handshake = handshakeStr.getBytes();
+        String targetName = toVM ? "VM" : "Debugger";
+        do {
+            try {
+                long now = System.currentTimeMillis();
+                if (toVM) {
+                    System.out.println("Trying to connect to VM on " + url);
+                    listener.open(url, handshake, true, false, null);
+                } else {
+                    System.out.println("Waiting for connection from debugger on " + url);
+                    
+                    listener.open(url, handshake, false, true, new Runnable() {
+                        public void run() {
+                            try {
+                                sdp.waitTillReadyForDebugger0(true);
+                            } catch(SDWPException e) {
+                                
+                            }
+                        }
+                    });
+                }
+
+                System.out.println("Established connection to " + targetName + " (handshake took " + (System.currentTimeMillis() - now) + "ms)");
+                return true;
+            } catch (IOException e) {
+                if (sdp.quitSDP) {
+                    return false;
+                }
+                System.out.println("Failed to establish connection with " + targetName + ": " + e.getMessage() + " - trying again in " + sdp.retry + " seconds...");
+
+                // Sleep and try again
+                try {
+                    Thread.sleep(sdp.retry * 1000);
+                } catch (InterruptedException ie) {
+                }
+            }
+        } while (toVM); // only loop for VM connect
+        return false;
+    }
+    
+    private static boolean connectToVM(SDP sdp, JDWPListener listener, String handshakeStr) {
+        return connect(true, sdp, listener, handshakeStr, sdp.vm_url);
+    }
+
+    private static boolean connectToDebugger(SDP sdp, JDWPListener listener, String handshakeStr) {
+        return connect(false, sdp, listener, handshakeStr, sdp.debugger_url);
+    }
+        
+    /**
      * Starts a single debug session between a VM and a debug client. Returns
      * when the session is closed from either end.
      */
     private void go() {
-
         // Establish the connection to the VM
         sda = new SDAListener(this);
         ptm = new ProxyTypeManager();
         tpm = new ThreadProxiesManager();
-        byte[] handshake = "SDWP-Handshake".getBytes();
-        while (true) {
-            try {
-                System.out.println("Trying to connect to VM on " + vm_url);
-                long now = System.currentTimeMillis();
-                sda.open(vm_url, handshake, true, false);
-                System.out.println("Established connection to VM (handshake took " + (System.currentTimeMillis() - now) + "ms)");
-                ptm.setVM(sda);
-                break;
-            } catch (IOException e) {
-                if (quitSDP) {
-                    return;
-                }
-                System.out.println("Failed to establish connection with VM: " + e.getMessage() + " - trying again in " + retry + " seconds...");
-
-                // Sleep and try again
-                try {
-                    Thread.sleep(retry * 1000);
-                } catch (InterruptedException ie) {
-                }
-            }
+        if (!connectToVM(this, sda, "SDWP-Handshake")) {
+            return;
         }
+        ptm.setVM(sda);
 
         // Establish connection from debugger
         jdb = new JDBListener(this);
-        handshake = "JDWP-Handshake".getBytes();
-        try {
-            System.out.println("Waiting for connection from debugger on " + debugger_url);
-            jdb.open(debugger_url, handshake, false, true);
-            System.out.println("Established connection with debugger");
-        } catch (IOException e) {
-            System.out.println("Failed to establish connection with JDWP debugger: " + e.getMessage());
-            sda.quit();
-            return;
-        }
-
-        // The connection with the VM may have been lost by the time the debugger connects
-        if (sda.hasQuit()) {
-            jdb.quit();
-            return;
-        }
-
+        jdb.bindProxyPeer(sda);
         eventManager = new SDPEventManager(new MatcherImpl());
 
         //
@@ -453,17 +538,21 @@ public class SDP {
         // knows how to talk to the other so that information can flow
         // over the proxy.
         //
-
-        jdb.bindProxyPeer(sda);
-
         Thread sdaThread = new Thread(sda, "SDAListener");
         Thread jdbThread = new Thread(jdb, "JDBListener");
 
         sdaThread.start();
+        try { // let sdaThread get ahead a bit...
+            Thread.sleep(100);
+        } catch (InterruptedException interruptedException) {
+        }
 
-        // Wait until an event has been passed to the debugger before receiving
-        // commands from the debugger
-        sda.waitForEvent();
+        if (!connectToDebugger(this, jdb, "JDWP-Handshake")) {
+            sda.quit();
+            jdb.quit();
+            return;
+        }
+                
         if (!sda.hasQuit()) {
             jdbThread.start();
         }
@@ -514,49 +603,24 @@ public class SDP {
     private void goSniff() {
 
         // Establish the connection to the VM
-        JDWPListener sda = new JDWPSniffer.JVMSniffer();
+        JDWPListener vmSniffer = new JDWPSniffer.JVMSniffer();
         
-        byte[] handshake = "JDWP-Handshake".getBytes();
-        while (true) {
-            try {
-                System.out.println("Trying to connect to VM on " + vm_url);
-                long now = System.currentTimeMillis();
-                sda.open(vm_url, handshake, true, false);
-                System.out.println("Established connection to VM (handshake took " + (System.currentTimeMillis() - now) + "ms)");
-                break;
-            } catch (IOException e) {
-                System.out.println("Failed to establish connection with VM: " + e.getMessage() + " - trying again in " + retry + " seconds...");
-
-                // Sleep and try again
-                try {
-                    Thread.sleep(retry * 1000);
-                } catch (InterruptedException ie) {
-                }
-            }
+        if (!connectToVM(this, vmSniffer, "JDWP-Handshake")) {
+            return;
         }
 
         // Establish connection from debugger
-        JDWPListener jdb = new JDWPSniffer.JDBSniffer();
-        try {
-            System.out.println("Waiting for connection from debugger on " + debugger_url);
-            jdb.open(debugger_url, handshake, false, true);
-            System.out.println("Established connection with debugger");
-        } catch (IOException e) {
-            System.out.println("Failed to establish connection with JDWP debugger: " + e.getMessage());
-            sda.quit();
+        JDWPListener dbSniffer = new JDWPSniffer.JDBSniffer();
+        if (!connectToDebugger(this, dbSniffer, "JDWP-Handshake")) {
+            vmSniffer.quit();
+            dbSniffer.quit();
             return;
         }
 
-        // The connection with the VM may have been lost by the time the debugger connects
-        if (sda.hasQuit()) {
-            jdb.quit();
-            return;
-        }
+        dbSniffer.bindProxyPeer(vmSniffer);
 
-        jdb.bindProxyPeer(sda);
-
-        Thread jvmThread = new Thread(sda, "JVM");
-        Thread jdbThread = new Thread(jdb, "Debugger");
+        Thread jvmThread = new Thread(vmSniffer, "JVM-Sniffer");
+        Thread jdbThread = new Thread(dbSniffer, "Debugger-Sniffer");
 
         jvmThread.start();
         jdbThread.start();
@@ -573,7 +637,7 @@ public class SDP {
         if (Log.info()) {
             Log.log("Completed shutdown");
         }
-        System.out.println("Debug session completed.");
+        System.out.println("Sniff session completed.");
         System.out.println();
     }
 
@@ -662,8 +726,12 @@ public class SDP {
             
             switch (kind) {
                 case JDWP.EventKind_CLASS_PREPARE:
-                    request = new ClassPrepare(getNextEventRequestID(), in, kind);
-                    break;
+                    /* Treat CLASS_PREPARE events as if they will never happen,
+                     * unless the VM supports dynamic class loading. Treat system as if all 
+                     * classloading happened before the debugger attached. The debugger needs to be 
+                     * able to handle this situation anyway. So the proxy can pass these on to VM, which
+                     * can ignore them (Unsupported), or handle if dynamic classloading enabled.
+                     */
                 case JDWP.EventKind_BREAKPOINT:
                 case JDWP.EventKind_SINGLE_STEP:
                 case JDWP.EventKind_VM_INIT:
@@ -686,10 +754,11 @@ public class SDP {
                 default:
                     throw new SDWPException(JDWP.Error_INVALID_EVENT_TYPE, "event kind = " + kind);
             }
-            if (request.suspendPolicy != JDWP.SuspendPolicy_NONE) {
-                // forget about handling suspension remotely, just send off.
-                return -1;
-            }
+            // We will ignore suspension for unsupported events, so don't bother with this:
+//            if (request.suspendPolicy != JDWP.SuspendPolicy_NONE) {
+//                // forget about handling suspension remotely, just send off.
+//                return -1;
+//            }
             register(request);
             return request.id;
         }
@@ -744,45 +813,6 @@ public class SDP {
         }
 
         abstract void write(PacketOutputStream out, Debugger.Event event) throws IOException, SDWPException;
-    }
-
-    /**
-     * This class encapsulates a request for notification of a <code>JDWP.EventKind.CLASS_PREPARE</code> event.
-     */
-    class ClassPrepare extends SDPEventRequest {
-
-        /**
-         * @see EventRequest#EventRequest(int, int)
-         */
-        public ClassPrepare(int suspendPolicy) {
-            super(JDWP.EventKind_CLASS_PREPARE, suspendPolicy);
-        }
-
-        /**
-         * @see EventRequest#EventRequest(PacketInputStream, EventManager.VMAgent, int)
-         */
-        public ClassPrepare(int id, PacketInputStream in, int kind) throws SDWPException, IOException {
-            super(id, in, kind);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public void write(PacketOutputStream out, Debugger.Event event) throws IOException {
-            out.writeObjectID((ObjectID)event.getThreadID(), "thread");
-            Assert.that(event.object instanceof ProxyType);
-            ProxyType type = (ProxyType)event.object;
-
-            out.writeByte(JDWP.getTypeTag(type.getKlass()), "refTypeTag");
-            out.writeReferenceTypeID(type.getID(), "typeID");
-            String sig = type.getSignature();
-            out.writeString(sig, "signature");
-
-            // All classes are initialized from a debugger clients perspective as
-            // the default values will be returned for the statics of uninitialized
-            // classes
-            out.writeInt(JDWP.ClassStatus_VERIFIED_PREPARED_INITIALIZED, "status");
-        }
     }
 
     /**

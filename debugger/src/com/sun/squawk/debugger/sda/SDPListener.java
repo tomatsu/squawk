@@ -51,6 +51,8 @@ class SDPListener extends JDWPListener {
      */
     private final IntHashtable commandSets = new IntHashtable();
 
+    private boolean dispose;
+
     public SDPListener(SDA debugger) {
         super();
         this.sda = debugger;
@@ -302,6 +304,13 @@ class SDPListener extends JDWPListener {
             return true;
         }
 
+        protected void postDispatch() {
+            if (dispose) {
+                quit();
+                sda.resumeIsolate(true);
+            }
+        }
+
         /**
          * Implements <a href="http://java.sun.com/j2se/1.5.0/docs/guide/jpda/jdwp/jdwp-protocol.html#JDWP_VirtualMachine_ClassesBySignature">ClassesBySignature</a>.
          */
@@ -353,8 +362,8 @@ class SDPListener extends JDWPListener {
          * Implements <a href="http://java.sun.com/j2se/1.5.0/docs/guide/jpda/jdwp/jdwp-protocol.html#JDWP_VirtualMachine_Dispose">Dispose</a>.
          */
         private void Dispose() throws IOException {
-            sda.getListener().quit();
-            sda.resumeIsolate(true);
+            Assert.that(!command.needsReply());
+            dispose = true;
         }
 
         /**

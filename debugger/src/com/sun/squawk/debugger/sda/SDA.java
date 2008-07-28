@@ -200,20 +200,31 @@ public class SDA extends Debugger {
      *                            Thread requests                            *
     \*-----------------------------------------------------------------------*/
 
+    /** 
+     * Stop debugging the debuggee isolate
+     */
+    private void cleanupForDetach() {
+        // Clear all breakpoints
+        debuggeeIsolate.updateBreakpoints(null);
+        eventManager.clear(0, 0);
+        eventManager.quit();
+        DebuggerSupport.setDebugger(debuggeeIsolate, this, false);
+    }
+
     /**
      * Resume all the threads of the debuggee isolate.
-     *
+     * 
+     * @param forDetach if true, cleanup up all debugging
      */
     void resumeIsolate(boolean forDetach) {
+        if (forDetach) {
+            cleanupForDetach();
+        }
+
         Enumeration e = debuggeeIsolate.getChildThreads();
         while (e.hasMoreElements()) {
             VMThread vmThread = (VMThread) e.nextElement();
             vmThread.resumeForDebugger(forDetach);
-        }
-
-        if (forDetach) {
-            // Clear all breakpoints
-            debuggeeIsolate.updateBreakpoints(null);
         }
     }
 
@@ -237,6 +248,15 @@ public class SDA extends Debugger {
 
     SDPListener getListener() {
         return sdp;
+    }
+    
+    /**
+     * Return true if the debugger has been detached,
+     * or in process of shuting down VM.
+     * @return true if detaching
+     */
+    public boolean hasQuit() {
+        return sdp.hasQuit();
     }
 
     /*-----------------------------------------------------------------------*\
@@ -897,7 +917,7 @@ public class SDA extends Debugger {
             if (id == 0) {
                 // If the VM just started then the currently loaded classes are sent to the proxy
                 // so that its triggers the CLASS_PREPARE events
-                out.writeString(SDA.this.getDebuggeeIsolate().getMainClassName(), "isolate name");
+                out.writeString(SDA.this.getDebuggeeIsolate().getName(), "isolate name");
                 writeAllClasses(out);
             }
         }
@@ -1016,11 +1036,13 @@ public class SDA extends Debugger {
     /**
      * {@inheritDoc}
      */
-    public void notifyEvent(Debugger.Event event) {
-        Thread thread = Thread.currentThread();
-        ObjectID threadID = objectManager.getIDForObject(VMThread.asVMThread(thread));
-        event.setThread(thread, threadID);
-        eventManager.produceEvent(event);
+    public synchronized void notifyEvent(Debugger.Event event) {
+        if (!hasQuit()) {
+            Thread thread = Thread.currentThread();
+            ObjectID threadID = objectManager.getIDForObject(VMThread.asVMThread(thread));
+            event.setThread(thread, threadID);
+            eventManager.produceEvent(event);
+        }
     }
 
     /**
@@ -1088,7 +1110,6 @@ public class SDA extends Debugger {
         debuggerIsolate = VM.getCurrentIsolate();
     }
 
-    private static final String DEFAULT_MAINCLASSNAME = "tests.TestApp";
     private static final String DEFAULT_APPCLASSPATH = "file://.";
     private static final String DEFAULT_URL = "serversocket://:2800;acceptTimeout=2000";
 
@@ -1110,9 +1131,7 @@ public class SDA extends Debugger {
      * @return      true if there were no errors in the arguments and the debuggee application isolate was initialized
      */
     boolean parseArgs(String args[]) {
-
-        // This should be initialized to null after TestApp has served its purpose...
-        String mainClassName = DEFAULT_MAINCLASSNAME;
+        String mainClassName = null;
         String[] mainClassArgs = {};
         String appSuite = VMThread.currentThread().getIsolate().getParentSuiteSourceURI();
         String logLevel = "none";
@@ -1303,7 +1322,7 @@ public class SDA extends Debugger {
             try {
                 sdp = new SDPListener(this);
                 System.out.println("Listening for connection from proxy on " + url);
-                sdp.open(url, "SDWP-Handshake".getBytes(), false, false);
+                sdp.open(url, "SDWP-Handshake".getBytes(), false, false, null);
                 break;
             } catch (InterruptedIOException e) {
                 // Time-out waiting for accept
@@ -1368,11 +1387,12 @@ public class SDA extends Debugger {
             if (Log.info()) {
                 Log.log("Detaching debuggee isolate...");
             }
-            // Detach from the debuggee isolate and allow it continue
-            resumeIsolate(true);
-            DebuggerSupport.setDebugger(debuggeeIsolate, this, false);
-
-            sdp.quit();
+            // should already have quit, or we wouldn't be here. but to be safe...
+            if (!sdp.hasQuit()) {
+                // Detach from the debuggee isolate and allow it continue
+                resumeIsolate(true);
+                sdp.quit();
+            }
         }
 
         // Wait until the event manager finishes. This must happen after
@@ -1405,7 +1425,6 @@ public class SDA extends Debugger {
      * Program entry point.
      *
      * @param args  command line arguments
-     * @throws IOException
      */
     public static void main(String args[]) {
         Assert.always(!VM.isHosted(), "Squawk Debugger Agent can only run on a native Squawk VM, not hosted");
@@ -1433,6 +1452,9 @@ public class SDA extends Debugger {
             throw e;
         } finally {
             System.out.println("Debug agent disconnected from application");
+//            System.out.println("================ VM STATE ====================");
+//            Isolate.printAllIsolateStates(System.out);
+//            System.out.println("==============================================");
         }
         // Make sure we exit with the exit code of the debuggee and not the debugger
         if (debugger.getDebuggeeIsolate() != null) {

@@ -155,7 +155,7 @@ class JDBListener extends JDWPListener {
             Collection types = sdp.getPTM().getTypes();
 
             // Only send back classes that came from class files
-            Set classfileTypes = new HashSet();
+            Set<ProxyType> classfileTypes = new HashSet<ProxyType>();
             for (Iterator iter = types.iterator(); iter.hasNext(); ) {
                 ProxyType type = (ProxyType) iter.next();
                 Klass klass = type.getKlass();
@@ -217,6 +217,7 @@ class JDBListener extends JDWPListener {
             out.writeInt(MINOR, "jdwpMinor"); /* minor version */ // Note that HotSpot tends to send the jVM version - 1.4, 1.5, .
             out.writeString(VM_VERSION, "vmVersion");
             out.writeString(VM_NAME, "vmName");
+            ((JDBListener)host).debuggerAskedSizes = true;
         }
 
         /**
@@ -244,7 +245,7 @@ class JDBListener extends JDWPListener {
             out.writeInt(ObjectID.SIZE, "objectIDSize");
             out.writeInt(ReferenceTypeID.SIZE, "referenceTypeIDSize");
             out.writeInt(FrameID.SIZE, "frameIDSize");
-            ((JDBListener)host).debuggerAskedSizes = true;
+           // ((JDBListener)host).debuggerAskedSizes = true;
         }
 
         /**
@@ -282,12 +283,14 @@ class JDBListener extends JDWPListener {
             out.writeBoolean(false, "canGetSourceDebugExtension");      // Can the VM get the source debug extension?
             out.writeBoolean(true,  "canRequestVMDeathEvent");          // Can the VM request VM death events?
             out.writeBoolean(false, "canSetDefaultStratum");            // Can the VM set a default stratum?
-            out.writeBoolean(false, "reserved16");                      // Reserved for future capability
-            out.writeBoolean(false, "reserved17");                      // Reserved for future capability
-            out.writeBoolean(false, "reserved18");                      // Reserved for future capability
-            out.writeBoolean(false, "reserved19");                      // Reserved for future capability
-            out.writeBoolean(false, "reserved20");                      // Reserved for future capability
-            out.writeBoolean(false, "reserved21");                      // Reserved for future capability
+            // added in 1.6:    
+            out.writeBoolean(false, "canGetInstanceInfo");              // Can the VM return instances, counts of instances of classes and referring objects?
+            out.writeBoolean(false, "canRequestMonitorEvents");         // Can the VM request monitor events? 
+            out.writeBoolean(false, "canGetMonitorFrameInfo");          // Can the VM get monitors with frame depth info? 
+            out.writeBoolean(false, "canUseSourceNameFilters");         // Can the VM filter class prepare events by source name? 
+            out.writeBoolean(false, "canGetConstantPool");              // Can the VM return the constant pool information? 
+            out.writeBoolean(false, "canForceEarlyReturn");             // Can the VM force early return from a method?  
+            
             out.writeBoolean(false, "reserved22");                      // Reserved for future capability
             out.writeBoolean(false, "reserved23");                      // Reserved for future capability
             out.writeBoolean(false, "reserved24");                      // Reserved for future capability

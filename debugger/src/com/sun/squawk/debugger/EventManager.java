@@ -177,6 +177,7 @@ public abstract class EventManager implements Runnable, EventNotifier.Consumer {
     }
 
     /**
+     * @param event 
      * @see EventNotifier#produceEvent
      */
     public void produceEvent(Debugger.Event event) {
@@ -206,6 +207,8 @@ public abstract class EventManager implements Runnable, EventNotifier.Consumer {
 
     /**
      * Finds the registered requests that match a given event.
+     * @param event to match against requests
+     * @return set of matching event requsts, or null
      */
     public MatchedRequests matchRequests(Debugger.Event event) {
         Vector matchedRequests = null;
@@ -291,6 +294,8 @@ public abstract class EventManager implements Runnable, EventNotifier.Consumer {
     
     /**
      * Events handled by proxy are odd, and those by the agent are even.
+     * @param id the id to check
+     * @return true if the event request was handled locally
      */
     public abstract boolean isMyEventRequestID(int id);
     
