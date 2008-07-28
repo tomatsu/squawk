@@ -511,7 +511,7 @@ public final class VMThread implements GlobalStaticFields {
                     // isolate is exiting/hibernating, but a thread is waiting for an unowned monitor. should be ok...
                 } else if (ownerThread.isolate != isolate) {
                     VM.print("######## WARNING: Isolate ");
-                    VM.print(isolate.getMainClassName());
+                    VM.print(isolate.getName());
                     VM.println(" is exiting/hibernating, but a thread is waiting for monitor owned by another isolate.");
                     VM.print("    waiting thread: ");
                     VM.println(thread.toString());
@@ -523,7 +523,7 @@ public final class VMThread implements GlobalStaticFields {
                     while (next != null) {
                         if (next.isolate != isolate) {
                             VM.print("######## WARNING: Isolate ");
-                            VM.print(isolate.getMainClassName());
+                            VM.print(isolate.getName());
                             VM.println(" is exiting/hibernating, but a thread in another isolate is waiting for monitor owned by this isolate.");
                             VM.print("    waiting thread: ");
                             VM.println(next.toString());
@@ -1244,8 +1244,8 @@ VM.println();
             VMThread next = monitor.monitorQueue;
             while (next != null) {
                 if (next.isolate != isolate) {
-                    VM.print("######## WARNING: thread ");
-                    VM.print(isolate.getMainClassName());
+                    VM.print("######## WARNING: thread in isolate ");
+                    VM.print(isolate.getName());
                     VM.println(" is exiting/hibernating, but a thread in another isolate is waiting for monitor owned by this isolate.");
                     VM.print("    waiting thread: ");
                     VM.println(next.toString());

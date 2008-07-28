@@ -326,6 +326,11 @@ public final class Isolate implements Runnable {
     private boolean isMidlet;
 
     /**
+     * name for isolate
+     */
+    private String name;
+
+    /**
      * Creates the root isolate.
      *
      * @param mainClassName  the name of the class with bootstrap main()
@@ -340,6 +345,7 @@ public final class Isolate implements Runnable {
         this.parentSuiteSourceURI = null;
         this.state                = NEW;
         this.id                   = VM.allocateIsolateID();
+        this.name                 = mainClassName;
 
         while (suite.getParent() != null) {
             suite = suite.getParent();
@@ -394,6 +400,7 @@ public final class Isolate implements Runnable {
         this.parentSuiteSourceURI = copyIfCurrentThreadIsExternal(parentSuiteSourceURI);
         this.state                = NEW;
         this.id                   = VM.allocateIsolateID();
+        this.name                 = this.mainClassName;
 
         Isolate currentIsolate = VM.getCurrentIsolate();
         Assert.that(currentIsolate != null);
@@ -518,6 +525,28 @@ public final class Isolate implements Runnable {
         return arr;
     }
 
+    /**
+     * Gets name of the isolate.
+     * By default, this is the mainClassName passed to the constructor, or the MIDlet's class name
+     *
+     * @return the isolate name
+     */
+    public String getName() {
+        return copyIfCurrentThreadIsExternal(name);
+    }
+    
+    /**
+     * Sets name of the isolate.
+     *
+     * @param newName (must not be null)
+     */
+    public void setName(String newName) {
+        if (name == null) {
+            throw new IllegalArgumentException();
+        }
+        name = copyIfCurrentThreadIsExternal(newName);
+    }
+    
     /**
      * Gets the class path for the isolate.
      *
@@ -1516,30 +1545,28 @@ public final class Isolate implements Runnable {
             }
             klass.main(new String[] {wasFirstInitialized?"false":"true"});
         }
-        
-/*if[ENABLE_SDA_DEBUGGER]*/
-        // Notify debugger of event:
-        if (debugger != null) {
-            debugger.notifyEvent(new Debugger.Event(Debugger.Event.VM_INIT, VMThread.currentThread()));
-
-            // This gives the debugger a chance to receive the THREAD_START event for the
-            // initial thread in an isolate
-//            debugger.notifyEvent(new Debugger.Event(Debugger.Event.THREAD_START, Thread.currentThread()));
-        }
-/*end[ENABLE_SDA_DEBUGGER]*/
+       
         
         // Find the main class and call it's main().
         Klass klass = null;
         try {
             klass = Klass.forName(mainClassName);
-            klass.main(args);
-
-            System.out.flush();
-            System.err.flush();
         } catch (ClassNotFoundException ex) {
             System.err.println("No such class " + mainClassName + ": " + ex);
             exit(999);
         }
+        
+/*if[ENABLE_SDA_DEBUGGER]*/
+        // Notify debugger of event:
+        if (!isMidlet() && debugger != null) {
+            debugger.notifyEvent(new Debugger.Event(Debugger.Event.VM_INIT, VMThread.currentThread()));
+        }
+/*end[ENABLE_SDA_DEBUGGER]*/
+        
+        klass.main(args);
+
+        System.out.flush();
+        System.err.flush();
     }
 
     /**
@@ -2082,7 +2109,7 @@ public final class Isolate implements Runnable {
      * @return the string
      */
     public String toString() {
-        String res = "isolate " + id + " \"" + mainClassName + "\"";
+        String res = "isolate " + id + " \"" + name + "\"";
         if (isAlive()) {
             res = res.concat(" (ALIVE)");
         } else if (isExited()) {

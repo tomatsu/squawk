@@ -211,7 +211,7 @@ public final class Mailbox {
     private synchronized static Mailbox create(Isolate owner) {
          // debugging name ...
         int id = anonCounter++;
-        String anonName = "anonymous mailbox " + id + " in " + owner.getMainClassName();
+        String anonName = "anonymous mailbox " + id + " in " + owner.getName();
         
         Mailbox box = new Mailbox(anonName, new AnonymousMailboxHandler(), owner);
          // tell VM internal about it.
