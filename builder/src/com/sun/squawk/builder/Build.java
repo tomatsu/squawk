@@ -1571,6 +1571,7 @@ public class Build {
         out.println("    -o2                 optimize C compilation/linking for speed");
         out.println("    -o3                 optimize C compilation/linking for max speed");
         out.println("    -prod               build the production version of the VM");
+        out.println("    -mac                build the interpreter loop using fast macros");
         out.println("    -tracing            enable tracing in the VM");
         out.println("    -profiling          enable profiling in the VM");
         out.println("    -assume             enable assertions in the VM");
