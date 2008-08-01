@@ -445,6 +445,15 @@ public class Klass {
     }
 
     /**
+     * Return true if this class can be allocated (not abstract or interface, etc.)
+     * If true, there may be some object "obj" such that GC.getKlass(obj) == this class.
+     * 
+     * @return true if objects of this klass can be insta
+     */
+    public boolean isInstantiable() {
+        return !(isInterface() || isPrimitive() || isAbstract());
+    }
+    /**
      * Determines if the specified <code>Class</code> object represents an
      * interface type.
      *

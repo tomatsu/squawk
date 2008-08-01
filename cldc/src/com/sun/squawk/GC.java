@@ -1978,7 +1978,7 @@ public class GC implements GlobalStaticFields {
                 if (GC.GC_TRACING_SUPPORTED && VM.isVeryVerbose()) {
                     Address start = parent.getStart();
                     Offset size = end.diff(start);
-                    int percentNow = (int)((block.diff(start).toPrimitive() * 100) / size.toPrimitive());
+                    int percentNow = (block.diff(start).toPrimitive() * 100) / size.toPrimitive();
                     if (percentNow != percent) {
                         VM.print('.');
                         percent = percentNow;
@@ -2014,8 +2014,11 @@ public class GC implements GlobalStaticFields {
                 Suite s = suites[i];
                 int classCount = s.getClassCount();
                 for (int j = 0; j < classCount; j++) {
-                    Assert.always(heapstats.get(s.getKlass(j)) == null);
-                    heapstats.put(s.getKlass(j), new ClassStat());
+                    Klass k = s.getKlass(j);
+                    if (k.isInstantiable()) {
+                        Assert.always(heapstats.get(s.getKlass(j)) == null);
+                        heapstats.put(s.getKlass(j), new ClassStat());
+                    }
                 }
             }
             
@@ -2092,6 +2095,29 @@ public class GC implements GlobalStaticFields {
         VM.println();
     }
     
+   /**
+     * Get the size of this instance or array in bytes,
+     * including header words.
+     * 
+     * @return the size in bytes
+     */
+    static int getObjectBytes(Object object) {
+        Klass klass = GC.getKlass(object);
+        int blkSize = GC.getBodySize(klass, Address.fromObject(object));
+        return blkSize + (klass.isArray() ? HDR.arrayHeaderSize : HDR.basicHeaderSize);
+    }
+    
+   /**
+     * Get the size of instances of this klass in bytes,
+     * including header words.
+     * 
+     * @return the size in bytes
+     */
+    static int getObjectBytes(Klass klass) {
+        int size = klass.getInstanceSize() << HDR.LOG2_BYTES_PER_WORD;
+        return size += HDR.basicHeaderSize;
+    }
+    
     /**
      * Do actual heap walk, from start object, or whole heap is startObj is null.
      * Collect statistics in heapstats table.
@@ -2140,6 +2166,39 @@ public class GC implements GlobalStaticFields {
     }
     
     /**
+     * print an estimate the number of bytes used by this hastable, not including keys and values.
+     * 
+     * @param tbl
+     */
+    public static void printEstimatedHashtableSize(SquawkHashtable tbl) {
+        Klass entryKlass = null;
+        Klass classStatKlass = Klass.asKlass(ClassStat.class);
+        Object internalTbl = tbl.getEntryTable();
+        int size = tbl.size();
+        try {
+            entryKlass = Klass.forName("com.sun.squawk.util.HashtableEntry");
+        } catch (ClassNotFoundException ex) {
+            Assert.shouldNotReachHere();
+        }
+
+        VM.println("The above includes these objects used to calculate class stats:");
+        VM.println("Class:\t Count: \t Bytes:");
+        print1Stat(GC.getKlass(tbl).toString(), 1, GC.getObjectBytes(tbl));
+        print1Stat(GC.getKlass(internalTbl).toString(), 1, GC.getObjectBytes(internalTbl));
+        print1Stat(entryKlass.toString(), size, size * GC.getObjectBytes(entryKlass));
+        print1Stat(classStatKlass.toString(), size, size * GC.getObjectBytes(classStatKlass));
+    }
+    
+    private static void print1Stat(String key, int count, int size) {
+        System.out.print(key);
+        System.out.print(": \t");
+        System.out.print(count);
+        System.out.print(" \t");
+        System.out.print(size);
+        System.out.println();
+    }
+    
+    /**
      * Do actual heap walk, from start object, or whole heap is startObj is null.
      * Count how many instances, and how many bytes are used, by all objects that are the same aage or youngre than
      * startObj. Print out statistics of each class that has at least one instance in the set found in the heap walk.
@@ -2169,14 +2228,11 @@ public class GC implements GlobalStaticFields {
             Object key = e.nextElement();
             ClassStat cs = (ClassStat) heapstats.get(key);
             if (cs.count > 0) {
-                System.out.print(key.toString());
-                System.out.print(": \t");
-                System.out.print(cs.count);
-                System.out.print(" \t");
-                System.out.print(cs.size);
-                System.out.println();
+                print1Stat(key.toString(), cs.count, cs.size);
             }
         }
+        
+        printEstimatedHashtableSize(heapstats);
     }
     
 }

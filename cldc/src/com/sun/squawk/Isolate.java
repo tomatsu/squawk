@@ -497,12 +497,13 @@ public final class Isolate implements Runnable {
      */
     private String copyIfCurrentThreadIsExternal(String s) {
         if (s != null && GC.inRam(s) && isCurrentThreadExternal()) {
-            String s2 = Isolate.lookupInterned(s); // try to find version in ROM
-            if (s2 == null || GC.inRam(s2)) {
+              // Interning is way too heavy weight to bother with for now...
+//            String s2 = Isolate.lookupInterned(s); // try to find version in ROM
+//            if (s2 == null || GC.inRam(s2)) {
                 return new String(s);
-            } else {
-                return s2;
-            }
+//            } else {
+//                return s2;
+//            }
         } else {
             return s;
         }
@@ -541,7 +542,7 @@ public final class Isolate implements Runnable {
      * @param newName (must not be null)
      */
     public void setName(String newName) {
-        if (name == null) {
+        if (newName == null) {
             throw new IllegalArgumentException();
         }
         name = copyIfCurrentThreadIsExternal(newName);
@@ -1545,28 +1546,30 @@ public final class Isolate implements Runnable {
             }
             klass.main(new String[] {wasFirstInitialized?"false":"true"});
         }
-       
+        
+/*if[ENABLE_SDA_DEBUGGER]*/
+        // Notify debugger of event:
+        if (debugger != null && !isMidlet()) {
+            debugger.notifyEvent(new Debugger.Event(Debugger.Event.VM_INIT, VMThread.currentThread()));
+
+            // This gives the debugger a chance to receive the THREAD_START event for the
+            // initial thread in an isolate
+//            debugger.notifyEvent(new Debugger.Event(Debugger.Event.THREAD_START, Thread.currentThread()));
+        }
+/*end[ENABLE_SDA_DEBUGGER]*/
         
         // Find the main class and call it's main().
         Klass klass = null;
         try {
             klass = Klass.forName(mainClassName);
+            klass.main(args);
+
+            System.out.flush();
+            System.err.flush();
         } catch (ClassNotFoundException ex) {
             System.err.println("No such class " + mainClassName + ": " + ex);
             exit(999);
         }
-        
-/*if[ENABLE_SDA_DEBUGGER]*/
-        // Notify debugger of event:
-        if (!isMidlet() && debugger != null) {
-            debugger.notifyEvent(new Debugger.Event(Debugger.Event.VM_INIT, VMThread.currentThread()));
-        }
-/*end[ENABLE_SDA_DEBUGGER]*/
-        
-        klass.main(args);
-
-        System.out.flush();
-        System.err.flush();
     }
 
     /**

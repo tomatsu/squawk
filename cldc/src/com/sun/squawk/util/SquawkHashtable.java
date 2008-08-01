@@ -427,6 +427,25 @@ public class SquawkHashtable {
     public String toString() {
         return SquawkHashtable.enumerationsToString(keys(), elements(), size());
     }
+    
+    /**
+     * Return the current capacity of the hashtable.
+     * @return the current capacity
+     */
+    public int capacity() {
+        return entryTable.length;
+    }
+    
+    /**
+     * Return the internal table. Used by GC for bookkeeping.
+     * 
+     * THIS IS PRIVATE TO THE BOOTSTRAP SUITE
+     * 
+     * @return the internal table
+     */
+    public Object getEntryTable() {
+        return entryTable;
+    }
 
     /**
      * Utility class to get a rather long string representation of any kind of hashtable.
