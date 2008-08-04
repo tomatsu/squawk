@@ -1211,8 +1211,14 @@ public final class IRBuilder {
         } else {
             frame.growMaxStack(2);
             opc_load(Klass.INT, index);
-            opc_constant(new ConstantInt(new Integer(value)));
-            opc_arithmetic(Klass.INT, OPC.ADD_I);
+            // there are more special cases for positive constants than neg, so keep constant positive and flip operation
+            if (value > 0) {
+                opc_constant(new ConstantInt(new Integer(value)));
+                opc_arithmetic(Klass.INT, OPC.ADD_I);
+            } else {
+                opc_constant(new ConstantInt(new Integer(-value)));
+                opc_arithmetic(Klass.INT, OPC.SUB_I);
+            }
             opc_store(Klass.INT, index);
             frame.resetMaxStack();
         }

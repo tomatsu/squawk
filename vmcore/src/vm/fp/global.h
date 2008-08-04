@@ -49,26 +49,28 @@
 #define D_L_NEG_NAN       0xFFF0000000000001LL
 #define D_H_NEG_NAN       0xFFFFFFFFFFFFFFFFLL
 
-union  uu   { int i; float f; jlong l; int lParts[2]; double d;        };
+union  uu1   { int i; float f; };
+union  uu2   { jlong l; unsigned int lParts[2]; double d;        };
 
 // This version is intended to allow compiler optimizations to be turned on 
 // for x86 machines. It is vetter than the fdlibm code on gcc-x86, but
 // still fails on MVC (with optimizations on).
 #if (PLATFORM_BIG_ENDIAN || ARM_FPA)
-#define __HI(x) (((union uu*)&x)->lParts[0])
-#define __LO(x) (((union uu*)&x)->lParts[1])
-#define __HIp(x) (((union uu*)x)->lParts[0])
-#define __LOp(x) (((union uu*)x)->lParts[1])
+#define __HI(x) (((union uu2*)&x)->lParts[0])
+#define __LO(x) (((union uu2*)&x)->lParts[1])
+#define __HIp(x) (((union uu2*)x)->lParts[0])
+#define __LOp(x) (((union uu2*)x)->lParts[1])
 #else
-#define __HI(x) (((union uu*)&x)->lParts[1])
-#define __LO(x) (((union uu*)&x)->lParts[0])
-#define __HIp(x) (((union uu*)x)->lParts[1])
-#define __LOp(x) (((union uu*)x)->lParts[0])
+#define __HI(x) (((union uu2*)&x)->lParts[1])
+#define __LO(x) (((union uu2*)&x)->lParts[0])
+#define __HIp(x) (((union uu2*)x)->lParts[1])
+#define __LOp(x) (((union uu2*)x)->lParts[0])
 #endif
 
 
-INLINE float  ib2f(int i)                  { union  uu x; x.i = i; return x.f;         }
-INLINE int    f2ib(float f)                { union  uu x; x.f = f; return x.i;         }
+INLINE float ib2f(int i)                { union  uu1 x; x.i = i; return x.f;         }
+INLINE int   f2ib(float f)              { union  uu1 x; x.f = f; return x.i;         }
+
 #ifdef _MSC_VER
 #  if _MSC_VER < 1400 /* fmodf is defined in MSC version 14.00 and greater */
 INLINE float  fmodf(float a, float b)      { return (float)fmod(a, b);                 }
@@ -80,12 +82,19 @@ INLINE float  fmodf(float a, float b)      { return (float)fmod(a, b);          
 #    endif /* __GNUC__ */
 #  endif /* __APPLE__ */
 #endif /* _MSC_VER */
+
 #if ARM_FPA
-INLINE double lb2d(jlong l)                { union  uu x; x.lParts[0] = (int)(l >> 32); x.lParts[1] = l; return x.d;         }
-INLINE jlong  d2lb(double d)               { union  uu x; int y; x.d = d; y = x.lParts[0]; x.lParts[0]= x.lParts[1]; x.lParts[1] = y; return x.l;         }
+INLINE double lb2d(jlong l)                { union uu2 x; x.lParts[0] = (unsigned int)((ujlong)l >> 32); x.lParts[1] = l; return x.d;         }
+
+INLINE jlong  d2lb(const double d) {
+	union uu2 x;
+    unsigned int y; 
+	x.d = d; y = x.lParts[0]; x.lParts[0]= x.lParts[1]; x.lParts[1] = y; 
+    return x.l;
+}
 #else /* ARM_FPA */
-INLINE double lb2d(jlong l)                { union  uu x; x.l = l; return x.d;         }
-INLINE jlong  d2lb(double d)               { union  uu x; x.d = d; return x.l;         }
+INLINE double lb2d(jlong l)                { union uu2 x; x.l = l; return x.d;         }
+INLINE jlong  d2lb(double d)               { union uu2 x; x.d = d; return x.l;         }
 #endif /* ARM_FPA */
 
 extern int    __ieee754_rem_pio2(double x, double *y);

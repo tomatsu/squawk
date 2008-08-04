@@ -113,7 +113,7 @@ void toggleMemoryProtection(Address start, Address end, boolean readonly) {
 /**
  * Exits the VM with an error message.
  */
-void fatalVMError(char *msg) {
+NORETURN void fatalVMError(char *msg) {
     static boolean inFatalVMError = false;
     void stopVM(int);
 
@@ -148,27 +148,17 @@ void fatalVMError(char *msg) {
  */
 #define assumeAlways(x) if (!(x))  { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #x, __FILE__, __LINE__); fatalVMError(""); }
 
-void fatalInterpreterError0(char *msg, int opcode, ByteAddress _ip, UWordAddress _fp, UWordAddress _sp, char* file, int line);
+NORETURN void fatalInterpreterError0(char *msg, int opcode, ByteAddress _ip, UWordAddress _fp, UWordAddress _sp, char* file, int line);
 
 /**
  * Exits the VM with an error message including various interpreter state.
  */
 /*if[MACROIZE]*/
-#if defined(ASSUME) && ASSUME != 0
 #define fatalInterpreterError(_msg) \
     fatalInterpreterError0(_msg, opcode, ip, fp, sp, __FILE__, __LINE__)
-#else
-#define fatalInterpreterError(_msg) \
-    fatalInterpreterError0(_msg, opcode, ip, fp, sp, "<some file>", __LINE__)
-#endif
 /*else[MACROIZE]*/
-//#if defined(ASSUME) && ASSUME != 0
 //#define fatalInterpreterError(_msg) \
-//    fatalInterpreterError0(_msg, 0, ip, fp, sp, __FILE__, __LINE__)
-//#else
-//#define fatalInterpreterError(_msg) \
-//    fatalInterpreterError0(_msg, 0, ip, fp, sp, "<some file>", __LINE__)
-//#endif
+//  fatalInterpreterError0(_msg,      0, ip, fp, sp, __FILE__, __LINE__)
 /*end[MACROIZE]*/
 
 #ifndef FLASH_MEMORY
@@ -286,6 +276,7 @@ extern jlong double2ll(double d);
 extern int double2l(double d);
 extern int float2l(float f);
 
+#if INLINE_JAVA_FP
 INLINE int    addf(int l, int r)           { return f2ib(ib2f(l) + ib2f(r));           }
 INLINE int    subf(int l, int r)           { return f2ib(ib2f(l) - ib2f(r));           }
 INLINE int    mulf(int l, int r)           { return f2ib(ib2f(l) * ib2f(r));           }
@@ -309,6 +300,33 @@ INLINE jlong  f2d(int f)                   { return d2lb((double)ib2f(f));      
 INLINE int    d2i(jlong l)                 { return (int)double2l(lb2d(l));            }
 INLINE jlong  d2l(jlong l)                 { return (jlong)double2ll(lb2d(l));         }
 INLINE int    d2f(jlong l)                 { return f2ib((float)lb2d(l));              }
+
+#else /* !INLINE_JAVA_FP */
+
+NOINLINE int    addf(int l, int r)          { return f2ib(ib2f(l) + ib2f(r));           }
+NOINLINE int    subf(int l, int r)           { return f2ib(ib2f(l) - ib2f(r));           }
+NOINLINE int    mulf(int l, int r)           { return f2ib(ib2f(l) * ib2f(r));           }
+NOINLINE int    divf(int l, int r)           { return f2ib(ib2f(l) / ib2f(r));           }
+NOINLINE int    remf(int l, int r)           { return f2ib(JFP_lib_remf(ib2f(l), ib2f(r))); }
+NOINLINE int    negf(int l)                  { return f2ib( - ib2f(l));        }
+NOINLINE jlong  addd(jlong l, jlong r)        { return d2lb(lb2d(l) + lb2d(r));           }
+NOINLINE jlong  subd(jlong l, jlong r)       { return d2lb(lb2d(l) - lb2d(r));           }
+NOINLINE jlong  muld(jlong l, jlong r)       { return d2lb(JFP_lib_muld(lb2d(l), lb2d(r))); }
+NOINLINE jlong  divd(jlong l, jlong r)       { return d2lb(JFP_lib_divd(lb2d(l), lb2d(r))); }
+NOINLINE jlong  remd(jlong l, jlong r)       { return d2lb(JFP_lib_remd(lb2d(l), lb2d(r))); }
+NOINLINE jlong  negd(jlong l)                { return d2lb(- lb2d(l));       }
+
+NOINLINE int    i2f(int i)                   { return f2ib((float)i);                    }
+NOINLINE jlong  i2d(int i)                   { return d2lb((double)i);                   }
+NOINLINE int    l2f(jlong l)                 { return f2ib((float)l);                    }   
+NOINLINE jlong  l2d(jlong l)                 { return d2lb((double)l);                   }
+NOINLINE int    f2i(int f)                   { return (int)float2l(ib2f(f));             }
+NOINLINE jlong  f2l(int f)                   { return (jlong)float2ll(ib2f(f));          }
+NOINLINE jlong  f2d(int f)                   { return d2lb((double)ib2f(f));             }
+NOINLINE int    d2i(jlong l)                 { return (int)double2l(lb2d(l));            }
+NOINLINE jlong  d2l(jlong l)                 { return (jlong)double2ll(lb2d(l));         }
+NOINLINE int    d2f(jlong l)                 { return f2ib((float)lb2d(l));              }
+#endif /* ! INLINE_JAVA_FP */
 
 /*---------------------------------------------------------------------------*\
  *                                Math functions                             *

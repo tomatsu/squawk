@@ -565,7 +565,7 @@ public final class MethodBody {
      * @return true if oop is an intrepreter invoked only method
      */
     public static boolean isInterpreterInvoked(Object oop) {
-        int b0 = NativeUnsafe.getByte(oop, HDR.methodInfoStart) & 0xFF;
+        int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
         if (b0 < 128) {
             return false;
         } else {
@@ -580,7 +580,7 @@ public final class MethodBody {
      * @return the number of parameters
      */
     static int decodeParameterCount(Object oop) {
-        int b0 = NativeUnsafe.getByte(oop, HDR.methodInfoStart) & 0xFF;
+        int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
         if (b0 < 128) {
             return b0 >> 2;
         } else {
@@ -595,9 +595,9 @@ public final class MethodBody {
      * @return the number of locals
      */
     static int decodeLocalCount(Object oop) {
-        int b0 = NativeUnsafe.getByte(oop, HDR.methodInfoStart) & 0xFF;
+        int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
         if (b0 < 128) {
-            int b1 = NativeUnsafe.getByte(oop, HDR.methodInfoStart-1) & 0xFF;
+            int b1 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart-1);
             return (((b0 << 8) | b1) >> 5) & 0x1F;
         } else {
             return minfoValue2(oop);
@@ -611,9 +611,9 @@ public final class MethodBody {
      * @return the number of stack words
      */
     static int decodeStackCount(Object oop) {
-        int b0 = NativeUnsafe.getByte(oop, HDR.methodInfoStart) & 0xFF;
+        int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
         if (b0 < 128) {
-            int b1 = NativeUnsafe.getByte(oop, HDR.methodInfoStart-1) & 0xFF;
+            int b1 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart-1);
             return b1 & 0x1F;
         } else {
             return minfoValue1(oop);
@@ -627,7 +627,7 @@ public final class MethodBody {
      * @return the number of bytes
      */
     static int decodeExceptionTableSize(Object oop) {
-        int b0 = NativeUnsafe.getByte(oop, HDR.methodInfoStart) & 0xFF;
+        int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
         if (b0 < 128 || ((b0 & FMT_E) == 0)) {
             return 0;
         }
@@ -642,7 +642,7 @@ public final class MethodBody {
      */
     static int decodeRelocationTableSize(Object oop) {
         if (MethodBody.ENABLE_RELOCATION_TABLES) {
-            int b0 = NativeUnsafe.getByte(oop, HDR.methodInfoStart) & 0xFF;
+            int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
             if (b0 < 128 || ((b0 & FMT_R) == 0)) {
                 return 0;
             }
@@ -664,7 +664,7 @@ public final class MethodBody {
      */
     static int decodeTypeTableSize(Object oop) {
         if (MethodBody.ENABLE_SPECIFIC_TYPE_TABLES) {
-            int b0 = NativeUnsafe.getByte(oop, HDR.methodInfoStart) & 0xFF;
+            int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
             if (b0 < 128 || ((b0 & FMT_T) == 0)) {
                 return 0;
             }
@@ -696,9 +696,9 @@ public final class MethodBody {
     private static int minfoValue(Object oop, int offset) {
         int p = HDR.methodInfoStart - 1;
         int val = -1;
-        Assert.that(((NativeUnsafe.getByte(oop, p+1) & 0xFF) & FMT_LARGE) != 0);
+        Assert.that((NativeUnsafe.getUByte(oop, p+1) & FMT_LARGE) != 0);
         while(offset-- > 0) {
-            val = NativeUnsafe.getByte(oop, p--) & 0xFF;
+            val = NativeUnsafe.getUByte(oop, p--);
             if (val > 127) {
                 p--;
             }
@@ -706,7 +706,7 @@ public final class MethodBody {
         if (val > 127) {
             val = val & 0x7F;
             val = val << 8;
-            val = val | (NativeUnsafe.getByte(oop, p-1) & 0xFF);
+            val = val | (NativeUnsafe.getUByte(oop, p-1));
         }
         Assert.that(val >= 0);
         return val;
@@ -715,12 +715,12 @@ public final class MethodBody {
     private static int minfoValue1(Object oop) {
         int p = HDR.methodInfoStart - 1;
         int val;
-        Assert.that(((NativeUnsafe.getByte(oop, p+1) & 0xFF) & FMT_LARGE) != 0);
-        val = NativeUnsafe.getByte(oop, p--) & 0xFF;
+        Assert.that((NativeUnsafe.getUByte(oop, p+1) & FMT_LARGE) != 0);
+        val = NativeUnsafe.getUByte(oop, p--);
         if (val > 127) {
             val = val & 0x7F;
             val = val << 8;
-            val = val | (NativeUnsafe.getByte(oop, p) & 0xFF);
+            val = val | (NativeUnsafe.getUByte(oop, p));
         }
         Assert.that(val >= 0);
         return val;
@@ -729,15 +729,15 @@ public final class MethodBody {
     private static int minfoValue2(Object oop) {
         int p = HDR.methodInfoStart - 1;
         int val;
-        Assert.that(((NativeUnsafe.getByte(oop, p+1) & 0xFF) & FMT_LARGE) != 0);
+        Assert.that((NativeUnsafe.getUByte(oop, p+1) & FMT_LARGE) != 0);
         if (NativeUnsafe.getByte(oop, p--) < 0) {
             p--;
         }
-        val = NativeUnsafe.getByte(oop, p--) & 0xFF;
+        val = NativeUnsafe.getUByte(oop, p--);
         if (val > 127) {
             val = val & 0x7F;
             val = val << 8;
-            val = val | (NativeUnsafe.getByte(oop, p) & 0xFF);
+            val = val | NativeUnsafe.getUByte(oop, p);
         }
         Assert.that(val >= 0);
         return val;
@@ -746,18 +746,18 @@ public final class MethodBody {
     private static int minfoValue3(Object oop) {
         int p = HDR.methodInfoStart - 1;
         int val;
-        Assert.that(((NativeUnsafe.getByte(oop, p+1) & 0xFF) & FMT_LARGE) != 0);
+        Assert.that(((NativeUnsafe.getUByte(oop, p+1)) & FMT_LARGE) != 0);
         if (NativeUnsafe.getByte(oop, p--) < 0) {
             p--;
         }
         if (NativeUnsafe.getByte(oop, p--) < 0) {
             p--;
         }
-        val = NativeUnsafe.getByte(oop, p--) & 0xFF;
+        val = NativeUnsafe.getUByte(oop, p--);
         if (val > 127) {
             val = val & 0x7F;
             val = val << 8;
-            val = val | (NativeUnsafe.getByte(oop, p) & 0xFF);
+            val = val | NativeUnsafe.getUByte(oop, p);
         }
         Assert.that(val >= 0);
         return val;
@@ -766,7 +766,7 @@ public final class MethodBody {
     private static int minfoValue4(Object oop) {
         int p = HDR.methodInfoStart - 1;
         int val;
-        Assert.that(((NativeUnsafe.getByte(oop, p+1) & 0xFF) & FMT_LARGE) != 0);
+        Assert.that(((NativeUnsafe.getByte(oop, p+1)) & FMT_LARGE) != 0);
         if (NativeUnsafe.getByte(oop, p--) < 0) {
             p--;
         }
@@ -776,11 +776,11 @@ public final class MethodBody {
         if (NativeUnsafe.getByte(oop, p--) < 0) {
             p--;
         }
-        val = NativeUnsafe.getByte(oop, p--) & 0xFF;
+        val = NativeUnsafe.getUByte(oop, p--);
         if (val > 127) {
             val = val & 0x7F;
             val = val << 8;
-            val = val | (NativeUnsafe.getByte(oop, p) & 0xFF);
+            val = val | NativeUnsafe.getUByte(oop, p);
         }
         Assert.that(val >= 0);
         return val;
@@ -794,7 +794,7 @@ public final class MethodBody {
      */
     private static int getOffsetToLastMinfoByte(Object oop) {
         int p = HDR.methodInfoStart;
-        int b0 = NativeUnsafe.getByte(oop, p--) & 0xFF;
+        int b0 = NativeUnsafe.getUByte(oop, p--);
         if (b0 < 128) {
             p--;
         } else {
@@ -809,7 +809,7 @@ public final class MethodBody {
                 offset++;
             }
             while(offset-- > 0) {
-                int val = NativeUnsafe.getByte(oop, p--) & 0xFF;
+                int val = NativeUnsafe.getUByte(oop, p--);
                 if (val > 127) {
                     p--;
                 }
@@ -889,7 +889,7 @@ public final class MethodBody {
             for (int i = 0 ; i < types.length ; i++) {
                 int pos = i / 8;
                 int bit = i % 8;
-                int bite = NativeUnsafe.getByte(oop, offset+pos) & 0xFF;
+                int bite = NativeUnsafe.getUByte(oop, offset+pos);
                 boolean isRef = ((bite>>bit)&1) != 0;
                 types[i] = (isRef) ? Klass.OBJECT : Klass.INT;
             }
@@ -967,7 +967,7 @@ public final class MethodBody {
                 Klass k = localTypes[i];
                 int pos = i / 8;
                 int bit = i % 8;
-                int bite = NativeUnsafe.getByte(oop, offset+pos) & 0xFF;
+                int bite = NativeUnsafe.getUByte(oop, offset+pos);
                 boolean isOop = ((bite>>bit)&1) != 0;
                 if (k.isReferenceType()) {
                     Assert.that(isOop == true);

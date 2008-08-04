@@ -282,6 +282,7 @@ public final class NativeUnsafe {
      * @see Unsafe#getUByte
      *
      * @todo Could add real native for better performance
+     * @vm2c proxy
      */
     public static int getUByte(Object base, int offset) {
         return getByte(base, offset) & 0xFF;
@@ -461,7 +462,7 @@ public final class NativeUnsafe {
      *
      * @vm2c code( Address cls = com_sun_squawk_Klass_self(getObject(str, HDR_klass));
      *             if (com_sun_squawk_Klass_id(cls) == com_sun_squawk_StringOfBytes) {
-     *                 return getByte(str, index) & 0xFF;
+     *                 return getUByte(str, index);
      *             } else {
      *                 return getUShort(str, index);
      *             } )

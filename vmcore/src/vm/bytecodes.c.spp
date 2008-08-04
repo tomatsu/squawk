@@ -86,11 +86,11 @@
          * @param klass the klass
          * @return its class state or null if not found
          */
-/*MAC*/ Address getClassState(Address $klass) {
+        Address getClassState(Address klass) {
             int i;
             cachedClassAccesses++;
             for (i = 0 ; i < CLASS_CACHE_SIZE ; i++) {
-                if (cachedClass[i] == $klass) {
+                if (cachedClass[i] == klass) {
                     cachedClassHits++;
                     return cachedClassState[i];
                 }
@@ -221,19 +221,8 @@
                 flparm = getLongTyped(ip, 0, AddressType_BYTECODE);
                 ip += sizeof(jlong);
             } else {
-                jlong b1 = fetchUByte();
-                jlong b2 = fetchUByte();
-                jlong b3 = fetchUByte();
-                jlong b4 = fetchUByte();
-                jlong b5 = fetchUByte();
-                jlong b6 = fetchUByte();
-                jlong b7 = fetchUByte();
-                jlong b8 = fetchUByte();
-                if (PLATFORM_BIG_ENDIAN) {
-                    flparm = (b1 << 56) | (b2 << 48) | (b3 << 40) | (b4 << 32) | (b5 << 24) | (b6 << 16) | (b7 << 8) | b8;
-                } else {
-                    flparm = (b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32) | (b4 << 24) | (b3 << 16) | (b2 << 8) | b1;
-                }
+                flparm = getUnalignedLong(ip, 0);
+                ip += sizeof(jlong);
             }
         }
 
@@ -855,7 +844,7 @@ static int             MethodBody_minfoValue3_L(Address);
          * @return the value
          */
 /*MAC*/ int getb0(Address $mp) {
-            return getByte($mp, HDR_methodInfoStart) & 0xFF;
+            return getUByte($mp, HDR_methodInfoStart);
         }
 
         /**
@@ -865,7 +854,7 @@ static int             MethodBody_minfoValue3_L(Address);
          * @return the value
          */
 /*MAC*/ int getb1(Address $mp) {
-            return getByte($mp, HDR_methodInfoStart - 1) & 0xFF;
+            return getUByte($mp, HDR_methodInfoStart - 1);
         }
 
         /**
@@ -955,7 +944,7 @@ static int             MethodBody_minfoValue3_L(Address);
          */
 /*MAC*/ int getOffsetToLastMinfoByte(Address $mp) {
             int p = HDR_methodInfoStart;
-            int b0 = getByte($mp, p--) & 0xFF;
+            int b0 = getUByte($mp, p--);
             if (b0 < 128) {
                 p--;
             } else {
@@ -970,7 +959,7 @@ static int             MethodBody_minfoValue3_L(Address);
                     offset++;
                 }
                 while(offset-- > 0) {
-                    int val = getByte($mp, p--) & 0xFF;
+                    int val = getUByte($mp, p--);
                     if (val > 127) {
                         p--;
                     }
@@ -3792,7 +3781,7 @@ foundSlot:
                     Address cls = getClass(str);
                     boundsAssume(str, off);
                     if (com_sun_squawk_Klass_id(cls) == com_sun_squawk_StringOfBytes) {
-                        pushInt(getByte(str, off) & 0xFF);
+                        pushInt(getUByte(str, off));
                     } else {
                         pushInt(getUShort(str, off));
                     }

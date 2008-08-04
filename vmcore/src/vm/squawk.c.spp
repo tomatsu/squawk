@@ -432,11 +432,11 @@ void *newBuffer(UWord size, const char *desc, boolean fatalIfFail) {
 #ifdef _MSC_VER
     buffer = VirtualAlloc(0, actualSize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
 #else
-#ifdef sun
-    buffer = malloc(actualSize);
-#else
+	//#ifdef sun
+    //buffer = malloc(actualSize);    this may have been work-around for solaris bug 4846556, now fixed.
+	//#else
     buffer = valloc(actualSize);
-#endif /* sun */
+	//#endif /* sun */
 #endif /* _MSC_VER */
 //fprintf(stderr, format("newBuffer: desc=%s, size=%A, actualSize=%O buffer=%A\n"), desc, size, actualSize, buffer);
     /*
@@ -751,7 +751,7 @@ static void printCacheStats() {
  *
  * @param exitCode the exit code
  */
-void stopVM(int exitCode) {
+NORETURN void stopVM(int exitCode) {
     finalizeStreams();
     freeBuffers();
     fprintf(stderr, "\n\n");

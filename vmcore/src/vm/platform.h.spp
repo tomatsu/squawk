@@ -127,6 +127,11 @@
 #define NORETURN
 #endif /* */
 
+/* It actualy never seems to pay off to inline this FP code.
+   But the switch is here to play with.
+*/
+#define INLINE_JAVA_FP 0
+
 #ifndef INLINE_JAVA_FP
 #    if ARM_FPA
 #        define INLINE_JAVA_FP 0
