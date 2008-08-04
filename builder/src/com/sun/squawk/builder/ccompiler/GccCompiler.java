@@ -64,7 +64,7 @@ public class GccCompiler extends CCompiler {
         
         if (options.nativeVerification) { buf.append("-DNATIVE_VERIFICATION=true ");          }
  
-
+        buf.append("  -ffunction-sections -fdata-sections ");
         // Required for definition of RTLD_DEFAULT handle sent to dlsym
         buf.append("-D_GNU_SOURCE ");
 
@@ -193,7 +193,7 @@ public class GccCompiler extends CCompiler {
             exec = "-o " + output + " " + getSharedLibrarySwitch() + " " + Build.join(objects) + " " + getLinkSuffix();
         } else {
             output = out + platform.getExecutableExtension();
-            exec = "-o " + output + " " + Build.join(objects) + " " + getLinkSuffix();
+            exec = "--gc-sections -o " + output + " " + Build.join(objects) + " " + getLinkSuffix();
         }
         env.exec("gcc " + exec);
         return new File(output);

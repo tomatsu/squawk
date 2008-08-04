@@ -74,7 +74,8 @@ public class MacOSX_X86 extends Unix {
      * {@inheritDoc}
      */
     public boolean allowUnalignedLoads() {
-        return false;
+        // unaligned loads results in 14% faster code, and 3% smaller exe
+        return true;
     }
 
 }

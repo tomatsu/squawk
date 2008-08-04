@@ -65,7 +65,7 @@ public class SunOS_X86 extends Unix {
      * {@inheritDoc}
      */
     public boolean allowUnalignedLoads() {
-        return false;
+        return true;
     }
 
 }
