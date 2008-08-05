@@ -627,14 +627,14 @@ public final class Suite {
 
     /**
      * Returns true if this suite contains the given klass.
-     * to a specified class name in internal form.
      *
      * @param   klass     the klass
      * @return  true if klass belongs to this suite
      */
     public boolean contains(Klass klass) {
-        for (int i = 0 ; i < classes.length ; i++) {
-            if (classes[i] == klass) {
+        int id = klass.getSuiteID();
+        if (id < classes.length) {
+            if (classes[id] == klass) {
                 return true;
             }
         }
