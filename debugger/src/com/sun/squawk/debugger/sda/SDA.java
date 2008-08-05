@@ -46,7 +46,7 @@ import com.sun.squawk.util.*;
  * being debugged as the debugging context for the application isolate.
  *
  */
-public class SDA extends Debugger {
+public final class SDA extends Debugger {
 
     /*-----------------------------------------------------------------------*\
      *                            Class requests                             *
@@ -395,7 +395,7 @@ public class SDA extends Debugger {
     
     private boolean vmStartEventSent = false;
 
-    class MatcherImpl implements EventRequestModifier.Matcher {
+    final class MatcherImpl implements EventRequestModifier.Matcher {
 
         /**
          * {@inheritDoc}
@@ -487,7 +487,7 @@ public class SDA extends Debugger {
         }
     }
 
-    class SDAEventManager extends EventManager {
+    final class SDAEventManager extends EventManager {
 
         /**
          * Event IDs originating from the SDA will be even and events from the SDP will be odd.
@@ -655,7 +655,7 @@ public class SDA extends Debugger {
     /**
      * This class encapsulates a request for notification of a <code>JDWP.EventKind.CLASS_PREPARE</code> event.
      */
-    class ClassPrepare extends SDAEventRequest {
+    final class ClassPrepare extends SDAEventRequest {
 
         /**
          * @see EventRequest#EventRequest(int, int)
@@ -688,7 +688,7 @@ public class SDA extends Debugger {
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
 
 
-    class Breakpoint extends SDAEventRequest {
+    final class Breakpoint extends SDAEventRequest {
         public Breakpoint(int id, PacketInputStream in) throws SDWPException, IOException {
             super(id, in, JDWP.EventKind_BREAKPOINT);
         }
@@ -734,7 +734,7 @@ public class SDA extends Debugger {
 
     }
 
-    class SingleStep extends SDAEventRequest {
+    final class SingleStep extends SDAEventRequest {
 
         final Step step;
 
@@ -861,7 +861,7 @@ public class SDA extends Debugger {
      * This class encapsulates a request for notification of a <code>JDWP.EventKind.THREAD_START</code> or
      * <code>JDWP.EventKind.THREAD_END</code> event.
      */
-    class ThreadStartOrEnd extends SDAEventRequest {
+    final class ThreadStartOrEnd extends SDAEventRequest {
 
         public ThreadStartOrEnd(int kind, int suspendPolicy) {
             super(kind, suspendPolicy);
@@ -889,7 +889,7 @@ public class SDA extends Debugger {
     /**
      * This class encapsulates a request for notification of a <code>JDWP.EventKind.VM_INIT</code> event.
      */
-    class VMStart extends SDAEventRequest {
+    final class VMStart extends SDAEventRequest {
 
         public VMStart(int suspendPolicy) {
             super(JDWP.EventKind_VM_START, suspendPolicy);
@@ -926,7 +926,7 @@ public class SDA extends Debugger {
     /**
      * This class encapsulates a request for notification of a <code>JDWP.EventKind.EXCEPTION</code> event.
      */
-    class ExceptionRequest extends SDAEventRequest {
+    final class ExceptionRequest extends SDAEventRequest {
 
         public ExceptionRequest(int id, PacketInputStream in) throws SDWPException, IOException {
             super(id, in, JDWP.EventKind_EXCEPTION);
@@ -973,7 +973,7 @@ public class SDA extends Debugger {
      * This class encapsulates a request to be notified when the VM exits. For Squawk,
      * this translates to the isolate being debugged exiting.
      */
-    class VMDeath extends SDAEventRequest {
+    final class VMDeath extends SDAEventRequest {
 
         public VMDeath(int suspendPolicy) {
             super(JDWP.EventKind_VM_DEATH, suspendPolicy);

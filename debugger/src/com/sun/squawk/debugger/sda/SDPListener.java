@@ -39,7 +39,7 @@ import com.sun.squawk.vm.*;
  * A SDPListener implements the Squawk VM side of the JDWP protocol
  * and communicates with a Squawk Debugger Proxy.
  */
-class SDPListener extends JDWPListener {
+public final class SDPListener extends JDWPListener {
 
     /**
      * The agent that interacts with the application being debugged.
@@ -160,7 +160,7 @@ class SDPListener extends JDWPListener {
          * @return boolean true if the command was recognised and a reply was sent
          * @throws IOException if there was an IO error while sending a reply
          */
-        public boolean handle(JDWPListener listener, SDA sda, CommandPacket command) throws IOException {
+        public final boolean handle(JDWPListener listener, SDA sda, CommandPacket command) throws IOException {
             this.sda = sda;
             return handle(listener, command);
         }

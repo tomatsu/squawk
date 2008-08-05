@@ -132,7 +132,7 @@ public class SquawkHashtable {
             initialCapacity = 1;
         }
         setTable(new HashtableEntry[initialCapacity]);
-        threshold = (int)((initialCapacity * loadFactorPercent) / 100);
+        threshold = ((initialCapacity * loadFactorPercent) / 100);
     }
 
     public final SquawkHashtable setRehasher(Rehasher rehasher) {
@@ -309,7 +309,7 @@ public class SquawkHashtable {
         setTable(null); // safety
         int oldCapacity = oldTable.length;
         HashtableEntry[] newTable = new HashtableEntry[newCapacity];
-        threshold = (int)((newCapacity * loadFactorPercent) / 100);
+        threshold = ((newCapacity * loadFactorPercent) / 100);
         for (int i = oldCapacity ; i-- > 0 ;) {
             for (HashtableEntry old = oldTable[i] ; old != null ; ) {
                 HashtableEntry e = old;
@@ -413,8 +413,9 @@ public class SquawkHashtable {
      */
     public void clear() {
         HashtableEntry tab[] = getTable();
-        for (int index = tab.length; --index >= 0; )
+        for (int index = tab.length; --index >= 0; ) {
             tab[index] = null;
+        }
         count = 0;
     }
 
@@ -432,7 +433,7 @@ public class SquawkHashtable {
      * Return the current capacity of the hashtable.
      * @return the current capacity
      */
-    public int capacity() {
+    public final int capacity() {
         return entryTable.length;
     }
     
@@ -443,13 +444,16 @@ public class SquawkHashtable {
      * 
      * @return the internal table
      */
-    public Object getEntryTable() {
+    public final Object getEntryTable() {
         return entryTable;
     }
 
     /**
      * Utility class to get a rather long string representation of any kind of hashtable.
      *
+     * @param keys 
+     * @param elements 
+     * @param size 
      * @return  a string representation of this hashtable.
      * @since   JDK1.0
      */
@@ -500,7 +504,9 @@ public class SquawkHashtable {
 
         public Object nextElement() {
             if (entry == null) {
-                while ((index-- > 0) && ((entry = table[index]) == null));
+                while ((index-- > 0) && ((entry = table[index]) == null)) {
+                    // skip empty
+                }
             }
             if (entry != null) {
                 HashtableEntry e = entry;

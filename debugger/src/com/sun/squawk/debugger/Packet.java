@@ -136,7 +136,7 @@ public abstract class Packet {
      *
      * @return  the ID that is unique to this command and reply packet pair this packet belongs to (if any)
      */
-    public int getID() {
+    public final int getID() {
         return id;
     }
 

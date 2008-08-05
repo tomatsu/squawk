@@ -46,7 +46,7 @@ public class SDWPException extends Exception {
         this.error = error;
     }
 
-    public int getError() {
+    public final int getError() {
         return error;
     }
 

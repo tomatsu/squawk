@@ -174,7 +174,7 @@ final class SDAListener extends JDWPListener {
                 this.requestID = requestID;
             }
 
-            void writeHeader(PacketOutputStream out) throws IOException {
+            final void writeHeader(PacketOutputStream out) throws IOException {
                 out.writeByte(eventKind, "eventKind");
                 out.writeInt(requestID, "requestID");
             }

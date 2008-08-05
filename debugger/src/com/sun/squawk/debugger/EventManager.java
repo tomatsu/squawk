@@ -180,14 +180,14 @@ public abstract class EventManager implements Runnable, EventNotifier.Consumer {
      * @param event 
      * @see EventNotifier#produceEvent
      */
-    public void produceEvent(Debugger.Event event) {
+    public final void produceEvent(Debugger.Event event) {
         notifier.produceEvent(event, this);
     }
 
     /**
      * {@inheritDoc}
      */
-    public boolean isDone() {
+    public final boolean isDone() {
         return done;
     }
 

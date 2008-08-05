@@ -31,10 +31,8 @@ import com.sun.squawk.util.Assert;
  * isolate's other than the one that regsistered the callback objects.
  *
  * This class manages executing callbacks in the context of the isolate that registered the callback.
- *
- *  
  */
-public class CallbackManager {
+public final class CallbackManager {
     
     /**
      * If runHooks is only called once, then we can clean up and clear as we go.
@@ -79,26 +77,25 @@ public class CallbackManager {
     }
     
     /**
-     * Return true if this should only be run once, like for a shutdown hook.
+     * Should only be run once, like for a shutdown hook.
+     * @return true if this callback should be 
      */
     public boolean isRunOnce() {
         return runOnce;
     }
     
-        
-    /**
-     * Return true if this should only be run once, like for a shutdown hook.
-     */
-    public int count() {
-        int len = hooks.size();
-        int count = 0;
-        for (int i = 0; i < len; i++) {
-            CallbackGroup cbg = (CallbackGroup)hooks.elementAt(i);
-            count += cbg.count();
-        }
-        return count;
-    }
-    
+//    /**
+//     * Return true if this should only be run once, like for a shutdown hook.
+//     */
+//    public int count() {
+//        int len = hooks.size();
+//        int count = 0;
+//        for (int i = 0; i < len; i++) {
+//            CallbackGroup cbg = (CallbackGroup)hooks.elementAt(i);
+//            count += cbg.count();
+//        }
+//        return count;
+//    }
     
     /**
      * Add a hook to run in isolate <code>iso</code>. 
@@ -187,7 +184,6 @@ public class CallbackManager {
      * Remove a hook previously-registered for the current isolate.  Like the add method, this method
      * does not do any security checks.
      *
-     * @param iso the isolate context to search
      * @param hook the hook to search for
      * @return true if hook was registered in the iso context.
      */
@@ -253,6 +249,7 @@ public class CallbackManager {
     
     /**
      * If this CallbackManager contains any callbacks to be run in a context other than the current context, return true.
+     * @return true if contains cross-isolate callback.
      */
     public synchronized boolean containsOtherIsolates() {
         if (hooks != null) {

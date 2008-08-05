@@ -150,7 +150,7 @@ public final class ServerChannel {
     /**
      * Handler that creates a new private mailbox when connect to by client in Channel.lookup().
      */
-    static class ServerChannelMailboxHandler implements MailboxHandler {
+    final static class ServerChannelMailboxHandler implements MailboxHandler {
         
         /** @inheritdoc */
         public MailboxAddress handleOpen(Mailbox originalMailbox, MailboxAddress originalAddress, MailboxAddress replyAddress) {
@@ -228,7 +228,7 @@ public final class ServerChannel {
      *
      * We use receive() in order to get notification when the ServerChannel is closed (recieve will get an AddressClosedException.)
      */
-    static class NewChannelEnvelope extends Envelope {
+    final static class NewChannelEnvelope extends Envelope {
         
         Channel newChannel;
         

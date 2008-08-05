@@ -104,6 +104,9 @@ public abstract class JDWPListener implements Runnable {
 
     /**
      * Processes a single command received over this listeners connection.
+     * 
+     * @param command
+     * @throws IOException
      */
     protected abstract void processCommand(CommandPacket command) throws IOException;
 

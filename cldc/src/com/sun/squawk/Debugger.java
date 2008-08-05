@@ -94,7 +94,7 @@ public abstract class Debugger {
         }
 /*end[DEBUG_CODE_ENABLED]*/
         
-        public void setThread(Thread thread, Object threadID) {
+        public final void setThread(Thread thread, Object threadID) {
             Assert.always(thread != null && threadID != null);
             Assert.always(this.thread == null && this.threadID == null);
             this.thread = thread;
@@ -104,14 +104,14 @@ public abstract class Debugger {
         /**
          * @return the threadID associated with this event. (set by debugger).
          */
-        public Object getThreadID() {
+        public final Object getThreadID() {
             return threadID;
         }
         
         /**
          * @return the thread associated with this event.  (set by debugger)
          */
-        public Thread getThread() {
+        public final Thread getThread() {
             return thread;
         }
     }
