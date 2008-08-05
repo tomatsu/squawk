@@ -75,12 +75,6 @@ public final class MethodBody {
     private final Method definingMethod;
 
     /**
-     * The index of this method's definition in the symbols table
-     * of its defining class.
-     */
-    private final int index;
-
-    /**
      * The maximum size (in words) of the operand stack during execution
      * of this method.
      */
@@ -110,6 +104,11 @@ public final class MethodBody {
      * The Squawk bytecode.
      */
     private final byte[] code;
+    
+    /**
+     * Record if this is a constructor that inlined it call to a super consctructor.
+     */
+    private boolean inlinedSuperConstructor;
 
 /*if[TYPEMAP]*/
     /**
@@ -123,7 +122,6 @@ public final class MethodBody {
      */
     MethodBody() {
     	this.definingMethod = null;
-    	this.index = -1;
     	this.maxStack = -1;
     	this.parametersCount = -1;
     	this.exceptionTable = null;
@@ -140,7 +138,6 @@ public final class MethodBody {
      * of a method.
      *
      * @param definingMethod    the method in which the method body was defined
-     * @param index             the index of the method in the symbols table
      * @param maxStack          the maximum size in words of the operand stack
      * @param locals            the types of the local variables (excludes parameters)
      * @param exceptionTable    the exception handler table
@@ -155,10 +152,10 @@ public final class MethodBody {
      * @param typeMap           the type map describing the type of the value (if any) written
      *                          to memory by each instruction in 'code'
      * @param reverseParameters true if the parameters are pushed right-to-left
+     * @param inlinedSuperConstructor True IFF this is a constructor that inlined java.lang.Object.<init>. 
      */
     public MethodBody(
                        Method                definingMethod,
-                       int                   index,
                        int                   maxStack,
                        Klass[]               locals,
                        ExceptionHandler[]    exceptionTable,
@@ -166,10 +163,10 @@ public final class MethodBody {
                        ScopedLocalVariable[] lvt,
                        byte[]                code,
                        byte[]                typeMap,
-                       boolean               reverseParameters
+                       boolean               reverseParameters,
+                       boolean               inlinedSuperConstructor
                      ) {
         this.definingMethod  = definingMethod;
-        this.index           = index;
         this.maxStack        = maxStack;
         this.exceptionTable  = exceptionTable;
         this.metadata        = MethodMetadata.create(definingMethod.getOffset(), lvt, lnt);
@@ -177,6 +174,7 @@ public final class MethodBody {
 /*if[TYPEMAP]*/
         this.typeMap = typeMap;
 /*end[TYPEMAP]*/
+        this.inlinedSuperConstructor = inlinedSuperConstructor;
 
         /*
          * Make an array of classes with both the parameter and local types.
@@ -205,16 +203,6 @@ public final class MethodBody {
      */
     public String toString() {
         return "[bytecode for "+definingMethod.getDefiningClass().getName()+"."+definingMethod.getName();
-    }
-
-    /**
-     * Gets the index of this method's definition in the symbols table
-     * of its defining class.
-     *
-     * @return  the index of this method's definition
-     */
-    public int getIndex() {
-        return index;
     }
 
     /**
@@ -300,7 +288,13 @@ public final class MethodBody {
     public MethodMetadata getMetadata() {
         return metadata;
     }
-
+    
+    /**
+     * True IFF this is a constructor that inlined java.lang.Object.<init>. Used by squawk verifier.
+     */
+    public boolean getInlinedSuperConstructor() {
+        return inlinedSuperConstructor;
+    }
 
     /*-----------------------------------------------------------------------*\
      *                                Encoding                               *

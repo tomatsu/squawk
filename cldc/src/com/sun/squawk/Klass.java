@@ -323,7 +323,7 @@ public class Klass {
             VM.println(")]");
         }
 
-        Klass klass = Klass.getClass(className, -1, false);
+        Klass klass = Klass.lookupKlass(className);
         ClassNotFoundException cnfe = null;
         Isolate isolate = VM.getCurrentIsolate();
         if (klass == null) {
@@ -2276,15 +2276,15 @@ public class Klass {
     public final int getDataMapEntry(int index) {
         Assert.that(index < dataMapLength && index >= 0, "data map index out of range");
 
-        UWord dataMapWord;
+        UWord dmWord;
         // If the length is larger than a word, we look into the UWord array
         if (dataMapLength > DATAMAP_ENTRIES_PER_WORD) {
-            dataMapWord = dataMap[index / DATAMAP_ENTRIES_PER_WORD];
+            dmWord = dataMap[index / DATAMAP_ENTRIES_PER_WORD];
         } else {
-            dataMapWord = this.dataMapWord;
+            dmWord = this.dataMapWord;
         }
 
-        int log2DataSize = (int)(dataMapWord.toPrimitive() >> ((index % DATAMAP_ENTRIES_PER_WORD) * DATAMAP_ENTRY_BITS)) & DATAMAP_ENTRY_MASK;
+        int log2DataSize = (int)(dmWord.toPrimitive() >> ((index % DATAMAP_ENTRIES_PER_WORD) * DATAMAP_ENTRY_BITS)) & DATAMAP_ENTRY_MASK;
         int dataSize = (1 << log2DataSize);
         return dataSize;
     }
@@ -2972,6 +2972,14 @@ public class Klass {
         return id;
     }
 
+    /**
+     * For completeness, define identity equals().
+     * @param obj
+     * @return
+     */
+    public boolean equals(Object obj) {
+        return this == obj;
+    }
 
     /*---------------------------------------------------------------------------*\
      *                          Application startup                              *
@@ -3656,7 +3664,7 @@ public class Klass {
      * @return             the created class
      */
     private static Klass bootHosted(Klass superType, String name, int systemID, int modifiers, Suite bootstrapSuite) throws HostedPragma {
-        Klass klass = getClass(name, systemID, true);
+        Klass klass = getClass(name, systemID);
         Assert.that(systemID == -1 || bootstrapSuite.getKlass(systemID) == klass);
         klass.setSuperType(superType);
         klass.updateModifiers(modifiers | klass.getModifiers());
@@ -3807,7 +3815,7 @@ public class Klass {
                         return null;
                 }
                 if (dimensions != 0) {
-                    return getClass(name.substring(0, dimensions) + klass.getInternalName(), -1, true);
+                    return getClass(name.substring(0, dimensions) + klass.getInternalName(), -1);
                 } else {
                     return klass;
                 }
@@ -3829,24 +3837,39 @@ public class Klass {
                 } else {
                     name = baseName;
                 }
-                return getClass(name, -1, true);
+                return getClass(name, -1);
             }
         } else {
-            return getClass(name, -1, true);
+            return getClass(name, -1);
         }
     }
 
     /**
+     * Look up klass in current suite or one of it's parents.
+     *
+     * @param   name       the name of the class to lookup.
+     * @return the Klass instance for <code>name</code>, or null if it doesn't exists
+     */
+    private static Klass lookupKlass(String name) {
+        Isolate isolate = VM.getCurrentIsolate();
+        Suite suite = isolate.getLeafSuite();
+        if (suite == null) {
+            suite = isolate.getBootstrapSuite();
+        }
+        return suite.lookup(name); 
+    }
+
+    /**
+     * Lookup or create class. If the class does not already exist, then a new Klass instance is
+     * created and returned.
+     * 
      * @see #getClass(String, boolean)
      *
      * @param   name       the name of the class to get
      * @param   systemID   the system wide identifier reserved for the class or -1 if it doesn't have one
-     * @param   create     if true and the class does not already exist, then a new Klass instance is
-     *                     created and returned
-     * @return the Klass instance for <code>name</code> or null if it doesn't exists and <code>create</code> is false
+     * @return the Klass instance for <code>name</code>
      */
-    private static Klass getClass(String name, final int systemID, boolean create) {
-
+    private static Klass getClass(String name, final int systemID) {
         Isolate isolate = VM.getCurrentIsolate();
         Suite suite = isolate.getLeafSuite();
         if (suite == null) {
@@ -3854,16 +3877,16 @@ public class Klass {
         }
 
         /*
-         * Look up current suite first
+         * Look up first
          */
         Klass klass = suite.lookup(name);
-        if (klass == null && create) {
+        if (klass == null) {
             /*
              * Now have to create the class
              */
             if (name.charAt(0) == '[') {
                 String componentName = name.substring(1);
-                Klass componentType = getClass(componentName, -1, true);
+                Klass componentType = getClass(componentName, -1);
                 int suiteID = (systemID == -1 ? suite.getNextAvailableClassNumber() : systemID);
                 klass = new Klass(name, componentType, suiteID, systemID != -1);
             } else {

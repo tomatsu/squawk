@@ -383,7 +383,6 @@ public final class IR {
          */
         MethodBody body = new MethodBody(
                                           method,
-                                          index,
                                           maxStack,
                                           locals,
                                           exceptionTable,
@@ -391,7 +390,8 @@ public final class IR {
                                           codeParser.getLocalVariableTable(),
                                           code,
                                           typeMap,
-                                          Translator.REVERSE_PARAMETERS
+                                          Translator.REVERSE_PARAMETERS,
+                                          false
                                         );
 
         return body;
