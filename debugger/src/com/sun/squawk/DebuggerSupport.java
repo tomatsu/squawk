@@ -24,8 +24,6 @@
 
 package com.sun.squawk;
 
-import com.sun.squawk.ExecutionPoint;
-
 import com.sun.squawk.debugger.*;
 import com.sun.squawk.debugger.DataType.*;
 import com.sun.squawk.util.*;
@@ -54,7 +52,7 @@ public class DebuggerSupport {
                 case VMThread.Q_CONDVAR:
                 case VMThread.Q_ISOLATEJOIN:
                 case VMThread.Q_JOIN:            return JDWP.ThreadStatus_WAIT;
-                case 0:
+                case VMThread.Q_NONE:
                 case VMThread.Q_RUN:
                 case VMThread.Q_EVENT:           return JDWP.ThreadStatus_RUNNING;
                 case VMThread.Q_HIBERNATEDRUN:   return JDWP.ThreadStatus_ZOMBIE;
@@ -757,11 +755,13 @@ public class DebuggerSupport {
         
         /**
          * Returns the new primitive value for the slot last checked by shouldSetSlot.
+         * @return new value
          */
         public abstract long newPrimValue();
                 
         /**
          * Returns the new reference value for the slot last checked by shouldSetSlot.
+         * @return new value
          */
         public abstract Object newObjValue();
 

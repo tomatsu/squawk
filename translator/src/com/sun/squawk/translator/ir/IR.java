@@ -224,6 +224,7 @@ public final class IR {
     
     /**
      * Calculate number of instructions in IR.
+     * @return number of IR nodes
      */
     public int size() {
         Instruction instr = head;

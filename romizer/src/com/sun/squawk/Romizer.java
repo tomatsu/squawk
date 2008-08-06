@@ -221,6 +221,8 @@ public class Romizer {
         out.println();
         out.println("    -cp:<directories and jar/zip files separated by '"+File.pathSeparatorChar+"'>");
         out.println("                        paths where classes and sources can be found (required)");
+        out.println("    -suitepath:<directories separated by '"+File.pathSeparatorChar+"'>");
+        out.println("                        path where suite files can be found");        
         out.println("    -o:<name>           name of suite to generate (required)");
         out.println("    -boot:<name>        name of suite to to use for references to " + ObjectMemory.BOOTSTRAP_URI + " suite URL (default=file://squawk.suite)");
         out.println("    -parent:<name>      name of suite to use as the parent of the suite being built");
@@ -234,6 +236,7 @@ public class Romizer {
         out.println("    -arch:<name>        base name for dynamic compiler. Full name will be");
         out.println("                        \"com.sun.squawk.compiler.<name>Compiler\"");
         out.println("    -override:<file>     file to use to override the build.properties file found locally, defaults to build.override");
+        out.println("    -nobuildproperties   do not load build.propeties");
         protoTranslator.printOptionProperties(out, true);
         out.println("    -strip:<t>          strip symbolic information according to <t>:");
         out.println("                           'd' - debug: retain all symbolic info");
@@ -244,20 +247,23 @@ public class Romizer {
         out.println("                                 for private fields and methods");
         out.println("    -lnt                retain line number tables");
         out.println("    -lvt                retain local variable tables");
-        out.println("    -timer             print various phase timing statistics");
-        out.println("    -verbose, -v     provide more output while running");
+        out.println("    -timer              print various phase timing statistics");
+        out.println("    -verbose, -v        provide more output while running");
         out.println("    -stats              print various translation statistics");
-        out.println("    -traceimage         trace building of ROM image");
+        out.println("    -key:<name>         set key to add to suite's JAD properties");
+        out.println("                        must be followed by -value: option");
+        out.println("    -value:<name>       set value to add to suite's JAD properties");
+        out.println("                        must be preceded by -key: option");
         
         protoTranslator.printTraceFlags(out);
         
         if (Klass.TRACING_ENABLED) {
-            out.println("    -tracestripping       trace stripping of symbolic information from suite");
+            out.println("    -tracestripping     trace stripping of symbolic information from suite");
             out.println("    -traceoms           trace object memory serialization");
             out.println("    -traceswapper       trace endianess swapping");
         }
         
-        out.println("    -help               show this help message and exit");
+        out.println("    -h                  show this help message and exit");
         out.println();
         out.println();
         out.println("More than one suite can be created by separating the arguments for each");
@@ -275,7 +281,7 @@ public class Romizer {
      * @param file     the file of exclude specifications
      * @return the read in specifications
      */
-    private Vector<String> readExcludesFile(String file) {
+    private static Vector<String> readExcludesFile(String file) {
         Vector<String> lines = new Vector<String>();
         ArgsUtilities.readLines(file, lines);
 
@@ -312,6 +318,7 @@ public class Romizer {
      * Commmand line interface.
      *
      * @param args
+     * @throws IOException 
      */
     public static void main(String args[]) throws IOException {
         Romizer romizer = null;
@@ -525,8 +532,8 @@ public class Romizer {
                 usage(null);
                 return null;
             } else if (arg.startsWith("-boot:")) {
-                String suiteName = arg.substring("-boot:".length());
-                String suiteUrl = "file://" + suiteName + Suite.FILE_EXTENSION;
+                String bootSuiteName = arg.substring("-boot:".length());
+                String suiteUrl = "file://" + bootSuiteName + Suite.FILE_EXTENSION;
                 System.setProperty(ObjectMemory.BOOTSTRAP_URI_PROPERTY, suiteUrl);
                 try {
                     parentSuite = objectGraphLoader.loadSuite(suiteUrl);
@@ -535,8 +542,8 @@ public class Romizer {
                 }
                 System.setProperty("bootstrap.suite.url", suiteUrl);
             } else if (arg.startsWith("-parent:")) {
-                String suiteName = arg.substring("-parent:".length());
-                String suiteUrl = "file://" + suiteName + Suite.FILE_EXTENSION;
+                String parentSuiteName = arg.substring("-parent:".length());
+                String suiteUrl = "file://" + parentSuiteName + Suite.FILE_EXTENSION;
                 try {
                     parentSuite = objectGraphLoader.loadSuite(suiteUrl);
                 } catch (IOException e) {
