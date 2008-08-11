@@ -943,6 +943,9 @@ public class Build {
                 Build.delete(new File(userBaseDir, userBaseDir + ".sym"));
             }
         });
+        
+        // Add the "uei" command
+        addCommand(new UEICommand(this));
                
     }
 
@@ -1422,7 +1425,7 @@ public class Build {
     /**
      * Prints some information describing the builder's configuration.
      *
-     * @param out  where to print
+     * @param stdout  where to print
      */
     private void printConfiguration() {
 
