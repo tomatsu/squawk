@@ -25,39 +25,44 @@
 package com.sun.squawk.builder.commands;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.jar.Manifest;
 
 import com.sun.squawk.builder.Build;
 import com.sun.squawk.builder.BuildException;
 import com.sun.squawk.builder.Command;
 import com.sun.squawk.builder.Target;
+import com.sun.squawk.builder.util.FileSet;
 
 /**
  * Command to build a UEI-compliant squawk emulator.
  */
 public class UEICommand extends Command {
     
-    protected final static String EXEC_PATH     = System.getProperty("user.dir");
+    protected final static String EXEC_PATH = System.getProperty("user.dir");
     
     // Workaround for pathnames that include spaces
-    protected final static File      SQUAWK_DIR = (!EXEC_PATH.contains(" ") ? new File(EXEC_PATH) : null);
+    protected final static File SQUAWK_DIR = (!EXEC_PATH.contains(" ") ? new File(EXEC_PATH) : null);
     
-    protected final static File  UEI_MODULE_DIR = new File(SQUAWK_DIR, "uei");
+    protected final static File UEI_MODULE_DIR = new File(SQUAWK_DIR, "uei");
     protected final static File J2SE_MODULE_DIR = new File(UEI_MODULE_DIR, "emulator-j2se");
     protected final static File J2ME_MODULE_DIR = new File(UEI_MODULE_DIR, "emulator-j2me");
     
     protected final static String[] UEI_DIRECTORIES = { "bin", "lib", "doc", "squawk", "logs", "temp" };
-    protected final static String[] BIN_FILES       = { "squawk", "squawk.suite", "squawk.suite.api", "squawk.sym", "squawk.jar",
-                                                        "squawk_classes.jar", "build-commands.jar", "build.properties" };
+    protected final static String[] BIN_FILES = { "squawk", "squawk.suite", "squawk.suite.api", "squawk.sym", "squawk.jar",
+                                                  "squawk_classes.jar", "build-commands.jar", "build.properties" };
     protected final static String[] BIN_MODULE_JARS = { "romizer", "translator", "cldc", "debugger", "debugger-proxy" };
-    protected final static String[] VANILLA_FILES   = { "squawk", "squawk.suite", "squawk.suite.api", "squawk.suite.metadata",
-                                                        "squawk.sym", "squawk.jar", "squawk_classes.jar" };
+    protected final static String[] VANILLA_FILES = { "squawk", "squawk.suite", "squawk.suite.api", "squawk.suite.metadata",
+                                                      "squawk.sym", "squawk.jar", "squawk_classes.jar" };
     
     protected final static String MODULE_MANIFEST = getPath("resources", "META-INF", "MANIFEST.MF");
     
     protected final static File DEFAULT_DIRECTORY = new File(UEI_MODULE_DIR, "squawk-emulator");
     
+    // FIXME HACK: quick disabling of UEI command when uei module does not exist
+    protected final static boolean UEI_ACTIVE = UEI_MODULE_DIR.exists();
     
     protected final Target TARGET_EMULATOR_J2SE;
     protected final Target TARGET_EMULATOR_J2ME;
@@ -84,7 +89,7 @@ public class UEICommand extends Command {
      * {@inheritDoc}
      */
     public String getDescription() {
-        return "Builds the Unified Emulator Interface(UEI) module";
+        return (UEI_ACTIVE ? "" : "<< currently disabled >> ") + "Builds the Unified Emulator Interface(UEI) module";
     }
     
     private void usage() {
@@ -109,6 +114,10 @@ public class UEICommand extends Command {
      * {@inheritDoc}
      */
     public void run(String args[]) throws BuildException {
+        if (!UEI_ACTIVE) {
+            throw new BuildException("UEI disabled - UEI module does not exist");
+        }
+        
         stdout = System.out;
         stderr = System.err;
         vbsout = new PrintStream(new OutputStream() { public void write(int b) {;} });
@@ -179,6 +188,7 @@ public class UEICommand extends Command {
         // Build squawk
         stdout.println("Building squawk...");
         builder();
+        // Build uei modules
         TARGET_EMULATOR_J2SE.run(null);
         TARGET_EMULATOR_J2ME.run(null);
         
@@ -226,17 +236,9 @@ public class UEICommand extends Command {
         stdout.println("Creating API jars...");
         
         File libDir = new File(directory, "lib");
-        //env.createJar(new File(libDir, "cldc11.jar"), FileSet, getFile(SQUAWK_DIR, "cldc", MODULE_MANIFEST));
-        //env.exec("jar cfm "+libDir+"/cldc11.jar "+SQUAWK_DIR+"/cldc/resources/META-INF/MANIFEST.MF -C "+SQUAWK_DIR+"/cldc/j2meclasses/ .");
-        //env.exec("jar cfm "+libDir+"/imp10.jar  "+SQUAWK_DIR+"/imp/resources/META-INF/MANIFEST.MF  -C "+SQUAWK_DIR+"/imp/j2meclasses/ .");
-        //env.exec("jar cf  "+libDir+"/debugger.jar                                                  -C "+SQUAWK_DIR+"/debugger/j2meclasses/ .");
-        buildExec("jar", "cfm", getPath(libDir, "cldc11.jar"), getPath(SQUAWK_DIR, "cldc", MODULE_MANIFEST),
-                "-C", getPath(SQUAWK_DIR, "cldc", "j2meclasses"), ".");
-        buildExec("jar", "cfm", getPath(libDir, "imp10.jar"),  getPath(SQUAWK_DIR, "imp",  MODULE_MANIFEST),
-                "-C", getPath(SQUAWK_DIR, "imp", "j2meclasses"), ".");
-        buildExec("jar", "cf",  getPath(libDir, "debugger.jar"),
-                "-C", getPath(SQUAWK_DIR, "debugger", "j2meclasses"), ".");
-        
+        createJar(new File(libDir, "cldc11.jar"), getFile(SQUAWK_DIR, "cldc", "j2meclasses"), getFile(SQUAWK_DIR, "cldc", MODULE_MANIFEST));
+        createJar(new File(libDir, "imp10.jar"), getFile(SQUAWK_DIR, "imp", "j2meclasses"), getFile(SQUAWK_DIR, "imp", MODULE_MANIFEST));
+        createJar(new File(libDir, "debugger.jar"), getFile(SQUAWK_DIR, "debugger", "j2meclasses"), null);
         
         
         // Create API javadoc
@@ -337,8 +339,8 @@ public class UEICommand extends Command {
         
         Build.main(args);
     }
-    
-    /**
+
+    /*
      * Convenience method that invokes <code>Build.exec(String)</code> with
      * the given arguments.
      * 
@@ -346,6 +348,7 @@ public class UEICommand extends Command {
      * 
      * @see Build#exec(String)
      */
+    /*
     protected void buildExec(String... args) {
         String cmd = Build.join(args, 0, args.length, " ");
         
@@ -353,6 +356,7 @@ public class UEICommand extends Command {
         
         env.exec(cmd);
     }
+    */
     
     /**
      * Convenience method that copies a file from one directory to another.
@@ -401,9 +405,40 @@ public class UEICommand extends Command {
     }
     
     /**
+     * Convenience method that creates a jar-file using all the files in
+     * <code>srcFolder</code> and the specified <code>manifest</code>.
+     * 
+     * @param dest The jar-file to be created.
+     * @param srcFolder The source for the jar.
+     * @param manifest The manifest for the jar. If this value is null, then no
+     *            manifest will be included.
+     * 
+     * @throws BuildException if the build fails.
+     * 
+     * @see Build#createJar(File, FileSet[], Manifest)
+     */
+    protected void createJar(File dest, File srcFolder, File manifest) throws BuildException {
+        Manifest mf = null;
+        
+        if (manifest != null) {
+            try {
+                mf = new Manifest(new FileInputStream(manifest));
+            } catch (Exception e) {
+                throw new BuildException("Error reading manifest: " + manifest, e);
+            }
+        }
+        
+        env.createJar(dest, new FileSet[] { new FileSet(srcFolder, (FileSet.Selector) null) }, mf);
+    }
+    
+    /**
      * {@inheritDoc}
      */
     public void clean() {
+        if (!UEI_ACTIVE) {
+            return;
+        }
+        
         TARGET_EMULATOR_J2SE.clean();
         TARGET_EMULATOR_J2ME.clean();
         // clean(DEFAULT_DIRECTORY);
