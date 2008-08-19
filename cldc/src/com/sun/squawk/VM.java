@@ -891,11 +891,27 @@ public class VM implements GlobalStaticFields {
 
     }
     
+    private static boolean insaneFP(Object stack, Address fp) {
+        Offset fpOffset = fp.diff(Address.fromObject(stack));
+        int size = GC.getArrayLengthNoCheck(stack) * HDR.BYTES_PER_WORD;
+        if (fpOffset.ge(Offset.zero()) && fpOffset.lt(Offset.fromPrimitive(size))) {
+            return false;
+        } else {
+            VM.print("Illegal frame pointer during stack decoding: ");
+            VM.print(fpOffset.toPrimitive());
+            VM.println();
+            return true;
+        }
+
+    }
+    
     /**
      * Returns an array of stack trace elements, each representing one stack frame in the current call stack.
      * The zeroth element of the array represents the top of the stack, which is the frame of the caller's
      * method. The last element of the array represents the bottom of the stack, which is the first method
      * invocation in the sequence.
+     * 
+     * NOTE: This method may retun null ExecutionPoints in the aray if an error occurs while decoding the stack. 
      *
      * @param thread the thread to inspect
      * @param count  how many frames from the stack to reify, starting from the frame
@@ -904,17 +920,24 @@ public class VM implements GlobalStaticFields {
      * @return the reified call stack
      */
     private static ExecutionPoint[] reifyStack0(VMThread thread, Address fpBase, int count) {
-        
-        if (fpBase.isZero()) {
+        Object stack = thread.getStack();
+
+        if (fpBase.isZero() || insaneFP(stack, fpBase)) {
             return new ExecutionPoint[0];
         }
-        
+
         /*
          * Count the number of frames and allocate the array.
          */
-        Object stack = thread.getStack();
+        Assert.always(stack != null);
+        Offset fpBaseOffset = fpBase.diff(Address.fromObject(stack));
         int frames = 0;
-        Address fp = fpBase;
+        Address fp;
+        
+        /*
+         * Count the number of frames in GC free zone.
+         */
+        fp = fpBase;
 
         // Skip frame for this method
         fp = VM.getPreviousFP(fp);
@@ -923,6 +946,10 @@ public class VM implements GlobalStaticFields {
             frames++;
             fp = VM.getPreviousFP(fp);
         }
+        
+        // GC might invalidate these ocasionally, so let's do it explicitly:
+        fpBase = Address.zero();
+        fp     = Address.zero();
 
         // Skip unrequested frames
         if (count >= 0 && count < frames) {
@@ -933,13 +960,16 @@ public class VM implements GlobalStaticFields {
             return new ExecutionPoint[0];
         }
 
+        // WARNING: Allocation may cause GC, which will invalidate all Addresses.
         ExecutionPoint[] trace = new ExecutionPoint[frames];
 
-        fp = fpBase;
+        fp = Address.fromObject(stack).addOffset(fpBaseOffset); // recompute Address
         for (int i = 0; i != frames; ++i) {
             Address ip = VM.getPreviousIP(fp);
             fp = VM.getPreviousFP(fp);
-            Assert.always(!fp.isZero());
+            if (insaneFP(stack, fp)) {
+                return trace;
+            }
             Object mp = VM.getMP(fp);
             Offset bci = ip.diff(Address.fromObject(mp));
 
@@ -947,6 +977,7 @@ public class VM implements GlobalStaticFields {
             // a collection and so the fp need's to be saved as a
             // stack offset and restored after the allocation
             Offset fpOffset = fp.diff(Address.fromObject(stack));
+            fp = Address.zero(); // GC might invalidate this ocasionally, so let's do it explicitly:
             trace[i] = new ExecutionPoint(fpOffset, bci, mp);
             fp = Address.fromObject(stack).addOffset(fpOffset);
         }
@@ -3001,7 +3032,11 @@ hbp.dumpState();
         if (exc != VM.getOutOfMemoryError() && trace != null) {
             for (int i = 0; i != trace.length; ++i) {
                 VM.print("    ");
-                trace[i].printToVM();
+                if (trace[i] != null) {
+                    trace[i].printToVM();
+                } else {
+                    VM.print("undecipherable");
+                }
             }
         }
     }

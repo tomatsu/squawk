@@ -163,7 +163,11 @@ public class Throwable {
             if (this != VM.getOutOfMemoryError() && trace != null) {
                 for (int i = 0; i != trace.length; ++i) {
                     stream.print("    ");
-                    trace[i].print(stream);
+                    if (trace[i] != null) {
+                        trace[i].print(stream);
+                    } else {
+                        stream.print("undecipherable");
+                    }
                     stream.println();
                 }
             }
