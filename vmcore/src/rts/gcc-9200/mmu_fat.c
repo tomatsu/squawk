@@ -1,22 +1,22 @@
 /*
  * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -26,14 +26,14 @@
 #include "system.h"
 #include "flash.h"
 /*
- * This file contains routines that query the contents of the FlashFile FAT 
+ * This file contains routines that query the contents of the FlashFile FAT
  * and set up the MMU to match the virtual file settings in the FAT.
- * 
- * To understand this file you will need an external source that explains the 
+ *
+ * To understand this file you will need an external source that explains the
  * ARM9 MMU. We used and recommend "ARM System Developer's Guide" by Sloss, Symes
- * and Wright. 
+ * and Wright.
  */
- 
+
 // FAT constants: these must match the constants in FlashManager.java and ConfigPage.java
 #define VIRTUAL_ADDRESS_FILE_COUNT			8
 #define FAT_SECTOR							5
@@ -77,8 +77,8 @@ static unsigned int* get_address_of_level_2_table_containing(unsigned int virtua
 static void map_level_2_entry_using_addresses(int virtual_address, int physical_address) {
 	int j;
 	unsigned int* level_2_table = get_address_of_level_2_table_containing(virtual_address);
-	unsigned int first_level_2_table_entry = (virtual_address >> 12) & 0xFF; 
-	
+	unsigned int first_level_2_table_entry = (virtual_address >> 12) & 0xFF;
+
 	// for "coarse" page tables we need 16 identical entries in a row
 	for (j=0; j<16; j++) {
 		// 31..16 physical base address
@@ -98,13 +98,13 @@ static void map_level_2_entry_using_addresses(int virtual_address, int physical_
  */
 void mmu_enable(void) {
 	// enable access to all domains
-	AT91_coprocessor15_3(0, 0xFFFFFFFF); 
-	
+	AT91_coprocessor15_3(0, 0xFFFFFFFF);
+
 	// set MMU translation table base address
-	AT91_coprocessor15_2(0xFFFFFFFF, get_level1_page_table_address()); 
-	
+	AT91_coprocessor15_2(0xFFFFFFFF, get_level1_page_table_address());
+
 	// turn MMU on
-	AT91_coprocessor15_1(0, 1<<0); 
+	AT91_coprocessor15_1(0, 1<<0);
 }
 
 /*
@@ -112,12 +112,13 @@ void mmu_enable(void) {
  * and then compared to a copy held in flash, which is overwritten only if it
  * is different. The RAM copy is then discarded. This strategy means that
  * the top level page table - which doesn't change in normal operation - is not
- * wasting valuable RAM space. 
+ * wasting valuable RAM space.
  */
 void page_table_init() {
 	int i, j;
+	unsigned int ram_cache_type;
 	unsigned int level_1_table[4096];
-	
+
 	// map virtual to physical for 4GB and make uncacheable
 	for (i=0; i<4096; i++) {
 		// 31..20 physical base address
@@ -132,29 +133,31 @@ void page_table_init() {
 	}
 
 	// turn on caching for each 1Mb of RAM
+	ram_cache_type = get_hardware_revision() == 7 ? 0x8 : 0xC; // use write-through for rev 7; write-back otherwise
+	// the use of write-through is a temporary measure to avoid crashes with rev 7 hardware
 	for (i=0; i < ((get_ram_size() + (1024*1024) - 1) >> 20); i++) {
-		level_1_table[(RAM_BASE_ADDR>>20) + i] |= 0xC; // enable write-back caching
+		level_1_table[(RAM_BASE_ADDR>>20) + i] |= ram_cache_type;
 	}
 
 	// turn on caching for each 1Mb of flash
 	for (i=0; i < (get_flash_size() >> 20); i++) {
 		level_1_table[(FLASH_BASE_ADDR>>20)+i] |= 0x8; // write-through caching
 	}
-	
+
 	level_1_table[UNCACHED_RAM_START_ADDDRESS >> 20] = 0x20000000 | 0xC12;
 
 	// Set up tables for virtual files
 	for (j = 0; j < VIRTUAL_ADDRESS_FILE_COUNT; ++j) {
-		level_1_table[(VIRTUAL_ADDRESS_SPACE_LOWER_BOUND >> 20) + j] = 
+		level_1_table[(VIRTUAL_ADDRESS_SPACE_LOWER_BOUND >> 20) + j] =
 			(get_mmu_ram_space_address()+(LEVEL_2_TABLE_SIZE*j)) | 0x11; // subdivide this 1Mb of flash
 		for (i=0; i<NUMBER_OF_64K_PAGES_IN_1MB; i++) {
 			// map to itself - will cause a memory access fault if not overwritten
 			map_level_2_entry_using_addresses(
 				VIRTUAL_ADDRESS_SPACE_LOWER_BOUND+(j*VIRTUAL_ADDRESS_FILE_SPACING)+(i*SECTOR_SIZE),
-				VIRTUAL_ADDRESS_SPACE_LOWER_BOUND+(j*VIRTUAL_ADDRESS_FILE_SPACING)+(i*SECTOR_SIZE)); 
+				VIRTUAL_ADDRESS_SPACE_LOWER_BOUND+(j*VIRTUAL_ADDRESS_FILE_SPACING)+(i*SECTOR_SIZE));
 		}
 	}
-	
+
 	unsigned int* level_1_table_in_flash = (unsigned int*)get_level1_page_table_address();
 	int need_to_flash = FALSE;
 	for (i=0; i<4096; i++) {
@@ -191,7 +194,7 @@ static int is_FAT_valid() {
 /*
  * Answer the space (in bytes) allocated to the FlashFile that occupies
  * the given virtual address. If there is no such file, answers -1.
- * 
+ *
  * required_virtual_address   Virtual address of required FlashFile
  */
 int get_allocated_file_size(int required_virtual_address) {
@@ -239,7 +242,7 @@ int get_allocated_file_size(int required_virtual_address) {
 /*
  * Answer the virtual address of the flash file with a specified name. If
  * there is no such file, answers -1.
- * 
+ *
  * target_file_name_length    Length of the file name
  * target_file_name           Address of the buffer containing the file name
  */
@@ -287,10 +290,10 @@ unsigned int get_file_virtual_address(int target_file_name_length, char* target_
 }
 
 /*
- * Reprogram the MMU to map files into virtual memory as implied 
+ * Reprogram the MMU to map files into virtual memory as implied
  * by the virtual memory addresses specified in the FAT. Answer whether
  * a valid FAT was detected (if not, the MMU is left untouched).
- * 
+ *
  * ignore_obsolete_files    specify whether or not to map obsolete files
  */
 int reprogram_mmu(int ignore_obsolete_files) {
@@ -335,7 +338,7 @@ int reprogram_mmu(int ignore_obsolete_files) {
 		}
 		recordStatus = recordStatus = read_number(fat_ptr, 2);
 	}
-	
+
 	// invalidate data cache
 	data_cache_disable();
 	invalidate_data_tlb();
