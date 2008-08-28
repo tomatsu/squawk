@@ -29,6 +29,8 @@ import com.sun.squawk.pragma.*;
 import com.sun.squawk.util.*;
 import com.sun.squawk.vm.*;
 import java.io.PrintStream;
+import com.sun.squawk.platform.Platform;
+import com.sun.squawk.platform.SystemEvents;
 import java.util.Enumeration;
 
 /**
@@ -109,6 +111,11 @@ public final class VMThread implements GlobalStaticFields {
     private static EventHashtable events;
     
     /**
+     * Hashtable of threads waiting for an OS event.
+     */
+    private static EventHashtable osevents;
+    
+    /**
      * Count of contended monitorEnters
      */
     private static int contendedEnterCount;
@@ -131,6 +138,11 @@ public final class VMThread implements GlobalStaticFields {
      */
     static int waitTimeHi32;
     static int waitTimeLo32;
+    
+    /**
+     * Handler for OS events...
+     */
+    static SystemEvents systemEvents;
 
 
     /*-----------------------------------------------------------------------*\
@@ -689,6 +701,12 @@ public final class VMThread implements GlobalStaticFields {
             concat(")]");
     }
 
+    /**
+     * Handler for OS events...
+     */
+    public static SystemEvents getSystemEvents() {
+        return systemEvents;
+    }
 
     /*-----------------------------------------------------------------------*\
      *                              Thread state                             *
@@ -1114,6 +1132,7 @@ VM.println();
         runnableThreads     = new ThreadQueue();
         timerQueue          = new TimerQueue();
         events              = new EventHashtable();
+        osevents            = new EventHashtable();
         currentThread       = asVMThread(new Thread()); // Startup using a dummy thread
         serviceThread       = currentThread;
 
@@ -1132,6 +1151,14 @@ VM.println();
          */
         //NativeUnsafe.setObject(serviceStack, SC.owner, serviceThread);
         serviceThread.stack = serviceStack.toObject();
+        
+    }
+    
+    /**
+     * Initialize the threading system.
+     */
+    static void initializeThreading2() {
+        systemEvents = Platform.createSystemEvents();
     }
 
     /**
@@ -1525,9 +1552,14 @@ VM.println();
                 signalEvent(event);
             }
 
+            if (systemEvents != null) {
+                systemEvents.pollEvents();
+            }
+
             /*
              * Add any threads waiting for a certain time that are now due.
              */
+//VM.println("Add any threads waiting for a certain time that are now due.");
             while ((thread = timerQueue.next()) != null) {
                 Assert.that(thread.isAlive());
                 Monitor monitor = thread.monitor;
@@ -1549,7 +1581,7 @@ VM.println();
                 }
                 addToRunnableThreadsQueue(thread);
             }
-
+//VM.println("Break if there is something to do.");
             /*
              * Break if there is something to do.
              */
@@ -1560,9 +1592,10 @@ VM.println();
             /*
              * Wait for an event or until timeout.
              */
+//VM.println("Wait for an event or until timeout..");
             long delta = timerQueue.nextDelta();
             if (delta > 0) {
-                if (delta == Long.MAX_VALUE && events.size() == 0) {
+                if (delta == Long.MAX_VALUE && events.size() == 0 && osevents.size() == 0) {
                     /*
                      * This situation will usually only come about if the bootstrap
                      * isolate called System.exit() instead of VM.stopVM(). However,
@@ -1573,9 +1606,14 @@ VM.println();
                     Isolate.printAllIsolateStates(System.err);
                     Assert.shouldNotReachHere("Dead-locked system: no schedulable threads");
                 }
+//VM.println("waitForEventl timeout..");
                 long waitTime = VM.getTimeMillis();
                 long oldWaitTimeTotal = getTotalWaitTime();
-               	VM.waitForEvent(delta);
+                if (systemEvents == null || osevents.size() == 0) {
+                    VM.waitForEvent(delta);
+                } else {
+                     systemEvents.waitForEvents(delta);
+                }
                 waitTime = VM.getTimeMillis() - waitTime;
                 oldWaitTimeTotal += waitTime;
                 waitTimeHi32 = (int)(oldWaitTimeTotal >> 32);
@@ -1791,6 +1829,7 @@ VM.println();
         return otherThread.stack;
     }
 
+    /* ------------------- squawk events ---------------------*/
     /**
      * Block a thread waiting for an event.
      *
@@ -1827,24 +1866,57 @@ VM.println();
      * @param event the event number to unblock
      */
     private static void signalEvent(int event) {
-        VMThread thread = findEvent(event);
+        VMThread thread = events.findEvent(event);
         if (thread != null) {
             addToRunnableThreadsQueue(thread);
         }
     }
 
+
+       /* OS events are just like squawk events, but the event IDs come from the OS< and may confict with squawk event IDs
+     *  so we need to keep them seperate. Put a class around these two!!!!
+     * /
+
     /**
-     * Finds and removes a thread blocked on an event.
+     * Block a thread waiting for an OS event.
+     *
+     * Note: The bulk of the work is done in this function so that there are
+     * no dangling references to other threads or globals in the activation record
+     * that calls reschedule().
+     *
+     * @param event the event number to wait for
+     */
+    private static void waitForOSEvent0(int event) {
+/*if[FINALIZATION]*/
+        startFinalizers();
+/*end[FINALIZATION]*/
+        VMThread t = currentThread;
+        t.setInQueue(VMThread.Q_EVENT);
+        osevents.put(event, t);
+        Assert.that(t.nextThread == null);
+    }
+
+    /**
+     * Block a thread waiting for an event.
+     *
+     * @param event the event number to wait for
+     */
+    public static void waitForOSEvent(int event) {
+        waitForOSEvent0(event);
+        reschedule();
+        Assert.that(!currentThread.inQueue(VMThread.Q_EVENT) || currentThread.nextThread == null);
+    }
+
+    /**
+     * Restart a thread blocked on an event.
      *
      * @param event the event number to unblock
      */
-    static VMThread findEvent(int event) {
-        VMThread thread = (VMThread)events.remove(event);
+    public static void signalOSEvent(int event) {
+        VMThread thread = osevents.findEvent(event);
         if (thread != null) {
-            thread.setNotInQueue(VMThread.Q_EVENT);
-            Assert.that(thread.nextThread == null);
+            addToRunnableThreadsQueue(thread);
         }
-        return thread;
     }
 
     /**
@@ -2992,7 +3064,7 @@ final class TimerQueue {
 /**
  * Extension of IntHashtable that enables the pruning the threads of hibernated isolates.
  */
-class EventHashtable extends IntHashtable implements IntHashtableVisitor {
+final class EventHashtable extends IntHashtable implements IntHashtableVisitor {
 
     /**
      * The isolate being pruned.
@@ -3019,14 +3091,28 @@ class EventHashtable extends IntHashtable implements IntHashtableVisitor {
     public void visitIntHashtable(int key, Object value) {
         VMThread t = (VMThread)value;
         if (t.getIsolate() == isolate) {
-            VMThread t2 = VMThread.findEvent(key); // removes event from table
+            VMThread t2 = findEvent(key); // removes event from table
             Assert.that(t == t2);
             Assert.that(t.nextThread == null);
             t.setInQueue(VMThread.Q_HIBERNATEDRUN);
             isolate.addToHibernatedRunThread(t);
         }
     }
-}
+    
+    /**
+     * Finds and removes a thread blocked on an event.
+     *
+     * @param event the event number to unblock
+     */
+    VMThread findEvent(int event) {
+        VMThread thread = (VMThread)remove(event);
+        if (thread != null) {
+            thread.setNotInQueue(VMThread.Q_EVENT);
+            Assert.that(thread.nextThread == null);
+        }
+        return thread;
+    }
+} /* EventHashtable */
 
 /**
  * <code>CrossIsolateThread</code> is a package-private thread class that is allowed to be created in one isolate, but execute in the context of another isolate.

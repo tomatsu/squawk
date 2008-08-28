@@ -203,11 +203,11 @@ void cioExecute(void) {
         }
 
 /*      Moved to native method:
-        case ChannelConstants_INTERNAL_COPYBYTES:  {
-            copyBytes(o1, i2, o2, i3, i1, i4 != 0);
-            break;
-        }
-*/
+ *        case ChannelConstants_INTERNAL_COPYBYTES:  {
+ *            copyBytes(o1, i2, o2, i3, i1, i4 != 0);
+ *            break;
+ *        }
+ */
 
         case ChannelConstants_INTERNAL_GETTIMEMICROS_HIGH: {
             returnLongResult(sysTimeMicros());

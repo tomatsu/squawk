@@ -298,11 +298,21 @@ public class Romizer {
                 line = line.substring(index+1);
                 String value = "false"; // The default value where there is not '='.
                 index = predicate.indexOf('=');
+                boolean doNotOfPredicate = false;
+                
                 if (index != -1) {
                     value = predicate.substring(index+1);
+                    if (predicate.indexOf("!=") == (index - 1)) {
+                        index--;
+                        doNotOfPredicate = true;
+                    }
                     predicate = predicate.substring(0, index);
                 }
-                if (!getBuildProperty(predicate, "false").equals(value)) {
+                boolean predicateTrue = getBuildProperty(predicate, "false").equals(value);
+                if (doNotOfPredicate) {
+                    predicateTrue = !predicateTrue;
+                }
+                if (!predicateTrue) {
                     continue;
                 }
                 while (line.charAt(0) == ' ') { // remove any extra spaces

@@ -48,6 +48,97 @@ import com.sun.squawk.io.ConnectionBase;
  * for an HTTP connection.
  */
 public class Protocol extends ConnectionBase implements HttpConnection {
+    
+    public static void main(String[] args) {
+        try {
+            System.err.println("creating twiddler"); // start thread to verify that sockets are non-blocking...
+            Thread twiddler = new Thread(new Runnable() {
+                public void run() {
+                    while (true) {
+                        VM.print('$');
+                        Thread.yield();
+                    }
+                }
+            }, "Twiddler Thread");
+            twiddler.setPriority(Thread.MIN_PRIORITY);
+            VM.setAsDaemonThread(twiddler);
+            twiddler.start();
+            
+            HttpConnection conn = null;
+            InputStream is = null;
+            OutputStream os = null;
+
+            try {
+                conn = (HttpConnection) Connector.open(args[0]);
+                conn.setRequestMethod(HttpConnection.POST);
+                conn.setRequestProperty("User-Agent", "Profile/MIDP-1.0 Configuration/CLDC-1.0");
+                conn.setRequestProperty("Content-Language", "en-US");
+                conn.setRequestProperty("Accept", "application/octet-stream");
+                conn.setRequestProperty("Connection", "close");
+
+                os = conn.openOutputStream();
+                os.write("test\n\n\n".getBytes());
+                os.flush();
+
+                System.out.println(conn.getResponseCode());
+                is = conn.openInputStream();
+                while (is.available() > 0) {
+                    System.out.print((char)is.read());
+                }
+
+            } finally {
+
+                try {
+                    is.close();
+                    os.close();
+                    conn.close();
+                } catch (Exception ex) {
+                    // ignore any null pointers etc for this example test
+                }
+            }
+
+//            String url = args[0];
+//            HttpConnection c = null;
+//            InputStream is = null;
+//
+//            try {
+//                c = (HttpConnection) Connector.open(url);
+//
+//                // Getting the InputStream will open the connection
+//                // and read the HTTP headers. They are stored until
+//                // requested.
+//                is = c.openInputStream();
+//
+//                // Get the ContentType
+//                String type = c.getType();
+//                System.out.println("http type: " + type);
+//
+//                // Get the length and process the data
+//                int len = (int) c.getLength();
+//                if (len > 0) {
+//                    byte[] data = new byte[len];
+//                    int actual = is.read(data);
+//                    System.out.write(data, 0, len);
+//                } else {
+//                    byte[] data = new byte[512];
+//                    int n = 0;
+//                    while ((n = is.read(data)) != -1) {
+//                        System.out.write(data, 0, n);
+//                    }
+//                }
+//            } finally {
+//                if (is != null) {
+//                    is.close();
+//                }
+//                if (c != null) {
+//                    c.close();
+//                }
+//            }
+            
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
 
     private static final String HTTP_PROXY_MANIFEST_PROPERTY = "com.sun.squawk.io.j2me.http.Protocol-HttpProxy";
     
@@ -232,7 +323,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             if (connected) {
                 if (bytesleft > 0) {
                     return bytesleft;
-                } else if (bytesleft <= 0 && chunked) {
+                } else if (chunked) {
                     readCRLF();    // Skip trailing \r\n
                     readChunkSize();
                     return bytesleft;

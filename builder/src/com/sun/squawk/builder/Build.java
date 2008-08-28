@@ -25,6 +25,7 @@
 package com.sun.squawk.builder;
 
 import com.sun.squawk.builder.ccompiler.*;
+import com.sun.squawk.builder.ccompiler.CCompiler.Options;
 import com.sun.squawk.builder.commands.*;
 import com.sun.squawk.builder.gen.Generator;
 import com.sun.squawk.builder.launcher.Launcher;
@@ -40,12 +41,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -153,13 +152,14 @@ public class Build {
 
     /**
      * Gets the instance through which JDK tools can be accessed.
+     * @return the JDK instance
      */
     public JDK getJDK() {
         return jdk;
     }
 
     /**
-     * The host platform. This is used to access tools required for running the builder and has not
+     * The host platform. This is used to access tools required for running the builder and has no
      * relationship with the target platform that a Squawk executable will be built for.
      */
     private final Platform platform;
@@ -387,6 +387,7 @@ public class Build {
      * @param extraVMArgs String
      * @param mainClassName String
      * @param args String
+     * @param description 
      * @return the created and installed command
      */
     public Command addSquawkCommand(String name, String classPath, String extraVMArgs, String mainClassName, String args, final String description) {
@@ -477,15 +478,15 @@ public class Build {
      */
     protected void processBuilderDotPropertiesFile(File dotPropertiesFile) {
     	log(verbose, "Reading commands from: " + dotPropertiesFile.getPath());
-    	Properties properties = new Properties();
+    	Properties savedproperties = new Properties();
     	InputStream in = null;
     	try {
         	in = new FileInputStream(dotPropertiesFile);
-    		properties.load(in);
+    		savedproperties.load(in);
     	} catch (IOException e) {
     	}
     	if (in != null) {
-    		try {in.close();} catch (IOException e) {};
+    		try {in.close();} catch (IOException e) { }
     		in = null;
     	}
     	int propertyIndex = 0;
@@ -494,9 +495,9 @@ public class Build {
     	HashMap<String, String> attributes = new HashMap<String, String>();
         ClassLoader loader = Build.class.getClassLoader();
         final String classpathKey = "classpath";
-        if (properties.containsKey(classpathKey)) {
-        	String value = properties.getProperty(classpathKey);
-        	properties.remove(classpathKey);
+        if (savedproperties.containsKey(classpathKey)) {
+        	String value = savedproperties.getProperty(classpathKey);
+        	savedproperties.remove(classpathKey);
         	// handle classpath=path1:path2
             URL[] urls = null;
             String[] classpath = Build.toPlatformPath(value, true).split(File.pathSeparator);
@@ -530,14 +531,14 @@ public class Build {
             };
         }
         // Sort the properties to process them in a decent order
-        ArrayList<String> sortedPropertyNames = new ArrayList<String>(properties.size());
-        for (Enumeration<?> names = properties.propertyNames(); names.hasMoreElements(); ) {
+        ArrayList<String> sortedPropertyNames = new ArrayList<String>(savedproperties.size());
+        for (Enumeration<?> names = savedproperties.propertyNames(); names.hasMoreElements(); ) {
         	sortedPropertyNames.add((String) names.nextElement());
         }
         Collections.sort(sortedPropertyNames);
     	for (String propertyName: sortedPropertyNames) {
     		propertyIndex++;
-            String value = properties.getProperty(propertyName);
+            String value = savedproperties.getProperty(propertyName);
             if (propertyName.indexOf('.') == -1) {
             	// handle command name=command class
                 try {
@@ -685,7 +686,8 @@ public class Build {
 //			When I remove the phoneme source from our source tree
 //            	String phoneMeSourceRoot = "../phoneme/";
             	String phoneMeSourceRoot = "phoneme/";
-            	copy(phoneMeSourceRoot + "cldc/src/javaapi/cldc1.1", "cldc/phoneme", "cldc/src", "java/io", "java/lang", "java/lang/ref", "java/util", "javax/microedition/io");
+            	copy(phoneMeSourceRoot + "cldc/src/javaapi/cldc1.1", "cldc/phoneme", "cldc/src", 
+                            "java/io", "java/lang", "java/lang/ref", "java/util", "javax/microedition/io", "com/sun/cldc/io");
             	copy(phoneMeSourceRoot + "midp/src/core/javautil/classes", "cldc/phoneme", "cldc/src", "java/lang");
             	copy(phoneMeSourceRoot + "midp/src/core/javautil/reference/classes", "cldc/phoneme", "cldc/src", "java/lang");
             	copy(phoneMeSourceRoot + "midp/src/core/javautil/classes", "imp/phoneme", "imp/src", "java/util");
@@ -956,7 +958,7 @@ public class Build {
      * @return the command registered with the given name or null if there is no such command
      */
     public Command getCommand(String name) {
-        return (Command)commands.get(name);
+        return commands.get(name);
     }
 
     /**
@@ -1112,6 +1114,7 @@ public class Build {
      *    normal. To me it looks like a bug, but, anyway, I am taking measure here.
      *
      * @param path the path to fix
+     * @return fixed URL
      */
     public String fixURL(String path) {
         if (getPlatform() instanceof Windows_X86) {
@@ -1389,6 +1392,7 @@ public class Build {
 
     /**
      * Creates an instance of the builder.
+     * @param buildDotOverrideFileName the name of any file that overrides builder properties
      */
     public Build(String buildDotOverrideFileName) {
         File defaultProperties = new File("build.properties");
@@ -1412,7 +1416,7 @@ public class Build {
         }
 
         platform = Platform.createPlatform(this);
-        ccompiler = platform.createDefaultCCompiler();
+        // target ccompiler set later...
         jdk = new JDK(platform.getExecutableExtension());
         preprocessor = new Preprocessor();
         preprocessor.properties = properties;
@@ -1424,8 +1428,6 @@ public class Build {
 
     /**
      * Prints some information describing the builder's configuration.
-     *
-     * @param stdout  where to print
      */
     private void printConfiguration() {
 
@@ -1601,11 +1603,11 @@ public class Build {
      */
     private Properties loadProperties(File file, Properties defaults) throws BuildException {
         try {
-            Properties properties;
+            Properties result;
             if (defaults == null) {
-                properties = new SubstitutionProperties();
+                result = new SubstitutionProperties();
             } else {
-                properties = new SubstitutionProperties(defaults) {
+                result = new SubstitutionProperties(defaults) {
                     private static final long serialVersionUID = 6268985530668173269L;
 
                     public Object put(Object key, Object value) {
@@ -1619,7 +1621,7 @@ public class Build {
             }
             FileInputStream inputStream =  new FileInputStream(file);
             try {
-                properties.load(inputStream);
+                result.load(inputStream);
             } finally {
                 inputStream.close();
             }
@@ -1627,7 +1629,7 @@ public class Build {
             if (file.lastModified() > propertiesLastModified) {
                 propertiesLastModified = file.lastModified();
             }
-            return properties;
+            return result;
         } catch (IOException e) {
             throw new BuildException("error loading properties from " + file, e);
         }
@@ -1640,7 +1642,7 @@ public class Build {
      * @param name  the name of the new C compiler to use
      */
     private void updateCCompiler(String name) {
-        CCompiler.Options options = ccompiler.options;
+        // CCompiler.Options options = ccompiler.options;
         if (name.equals("msc")) {
             ccompiler = new MscCompiler(this, platform);
         } else if (name.equals("gcc")) {
@@ -1654,7 +1656,7 @@ public class Build {
             ccompiler = null;
             return;
         }
-        ccompiler.options = options;
+        // ccompiler.options = options;
     }
 
     /**
@@ -1663,15 +1665,30 @@ public class Build {
      *
      * @param name    the property's name
      * @param value   the property's new value
-     * @return isBooleanProperty specifies if this is a boolean property
+     * @param isBooleanProperty specifies if this is a boolean property
      */
-    private void updateProperty(String name, String value, boolean isBooleanProperty) {
+    private void updateProperty(String name, String value, boolean isBooleanProperty, boolean derivedProperty) {
         String old = isBooleanProperty ? properties.getProperty(name, "true") : properties.getProperty(name);
+//        System.err.println("******** setting prop " + name + " to " + value + ", was " + old);
         if (!value.equals(old)) {
             properties.setProperty(name, value);
-            propertiesLastModified = System.currentTimeMillis();
+            if (!derivedProperty) {
+                propertiesLastModified = System.currentTimeMillis();
+            }
             log(verbose, "[build properties updated]");
         }
+    }
+
+    /**
+     * Updates one of the build properties and updates the {@link propertiesLastModified} field
+     * if the new value differs from the old value.
+     *
+     * @param name    the property's name
+     * @param value   the property's new value
+     * @param isBooleanProperty specifies if this is a boolean property
+     */
+    private void updateProperty(String name, String value, boolean isBooleanProperty) {
+        updateProperty(name, value, isBooleanProperty, false);
     }
 
     /**
@@ -1696,6 +1713,26 @@ public class Build {
     }
 
     /**
+     * Test to see if the given platform property is set.
+     * 
+     * @param platformOption
+     */
+    private void tryPlatformType(CCompiler.Options cOptions, String platformOption) {
+        String derivedPropName = "PLATFORM_TYPE_"+platformOption;
+         if (getProperty("PLATFORM_TYPE").equals(platformOption)) {
+            if (cOptions.platformType != null) {
+                throw new BuildException("platform type already set to " + cOptions.platformType); 
+            }
+            cOptions.platformType = platformOption;
+            cOptions.cflags += " -D"+derivedPropName+"=1";
+            updateProperty(derivedPropName, "true", true, true);
+            System.out.println("PLATFORM_TYPE=" + platformOption);
+        } else {
+            updateProperty(derivedPropName, "false", true, true);
+        }
+    }
+    
+    /**
      * Parses and extracts the command line arguments passed to the builder that apply to the
      * builder in general as opposed to the command about to be run.
      *
@@ -1707,7 +1744,7 @@ public class Build {
         builderArgs.clear();
 
         int argc = 0;
-        CCompiler.Options cOptions = ccompiler.options;
+        CCompiler.Options cOptions = new CCompiler.Options();
         boolean production = false;
 
         // Reset the default state for -tracing and -assume
@@ -1716,6 +1753,7 @@ public class Build {
 
         String depsFlag = null;
         boolean help = false;
+        String compName = null;
 
         while (args.length > argc) {
             String arg = args[argc];
@@ -1737,8 +1775,7 @@ public class Build {
                     throw new BuildException("malformed option");
                 }
             } else if (arg.startsWith("-comp:")) {
-                String compName = arg.substring("-comp:".length()).toLowerCase();
-                updateCCompiler(compName);
+                compName = arg.substring("-comp:".length()).toLowerCase();
             } else if (arg.equals("-nocomp")) {
                 RomCommand rom = (RomCommand)getCommand("rom");
                 rom.enableCompilation(false);
@@ -1876,6 +1913,18 @@ public class Build {
         } else {
             properties.setProperty("LISP2_BITMAP", "false");
         }
+        
+        tryPlatformType(cOptions, Options.BARE_METAL);
+        tryPlatformType(cOptions, Options.DELEGATING);
+        tryPlatformType(cOptions, Options.NATIVE);
+        tryPlatformType(cOptions, Options.SOCKET);
+        if (cOptions.platformType == null) {
+            throw new BuildException("PLATFORM_TYPE build property not specified");
+        }
+
+        if (cOptions.is64 != getBooleanProperty("SQUAWK_64")) {
+            cOptions.is64 |= getBooleanProperty("SQUAWK_64");
+        }
 
         // The -tracing, and -assume options are turned on by default if -production was not specified
         if (!production) {
@@ -1883,12 +1932,20 @@ public class Build {
             cOptions.assume = true;
         }
 
+        // set up compiler:
+        if (compName == null) {
+            ccompiler = platform.createDefaultCCompiler();
+        } else {
+            updateCCompiler(compName);
+        }
+        ccompiler.options = cOptions;
+        
         // If no arguments were supplied, then
         if (argc == args.length) {
 
             checkDependencies = true;
             if (depsFlag != null) {
-                checkDependencies = (depsFlag == "-deps");
+                checkDependencies = (depsFlag.equals("-deps"));
             }
 
             return new String[] { "<all>" };
@@ -1898,7 +1955,7 @@ public class Build {
 
             checkDependencies = (getCommand(args[argc]) instanceof Target);
             if (depsFlag != null) {
-                checkDependencies = (depsFlag == "-deps");
+                checkDependencies = (depsFlag.equals("-deps"));
             }
 
             return cmdAndArgs;
@@ -2032,7 +2089,7 @@ public class Build {
      */
     private void runDocTools(String classPath, File baseDir, File[] srcDirs) {
         boolean preprocessed = srcDirs.length == 1 && srcDirs[0].getName().equals("preprocessed");
-        List packageList = new ArrayList();
+        List<String> packageList = new ArrayList<String>();
         for (int i = 0; i != srcDirs.length; ++i) {
             File srcDir = srcDirs[i];
             extractPackages(new FileSet(srcDir, JAVA_SOURCE_SELECTOR), packageList);
@@ -2095,10 +2152,11 @@ public class Build {
      *
      * @param   classPath  the class path
      * @param   baseDir    the base directory for generated directories (i.e. "preprocessed", "classes" and "j2meclasses")
-     * @param   srcDirs the set of directories that are searched recursively for the Java source files to be compiled
+     * @param   srcDirs    the set of directories that are searched recursively for the Java source files to be compiled
      * @param   j2me       specifies if the classes being compiled are to be deployed on a J2ME platform
+     * @param   version    set the java language version (default is 1.5 if version is null)
+     * @param   extraArgs  extra javac arguments
      * @param   preprocess runs the {@link Preprocessor} over the sources if true
-     * @return the directory the compiled classes were written to
      */
     public void javac(String classPath, File baseDir, File[] srcDirs, boolean j2me, String version, List extraArgs, boolean preprocess) {
 
@@ -2232,7 +2290,7 @@ public class Build {
      * functionality of the jar command line tool when using the 'c' switch.
      *
      * @param out      the jar file to create
-     * @param files    the files to put in the jar file
+     * @param fileSets    the files to put in the jar file
      * @param manifest the entries that will used to create manifest in the jar file.
      *                 If this value is null, then no manifest will be created
      */

@@ -23,11 +23,7 @@
  */
 
 
-/*************** NOTE: this file is not included when running on bare metal **************************/
-
-#ifdef IOPORT
-#include "ioport.c"
-#endif
+/*************** NOTE: this file is included when PLATFORM_TYPE_DELEGATING=true **************************/
 
 /*---------------------------------------------------------------------------*\
  *                                 Channel I/O                               *
@@ -200,73 +196,56 @@ static void updateFromJVMByteArray(Address array, Address jvmArray, int offset, 
 /**
  * Initializes the IO subsystem.
  *
- * @param  jniEnv      the table of JNI function pointers which is only non-null if Squawk was
- *                     launched via a JNI call from a Java based launcher
- * @param  classPath   the class path with which to start the embedded JVM (ignored if 'jniEnv' != null)
- * @param  args        extra arguments to pass to the embedded JVM (ignored if 'jniEnv' != null)
- * @param  argc        the number of extra arguments in 'args' (ignored if 'jniEnv' != null)
+ * @param  classPath   the class path with which to start the embedded JVM
+ * @param  args        extra arguments to pass to the embedded JVM
+ * @param  argc        the number of extra arguments in 'args
  */
-void CIO_initialize(JNIEnv *jniEnv, char *classPath, char** args, int argc) {
-
-#ifdef IOPORT
+void CIO_initialize(char *classPath, char** args, int argc) {
     /*
-     * If an I/O port was set in the globals then this is used for I/O and the
-     * other parameters are ingorned. Otherwise the jniEnv is used.
+     * Create the embedded Java VM now
      */
-    if (ioport != 0) {
-        return;
-    } else {
-        JNI_env = jniEnv;
+    jint createJVM(JavaVM **, void **env, void *args);
+    JavaVMInitArgs vm_args;
+    JavaVMOption   options[MAX_JVM_ARGS + 1];
+
+    char *buf = (char *)malloc(strlen("-Djava.class.path=")+strlen(classPath)+strlen(":hosted-support/classes")+1);
+    sprintf(buf, "-Djava.class.path=%s%chosted-support%cclasses", classPath, (char)pathSeparatorChar, (char)fileSeparatorChar);
+
+    // A version 1.4 Java VM is required
+    vm_args.version = JNI_VERSION_1_4;
+
+    vm_args.options  = options;
+    options[0].optionString = buf;
+    vm_args.nOptions = 1;
+
+    /*
+     * Disable the JIT as it has stability problems on at least one platform (Solaris)
+     * and the slow down is not noticeable anyway.
+     * 
+     * Try it on again. It makes a 20% difference with the suite creator.
+     * if there is trouble, users can disable from command line:
+     * -J-Djava.compiler=NONE
+     */
+            /*  options[vm_args.nOptions++].optionString = "-Djava.compiler=NONE";*/
+
+    /*
+     * Add command line oprtions.
+     */
+    while (argc-- != 0) {
+        options[vm_args.nOptions++].optionString = *args;
+        args++;
     }
-#endif
-
-    /*
-     * Create the embedded Java VM now if Squawk was not launched via JNI call
-     */
-    if (JNI_env == null) {
-        jint createJVM(JavaVM **, void **env, void *args);
-        JavaVMInitArgs vm_args;
-        JavaVMOption   options[MAX_JVM_ARGS + 1];
-
-        char *buf = (char *)malloc(strlen("-Djava.class.path=")+strlen(classPath)+strlen(":hosted-support/classes")+1);
-        sprintf(buf, "-Djava.class.path=%s%chosted-support%cclasses", classPath, (char)pathSeparatorChar, (char)fileSeparatorChar);
-
-        // A version 1.4 Java VM is required
-        vm_args.version = JNI_VERSION_1_4;
-
-        vm_args.options  = options;
-        options[0].optionString = buf;
-        vm_args.nOptions = 1;
-
-        /*
-         * Disable the JIT as it has stability problems on at least one platform (Solaris)
-         * and the slow down is not noticeable anyway.
-         * 
-         * Try it on again. It makes a 20% difference with the suite creator.
-         * if there is trouble, users can disable from command line:
-         * -J-Djava.compiler=NONE
-         */
-	 	/*  options[vm_args.nOptions++].optionString = "-Djava.compiler=NONE";*/
-
-        /*
-         * Add command line oprtions.
-         */
-        while (argc-- != 0) {
-            options[vm_args.nOptions++].optionString = *args;
-            args++;
-        }
 /*
 {
-    int i;
-    fprintf(stderr, "Starting embedded JVM with options \"");
-    for (i = 0; i != vm_args.nOptions; i++) {
-        fprintf(stderr, "%s ", vm_args.options[i].optionString);
-    }
-    fprintf(stderr, "\"\n");
+int i;
+fprintf(stderr, "Starting embedded JVM with options \"");
+for (i = 0; i != vm_args.nOptions; i++) {
+    fprintf(stderr, "%s ", vm_args.options[i].optionString);
+}
+fprintf(stderr, "\"\n");
 }
 */
-        createJVM(&jvm, (void**)&JNI_env, &vm_args);
-    }
+    createJVM(&jvm, (void**)&JNI_env, &vm_args);
 
     if (JNI_env != null) {
         channelIO_clazz = (*JNI_env)->FindClass(JNI_env, "com/sun/squawk/vm/ChannelIO");
@@ -323,15 +302,6 @@ void CIO_initialize(JNIEnv *jniEnv, char *classPath, char** args, int argc) {
     Address r1;
     int res;
 
-#ifdef IOPORT
-    /*
-     * If an I/O port was specified then use the external I/O server.
-     */
-    if (ioport != null) {
-        res = ioport_execute(context, op, channel, i1, i2, i3, i4, i5, i6, send, receive);
-    } else
-#endif
-
     {
         /*
          * Always return 0 if there is no embedded JVM.
@@ -360,14 +330,6 @@ void CIO_initialize(JNIEnv *jniEnv, char *classPath, char** args, int argc) {
  * Posts an event via ChannelIO to wake up any waiters.
  */
 static void ioPostEvent(void) {
-#ifdef IOPORT
-    /*
-     * If an I/O port was specified then use the external I/O server.
-     */
-    if (ioport != null) {
-        ioport_execute(-1, ChannelConstants_GLOBAL_POSTEVENT, -1, 0, 0, 0, 0, 0, 0, null, null);
-    } else
-#endif
 
     {
         /*
