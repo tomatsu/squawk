@@ -148,24 +148,23 @@ NORETURN void fatalVMError(char *msg) {
  */
 #define assumeAlways(x) if (!(x))  { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #x, __FILE__, __LINE__); fatalVMError(""); }
 
-NORETURN void fatalInterpreterError0(char *msg, int opcode, int iparm, ByteAddress _ip, UWordAddress _fp, UWordAddress _sp, char* file, int line);
+NORETURN void fatalInterpreterError0(char *msg, int opcode, ByteAddress _ip, UWordAddress _fp, UWordAddress _sp, char* file, int line);
 
 /**
  * Exits the VM with an error message including various interpreter state.
  */
 /*if[MACROIZE]*/
 #define fatalInterpreterError(_msg) \
-    fatalInterpreterError0(_msg, opcode, iparm, ip, fp, sp, __FILE__, __LINE__)
+    fatalInterpreterError0(_msg, opcode, ip, fp, sp, __FILE__, __LINE__)
 /*else[MACROIZE]*/
 //#define fatalInterpreterError(_msg) \
-//  fatalInterpreterError0(_msg,       0,    0, ip, fp, sp, __FILE__, __LINE__)
+//  fatalInterpreterError0(_msg,      0, ip, fp, sp, __FILE__, __LINE__)
 /*end[MACROIZE]*/
 
 #ifndef FLASH_MEMORY
 #include <signal.h>
 void signalHandler(int signum) {
     char* strsignal(int signum);
-    /* WARNING: ARE THESE SAFE TO CALL FROM A SIGNAL HANDLER??? */
     fprintf(stderr, "caught signal %d\n", signum);
     fatalVMError(strsignal(signum));
 }

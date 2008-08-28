@@ -711,7 +711,7 @@ public class GC implements GlobalStaticFields {
      * @param newState the new abled/disabled state of the garbage collector
      * @return the garbage collector's state before this call
      */
-    public static boolean setGCEnabled(boolean newState) {
+    static boolean setGCEnabled(boolean newState) {
         boolean oldState = gcEnabled;
         gcEnabled = newState;
         return oldState;

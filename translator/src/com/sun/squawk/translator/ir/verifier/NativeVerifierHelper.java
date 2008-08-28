@@ -459,63 +459,6 @@ class NativeVerifierHelper {
             return;
         }
 
-        case Native.com_sun_squawk_NativeUnsafe$call0: {
-            frame.pop(REF); // com.sun.squawk.Address
-            Assert.that(frame.isStackEmpty());
-            frame.push(INT); // int
-            return;
-        }
-
-        case Native.com_sun_squawk_NativeUnsafe$call1: {
-            frame.pop(INT); // int
-            frame.pop(REF); // com.sun.squawk.Address
-            Assert.that(frame.isStackEmpty());
-            frame.push(INT); // int
-            return;
-        }
-
-        case Native.com_sun_squawk_NativeUnsafe$call2: {
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(REF); // com.sun.squawk.Address
-            Assert.that(frame.isStackEmpty());
-            frame.push(INT); // int
-            return;
-        }
-
-        case Native.com_sun_squawk_NativeUnsafe$call3: {
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(REF); // com.sun.squawk.Address
-            Assert.that(frame.isStackEmpty());
-            frame.push(INT); // int
-            return;
-        }
-
-        case Native.com_sun_squawk_NativeUnsafe$call4: {
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(REF); // com.sun.squawk.Address
-            Assert.that(frame.isStackEmpty());
-            frame.push(INT); // int
-            return;
-        }
-
-        case Native.com_sun_squawk_NativeUnsafe$call5: {
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(REF); // com.sun.squawk.Address
-            Assert.that(frame.isStackEmpty());
-            frame.push(INT); // int
-            return;
-        }
-
         case Native.com_sun_squawk_NativeUnsafe$charAt: {
             frame.pop(INT); // int
             frame.pop(OOP); // java.lang.String
@@ -1102,14 +1045,6 @@ class NativeVerifierHelper {
         case Native.com_sun_squawk_VM$serviceResult: {
             Assert.that(frame.isStackEmpty());
             frame.push(INT); // int
-            return;
-        }
-
-        case Native.com_sun_squawk_VM$setBytes: {
-            frame.pop(INT); // int
-            frame.pop(BYTE); // byte
-            frame.pop(REF); // com.sun.squawk.Address
-            Assert.that(frame.isStackEmpty());
             return;
         }
 

@@ -239,7 +239,7 @@ public class VM implements GlobalStaticFields {
      * @param bootstrapSuite        the bootstrap suite
      */
     static void startup(Suite bootstrapSuite) throws InterpreterInvokedPragma {
-//VM.println("in startup");
+
         /*
          * Set default for allowing Runtime.gc() to work.
          */
@@ -250,23 +250,23 @@ public class VM implements GlobalStaticFields {
          * for use by the code in do_throw() and the OutOfMemoryError.
          */
         GC.initialize(bootstrapSuite);
-//VM.println("after GC.initialize");
+
         vmbufferDecoder  = new VMBufferDecoder();
         outOfMemoryError = new OutOfMemoryError();
-//VM.println("new args");
+
         /*
          * Create the root isolate and manually initialize com.sun.squawk.Klass.
          */
         String[] args  = new String[argc];
         currentIsolate = new Isolate("com.sun.squawk.JavaApplicationManager", args, bootstrapSuite);
         currentIsolate.initializeClassKlass();
-//VM.println("after initializeClassKlass");
+
         /*
          * Initialise threading.
          */
         VMThread.initializeThreading();
         synchronizationEnabled = true;
-//VM.println("after initializeThreading");
+
         /*
          * Fill in the args array with the C command line arguments.
          */
@@ -278,13 +278,8 @@ public class VM implements GlobalStaticFields {
          */
         try {
             exceptionsEnabled = true;
-//VM.println("before CallbackManager");
             shutdownHooks = new CallbackManager(true);
-//VM.println("before primitiveThreadStart");
             currentIsolate.primitiveThreadStart();
-//VM.println("before initializeThreading2");
-            VMThread.initializeThreading2();
-//VM.println("before ServiceOperation.execute");
             ServiceOperation.execute();
         } catch (Throwable ex) {
             fatalVMError();
@@ -2575,18 +2570,7 @@ hbp.dumpState();
      *
      * @vm2c proxy
      */
-    public native static void copyBytes(Address src, int srcPos, Address dst, int dstPos, int length, boolean nvmDst);
-    
-    /**
-     * Set memory region to value.
-     *
-     * @param      dst          the destination address.
-     * @param      length       the number of bytes to be copied.
-     * @param      value        the value to set
-     *
-     * @vm2c proxy
-     */
-    public native static void setBytes(Address dst, byte value, int length);
+    native static void copyBytes(Address src, int srcPos, Address dst, int dstPos, int length, boolean nvmDst);
     
     /**
      * VM-private version of System.arraycopy for arrays that does little error checking.

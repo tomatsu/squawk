@@ -414,7 +414,7 @@ public class JavaApplicationManager {
                 "                          paths where classes, suites and sources can be found\n" +
 /*end[FLASH_MEMORY]*/
                 "    -suite:<name>         suite name (without \"" + Suite.FILE_EXTENSION + "\") to load\n" +
-                "    -suitepath:<path>     host path to look for suite's in\n" +
+                "    -suitepath:<path>   host path to look for suite's in\n" +
 /*if[FLASH_MEMORY]*/
                 "    -spotsuite:<name>     suite name (without \"" + Suite.FILE_EXTENSION + "\") to load\n" +
 /*end[FLASH_MEMORY]*/

@@ -2351,7 +2351,7 @@ public class Klass {
                                                             false);
                 if (superMethod != null && !superMethod.getDefiningClass().isInterface()) {
                     if (superMethod.isFinal()) {
-                        throw new NoClassDefFoundError("cannot override final method: " + superMethod);
+                        throw new NoClassDefFoundError("cannot override final method");
                     }
 
                     // This is a restriction imposed by the way Squawk treats native methods
@@ -3249,7 +3249,7 @@ public class Klass {
              * Step 5
              */
             if (getInitializationState() == INITSTATE_FAILED) {
-                throw new NoClassDefFoundError(name);
+                throw new NoClassDefFoundError();
             }
             /*
              * Step 6

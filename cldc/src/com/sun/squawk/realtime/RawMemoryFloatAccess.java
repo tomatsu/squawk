@@ -7,9 +7,7 @@
  */
 package com.sun.squawk.realtime;
 
-import com.sun.squawk.Address;
 import com.sun.squawk.NativeUnsafe;
-import com.sun.squawk.Offset;
 import com.sun.squawk.VM;
 
 /**
@@ -110,7 +108,7 @@ public class RawMemoryFloatAccess extends RawMemoryAccess {
      * @exception OutOfMemoryError  Thrown if the requested type of memory exists, but there is not
      *      enough of it free to satisfy the request.
      */
-    public RawMemoryFloatAccess(Object type, long size) throws SizeOutOfBoundsException, OutOfMemoryError {
+    public RawMemoryFloatAccess(Object type, long size) {
         super(type, size);
     }
 

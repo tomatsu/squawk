@@ -115,16 +115,6 @@ public abstract class CCompiler {
          * Extra flags to be passed to the compiler.
          */
         public String cflags = "";
-        
-        /**
-         * Specifies the kind of platform squawk will use.
-         */
-        public String platformType = null;
-        
-        public final static String DELEGATING = "DELEGATING";
-        public final static String NATIVE     = "NATIVE";
-        public final static String BARE_METAL = "BARE_METAL";
-        public final static String SOCKET     = "SOCKET";
     }
 
     /**
@@ -156,7 +146,7 @@ public abstract class CCompiler {
         this.name = name;
         this.env = env;
         this.platform = platform;
-        //this.options = new Options();
+        this.options = new Options();
     }
 
     /**
@@ -223,14 +213,4 @@ public abstract class CCompiler {
      * @return        the architecture that the Squawk dymanic compiler will target
      */
     public abstract String getArchitecture();
-    
-    /**
-     * Returns true on any varient of x86 architectures and OSs
-     *
-     * @return boolean
-     */
-    public boolean isTargetX86Architecture() {
-        String arch = getArchitecture().toLowerCase();
-        return arch.equals("x86") || arch.equals("i386") || arch.equals("amd64") || arch.equals("ia64") || arch.equals("x86_64");
-    }
 }

@@ -83,7 +83,7 @@ jlong sysTimeMillis(void) {
     return sysTimeMicros() / 1000;
 }
 
-#if PLATFORM_TYPE_DELEGATING
+
 jint createJVM(JavaVM **jvm, void **env, void *args) {
     HINSTANCE handle;
     jint (JNICALL *CreateJavaVM)(JavaVM **jvm, void **env, void *args) = 0;
@@ -132,7 +132,7 @@ jint createJVM(JavaVM **jvm, void **env, void *args) {
 
     return CreateJavaVM(jvm, env, args) == 0;
 }
-#endif
+
 
 
 

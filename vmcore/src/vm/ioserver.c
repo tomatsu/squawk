@@ -293,7 +293,7 @@ int IOServer_main (int argc, char *argv[]) {
     }
 
     // Initialize the embedded JVM
-    CIO_initialize("squawk.jar", VMArgs, VMArgsCount);
+    CIO_initialize(null, "squawk.jar", VMArgs, VMArgsCount);
 
     if (timing != 0) {
         memset(&timingInfo, 0, sizeof(timingInfo));

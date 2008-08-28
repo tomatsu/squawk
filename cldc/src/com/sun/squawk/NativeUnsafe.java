@@ -471,63 +471,6 @@ public final class NativeUnsafe {
         return str.charAt(index);
     }
 
-    /*-----------------------------------------------------------------------*\
-     *                        Function Ptr Support                            *
-    \*-----------------------------------------------------------------------*/
-    
-    /**
-     * Call a function pointer with no arguments
-     * 
-     * @vm2c code( funcPtr0 f0 = (funcPtr0)address; return (*f0)(); )
-     */
-    public static int call0(Address fptr) throws NativePragma {
-         throw Assert.shouldNotReachHere("unimplemented when hosted");
-    }
-    
-    /**
-     * Call a function pointer with one arguments
-     * 
-     * @vm2c code( funcPtr1 f1 = (funcPtr1)address; return (*f1)(i1)); )
-     */
-    public static int call1(Address fptr, int i1) throws NativePragma {
-         throw Assert.shouldNotReachHere("unimplemented when hosted");
-    }
-    
-    /**
-     * Call a function pointer with two arguments
-     * 
-     * @vm2c code( funcPtr2 f2 = (funcPtr2)address; return (*f2)(i1, i2)); )
-     */
-    public static int call2(Address fptr, int i1, int i2) throws NativePragma {
-         throw Assert.shouldNotReachHere("unimplemented when hosted");
-    }
-    
-    /**
-     * Call a function pointer with three arguments
-     * 
-     * @vm2c code( funcPtr3 f3 = (funcPtr3)address; return (*f3)(i1, i2, i3)); )
-     */
-    public static int call3(Address fptr, int i1, int i2, int i3) throws NativePragma {
-         throw Assert.shouldNotReachHere("unimplemented when hosted");
-    }
-    
-    /**
-     * Call a function pointer with four arguments
-     * 
-     * @vm2c  code( funcPtr4 f4 = (funcPtr4)address; return (*f4)(i1, i2, i3, i4)); )
-     */
-    public static int call4(Address fptr, int i1, int i2, int i3, int i4) throws NativePragma {
-         throw Assert.shouldNotReachHere("unimplemented when hosted");
-    }
-    
-    /**
-     * Call a function pointer with five arguments
-     * 
-     * @vm2c code( funcPtr5 f5 = (funcPtr5)address; return (*f5)(i1, i2, i3, i4, i5)); )
-     */
-    public static int call5(Address fptr, int i1, int i2, int i3, int i4, int i5) throws NativePragma {
-         throw Assert.shouldNotReachHere("unimplemented when hosted");
-    }
     
     /*-----------------------------------------------------------------------*\
      *               Raw (byte-orietened) memory support                     *
@@ -767,20 +710,14 @@ public final class NativeUnsafe {
      */
     static void resolveClasses(ArrayHashtable classMap) throws HostedPragma {
         Enumeration keys = unresolvedClassPointers.keys();
-        String unresolvedClasses = "";
         while (keys.hasMoreElements()) {
             Address address = (Address) keys.nextElement();
             Klass unresolvedClass = (Klass) unresolvedClassPointers.get(address);
             Address klassAddress = (Address) classMap.get(unresolvedClass);
             if (klassAddress == null) {
-                unresolvedClasses +=  unresolvedClass.getName() + "\n";
-            } else {
-                setAddress(address, 0, klassAddress);
+            	throw new RuntimeException("Klass " + unresolvedClass.getName() + " was not serialied");
             }
-        }
-        if (unresolvedClasses.length() != 0) {
-            throw new RuntimeException("Klasses " + unresolvedClasses + " were not serialied");
-
+            setAddress(address, 0, klassAddress);
         }
         unresolvedClassPointers.clear();
     }

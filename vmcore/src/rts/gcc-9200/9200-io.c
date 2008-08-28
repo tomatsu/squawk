@@ -692,10 +692,12 @@ int avr_low_result = 0;
 /**
  * Initializes the IO subsystem.
  *
+ * @param  jniEnv      the table of JNI function pointers which is only non-null if Squawk was
+ *                     launched via a JNI call from a Java based launcher
  * @param  classPath   the class path with which to start the embedded JVM (ignored if 'jniEnv' != null)
  * @param  args        extra arguments to pass to the embedded JVM (ignored if 'jniEnv' != null)
  * @param  argc        the number of extra arguments in 'args' (ignored if 'jniEnv' != null)
  */
 
-void CIO_initialize(char *classPath, char** args, int argc) {
+void CIO_initialize(JNIEnv *jniEnv, char *classPath, char** args, int argc) {
 }

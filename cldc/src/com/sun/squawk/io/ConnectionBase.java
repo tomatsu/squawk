@@ -47,7 +47,7 @@ abstract public class ConnectionBase implements Connection {
      *                                        be found.
      * @exception IOException  If some other kind of I/O error occurs.
      */
-    abstract public Connection open(String protocol, String name, int mode, boolean timeouts) throws IOException, ConnectionNotFoundException;
+    abstract public Connection open(String protocol, String name, int mode, boolean timeouts) throws IOException;
 
     /**
      * Open and return a data input stream for a connection.
@@ -88,7 +88,7 @@ abstract public class ConnectionBase implements Connection {
      *                                        be found.
      * @exception IOException  If some other kind of I/O error occurs.
      */
-    public DataInputStream openDataInputStream() throws IOException, ConnectionNotFoundException {
+    public DataInputStream openDataInputStream() throws IOException {
         InputStream is = openInputStream();
         if (!(is instanceof DataInputStream)) {
            is = new DataInputStream(is);
@@ -106,7 +106,7 @@ abstract public class ConnectionBase implements Connection {
      *                                        be found.
      * @exception IOException  If some other kind of I/O error occurs.
      */
-    public DataOutputStream openDataOutputStream() throws IOException, ConnectionNotFoundException {
+    public DataOutputStream openDataOutputStream() throws IOException {
         OutputStream os = openOutputStream();
         if (!(os instanceof DataOutputStream)) {
            os = new DataOutputStream(os);

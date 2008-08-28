@@ -207,10 +207,9 @@ public final class ChannelConstants {
         INTERNAL_RECEIVE_MESSAGE_FROM_CLIENT    = 1027,
         INTERNAL_SEARCH_SERVER_HANDLERS         = 1028,
 /*end[OLD_IIC_MESSAGES]*/
-        
-        /* Native Platform Support */
-        DLSYM                                   = 1999;
             
+        DUMMY = 999;
+
 /*if[DEBUG_CODE_ENABLED]*/
     private static final String[] Mnemonics = {
         "[invalid opcode]",

@@ -42,7 +42,6 @@ jlong sysTimeMillis(void) {
     return sysTimeMicros() / 1000;
 }
 
-#if PLATFORM_TYPE_DELEGATING
 jint createJVM(JavaVM **jvm, void **env, void *args) {
     jint (JNICALL *CreateJavaVM)(JavaVM **jvm, void **env, void *args) = 0;
     const char* name = "libjvm.so";
@@ -63,7 +62,6 @@ jint createJVM(JavaVM **jvm, void **env, void *args) {
 
     return CreateJavaVM(jvm, env, args) == 0;
 }
-#endif
 
 
 void startTicker(int interval) {

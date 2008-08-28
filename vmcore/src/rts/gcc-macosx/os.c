@@ -53,11 +53,9 @@ jlong sysTimeMillis(void) {
     return sysTimeMicros() / 1000;
 }
 
-#if PLATFORM_TYPE_DELEGATING
 jint createJVM(JavaVM **jvm, void **env, void *args) {
     return JNI_CreateJavaVM(jvm, env, args) == 0;
 }
-#endif
 
 
 void startTicker(int interval) {

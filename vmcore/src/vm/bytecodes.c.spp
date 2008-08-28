@@ -3977,69 +3977,6 @@ foundSlot:
                     break;
                 }
 
-                case Native_com_sun_squawk_NativeUnsafe_call0: {
-                    Address address = popAddress();
-                    funcPtr0 f0 = (funcPtr0)address;
-                    int result = (*f0)();
-                    pushInt(result);
-                    break;
-                }
-
-                case Native_com_sun_squawk_NativeUnsafe_call1: {
-                    int i1 = popInt();
-                    Address address = popAddress();
-                    funcPtr1 f1 = (funcPtr1)address;
-                    int result = (*f1)(i1);
-                    pushInt(result);
-                    break;
-                }
-
-                case Native_com_sun_squawk_NativeUnsafe_call2: {
-                    int i2 = popInt();
-                    int i1 = popInt();
-                    Address address = popAddress();
-                    funcPtr2 f2 = (funcPtr2)address;
-                    int result = (*f2)(i1, i2);
-                    pushInt(result);
-                    break;
-                }
-
-                case Native_com_sun_squawk_NativeUnsafe_call3: {
-                    int i3 = popInt();
-                    int i2 = popInt();
-                    int i1 = popInt();
-                    Address address = popAddress();
-                    funcPtr3 f3 = (funcPtr3)address;
-                    int result = (*f3)(i1, i2, i3);
-                    pushInt(result);
-                    break;
-                }
-
-                case Native_com_sun_squawk_NativeUnsafe_call4: {
-                    int i4 = popInt();
-                    int i3 = popInt();
-                    int i2 = popInt();
-                    int i1 = popInt();
-                    Address address = popAddress();
-                    funcPtr4 f4 = (funcPtr4)address;
-                    int result = (*f4)(i1, i2, i3, i4);
-                    pushInt(result);
-                    break;
-                }
-
-                case Native_com_sun_squawk_NativeUnsafe_call5: {
-                    int i5 = popInt();
-                    int i4 = popInt();
-                    int i3 = popInt();
-                    int i2 = popInt();
-                    int i1 = popInt();
-                    Address address = popAddress();
-                    funcPtr5 f5 = (funcPtr5)address;
-                    int result = (*f5)(i1, i2, i3, i4, i5);
-                    pushInt(result);
-                    break;
-                }
-
                 case Native_com_sun_squawk_Address_add: {
                     int offset = popInt();
                     Address addr = popAddress();
@@ -4251,17 +4188,6 @@ foundSlot:
                     assume(dstPos >= 0);
                     assume(length >= 0);
                     copyBytes(src, srcPos, dst, dstPos, length, nvmDst);
-                    break;
-                }
-
-				/* static void setBytes(Address src, byte value, int length); */
-                case Native_com_sun_squawk_VM_setBytes: {
-                    int     length   = popInt();
-                    int     value    = popInt();
-                    Address dst      = popAddress();
-                    assume(dst != NULL);
-                    assume(length >= 0);
-                    memset(dst, value, length);
                     break;
                 }
 
