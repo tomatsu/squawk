@@ -133,8 +133,8 @@ void page_table_init() {
 	}
 
 	// turn on caching for each 1Mb of RAM
-	ram_cache_type = get_hardware_revision() == 7 ? 0x8 : 0xC; // use write-through for rev 7; write-back otherwise
-	// the use of write-through is a temporary measure to avoid crashes with rev 7 hardware
+	ram_cache_type = get_hardware_revision() == 7 ? 0 : 0xC; // disable caching for rev 7; write-back otherwise
+	// TODO disabling the cache is a temporary measure to avoid crashes with rev 7 hardware
 	for (i=0; i < ((get_ram_size() + (1024*1024) - 1) >> 20); i++) {
 		level_1_table[(RAM_BASE_ADDR>>20) + i] |= ram_cache_type;
 	}
