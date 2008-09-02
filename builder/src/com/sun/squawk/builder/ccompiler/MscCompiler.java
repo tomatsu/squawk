@@ -75,7 +75,7 @@ public class MscCompiler extends CCompiler {
             throw new BuildException("-64 option not supported by MscCompiler");
         }
 
-        buf.append("/DIOPORT ");
+        //buf.append("/DIOPORT "); // this is optional
 
         buf.append("/DPLATFORM_BIG_ENDIAN=" + platform.isBigEndian()).append(' ');
         buf.append("/DPLATFORM_UNALIGNED_LOADS=" + platform.allowUnalignedLoads()).append(' ');
