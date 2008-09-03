@@ -1358,6 +1358,7 @@ public final class Isolate implements Runnable {
      * @throws IllegalStateException if the isolate has already been started
      */
     public void start() {
+        transitioningState = ALIVE;
         Thread t = new CrossIsolateThread(this, mainClassName + " - main");
         t.start();
     }
@@ -1493,6 +1494,7 @@ public final class Isolate implements Runnable {
         }
 
         changeState(ALIVE);
+        transitioningState = NEW; // not in transition
 
         // Manually initialize com.sun.squawk.Klass.
         initializeClassKlass();
@@ -1574,6 +1576,8 @@ public final class Isolate implements Runnable {
 
     /**
      * Waits for all the other threads and child isolates belonging to this isolate to stop.
+     * 
+     * WARNING: Only one thread can join an isolate, becuase this method clears the childIsolates list
      */
     public void join() {
 
@@ -1590,7 +1594,10 @@ public final class Isolate implements Runnable {
         if (childIsolates != null) {
             for (Enumeration e = childIsolates.elements() ; e.hasMoreElements() ;) {
                 Isolate isolate = (Isolate)e.nextElement();
-                isolate.join();
+                // if a child isolate is not alive, or has not been started, then it never will, so don't wait for it.
+                if (state == ALIVE || (state == NEW && transitioningState == ALIVE)) {
+                    isolate.join();
+                }
             }
         }
 
@@ -2097,6 +2104,8 @@ public final class Isolate implements Runnable {
 
     /**
      * Get all the joining threads.
+     * 
+     * WARNING: THIS CLEARS THE LIST OF JOINERS, SO ONLY CALL ONCE!
      *
      * @return all the threads
      */
