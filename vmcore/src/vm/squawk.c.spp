@@ -754,6 +754,7 @@ static void printCacheStats() {
 NORETURN void stopVM(int exitCode) {
     finalizeStreams();
     freeBuffers();
+/*if[!EMULATOR_LAUNCHER]*/
     fprintf(stderr, "\n\n");
 #ifndef FLASH_MEMORY
     printCacheStats();
@@ -774,6 +775,8 @@ NORETURN void stopVM(int exitCode) {
 #endif
     fprintf(stderr, "\n");
     fflush(stderr);
+/*else[EMULATOR_LAUNCHER]*/
+/*end[EMULATOR_LAUNCHER]*/
 
 #ifdef DB_DEBUG
     db_vm_exiting();
@@ -1182,6 +1185,7 @@ Address processArgs(char *argv[], const int argc) {
     int nvmSize = DEFAULT_NVM_SIZE;
     int ramSize = DEFAULT_RAM_SIZE;
 
+/*if[!EMULATOR_LAUNCHER]*/
 #ifdef PROFILING
     fprintf(stderr, "*************** Profiling version ***************\n");
 #endif
@@ -1274,6 +1278,9 @@ Address processArgs(char *argv[], const int argc) {
     while (oldIndex != argc) {
         argv[newIndex++] = argv[oldIndex++];
     }
+/*else[EMULATOR_LAUNCHER]*/
+//    newIndex = argc;
+/*end[EMULATOR_LAUNCHER]*/
 
 #ifndef FLASH_MEMORY
     if (!notrap) {
@@ -1761,8 +1768,39 @@ int os_main(int argc, char *argv[]) {
     int ignore = initializeGlobals(&userGlobals);
     char *executable = argv[0];
 
+    int executableLength = strlen(executable);
+    char *executablePath, *executableName;
+    char *delimiter;
+
+    executablePath = strncpy(calloc(executableLength + 1, sizeof(char)), executable, executableLength);
+    delimiter = strrchr(executablePath, (char) fileSeparatorChar);
+
+    if (delimiter != NULL) {
+        int nameLength;
+
+        delimiter++;
+        nameLength = strlen(delimiter);
+        executableName = strncpy(calloc(nameLength + 1, sizeof(char)), delimiter, nameLength);
+        *delimiter = '\0';  // Terminate executablePath
+    } else {
+        executableName = executablePath;
+        executablePath = calloc(1, sizeof(char));
+    }
+
+/*if[EMULATOR_LAUNCHER]*/
+/*else[EMULATOR_LAUNCHER]*/
+//    if (strlen(executablePath) > 0) {
+//        // hack: changes to the directory containing the emulator so that it
+//        // can access local files
+//        chdir(executablePath);
+//    }
+/*end[EMULATOR_LAUNCHER]*/
+
+    free(executablePath);
+    free(executableName);
+
     /*
-     * Loose the first argument (the path to the executable program).
+     * Lose the first argument (the path to the executable program).
      */
     argv++;
     argc--;

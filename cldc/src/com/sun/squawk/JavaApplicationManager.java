@@ -90,6 +90,11 @@ public class JavaApplicationManager {
         // If no name is specified for MIDlet, assume MIDlet-1
         midletPropertyNum = 1;
         
+        String mainClassName = null;
+        String[] javaArgs = null;
+
+/*if[!EMULATOR_LAUNCHER]*/
+        
         /*
          * Process any switches.
          */
@@ -97,8 +102,6 @@ public class JavaApplicationManager {
             args = processVMOptions(args);
         }
 
-        String mainClassName = null;
-        String[] javaArgs = null;
         if (testMIDletClass != null) {
             mainClassName = "com.sun.squawk.imp.MIDletMainWrapper";
             javaArgs = new String[] {"-name", testMIDletClass};
@@ -112,7 +115,15 @@ public class JavaApplicationManager {
                 javaArgs[i] = args[i+1];
             }
         } // else use midletPropertyNum
-
+        
+/*else[EMULATOR_LAUNCHER]*/
+//        mainClassName = "com.sun.squawk.uei.j2me.Launcher";
+//        javaArgs = new String[args.length];
+//        for (int i = 0 ; i < javaArgs.length ; i++) {
+//            javaArgs[i] = args[i];
+//        }
+/*end[EMULATOR_LAUNCHER]*/
+        
         /*
          * Get the start time.
          */

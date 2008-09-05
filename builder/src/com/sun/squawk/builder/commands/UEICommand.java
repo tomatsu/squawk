@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.jar.Manifest;
 
 import com.sun.squawk.builder.Build;
@@ -40,56 +41,33 @@ import com.sun.squawk.builder.util.FileSet;
  * Command to build a UEI-compliant squawk emulator.
  */
 public class UEICommand extends Command {
-    
-    protected final static String EXEC_PATH = System.getProperty("user.dir");
-    
-    // Workaround for pathnames that include spaces
-    protected final static File SQUAWK_DIR = (!EXEC_PATH.contains(" ") ? new File(EXEC_PATH) : null);
-    
-    protected final static File UEI_MODULE_DIR = new File(SQUAWK_DIR, "uei");
-    protected final static File J2SE_MODULE_DIR = new File(UEI_MODULE_DIR, "emulator-j2se");
-    protected final static File J2ME_MODULE_DIR = new File(UEI_MODULE_DIR, "emulator-j2me");
-    
-    protected final static String[] UEI_DIRECTORIES = { "bin", "lib", "doc", "squawk", "logs", "temp" };
-    protected final static String[] BIN_FILES = { "squawk", "squawk.suite", "squawk.suite.api", "squawk.sym", "squawk.jar",
-                                                  "squawk_classes.jar", "build-commands.jar", "build.properties" };
-    protected final static String[] BIN_MODULE_JARS = { "romizer", "translator", "cldc", "debugger", "debugger-proxy" };
-    protected final static String[] VANILLA_FILES = { "squawk", "squawk.suite", "squawk.suite.api", "squawk.suite.metadata",
-                                                      "squawk.sym", "squawk.jar", "squawk_classes.jar" };
-    
-    protected final static String MODULE_MANIFEST = getPath("resources", "META-INF", "MANIFEST.MF");
-    
-    protected final static File DEFAULT_DIRECTORY = new File(UEI_MODULE_DIR, "squawk-emulator");
-    
-    // FIXME HACK: quick disabling of UEI command when uei module does not exist
-    protected final static boolean UEI_ACTIVE = UEI_MODULE_DIR.exists();
-    
-    protected final Target TARGET_EMULATOR_J2SE;
-    protected final Target TARGET_EMULATOR_J2ME;
-    
-    protected final String EMULATOR_FILENAME;
-    protected final File   PREVERIFIER;
-    
+    protected Target targetEmulatorJ2SE;
+    protected Target targetEmulatorJ2ME;
     protected PrintStream stdout;
     protected PrintStream stderr;
     protected PrintStream vbsout;
+    protected File ueiModuleDirectory;
+    protected File targetDirectory;
     
     public UEICommand(Build env) {
         super(env, "uei");
-        // super(env, "builduei");
-        
-        EMULATOR_FILENAME = "emulator" + env.getPlatform().getExecutableExtension();
-        PREVERIFIER = env.getPlatform().preverifier();
-        
-        TARGET_EMULATOR_J2SE = getTarget(J2SE_MODULE_DIR, getPath(SQUAWK_DIR, "cldc", "classes") + ":build-commands.jar", false);
-        TARGET_EMULATOR_J2ME = getTarget(J2ME_MODULE_DIR, getPath(SQUAWK_DIR, "cldc", "classes"), true);
+        ueiModuleDirectory = getFile(getName());
+        targetDirectory = new File(ueiModuleDirectory, "build");
+        targetEmulatorJ2SE = getTarget(
+                new File (ueiModuleDirectory, "launcher-hosted-support"),
+                getFile("cldc", "classes") + File.pathSeparator + getFile("romizer", "classes") + File.pathSeparator + getFile("debugger-proxy", "classes") + File.pathSeparator + getFile("build-commands.jar"),
+                false);
+        targetEmulatorJ2ME = getTarget(
+                new File(ueiModuleDirectory, "launcher"),
+                getFile("cldc", "classes").getPath(),
+                true);
     }
     
     /**
      * {@inheritDoc}
      */
     public String getDescription() {
-        return (UEI_ACTIVE ? "" : "<< currently disabled >> ") + "Builds the Unified Emulator Interface(UEI) module";
+        return "Builds the Unified Emulator Interface(UEI) module";
     }
     
     private void usage() {
@@ -97,16 +75,11 @@ public class UEICommand extends Command {
         
         //Column     123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789
         stdout.println();
-        stdout.println("usage: " + name + " [options] [directory]");
+        stdout.println("usage: " + name + " [directory]");
         stdout.println();
         stdout.println("This will build a UEI-compliant emulator in the specified directory.  If no");
         stdout.println("directory is supplied, it will be built in:");
-        stdout.println("    " + DEFAULT_DIRECTORY);
-        stdout.println();
-        stdout.println("where options include:");
-        stdout.println("    -help                   Display this help message");
-        stdout.println("    -clean                  Cleans the specified UEI directory");
-        stdout.println("    -verbose                Displays all build output");
+        stdout.println("    " + targetDirectory);
         stdout.println();
     }
     
@@ -114,56 +87,28 @@ public class UEICommand extends Command {
      * {@inheritDoc}
      */
     public void run(String args[]) throws BuildException {
-        if (!UEI_ACTIVE) {
-            throw new BuildException("UEI disabled - UEI module does not exist");
-        }
-        
         stdout = System.out;
         stderr = System.err;
         vbsout = new PrintStream(new OutputStream() { public void write(int b) {;} });
         
-        File targetDirectory = DEFAULT_DIRECTORY;
-        
-        boolean clean = false;
-        boolean verbose = env.verbose;
-        
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i];
-            if (!arg.startsWith("-")) {
-                targetDirectory = new File(arg).getAbsoluteFile();
-            } else if (arg.equalsIgnoreCase("-help")) {
-                usage();
-                return;
-            } else if (arg.equalsIgnoreCase("-verbose")) {
-                verbose = true;
-            } else if (arg.equalsIgnoreCase("-clean")) {
-                clean = true;
-            } else {
-                stdout.println("Unrecognized option: " + arg);
-                usage();
-                throw new BuildException("Unrecognized option: " + arg);
-            }
+        if (args.length > 1) {
+            usage();
+            return;
         }
-        
-        if (verbose) {
+        if (args.length == 1) {
+            targetDirectory = new File(args[0]).getAbsoluteFile();
+        }
+        if (env.verbose) {
             vbsout = stdout;
         }
-        
         try {
             // Capture subprocess output to the verbose out
             System.setOut(vbsout);
-            
-            if (clean) {
-                cleanUEI(targetDirectory);
-                return;
-            }
-            
+            clean();
             buildUEI(targetDirectory);
-            
         } finally {
             System.setOut(stdout);
         }
-        
     }
     
     /**
@@ -174,95 +119,135 @@ public class UEICommand extends Command {
      * @throws BuildException if the build fails
      */
     protected void buildUEI(File directory) throws BuildException {
-        stdout.println("Using squawk in  " + SQUAWK_DIR);
-        stdout.println("Using uei module " + UEI_MODULE_DIR);
+        final String squawkExeFilename = "squawk" + env.getPlatform().getExecutableExtension();
+        final String emulatorExeFilename = "emulator" + env.getPlatform().getExecutableExtension();
+        final File preverifier = env.getPlatform().preverifier();
+        
         stdout.println("Building UEI in  " + directory);
-        
         Build.mkdir(directory);
-        
-        for (String dirName : UEI_DIRECTORIES) {
+        for (String dirName : new String[] { "bin", "lib", "doc", "squawk", "logs", "temp" }) {
             Build.mkdir(directory, dirName);
         }
-        
-        
-        // Build squawk
-        stdout.println("Building squawk...");
-        builder();
-        // Build uei modules
-        TARGET_EMULATOR_J2SE.run(null);
-        TARGET_EMULATOR_J2ME.run(null);
-        
-        
-        
-        // Romize emulator squawk
-        stdout.println("Romizing emulator suite...");
-        builder("rom", "-lnt", "-strip:d", getPath(SQUAWK_DIR, "cldc"), J2ME_MODULE_DIR.getPath());
+
+        stdout.println("Building emulator squawk...");
+        builder("clean", "cldc", "hosted-support", "squawk.jar");
+        builder("-override:" + getFile(ueiModuleDirectory, "emulator-build.properties"));
+        builder("hosted-support"); // does cldc by dependency
+        targetEmulatorJ2SE.run(null);
+        targetEmulatorJ2ME.run(null);
+        builder(
+                "-override:" + getFile(ueiModuleDirectory, "emulator-build.properties"),
+                "-prod",
+                "-mac",
+                "-o2",
+                "rom",
+                "-lnt",
+                "-strip:d", 
+                getFile("cldc").getPath(),
+                targetEmulatorJ2ME.baseDir.getPath());
         
         // Copy emulator squawk
         File binDir = new File(directory, "bin");
-        for (String fileName : BIN_FILES) {
-            copyFile(SQUAWK_DIR, fileName, binDir);
-        }
-        env.chmod(new File(binDir, "squawk"), "+x");
-        
-        // Copy emulator support jars
-        copyFile(J2SE_MODULE_DIR, "classes.jar", binDir, "emulator.jar");
-        for (String moduleName : BIN_MODULE_JARS) {
-            copyFile(new File(SQUAWK_DIR, moduleName), "classes.jar", binDir, moduleName + ".jar");
+        for (String fileName : new String[] {"squawk.suite"}) {
+            copyFile(getFile(), fileName, binDir);
         }
 
-        copyFile(UEI_MODULE_DIR, "emulator", binDir, EMULATOR_FILENAME);
-        env.chmod(new File(binDir, EMULATOR_FILENAME), "+x");
-        copyFile(UEI_MODULE_DIR, "SquawkEmulator.properties", binDir);
-        copyFile(PREVERIFIER.getParentFile(), PREVERIFIER.getName(), binDir);
-        env.chmod(new File(binDir, PREVERIFIER.getName()), "+x");
+        File emulatorJarContent = new File(directory, "emulator-jar");
+        emulatorJarContent.mkdirs();
+        for (String moduleName : new String[] { "cldc/classes.jar", "squawk.jar", "romizer/classes.jar", "translator/classes.jar", "debugger/classes.jar", "debugger-proxy/classes.jar", "uei/launcher-hosted-support/classes.jar" }) {
+            String cmd = "jar xf ../../../" + moduleName;
+            env.exec(cmd, null, emulatorJarContent);
+        }
+        Build.clear(new File(emulatorJarContent, "META-INF"), true);
+        createJar(new File(binDir, "squawk.jar"), emulatorJarContent);
+        Build.clear(emulatorJarContent, true);
+
+        copyFile(getFile(), squawkExeFilename, binDir, emulatorExeFilename);
+        env.chmod(new File(binDir, emulatorExeFilename), "+x");
+        copyFile(preverifier.getParentFile(), preverifier.getName(), binDir);
+        env.chmod(new File(binDir, preverifier.getName()), "+x");
         
-        
-        
-        // Romize vanilla squawk
-        stdout.println("Romizing vanilla suite...");
-        builder("rom", "-metadata", "-lnt", "-strip:d", getPath(SQUAWK_DIR, "cldc"), getPath(SQUAWK_DIR, "imp"), getPath(SQUAWK_DIR, "debugger"));
+        stdout.println("Building vanilla squawk...");
+        Build.clearFilesMarkedAsSvnIgnore(getFile("cldc"));
+        builder("clean", "cldc");
+        builder("cldc", "imp", "debugger");
+        builder(
+                "-prod",
+                "-mac",
+                "-o2",
+                "rom",
+                "-metadata",
+                "-lnt",
+                "-strip:d",
+                getFile("cldc").getPath(),
+                getFile("imp").getPath(),
+                getFile("debugger").getPath());
         
         // Copy vanilla squawk
         File vanillaDir = new File(directory, "squawk");
-        for (String fileName : VANILLA_FILES) {
-            copyFile(SQUAWK_DIR, fileName, vanillaDir);
+        for (String fileName : new String[] { "squawk.suite", "squawk.suite.metadata", "squawk.jar"}) {
+            copyFile(getFile(), fileName, vanillaDir);
         }
-        env.chmod(new File(vanillaDir, "squawk"), "+x");
-        
-        
+        copyFile(getFile(), squawkExeFilename, vanillaDir);
+        env.chmod(new File(vanillaDir, squawkExeFilename), "+x");
         
         // Copy API jars
         stdout.println("Creating API jars...");
-        
         File libDir = new File(directory, "lib");
-        createJar(new File(libDir, "cldc11.jar"), getFile(SQUAWK_DIR, "cldc", "j2meclasses"), getFile(SQUAWK_DIR, "cldc", MODULE_MANIFEST));
-        createJar(new File(libDir, "imp10.jar"), getFile(SQUAWK_DIR, "imp", "j2meclasses"), getFile(SQUAWK_DIR, "imp", MODULE_MANIFEST));
-        createJar(new File(libDir, "debugger.jar"), getFile(SQUAWK_DIR, "debugger", "j2meclasses"), null);
-        
-        
+        createJar(new File(libDir, "cldc11.jar"), getFile("cldc", "j2meclasses"), getFile("cldc", "preprocessed"));
+        createJar(new File(libDir, "imp10.jar"), getFile("imp", "j2meclasses"), getFile("imp", "preprocessed"));
         // Create API javadoc
         stdout.println("Creating API javadoc...");
-        
+if (true) {
+    return;
+}
         try {
             // Capture javadoc warnings to vbsout
             System.setErr(vbsout);
             env.getJavaCompiler().javadoc(new String[] {
-                    "-d", getPath(directory, "doc"),
-                    "-sourcepath", getPath(SQUAWK_DIR, "cldc", "preprocessed") + ":" + getPath(SQUAWK_DIR, "imp", "preprocessed"),
+                    "-d", new File(directory, "doc").getPath(),
+                    "-sourcepath", getFile("cldc", "preprocessed") + File.pathSeparator + getFile("imp", "preprocessed"),
                     "-subpackages", "com:java:javax",
                     "-windowtitle", "Java 2 Platform ME CLDC-1.1/IMP-1.0",
                     "-doctitle",  "Java<sup><font size=-2>TM</font></sup> 2 Platform Micro Edition<br>CLDC-1.1 / IMP-1.0 API Specification",
                     "-header", "<b>Java<sup><font size=-2>TM</font></sup> 2 Platform<br><font size=-1>Micro Ed. CLDC-1.1 / IMP-1.0</font></b>",
                     "-bottom", "<font size=-1>Copyright 2008 Sun Microsystems, Inc.  All rights reserved.</font>",
-                    "-quiet"}, true);
+                    "-quiet" }, true);
         } finally {
             System.setErr(stderr);
         }
-        
-        stdout.println("BUILD SUCCEEDED");
     }
     
+    /**
+     * Convenience method that gets the file designated by <code>path</code>
+     * relative to <code>parent</code>.
+     * 
+     * @param parent The parent directory.
+     * @param path The file path relative to the parent directory.
+     * @return The file specified by <code>path</code> relative to <code>parent</code>.
+     */
+    protected File getFile(File parent, String... path) {
+        File file = parent;
+        for (String element: path) {
+            file = new File(file, element);
+        }
+        return file;
+    }
+    
+    /**
+     * Convenience method that gets the file designated by <code>path</code>
+     * relative to current working directory.
+     * 
+     * @param path The file path relative to the parent directory.
+     * @return The file specified by <code>path</code> relative to current working directory.
+     */
+    protected File getFile(String... path) {
+        File file = null;
+        for (String element: path) {
+            file = new File(file, element);
+        }
+        return file;
+    }
     
     /**
      * Convenience method that gets the <code>Target</code> associated with the
@@ -277,51 +262,6 @@ public class UEICommand extends Command {
      */
     protected Target getTarget(File baseDir, String classpath, boolean j2me) {
         return new Target(classpath, j2me, baseDir.getPath(), new File[] { new File(baseDir, "src") }, true, env, baseDir.getName());
-    }
-    
-    /**
-     * Convenience method that concatenates the given array of strings into a
-     * valid system-dependent abstract path.
-     * 
-     * @param path The sequence of file names.
-     * @return The abstract file path specified by <code>path</code>.
-     */
-    protected static String getPath(String... path) {
-        if (path.length == 0) {
-            throw new IllegalArgumentException("Path must be non-empty");
-        }
-        
-        return Build.join(path, 0, path.length, File.separator);
-    }
-    
-    /**
-     * Convenience method that gets the file path designated by
-     * <code>path</code> relative to <code>parent</code>.
-     * 
-     * @param parent The parent directory.
-     * @param path The file path relative to the parent directory.
-     * @return The file path specified by <code>path</code> relative to
-     *         <code>parent</code>.
-     * 
-     * @see UEICommand#getPath(String[])
-     * @see UEICommand#getFile(File, String[])
-     */
-    protected static String getPath(File parent, String... path) {
-        return getFile(parent, path).getPath();
-    }
-    
-    /**
-     * Convenience method that gets the file designated by <code>path</code>
-     * relative to <code>parent</code>.
-     * 
-     * @param parent The parent directory.
-     * @param path The file path relative to the parent directory.
-     * @return The file specified by <code>path</code> relative to <code>parent</code>.
-     * 
-     * @see UEICommand#getPath(String[])
-     */
-    protected static File getFile(File parent, String... path) {
-        return new File(parent, getPath(path));
     }
     
     /**
@@ -417,53 +357,29 @@ public class UEICommand extends Command {
      * 
      * @see Build#createJar(File, FileSet[], Manifest)
      */
-    protected void createJar(File dest, File srcFolder, File manifest) throws BuildException {
+    protected void createJar(File dest, File... srcFolders) throws BuildException {
         Manifest mf = null;
-        
-        if (manifest != null) {
-            try {
-                mf = new Manifest(new FileInputStream(manifest));
-            } catch (Exception e) {
-                throw new BuildException("Error reading manifest: " + manifest, e);
+        ArrayList<FileSet> fileSets = new ArrayList<FileSet>();
+        for (File srcFolder: srcFolders) {
+            if (mf == null) {
+                File manifestFile = getFile(srcFolder.getParentFile(), "resources", "META-INF", "MANIFEST.MF");
+                if (manifestFile.canRead()) {
+                    try {
+                        mf = new Manifest(new FileInputStream(manifestFile));
+                    } catch (Exception e) {
+                        throw new BuildException("Error reading manifest: " + manifestFile, e);
+                    }
+                }
             }
+            fileSets.add(new FileSet(srcFolder, (FileSet.Selector) null));
         }
-        
-        env.createJar(dest, new FileSet[] { new FileSet(srcFolder, (FileSet.Selector) null) }, mf);
+        env.createJar(dest, fileSets.toArray(new FileSet[fileSets.size()]), mf);
     }
     
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public void clean() {
-        if (!UEI_ACTIVE) {
-            return;
-        }
-        
-        TARGET_EMULATOR_J2SE.clean();
-        TARGET_EMULATOR_J2ME.clean();
-        // clean(DEFAULT_DIRECTORY);
+        Build.clearFilesMarkedAsSvnIgnore(new File(getName()));
+        Build.clear(new File(getName(), "build"), true);
     }
-    
-    /**
-     * Removes the emulator previously generated at the specified directory.
-     * 
-     * @param directory The target emulator directory.
-     * 
-     * @throws BuildException if the clean failed.
-     */
-    protected void cleanUEI(File directory) throws BuildException {
-        stdout.println("Cleaning " + directory);
-        
-        if (directory.equals(DEFAULT_DIRECTORY)) {
-            Build.clear(directory, true);
-            return;
-        }
-        
-        if (!directory.isDirectory()) {
-            throw new BuildException("target " + directory + " is not a directory.");
-        }
-        
-        stdout.println("CLEAN STUB: Please perform manual deletion of " + directory);
-    }
-    
+
 }
