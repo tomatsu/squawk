@@ -198,9 +198,6 @@ public class UEICommand extends Command {
         createJar(new File(libDir, "imp10.jar"), getFile("imp", "j2meclasses"), getFile("imp", "preprocessed"));
         // Create API javadoc
         stdout.println("Creating API javadoc...");
-if (true) {
-    return;
-}
         try {
             // Capture javadoc warnings to vbsout
             System.setErr(vbsout);
