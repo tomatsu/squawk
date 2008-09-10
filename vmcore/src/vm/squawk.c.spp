@@ -1787,7 +1787,7 @@ int os_main(int argc, char *argv[]) {
         executablePath = calloc(1, sizeof(char));
     }
 
-/*if[EMULATOR_LAUNCHER]*/
+/*if[!EMULATOR_LAUNCHER]*/
 /*else[EMULATOR_LAUNCHER]*/
 //    if (strlen(executablePath) > 0) {
 //        // hack: changes to the directory containing the emulator so that it
