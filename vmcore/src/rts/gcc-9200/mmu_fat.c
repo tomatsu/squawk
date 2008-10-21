@@ -116,7 +116,6 @@ void mmu_enable(void) {
  */
 void page_table_init() {
 	int i, j;
-	unsigned int ram_cache_type;
 	unsigned int level_1_table[4096];
 
 	// map virtual to physical for 4GB and make uncacheable
@@ -133,10 +132,8 @@ void page_table_init() {
 	}
 
 	// turn on caching for each 1Mb of RAM
-	ram_cache_type = get_hardware_revision() == 7 ? 0 : 0xC; // disable caching for rev 7; write-back otherwise
-	// TODO disabling the cache is a temporary measure to avoid crashes with rev 7 hardware
 	for (i=0; i < ((get_ram_size() + (1024*1024) - 1) >> 20); i++) {
-		level_1_table[(RAM_BASE_ADDR>>20) + i] |= ram_cache_type;
+		level_1_table[(RAM_BASE_ADDR>>20) + i] |= 0xC; // write-back caching for RAM
 	}
 
 	// turn on caching for each 1Mb of flash
