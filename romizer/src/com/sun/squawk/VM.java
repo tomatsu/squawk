@@ -300,7 +300,7 @@ public class VM {
         }
         
         public String toString() {
-            return "ClassOnlyMatcher [" + pattern + ']';
+            return "ClassOnlyMatcher [" + pattern + ": " + action + ']';
         }
     }
 
@@ -410,7 +410,7 @@ public class VM {
                 if ("keep".equalsIgnoreCase(v)) {
                     action = Matcher.KEEP;
                 } else if ("keepclass".equalsIgnoreCase(v)) {
-                    action = Matcher.STRIP;
+                    action = Matcher.KEEP;
                     scopeAll = false;
                 } else if ("strip".equalsIgnoreCase(v)) {
                     action = Matcher.STRIP;
