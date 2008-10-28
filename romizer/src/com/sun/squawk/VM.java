@@ -257,7 +257,7 @@ public class VM {
     }
 
     static class ClassMatcher extends Matcher {
-        private final String pattern;
+        protected final String pattern;
         ClassMatcher(String pattern, int action) {
             super(action, PRECEDENCE_CLASS);
             if (pattern.indexOf('#') != -1 || pattern.indexOf('*') != -1) {
@@ -286,6 +286,21 @@ public class VM {
         
         public String toString() {
             return "ClassMatcher [" + pattern + ']';
+        }
+    }
+
+    /** Only the exact class will match, not members. */
+    static class ClassOnlyMatcher extends ClassMatcher {
+        ClassOnlyMatcher(String pattern, int action) {
+            super(pattern, action);
+        }
+
+        public boolean matches(String s) {
+            return pattern.equals(s);
+        }
+        
+        public String toString() {
+            return "ClassOnlyMatcher [" + pattern + ']';
         }
     }
 
@@ -391,8 +406,12 @@ public class VM {
                 String v = (String) entry.getValue();
 
                 int action;
+                boolean scopeAll = true;
                 if ("keep".equalsIgnoreCase(v)) {
                     action = Matcher.KEEP;
+                } else if ("keepclass".equalsIgnoreCase(v)) {
+                    action = Matcher.STRIP;
+                    scopeAll = false;
                 } else if ("strip".equalsIgnoreCase(v)) {
                     action = Matcher.STRIP;
                 } else if ("internal".equalsIgnoreCase(v)) {
@@ -410,7 +429,11 @@ public class VM {
                 } else if (k.indexOf('#') != -1) {
                     stripMatchers.add(new MemberMatcher(k, action));
                 } else {
-                    stripMatchers.add(new ClassMatcher(k, action));
+                    if (scopeAll) {
+                        stripMatchers.add(new ClassMatcher(k, action));
+                    } else {
+                        stripMatchers.add(new ClassOnlyMatcher(k, action));
+                    }
                 }
             }
         } catch (IOException e) {

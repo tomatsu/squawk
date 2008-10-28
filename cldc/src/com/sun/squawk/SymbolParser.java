@@ -334,11 +334,6 @@ final class SymbolParser extends ByteBufferDecoder {
     }
 
     /**
-     * Synchronization lock for {@link #strip}.
-     */
-    private static final Object PRUNE_LOCK = new Object();
-
-    /**
      * Prunes the symbols based on a given suite type.
      *
      * @param klass  the enclosing class
@@ -346,28 +341,26 @@ final class SymbolParser extends ByteBufferDecoder {
      * @param types  the collection to which the types in the signatures of the remaining members should be added
      * @return the stripped symbols
      */
-    byte[] strip(Klass klass, int type, SquawkVector types) {
-        synchronized(PRUNE_LOCK) {
-            if (symbolsBuffer == null) {
-                symbolsBuffer = new ByteBufferEncoder();
-                membersBuffer = new ByteBufferEncoder();
-            }
-            symbolsBuffer.reset();
-
-            // Place holder for flags
-            int flagsPos = symbolsBuffer.count;
-            symbolsBuffer.addUnsignedByte(0);
-
-            int flags = 0;
-            flags |= stripFields(klass, type, INSTANCE_FIELDS, types);
-            flags |= stripFields(klass, type, STATIC_FIELDS, types);
-            flags |= stripMethods(klass, type, VIRTUAL_METHODS, types);
-            flags |= stripMethods(klass, type, STATIC_METHODS, types);
-
-            symbolsBuffer.buffer[flagsPos] = (byte)flags;
-
-            return symbolsBuffer.toByteArray();
+    synchronized byte[] strip(Klass klass, int type, SquawkVector types) {
+        if (symbolsBuffer == null) {
+            symbolsBuffer = new ByteBufferEncoder();
+            membersBuffer = new ByteBufferEncoder();
         }
+        symbolsBuffer.reset();
+
+        // Place holder for flags
+        int flagsPos = symbolsBuffer.count;
+        symbolsBuffer.addUnsignedByte(0);
+
+        int flags = 0;
+        flags |= stripFields(klass, type, INSTANCE_FIELDS, types);
+        flags |= stripFields(klass, type, STATIC_FIELDS, types);
+        flags |= stripMethods(klass, type, VIRTUAL_METHODS, types);
+        flags |= stripMethods(klass, type, STATIC_METHODS, types);
+
+        symbolsBuffer.buffer[flagsPos] = (byte) flags;
+
+        return symbolsBuffer.toByteArray();
     }
 
     /**
@@ -468,7 +461,7 @@ final class SymbolParser extends ByteBufferDecoder {
                 } else {
                     // Stripping this method:
                     if ((Modifier.isAbstract(modifiers) || klass.isInterface())
-                        && !Modifier.isSuitePrivate(klass.getModifiers())) {
+                        && !(Modifier.isPackagePrivate(modifiers) || Modifier.isSuitePrivate(klass.getModifiers()))) {
                         // If a class with abstract methods, or an interface, is exported from a suite, but the abstract methods are not exported,
                         // then there is no way to extend or implement the exported class or interface.
                         throw new IllegalStateException("Can't strip method " + name + " because it is abstract in a class exported from a suite: " + klass);

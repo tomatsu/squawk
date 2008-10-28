@@ -33,7 +33,13 @@ import com.sun.squawk.vm.*;
 import java.util.Enumeration;
 
 
-
+/**
+ * Pure static class that handles object creation and GC control and monitoring.
+ * 
+ * The particular GC implementation used is a subclass of {@link GarbageCollector}. Many of
+ * the "public" methods of this class are actually "suite-private". See the file "squawk.library.properties"
+ * for the list of exported methods.
+ */
 public class GC implements GlobalStaticFields {
     
     /**
@@ -67,7 +73,7 @@ public class GC implements GlobalStaticFields {
      *
      * @return a reference to the installed collector
      */
-    static GarbageCollector getCollector() {
+    public static GarbageCollector getCollector() {
         return collector;
     }
 
@@ -1767,7 +1773,7 @@ public class GC implements GlobalStaticFields {
      *
      * @return the count of partial-heap collections.
      */
-    static int getPartialCollectionCount() {
+    public static int getPartialCollectionCount() {
         return partialCollectionCount;
     }
 
@@ -1776,7 +1782,7 @@ public class GC implements GlobalStaticFields {
      *
      * @return the count of full-heap collections.
      */
-    static int getFullCollectionCount() {
+    public static int getFullCollectionCount() {
         return fullCollectionCount;
     }
     
@@ -1785,7 +1791,7 @@ public class GC implements GlobalStaticFields {
      *
      * @return the total count of collections.
      */
-    static int getCollectionCount() {
+    public static int getCollectionCount() {
         return fullCollectionCount + partialCollectionCount;
     }
 

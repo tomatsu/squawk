@@ -36,8 +36,10 @@ import com.sun.squawk.pragma.*;
  */
 public abstract class GarbageCollector implements GlobalStaticFields {
     
-    /* if build.properties defines NATIVE_GC_ONLY= true, then define constant NATIVE_GC_ONLY = true.*/
+    /** If build.properties defines NATIVE_GC_ONLY= true, then define constant NATIVE_GC_ONLY = true.*/
     public final static boolean NATIVE_GC_ONLY = /*VAL*/false/*NATIVE_GC_ONLY*/;
+    
+    /* package-private**/ GarbageCollector() {}
 
     /**
      * Creates and initializes the garbage collector. The exact type of the

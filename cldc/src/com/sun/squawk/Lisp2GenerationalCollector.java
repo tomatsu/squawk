@@ -30,9 +30,10 @@ import com.sun.squawk.pragma.AllowInlinedPragma;
 
 
 /**
- * Collector based on the lisp 2 algorithm described in "Garbage Collection : Algorithms for Automatic Dynamic Memory Management"
- * by Richard Jones, Rafael Lins.
+ * A collector based on the lisp 2 algorithm described in "Garbage Collection : Algorithms for Automatic Dynamic Memory Management"
+ * by Richard Jones, Rafael Lins.<p>
  *
+ * <h3>Object Header Layout</h3>
  * For objects that move during a collection, forwarding offsets are installed in high bits
  * of the class word in the object's header. The class pointer is made relative to the space
  * in which the class lies (i.e. ROM, NVM or RAM) and this offset is stored in the lower bits.
@@ -40,23 +41,19 @@ import com.sun.squawk.pragma.AllowInlinedPragma;
  * ('00' if not) and if so, where is the class located ('01' in the heap, '11' in NVM and '10'
  * in ROM). The forwarding offset is relative to the start of a "slice" with the absolute
  * offset of the slice stored in a fixed size "slice offset table".
- * <p><hr><blockquote><pre>
+ * 
+ * <p><blockquote><pre>
  *       <-------------- (W-C-2) ---------> <------ C ------> <-2->
  *      +----------------------------------+-----------------+-----+
  *      |  forwarding offset               | class offset    | tag |
  *      +----------------------------------+-----------------+-----+
  *       <--------------------------- w -------------------------->
  *                                          <-- sliceOffsetShift ->
- * </pre></blockquote><hr>
+ * </pre></blockquote>
  *
- */
-public final class Lisp2GenerationalCollector extends GarbageCollector {
-
-    /*-----------------------------------------------------------------------*\
-     *                               Descripton                              *
-    \*-----------------------------------------------------------------------*/
-
-    /*
+ * <h3>Heap Layout</h3>
+ * <blockquote><pre>
+    
                       memoryEnd ->
                                     Slice table
 
@@ -87,8 +84,10 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
                                     Permanent space                                  |
                                                                                      |
             permanentMemoryStart ->                                                --+
+ * </pre></blockquote>
+ */
+public final class Lisp2GenerationalCollector extends GarbageCollector {
 
-     */
 
     /**
      * The default size of the young generation as a percent of the heap size.
@@ -677,7 +676,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
      * @return the minimum of the ideal young generation size and the amount of memory
      *         between the current start of the young generation and the end of the heap
      */
-    private int getYoungGenerationSize() {
+    public int getYoungGenerationSize() {
         int size = getIdealYoungGenerationSize();
         int available = heapEnd.diff(youngGenerationStart).toInt();
         if (available < size) {
@@ -708,10 +707,19 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
      *
      * @return the ideal young generation size
      */
-    private int getIdealYoungGenerationSize() {
+    public int getIdealYoungGenerationSize() {
         // Calculate percentage avoiding integer overflow
         return GC.roundDown((heapSize / 100) * idealYoungGenerationSizePercent, HDR.BYTES_PER_WORD);
     }
+    
+    /**
+     * Sets the size for the young generation based on its ideal ratio to the heap size.
+     *
+     * @param ygPct the new young generation percent
+     */
+     public void setIdealYoungGenerationSizePercent(int ygPct){
+        idealYoungGenerationSizePercent = ygPct;
+    } 
 
     /**
      * Determines if the current collection is a full collection. That is, is it processing the
