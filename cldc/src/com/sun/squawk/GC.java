@@ -594,7 +594,7 @@ public class GC implements GlobalStaticFields {
      *
      * May be inaccurate during a copyObjectGraph operation.
      */
-    static int getBytesAllocatedSinceLastGC() {
+    public static int getBytesAllocatedSinceLastGC() {
         return allocTop.diff(allocStart).toInt();
     }
     
