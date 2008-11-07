@@ -1167,7 +1167,8 @@ public final class CheneyCollector extends GarbageCollector {
         if ((HEAP_TRACE || GC.GC_TRACING_SUPPORTED) && GC.isTracing(GC.TRACE_HEAP_BEFORE_GC)) {
             traceHeap("Before collection", allocTop);
         }
-
+        this.numBytesLastScanned = allocTop.diff(toSpaceStartPointer).toPrimitive();
+        
         // Switch semi-spaces
         toggleSpaces();
 
@@ -1239,7 +1240,7 @@ public final class CheneyCollector extends GarbageCollector {
 
         Timings timings = collectionTimings;
         long total = timings.getTotal();
-        int count = GC.getCollectionCount();
+        int count = GC.getTotalCount();
         if (count != 0) {
             out.println("Collection: [average = " + (total/count) + timerUnitSuffix() +"]");
             dumpTiming(out, "    setup:        ", timings.setup, total);

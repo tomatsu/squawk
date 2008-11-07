@@ -24,11 +24,8 @@
 
 package com.sun.squawk;
 
-import java.lang.ref.*;
-
 import com.sun.squawk.vm.*;
 import com.sun.squawk.pragma.*;
-
 
 /**
  * Base class for all garbage collectors.
@@ -118,6 +115,11 @@ public abstract class GarbageCollector implements GlobalStaticFields {
 	private long totalPartialCollectionTime;
     
     /**
+     * The number of bytes scanned in the last collection.
+     */
+    protected long numBytesLastScanned;
+    
+    /**
      * The number of bytes freed in the last collection {@link #collectGarbage}.
      */
     private long numBytesLastFreed;
@@ -134,66 +136,117 @@ public abstract class GarbageCollector implements GlobalStaticFields {
     private long totalBytesAllocatedCheckPoint;
 
     /**
-     * Gets the time taken by the last call to {@link #collectGarbage}. In ms.
+     * Gets the time taken by the last collection.
+     * @return ms
      */
-    final long getLastCollectionTime() {
+    public final long getLastGCTime() {
         return lastCollectionTime;
     }
     
     /**
-     * Gets the time of the longest full GC. In ms.
+     * Gets the time of the longest full GC.
+     * @return ms
      */
-    final long getMaxFullCollectionTime() {
+    public final long getMaxFullGCTime() {
         return maxFullCollectionTime;
     }
     
     /**
-     * Gets the time of the longest partial GC. In ms.
+     * Gets the time of the longest partial GC.
+     * @return ms
      */
-    final long getMaxPartialCollectionTime() {
+    public final long getMaxPartialGCTime() {
         return maxPartialCollectionTime;
+    }
+
+    /**
+     * Get the time taken by the slowest garbage collection.
+     * @return ms
+     */
+    public final long getMaxGCTime() {
+        return Math.max(getMaxFullGCTime(), getMaxPartialGCTime());
     }
     
     /**
-     * Answers the time taken by all GC {@link #collectGarbage}. In ms.
+     * Gets the time taken by all GC.
+     * @return ms
      */
-    final long getTotalGCTime() {
+    public final long getTotalGCTime() {
         return totalFullCollectionTime + totalPartialCollectionTime;
     }
     
     /**
-     * Answers the time taken by all GC {@link #collectGarbage}. In ms.
+     * Gets the time taken by all full garbage collections.
+     * @return ms
      */
-    final long getTotalFullGCTime() {
+    public final long getTotalFullGCTime() {
         return totalFullCollectionTime;
     }
     
     /**
-     * Answers the time taken by all GC {@link #collectGarbage}. In ms.
+     * Get the time taken by all partial garbage collections.
+     * @return ms
      */
-    final long getTotalPartialGCTime() {
+    public final long getTotalPartialGCTime() {
         return totalPartialCollectionTime;
     }
     
     /**
-     * @return the number of bytes freed in the last collection
+     * Get the number of bytes freed in the last collection
+     * @return bytes
      */
-    final long getBytesLastFreed() {
+    public final long getBytesLastFreed() {
         return numBytesLastFreed;
     }
     
     /**
-     * @return the number of bytes freed in all collections
+     * Get the number of bytes scanned in the last collection.
+
+     * This is a measure of how much "work" the collector did in the last GC. It measures the size of the heap that was last collected.
+     * With generational colelctors this may be much less than the size of the used heap.
+     * 
+     * It can also be used to compute "bytes surviving collection" = getBytesLastScanned() - getBytesLastFreed().
+     * @return the number of bytes scanned in the last collection.
      */
-    final long getBytesFreedTotal() {
+    public final long getBytesLastScanned() {
+        return numBytesLastScanned;
+    }
+    
+    /**
+     * Get the number of bytes freed in all collections
+     * @return bytes
+     */
+    public final long getBytesFreedTotal() {
         return numBytesFreedTotal;
     }
     
     /**
-     * @return the number of bytes freed in all collections
+     * Get the total number of bytes allocated between JVM startup and the last collection.
+     * @return bytes
      */
     final long getTotalBytesAllocatedCheckPoint() {
         return totalBytesAllocatedCheckPoint;
+    }
+    
+    /**
+     * Get the number of bytes allocated since the last GC.
+     *
+     * May be inaccurate during a copyObjectGraph operation.
+     * 
+     * @return bytes
+     */
+    public int getBytesAllocatedSinceLastGC() {
+        return GC.getBytesAllocatedSinceLastGC();
+    }
+    
+    /**
+     * Get the number of bytes allocated since JVM startup.
+     *
+     * Watch out for overflow.
+     * @return bytes
+     */
+    public long getBytesAllocatedTotal() {
+        return getTotalBytesAllocatedCheckPoint() + getBytesAllocatedSinceLastGC();
     }
     
     /**

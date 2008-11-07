@@ -191,11 +191,11 @@ public class JavaApplicationManager {
             System.out.println();
             System.out.println("=============================");
             System.out.println("Squawk VM exiting with code "+exitCode);
-            if (GC.getPartialCollectionCount() > 0) {
-                System.out.println(""+GC.getPartialCollectionCount()+" partial collections");
+            if (GC.getPartialCount() > 0) {
+                System.out.println(""+GC.getPartialCount()+" partial collections");
             }
-            if (GC.getFullCollectionCount() > 0) {
-                System.out.println(""+GC.getFullCollectionCount()+" full collections");
+            if (GC.getFullCount() > 0) {
+                System.out.println(""+GC.getFullCount()+" full collections");
             }
             GC.getCollector().dumpTimings(System.out);
             System.out.println("Execution time was "+(endTime-startTime)+" ms");

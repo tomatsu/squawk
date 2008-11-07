@@ -220,7 +220,7 @@ public class GC implements GlobalStaticFields {
             if ((option & basicOptions) != 0) {
                 return true;
             } else {
-                return (collector == null || getCollectionCount() >= traceThreshold);
+                return (collector == null || getTotalCount() >= traceThreshold);
             }
         } else {
             return false;
@@ -590,21 +590,14 @@ public class GC implements GlobalStaticFields {
     }
 
     /**
-     * @return the number of bytes allocated since the last GC.
+     * Get the number of bytes allocated since the last GC.
      *
      * May be inaccurate during a copyObjectGraph operation.
+     * 
+     * @return bytes
      */
     public static int getBytesAllocatedSinceLastGC() {
         return allocTop.diff(allocStart).toInt();
-    }
-    
-    /**
-     * @return the number of bytes allocated from the beginning of the JVM.
-     *
-     * Watch out for overflow.
-     */
-    public static long getBytesAllocatedTotal() {
-        return getCollector().getTotalBytesAllocatedCheckPoint() + getBytesAllocatedSinceLastGC();
     }
 
     /**
@@ -877,7 +870,7 @@ public class GC implements GlobalStaticFields {
         long free = freeMemory();
         if (isTracing(TRACE_BASIC)) {
             VM.print("** Collecting garbage ** (collection count: ");
-            VM.print(getCollectionCount());
+            VM.print(getTotalCount());
 //            VM.print(", backward branch count:");
 //            VM.print(VM.getBranchCount());
             VM.print(", free memory:");
@@ -930,7 +923,7 @@ public class GC implements GlobalStaticFields {
             VM.print(" bytes, backward branch count:");
             VM.print(VM.getBranchCount());
             VM.print(", time:");
-            VM.print(collector.getLastCollectionTime());
+            VM.print(collector.getLastGCTime());
             VM.println("ms)");
         }
 
@@ -970,7 +963,7 @@ public class GC implements GlobalStaticFields {
             VM.print(" instance @ ");
             VM.printAddress(object);
             VM.print(" ** (collection count: ");
-            VM.print(getCollectionCount());
+            VM.print(getTotalCount());
             VM.print(", backward branch count:");
             VM.print(VM.getBranchCount());
             VM.println(")");
@@ -1773,7 +1766,7 @@ public class GC implements GlobalStaticFields {
      *
      * @return the count of partial-heap collections.
      */
-    public static int getPartialCollectionCount() {
+    public static int getPartialCount() {
         return partialCollectionCount;
     }
 
@@ -1782,7 +1775,7 @@ public class GC implements GlobalStaticFields {
      *
      * @return the count of full-heap collections.
      */
-    public static int getFullCollectionCount() {
+    public static int getFullCount() {
         return fullCollectionCount;
     }
     
@@ -1791,7 +1784,7 @@ public class GC implements GlobalStaticFields {
      *
      * @return the total count of collections.
      */
-    public static int getCollectionCount() {
+    public static int getTotalCount() {
         return fullCollectionCount + partialCollectionCount;
     }
 

@@ -735,8 +735,8 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
      * {@inheritDoc}
      */
     void dumpTimings(java.io.PrintStream out) {
-        fullCollectionTimer.dump(out, true, GC.getFullCollectionCount());
-        partialCollectionTimer.dump(out, false, GC.getPartialCollectionCount());
+        fullCollectionTimer.dump(out, true, GC.getFullCount());
+        partialCollectionTimer.dump(out, false, GC.getPartialCount());
         if (GC.GC_TRACING_SUPPORTED) {
             out.println("Object graph copying:");
             copyTimer.dump(out, "    ", false);
@@ -766,6 +766,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
             collectionStart = youngGenerationStart;
         }
         collectionEnd = allocTop;
+        numBytesLastScanned = collectionEnd.diff(collectionStart).toPrimitive();
 
         // Chooses the relevant timer
         timer = (isFullCollection() ? fullCollectionTimer : partialCollectionTimer);

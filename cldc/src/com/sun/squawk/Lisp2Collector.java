@@ -538,7 +538,7 @@ public final class Lisp2Collector extends GarbageCollector {
 
         Timings timings = collectionTimings;
         long total = timings.getTotal();
-        int count = GC.getCollectionCount();
+        int count = GC.getTotalCount();
         if (count != 0) {
             out.println("Collection: [average time per collection = " + (total/count) + timerUnitSuffix() + "]");
             out.println(    "    collection count: " + count);
@@ -583,6 +583,7 @@ public final class Lisp2Collector extends GarbageCollector {
         // Set up the limits of the space to be collected.
         collectionStart = heapStart;
         collectionEnd = allocTop;
+        numBytesLastScanned = collectionEnd.diff(collectionStart).toPrimitive();
 
         // Sets up the marking stack.
         markingStack.setup(collectionEnd, Lisp2Bitmap.getStart());

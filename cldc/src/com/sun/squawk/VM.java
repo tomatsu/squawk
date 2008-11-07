@@ -3729,118 +3729,133 @@ hbp.dumpState();
             return VMThread.getTotalWaitTime();
         }
         
-        /**
-         *  Get the total time taken by all garbage collections.
-         *
-         * @return the total GC time in milliseconds
-         */
-        public static long getTotalGCTime() {
-            return GC.getCollector().getTotalGCTime();
-        }
-        
-        /**
-         *  Get the total time taken by all full garbage collections.
-         *
-         * @return the full GC time in milliseconds
-         */
-        public static long getTotalFullGCTime() {
-            return GC.getCollector().getTotalFullGCTime();
-        }
-        
-        /**
-         *  Get the total time taken by all partial garbage collections.
-         *
-         * @return the partial GC time in milliseconds
-         */
-        public static long getTotalPartialGCTime() {
-            return GC.getCollector().getTotalPartialGCTime();
-        }
-        
-        /**
-         * Get the time taken by the last garbage collection.
-         *
-         * @return the last GC time in milliseconds
-         */
-        public static long getLastGCTime() {
-            return GC.getCollector().getLastCollectionTime();
-        }
-        
-        /**
-         * Get the time taken by the slowest garbage collection.
-         *
-         * @return the longest GC time in milliseconds
-         */
-        public static long getMaxGCTime() {
-            return Math.max(getMaxFullGCTime(), getMaxPartialGCTime());
-        }
-        
-        /**
-         * Get the time taken by the slowest full garbage collection.
-         *
-         * @return the longest full GC time in milliseconds
-         */
-        public static long getMaxFullGCTime() {
-            return GC.getCollector().getMaxFullCollectionTime();
-        }
-        
-        /**
-         * Get the time taken by the slowest partial garbage collection.
-         *
-         * @return the longest partial GC time in milliseconds
-         */
-        public static long getMaxPartialGCTime() {
-            return GC.getCollector().getMaxPartialCollectionTime();
-        }
-        
-        /**
-         * Get the total number of full garbage collections since reboot.
-         *
-         * @return full gc count
-         */
-        public static int getFullGCCount() {
-            return GC.getFullCollectionCount();
-        }
-        
-        /**
-         * Get the total number of partial garbage collections since reboot.
-         *
-         * @return partial gc count
-         */
-        public static int getPartialGCCount() {
-            return GC.getPartialCollectionCount();
-        }
-        
-        /**
-         * Get the number of bytes freed in the last collection.
-         *
-         * @return bytes freed
-         */
-        public static long getBytesLastFreed() {
-            return GC.getCollector().getBytesLastFreed();
-        }
-        
-        /**
-         * Get the number of bytes freed since reboot.<p>
-         *
-         * Watch out for overflow.
-         *
-         * @return total bytes freed
-         */
-        public static long getBytesFreedTotal() {
-            return GC.getCollector().getBytesFreedTotal();
-        }
-        
-        /**
-         *Get the number of bytes allocated since reboot.<p>
-         *
-         * Watch out for overflow.
-         *
-         * @return total bytes allocated
-         */
-        public static long getBytesAllocatedTotal() {
-            return GC.getBytesAllocatedTotal();
-        }
-        
+//        /**
+//         *  Get the total time taken by all garbage collections.
+//         *
+//         * @return the total GC time in milliseconds
+//         */
+//        public static long getTotalGCTime() {
+//            return GC.getCollector().getTotalGCTime();
+//        }
+//        
+//        /**
+//         *  Get the total time taken by all full garbage collections.
+//         *
+//         * @return the full GC time in milliseconds
+//         */
+//        public static long getTotalFullGCTime() {
+//            return GC.getCollector().getTotalFullGCTime();
+//        }
+//        
+//        /**
+//         *  Get the total time taken by all partial garbage collections.
+//         *
+//         * @return the partial GC time in milliseconds
+//         */
+//        public static long getTotalPartialGCTime() {
+//            return GC.getCollector().getTotalPartialGCTime();
+//        }
+//        
+//        /**
+//         * Get the time taken by the last garbage collection.
+//         *
+//         * @return the last GC time in milliseconds
+//         */
+//        public static long getLastGCTime() {
+//            return GC.getCollector().getLastCollectionTime();
+//        }
+//        
+//        /**
+//         * Get the time taken by the slowest garbage collection.
+//         *
+//         * @return the longest GC time in milliseconds
+//         */
+//        public static long getMaxGCTime() {
+//            return Math.max(getMaxFullGCTime(), getMaxPartialGCTime());
+//        }
+//        
+//        /**
+//         * Get the time taken by the slowest full garbage collection.
+//         *
+//         * @return the longest full GC time in milliseconds
+//         */
+//        public static long getMaxFullGCTime() {
+//            return GC.getCollector().getMaxFullCollectionTime();
+//        }
+//        
+//        /**
+//         * Get the time taken by the slowest partial garbage collection.
+//         *
+//         * @return the longest partial GC time in milliseconds
+//         */
+//        public static long getMaxPartialGCTime() {
+//            return GC.getCollector().getMaxPartialCollectionTime();
+//        }
+//        
+//        /**
+//         * Get the total number of full garbage collections since reboot.
+//         *
+//         * @return full gc count
+//         */
+//        public static int getFullCount() {
+//            return GC.getFullCollectionCount();
+//        }
+//        
+//        /**
+//         * Get the total number of partial garbage collections since reboot.
+//         *
+//         * @return partial gc count
+//         */
+//        public static int getPartialCount() {
+//            return GC.getPartialCollectionCount();
+//        }
+//        
+//        /**
+//         * Get the number of bytes freed in the last collection.
+//         *
+//         * @return bytes freed
+//         */
+//        public static long getBytesLastFreed() {
+//            return GC.getCollector().getBytesLastFreed();
+//        }
+//
+//        /**
+//         * Get the number of bytes scanned in the last collection.
+//         * 
+//         * This is a measure of how much "work" the collector did in the last GC. It measures the size of the heap that was last collected.
+//         * With generational colelctors this may be much less than the size of the used heap.
+//         * 
+//         * It can also be used to compute "bytes surviving collection" = getBytesLastScanned() - getBytesLastFreed().
+//         * 
+//         * @return the number of bytes scanned in the last collection.
+//         */
+//        public static long getBytesLastScanned() {
+//            return GC.getCollector().getBytesLastScanned();
+//        }
+//        
+//        
+//        /**
+//         * Get the number of bytes freed since reboot.<p>
+//         *
+//         * Watch out for overflow.
+//         *
+//         * @return total bytes freed
+//         */
+//        public static long getBytesFreedTotal() {
+//            return GC.getCollector().getBytesFreedTotal();
+//        }
+//        
+//        /**
+//         *Get the number of bytes allocated since reboot.<p>
+//         *
+//         * Watch out for overflow.
+//         *
+//         * @return total bytes allocated
+//         */
+//        public static long getBytesAllocatedTotal() {
+//            return GC.getCollector().getBytesAllocatedTotal();
+//        }
+//        
         /**
          * Get the number of objects allocated since reboot.
          *
@@ -4006,19 +4021,20 @@ hbp.dumpState();
          * @param values must have length of at least {@link #NUM_STAT_VALUES}.
          */
         public static void readAllValues(long[] values) {
+            GarbageCollector gc = GC.getCollector();
             values[STAT_WALL_TIME]               = VM.getTimeMillis();
             values[STAT_WAIT_TIME]               = VM.Stats.getTotalWaitTime();
-            values[STAT_GC_TIME]                 = VM.Stats.getTotalGCTime();
-            values[STAT_FULL_GC_TIME]            = VM.Stats.getTotalFullGCTime();
-            values[STAT_PARTIAL_GC_TIME]         = VM.Stats.getTotalPartialGCTime();
-            values[STAT_LAST_GC_TIME]            = VM.Stats.getLastGCTime();
-            values[STAT_MAX_FULLGC_TIME]         = VM.Stats.getMaxFullGCTime();
-            values[STAT_MAX_PARTGC_TIME]         = VM.Stats.getMaxPartialGCTime();
-            values[STAT_FULL_GC_COUNT]           = VM.Stats.getFullGCCount();
-            values[STAT_PARTIAL_GC_COUNT]        = VM.Stats.getPartialGCCount();
-            values[STAT_BYTES_LAST_FREED]        = VM.Stats.getBytesLastFreed();
-            values[STAT_BYTES_TOTAL_FREED]       = VM.Stats.getBytesFreedTotal();
-            values[STAT_BYTES_TOTAL_ALLOCATED]   = VM.Stats.getBytesAllocatedTotal();
+            values[STAT_GC_TIME]                 = gc.getTotalGCTime();
+            values[STAT_FULL_GC_TIME]            = gc.getTotalFullGCTime();
+            values[STAT_PARTIAL_GC_TIME]         = gc.getTotalPartialGCTime();
+            values[STAT_LAST_GC_TIME]            = gc.getLastGCTime();
+            values[STAT_MAX_FULLGC_TIME]         = gc.getMaxFullGCTime();
+            values[STAT_MAX_PARTGC_TIME]         = gc.getMaxPartialGCTime();
+            values[STAT_FULL_GC_COUNT]           = GC.getFullCount();
+            values[STAT_PARTIAL_GC_COUNT]        = GC.getPartialCount();
+            values[STAT_BYTES_LAST_FREED]        = gc.getBytesLastFreed();
+            values[STAT_BYTES_TOTAL_FREED]       = gc.getBytesFreedTotal();
+            values[STAT_BYTES_TOTAL_ALLOCATED]   = gc.getBytesAllocatedTotal();
             values[STAT_OBJECTS_TOTAL_ALLOCATED] = VM.Stats.getObjectsAllocatedTotal();
             values[STAT_THREADS_ALLOCATED]       = VM.Stats.getThreadsAllocatedCount();
             values[STAT_THREAD_SWITCH_COUNT]     = VM.Stats.getThreadSwitchCount();
