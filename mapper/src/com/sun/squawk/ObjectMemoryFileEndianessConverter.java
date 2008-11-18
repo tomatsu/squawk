@@ -106,7 +106,8 @@ public class ObjectMemoryFileEndianessConverter {
         }
         out = new File(args[argc]);
 
-        VM.initializeTranslator(VM.DEFAULT_CLASSPATH);
+        // why did this ever need the translator?
+  //      VM.initializeTranslator(VM.DEFAULT_CLASSPATH);
 
         try {
 

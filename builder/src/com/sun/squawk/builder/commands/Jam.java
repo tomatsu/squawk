@@ -353,7 +353,7 @@ public class Jam extends Thread {
      * @param bootstrapSuitePath Path to the bootstrap suite of the suite to be created
      * @param classPath Classpath containing all classes to be included in suite to be created
      * @param littleEndian True if the suite to be created is to be little endian, false for big endian, and
-     *                     null to use the default of the platform SuiteCreator is being run on
+     *                     null to use the default of the host platform
      * @param suiteName The name of the suite to be created
      * @param properties properties from the application descriptor file (.jad)
      */

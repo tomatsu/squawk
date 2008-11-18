@@ -308,15 +308,11 @@ public class Klass {
      * @return Klass
      * @throws java.lang.ClassNotFoundException 
      */
-    public static Klass forName(String className) throws ClassNotFoundException {
-        return forName(className, false, true);
-    }
-
-    /**
-     * This is a package private interface that is only directly used by com.sun.squawk.SuiteCreator.
-     */
-    static synchronized Klass forName(String className, boolean allowSystemClasses, boolean runClassInitializer) throws ClassNotFoundException {
-        // Verbose trace.
+    public static synchronized Klass forName(String className) throws ClassNotFoundException {
+        final boolean allowSystemClasses = false; // these were parameters...
+        final boolean runClassInitializer = true;
+        
+       // Verbose trace.
         if (VM.isVeryVerbose()) {
             VM.print("[Klass.forName(");
             VM.print(className);

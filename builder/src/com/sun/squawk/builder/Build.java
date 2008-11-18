@@ -2162,6 +2162,8 @@ public class Build {
         // Preprocess the sources
         preprocessor.processAssertions = j2me;
         preprocessor.verbose = verbose;
+        // @TODO: Should be true for desktop builds. host == target?
+        preprocessor.showLineNumbers = false;
 
         for (int i = 0; i != srcDirs.length; ++i) {
 

@@ -97,7 +97,7 @@ public final class Suite {
     
     /**
      * List of classes that should throw a NoClassDefFoundError instead of a ClassNotFoundException.
-     * See implementation of {@link Klass#forName(String, boolean, boolean)} for more information.
+     * See implementation of {@link Klass#forName(String)} for more information.
      */
     private String[] noClassDefFoundErrorClassNames;
 	

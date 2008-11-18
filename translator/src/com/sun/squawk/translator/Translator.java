@@ -31,7 +31,6 @@ import java.util.Hashtable;
 import java.util.Stack;
 
 import com.sun.squawk.util.Assert;
-//import com.sun.squawk.SuiteCreator.*;
 import com.sun.squawk.io.connections.*;
 import com.sun.squawk.translator.ci.*;
 import com.sun.squawk.util.ComputationTimer;

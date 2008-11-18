@@ -1448,7 +1448,7 @@ public class GC implements GlobalStaticFields {
          * Write the symbol table entries.
          */
 /*if[!FLASH_MEMORY]*/
-        if (isHosted || VM.isVerbose() || VM.getCurrentIsolate().getMainClassName().equals("com.sun.squawk.SuiteCreator")) {
+        if (isHosted || VM.isVerbose()) {
             Method method = body.getDefiningMethod();
             String name = method.toString();
             String file = body.getDefiningClass().getSourceFilePath();

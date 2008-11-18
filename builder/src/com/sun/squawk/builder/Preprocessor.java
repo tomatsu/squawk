@@ -87,6 +87,13 @@ public class Preprocessor {
      * The default value is <code>false</code>.
      */
     public boolean assertionsEnabled;
+    
+    /**
+     * If <code>true</code> then assertion failure messages contain the file and line number.
+     * <p>
+     * The default value is <code>false</code>.
+     */
+    public boolean showLineNumbers;
 
     /**
      * Processes a set of files placing the resulting output in a given directory.
@@ -578,7 +585,9 @@ public class Preprocessor {
                         // Change "Assert..." into "if (false) Assert..."
                         newLine = line.substring(0, invoke) + "if (false) " + line.substring(invoke);
                     } else {
-                        line = prependContext(line, invoke, in);
+                        if (showLineNumbers) {
+                            line = prependContext(line, invoke, in);
+                        }
                         newLine = line.substring(0, invoke) + "if (Assert.SHOULD_NOT_REACH_HERE_ALWAYS_ENABLED) " + line.substring(invoke);
                     }
                     line = newLine;
@@ -587,9 +596,10 @@ public class Preprocessor {
                 if (makeAssertionsFatal) {
                     line = makeAssertionFatal(line, line.indexOf('(', invoke));
                 }
-
-                // prepend file name and line number to message
-                line = prependContext(line, invoke, in);
+                if (showLineNumbers) {
+                    // prepend file name and line number to message
+                    line = prependContext(line, invoke, in);
+                }
 
             }
         }
