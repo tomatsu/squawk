@@ -32,7 +32,7 @@ import com.sun.squawk.debugger.DataType.*;
  * A PacketInputStream is used to read data from the data part of a {@link Packet}.
  *
  */
-public final class PacketInputStream {
+public class PacketInputStream {
 
     private final DataInputStream dis;
 
@@ -40,10 +40,14 @@ public final class PacketInputStream {
         this.dis = dis;
     }
     
+    protected PacketInputStream(PacketInputStream inner) {
+        this.dis = inner.dis;
+    }
+    
     /** 
      * Get the underlying inputstream for sniffing purposes
      */
-    public DataInputStream getInputStream() {
+    public final DataInputStream getInputStream() {
         return dis;
     }
 
@@ -55,7 +59,7 @@ public final class PacketInputStream {
      *             stream is reached.
      * @throws IOException if there was an IO error while reading
      */
-    public byte readByte(String s) throws IOException {
+    public final byte readByte(String s) throws IOException {
         byte value = dis.readByte();
         if (s != null && Log.verbose()) Log.log("in[byte]      " + s + "=" + value);
         return value;
@@ -68,7 +72,7 @@ public final class PacketInputStream {
      * @return     the <code>boolean</code> value read.
      * @throws IOException if there was an IO error while reading
      */
-    public boolean readBoolean(String s) throws IOException {
+    public final boolean readBoolean(String s) throws IOException {
         boolean value = dis.readBoolean();
         if (s != null && Log.verbose()) Log.log("in[boolean]   " + s + "=" + value);
         return value;
@@ -82,7 +86,7 @@ public final class PacketInputStream {
      *             character.
      * @throws IOException if there was an IO error while reading
      */
-    public char readChar(String s) throws IOException {
+    public final char readChar(String s) throws IOException {
         char value = dis.readChar();
         if (s != null && Log.verbose()) Log.log("in[char]      " + s + "=" + value);
         return value;
@@ -96,7 +100,7 @@ public final class PacketInputStream {
      *             signed 16-bit number.
      * @throws IOException if there was an IO error while reading
      */
-    public short readShort(String s) throws IOException {
+    public final short readShort(String s) throws IOException {
         short value = dis.readShort();
         if (s != null && Log.verbose()) Log.log("in[short]     " + s + "=" + value);
         return value;
@@ -110,7 +114,7 @@ public final class PacketInputStream {
      *             <code>int</code>.
      * @throws IOException if there was an IO error while reading
      */
-    public int readInt(String s) throws IOException {
+    public final int readInt(String s) throws IOException {
         int value = dis.readInt();
         if (s != null && Log.verbose()) Log.log("in[int]       " + s + "=" + value);
         return value;
@@ -124,7 +128,7 @@ public final class PacketInputStream {
      *             <code>long</code>.
      * @throws IOException if there was an IO error while reading
      */
-    public long readLong(String s) throws IOException {
+    public final long readLong(String s) throws IOException {
         long value = dis.readLong();
         if (s != null && Log.verbose()) Log.log("in[long]      " + s + "=" + value);
         return value;
@@ -138,7 +142,7 @@ public final class PacketInputStream {
      * @return the read 32 bit float.
      * @throws IOException if there was an IO error while reading
      */
-    public float readFloat(String s) throws IOException {
+    public final float readFloat(String s) throws IOException {
         int value = dis.readInt();
         if (s != null && Log.verbose()) Log.log("in[float]     " + s + "=" + value);
         return Float.intBitsToFloat(value);
@@ -151,7 +155,7 @@ public final class PacketInputStream {
      * @return the 64 bit double read.
      * @throws IOException if there was an IO error while reading
      */
-    public double readDouble(String s) throws IOException {
+    public final double readDouble(String s) throws IOException {
         long value = dis.readLong();
         if (s != null && Log.verbose()) Log.log("in[double]    " + s + "=" + value);
         return Double.longBitsToDouble(value);
@@ -172,7 +176,7 @@ public final class PacketInputStream {
      * @return     a Unicode string.
      * @throws IOException if there was an IO error while reading
      */
-    public String readString(String s) throws IOException {
+    public final String readString(String s) throws IOException {
         // A String is encoded in a JDWP packet as a UTF-8 encoded array, not zero
         // terminated, preceded by a *four-byte* integer length.
         String value = com.sun.squawk.util.DataInputUTF8Decoder.readUTF(dis, false, false);

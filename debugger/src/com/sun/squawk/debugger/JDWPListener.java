@@ -338,7 +338,15 @@ public abstract class JDWPListener implements Runnable {
      */
     public abstract String sourceName();
     
-
+    /**
+     * Get the input stream from a command packet (sniffer needs to wrap input stream.
+     * @param command packet to read from
+     * @return the input stream to read with
+     */
+    public PacketInputStream getInputStreamFor(CommandPacket command) {
+        return command.getInputStream();
+    }
+    
     /*-----------------------------------------------------------------------*\
      *                            Command Set                                *
     \*-----------------------------------------------------------------------*/
@@ -380,7 +388,7 @@ public abstract class JDWPListener implements Runnable {
         public final boolean handle(JDWPListener listener, CommandPacket command) throws IOException {
             this.command = command;
             this.reply = command.createReply(JDWP.Error_NONE);
-            this.in = command.getInputStream();
+            this.in = listener.getInputStreamFor(command);
             this.out = reply.getOutputStream();
 
             boolean handled = true;

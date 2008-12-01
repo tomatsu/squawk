@@ -42,10 +42,63 @@ import com.sun.squawk.Debugger;
  */
 public abstract class JDWPSniffer extends JDWPListener {
     
+    public static class SnifferPacketInputStream extends PacketInputStream {
+
+        public SnifferPacketInputStream(PacketInputStream raw) {
+            super(raw);
+        }
+
+        public ObjectID readObjectID(String s) throws IOException {
+            JDWPSniffer.readObjectID(this, s);
+            return null;
+        }
+
+        public TaggedObjectID readTaggedObjectID(String s) throws IOException {
+            JDWPSniffer.readTaggedObjectID(this, s);
+            return null;
+        }
+
+        public ReferenceTypeID readReferenceTypeID(String s) throws IOException {
+            JDWPSniffer.readReferenceTypeID(this, s);
+            return null;
+        }
+
+        public MethodID readMethodID(String s) throws IOException {
+            JDWPSniffer.readMethodID(this, s);
+            return null;
+        }
+
+        public FrameID readFrameID(String s) throws IOException {
+            JDWPSniffer.readFrameID(this, s);
+            return null;
+        }
+
+        public FieldID readFieldID(String s) throws IOException {
+            JDWPSniffer.readFieldID(this, s);
+            return null;
+        }
+
+        public Location readLocation(String s) throws IOException {
+            JDWPSniffer.readLocation(this, s);
+            return null;
+        }
+    } /* SnifferPacketInputStream */
+    
     /**
      * The JDWP command set handlers.
      */
     protected final IntHashtable commandSets = new IntHashtable();
+    
+    /**
+     * Get the input stream from a command packet (sniffer needs to wrap input stream.
+     * @param command packet to read from
+     * @return the input stream to read with
+     */
+    public PacketInputStream getInputStreamFor(CommandPacket command) {
+        PacketInputStream raw = command.getInputStream();
+        return new SnifferPacketInputStream(raw);
+    }
+    
     
     public static abstract class SnifferCommandSet extends CommandSet {
         public void logReply(CommandPacket command, ReplyPacket reply, PacketInputStream in) throws IOException {
@@ -65,13 +118,16 @@ public abstract class JDWPSniffer extends JDWPListener {
         } catch (SDWPException e) {
             // Just pass error replies through to debugger
         }
-        ReplyPacket sdaReply = command.getReply();
         
-        if (sdaReply != null) {
-            if (handler != null) {
-                handler.logReply(command, sdaReply, sdaReply.getInputStream());
+        if (command.needsReply()) {
+            ReplyPacket sdaReply = command.getReply();
+
+            if (sdaReply != null) {
+                if (handler != null) {
+                    handler.logReply(command, sdaReply, sdaReply.getInputStream());
+                }
+                sendReply(sdaReply);
             }
-            sendReply(sdaReply);
         }
     }
     
@@ -366,12 +422,12 @@ public abstract class JDWPSniffer extends JDWPListener {
                 in.readBoolean("canGetSourceDebugExtension");      // Can the VM get the source debug extension?
                 in.readBoolean("canRequestVMDeathEvent");          // Can the VM request VM death events?
                 in.readBoolean("canSetDefaultStratum");            // Can the VM set a default stratum?
-                in.readBoolean("reserved16");                      // Reserved for future capability
-                in.readBoolean("reserved17");                      // Reserved for future capability
-                in.readBoolean("reserved18");                      // Reserved for future capability
-                in.readBoolean("reserved19");                      // Reserved for future capability
-                in.readBoolean("reserved20");                      // Reserved for future capability
-                in.readBoolean("reserved21");                      // Reserved for future capability
+                in.readBoolean("canGetInstanceInfo");              // Can the VM return instances, counts of instances of classes and referring objects? 
+                in.readBoolean("canRequestMonitorEvents");         // Can the VM request monitor events?
+                in.readBoolean("canGetMonitorFrameInfo");          // Can the VM get monitors with frame depth info?  
+                in.readBoolean("canUseSourceNameFilters");         // Can the VM filter class prepare events by source name?  
+                in.readBoolean("canGetConstantPool");              // Can the VM return the constant pool information?  
+                in.readBoolean("canForceEarlyReturn");             // Can the VM force early return from a method?  
                 in.readBoolean("reserved22");                      // Reserved for future capability
                 in.readBoolean("reserved23");                      // Reserved for future capability
                 in.readBoolean("reserved24");                      // Reserved for future capability
