@@ -311,6 +311,14 @@ public final class ChannelConstants {
     public static final int SPI_SEND_AND_RECEIVE = 209;
     public static final int SPI_GET_MAX_TRANSFER_SIZE = 210;
 
+    public static final int I2C_OPEN            = 250;
+    public static final int I2C_CLOSE           = 251;
+    public static final int I2C_SET_CLOCK_SPEED = 252;
+    public static final int I2C_READ            = 253;
+    public static final int I2C_WRITE           = 254;
+    public static final int I2C_BUSY            = 255;
+    public static final int I2C_PROBE           = 256;
+
     public static final int GET_LAST_DEVICE_INTERRUPT_TIME_ADDR = 302;
     public static final int GET_CURRENT_TIME_ADDR = 303;
 

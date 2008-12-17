@@ -23,6 +23,7 @@
  */
 
 #include "spi.h"
+#include "i2c.h"
 #include "flash.h"
 #include "avr.h"
 #include "9200-io.h"
@@ -410,73 +411,103 @@ int avr_low_result = 0;
     		}
     	    break;
     	    		
-	    case ChannelConstants_SPI_SEND_RECEIVE_8: {
-	    		// CE pin in i1
-	    		// SPI config in i2
-	    		// data in i3
-	    		res = spi_sendReceive8(i1, i2, i3);
-		    }
+	    case ChannelConstants_SPI_SEND_RECEIVE_8:
+	    	// CE pin in i1
+	    	// SPI config in i2
+	    	// data in i3
+	    	res = spi_sendReceive8(i1, i2, i3);
 		    break;
-	    case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_SEND_16: {
-	    		// CE pin in i1
-	    		// SPI config in i2
-	    		// data in i3
-	    		// 16 bits in i4
-	    		res = spi_sendReceive8PlusSend16(i1, i2, i3, i4);
-		    }
+	    case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_SEND_16:
+	    	// CE pin in i1
+	    	// SPI config in i2
+	    	// data in i3
+	    	// 16 bits in i4
+	    	res = spi_sendReceive8PlusSend16(i1, i2, i3, i4);
 		    break;
-	    case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_SEND_N: {
-	    		// CE pin in i1
-	    		// SPI config in i2
-	    		// data in i3
-	    		// size in i4
-	    		res = spi_sendReceive8PlusSendN(i1, i2, i3, i4, send);
-		    }
+	    case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_SEND_N:
+	    	// CE pin in i1
+	    	// SPI config in i2
+	    	// data in i3
+	    	// size in i4
+	    	res = spi_sendReceive8PlusSendN(i1, i2, i3, i4, send);
 		    break;
-	    case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_RECEIVE_16: {
-	    		// CE pin in i1
-	    		// SPI config in i2
-	    		// data in i3
-	    		// 16 bits encoded in result
-	    		res = spi_sendReceive8PlusReceive16(i1, i2, i3);
-		    }
+	    case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_RECEIVE_16:
+	    	// CE pin in i1
+	    	// SPI config in i2
+	    	// data in i3
+	    	// 16 bits encoded in result
+	    	res = spi_sendReceive8PlusReceive16(i1, i2, i3);
 		    break;
-	    case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_VARIABLE_RECEIVE_N: {
-	    		// CE pin in i1
-	    		// SPI config in i2
-	    		// data in i3
-	    		// fifo_pin in i4
-	    		// fifo pio in i5
-	    		// data in receive
-	    		res = spi_sendReceive8PlusVariableReceiveN(i1, i2, i3, receive, i4, i5);
-		    }
+	    case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_VARIABLE_RECEIVE_N:
+	    	// CE pin in i1
+	    	// SPI config in i2
+	    	// data in i3
+	    	// fifo_pin in i4
+	    	// fifo pio in i5
+	    	// data in receive
+	    	res = spi_sendReceive8PlusVariableReceiveN(i1, i2, i3, receive, i4, i5);
 		    break;
-		case ChannelConstants_SPI_SEND_AND_RECEIVE: {
-				// CE pin in i1
-				// SPI config in i2
-	    		// tx size in i4
-	    		// rx size in i5
-	    		// rx offset in i6
-	    		// tx data in send
-	    		// rx data in receive
-	    		spi_sendAndReceive(i1, i2, i4, i5, i6, send, receive);
-			}
+		case ChannelConstants_SPI_SEND_AND_RECEIVE:
+			// CE pin in i1
+			// SPI config in i2
+	    	// tx size in i4
+	    	// rx size in i5
+	    	// rx offset in i6
+	    	// tx data in send
+	    	// rx data in receive
+	    	spi_sendAndReceive(i1, i2, i4, i5, i6, send, receive);
 			break;
-		case ChannelConstants_SPI_SEND_AND_RECEIVE_WITH_DEVICE_SELECT: {
-				// CE pin in i1
-				// SPI config in i2
-				// device address in i3
-	    		// tx size in i4
-	    		// rx size in i5
-	    		// rx offset in i6
-	    		// tx data in send
-	    		// rx data in receive
-	    		spi_sendAndReceiveWithDeviceSelect(i1, i2, i3, i4, i5, i6, send, receive);
-			}
+		case ChannelConstants_SPI_SEND_AND_RECEIVE_WITH_DEVICE_SELECT:
+			// CE pin in i1
+			// SPI config in i2
+			// device address in i3
+	    	// tx size in i4
+	    	// rx size in i5
+	    	// rx offset in i6
+	    	// tx data in send
+	    	// rx data in receive
+	    	spi_sendAndReceiveWithDeviceSelect(i1, i2, i3, i4, i5, i6, send, receive);
 			break;
 		case ChannelConstants_SPI_GET_MAX_TRANSFER_SIZE:
 			res = SPI_DMA_BUFFER_SIZE;
 			break;
+
+        case ChannelConstants_I2C_OPEN:
+            i2c_open();
+            break;
+        case ChannelConstants_I2C_CLOSE:
+            i2c_close();
+			break;
+        case ChannelConstants_I2C_SET_CLOCK_SPEED:
+            // clock speed in i1
+            i2c_setClockSpeed(i1);
+		    break;
+        case ChannelConstants_I2C_READ:
+            // slave address in i1
+			// internal address in i2
+			// internal address size in i3
+	    	// rx offset in i4
+	    	// rx size in i5
+	    	// rx data in receive
+            res = i2c_read(i1, i2, i3, i4, i5, receive);
+		    break;
+        case ChannelConstants_I2C_WRITE:
+            // slave address in i1
+			// internal address in i2
+			// internal address size in i3
+            // tx offset in i4
+	    	// tx size in i5
+	    	// tx data in send
+            res = i2c_write(i1, i2, i3, i4, i5, send);
+		    break;
+        case ChannelConstants_I2C_BUSY:
+            res = i2c_busy();
+		    break;
+        case ChannelConstants_I2C_PROBE:
+            // slave address in i1
+            res = i2c_probe(i1);
+		    break;
+
     	case ChannelConstants_FLASH_ERASE:
     		data_cache_disable();
     		res = flash_erase_sector((Flash_ptr)i2);
