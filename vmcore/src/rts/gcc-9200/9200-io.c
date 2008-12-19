@@ -354,223 +354,224 @@ int avr_low_result = 0;
 
     switch (op) {
     	case ChannelConstants_GLOBAL_CREATECONTEXT:
-    		res = 1; //let all Isolates share a context for now
-    		break;
+            res = 1; //let all Isolates share a context for now
+            break;
     	case ChannelConstants_CONTEXT_GETCHANNEL: {
-            		int channelType = i1;
-            		if (channelType == ChannelConstants_CHANNEL_IRQ) {
-            			res = 1;
-            		} else if (channelType == ChannelConstants_CHANNEL_SPI) {
-            			res = 2;
-            		} else {
-            			res = ChannelConstants_RESULT_BADPARAMETER;
-            		}
-            	}
-    		break;
+                int channelType = i1;
+                if (channelType == ChannelConstants_CHANNEL_IRQ) {
+                    res = 1;
+                } else if (channelType == ChannelConstants_CHANNEL_SPI) {
+                    res = 2;
+                } else {
+                    res = ChannelConstants_RESULT_BADPARAMETER;
+                }
+            }
+            break;
     	case ChannelConstants_IRQ_WAIT: {
-            		int irq_no = i1;
-            		if (check_irq(irq_no, 1)) {
-            			res = 0;
-            		} else {
-        	    		res = storeIrqRequest(irq_no);
-        	    	}
-    		}
-    		break;
+                int irq_no = i1;
+                if (check_irq(irq_no, 1)) {
+                    res = 0;
+                } else {
+                    res = storeIrqRequest(irq_no);
+                }
+            }
+            break;
     		
     	case ChannelConstants_AVAILABLE_SERIAL_CHARS: {
-    			int deviceType = i1;
-    			res = sysAvailable(deviceType)?1:0;
-	    	}
+                int deviceType = i1;
+                res = sysAvailable(deviceType) ? 1 : 0;
+            }
     	    break;
-    	    		
-	    case ChannelConstants_GET_SERIAL_CHARS: {
-	    		int deviceType = i3;
-	    		if (sysAvailable(deviceType)) {
-	    			// Return 0 if there are chars available (which we will return in the receive param)
-	    			res = 0;
-			    	int offset = i1;
-			    	int len = i2;
-			    	int* countBuf = send;
-			    	char* buf = receive;
-			    	*countBuf = sysReadSeveral(buf + offset, len, deviceType);
-			    	freeSerialPort(deviceType); // free serial port for future use
-	    		} else {
-	    			// Otherwise return event number to say there might be later
-	    			res = getSerialPortEvent(deviceType);
-	    		}
-    		}
-    	    break;
-    	    		
-	    case ChannelConstants_WRITE_SERIAL_CHARS: {
-		    	int offset = i1;
-		    	int len = i2;
-		    	int deviceType = i3;
-		    	char* buf = send;
-		    	sysWriteSeveral(buf + offset, len, deviceType);
-		    	res = 0;
-    		}
-    	    break;
-    	    		
-	    case ChannelConstants_SPI_SEND_RECEIVE_8:
-	    	// CE pin in i1
-	    	// SPI config in i2
-	    	// data in i3
-	    	res = spi_sendReceive8(i1, i2, i3);
-		    break;
-	    case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_SEND_16:
-	    	// CE pin in i1
-	    	// SPI config in i2
-	    	// data in i3
-	    	// 16 bits in i4
-	    	res = spi_sendReceive8PlusSend16(i1, i2, i3, i4);
-		    break;
-	    case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_SEND_N:
-	    	// CE pin in i1
-	    	// SPI config in i2
-	    	// data in i3
-	    	// size in i4
-	    	res = spi_sendReceive8PlusSendN(i1, i2, i3, i4, send);
-		    break;
-	    case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_RECEIVE_16:
-	    	// CE pin in i1
-	    	// SPI config in i2
-	    	// data in i3
-	    	// 16 bits encoded in result
-	    	res = spi_sendReceive8PlusReceive16(i1, i2, i3);
-		    break;
-	    case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_VARIABLE_RECEIVE_N:
-	    	// CE pin in i1
-	    	// SPI config in i2
-	    	// data in i3
-	    	// fifo_pin in i4
-	    	// fifo pio in i5
-	    	// data in receive
-	    	res = spi_sendReceive8PlusVariableReceiveN(i1, i2, i3, receive, i4, i5);
-		    break;
-		case ChannelConstants_SPI_SEND_AND_RECEIVE:
-			// CE pin in i1
-			// SPI config in i2
-	    	// tx size in i4
-	    	// rx size in i5
-	    	// rx offset in i6
-	    	// tx data in send
-	    	// rx data in receive
-	    	spi_sendAndReceive(i1, i2, i4, i5, i6, send, receive);
-			break;
-		case ChannelConstants_SPI_SEND_AND_RECEIVE_WITH_DEVICE_SELECT:
-			// CE pin in i1
-			// SPI config in i2
-			// device address in i3
-	    	// tx size in i4
-	    	// rx size in i5
-	    	// rx offset in i6
-	    	// tx data in send
-	    	// rx data in receive
-	    	spi_sendAndReceiveWithDeviceSelect(i1, i2, i3, i4, i5, i6, send, receive);
-			break;
-		case ChannelConstants_SPI_GET_MAX_TRANSFER_SIZE:
-			res = SPI_DMA_BUFFER_SIZE;
-			break;
+
+        case ChannelConstants_GET_SERIAL_CHARS: {
+                int deviceType = i3;
+                if (sysAvailable(deviceType)) {
+                    // Return 0 if there are chars available (which we will return in the receive param)
+                    res = 0;
+                    int offset = i1;
+                    int len = i2;
+                    int* countBuf = send;
+                    char* buf = receive;
+                    *countBuf = sysReadSeveral(buf + offset, len, deviceType);
+                    freeSerialPort(deviceType); // free serial port for future use
+                } else {
+                    // Otherwise return event number to say there might be later
+                    res = getSerialPortEvent(deviceType);
+                }
+            }
+            break;
+
+        case ChannelConstants_WRITE_SERIAL_CHARS: {
+                int offset = i1;
+                int len = i2;
+                int deviceType = i3;
+                char* buf = send;
+                sysWriteSeveral(buf + offset, len, deviceType);
+                res = 0;
+            }
+            break;
+
+        case ChannelConstants_SPI_SEND_RECEIVE_8:
+            // CE pin in i1
+            // SPI config in i2
+            // data in i3
+            res = spi_sendReceive8(i1, i2, i3);
+            break;
+        case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_SEND_16:
+            // CE pin in i1
+            // SPI config in i2
+            // data in i3
+            // 16 bits in i4
+            res = spi_sendReceive8PlusSend16(i1, i2, i3, i4);
+            break;
+        case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_SEND_N:
+            // CE pin in i1
+            // SPI config in i2
+            // data in i3
+            // size in i4
+            res = spi_sendReceive8PlusSendN(i1, i2, i3, i4, send);
+            break;
+        case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_RECEIVE_16:
+            // CE pin in i1
+            // SPI config in i2
+            // data in i3
+            // 16 bits encoded in result
+            res = spi_sendReceive8PlusReceive16(i1, i2, i3);
+            break;
+        case ChannelConstants_SPI_SEND_RECEIVE_8_PLUS_VARIABLE_RECEIVE_N:
+            // CE pin in i1
+            // SPI config in i2
+            // data in i3
+            // fifo_pin in i4
+            // fifo pio in i5
+            // data in receive
+            res = spi_sendReceive8PlusVariableReceiveN(i1, i2, i3, receive, i4, i5);
+            break;
+        case ChannelConstants_SPI_SEND_AND_RECEIVE:
+            // CE pin in i1
+            // SPI config in i2
+            // tx size in i4
+            // rx size in i5
+            // rx offset in i6
+            // tx data in send
+            // rx data in receive
+            spi_sendAndReceive(i1, i2, i4, i5, i6, send, receive);
+            break;
+        case ChannelConstants_SPI_SEND_AND_RECEIVE_WITH_DEVICE_SELECT:
+            // CE pin in i1
+            // SPI config in i2
+            // device address in i3
+            // tx size in i4
+            // rx size in i5
+            // rx offset in i6
+            // tx data in send
+            // rx data in receive
+            spi_sendAndReceiveWithDeviceSelect(i1, i2, i3, i4, i5, i6, send, receive);
+            break;
+        case ChannelConstants_SPI_GET_MAX_TRANSFER_SIZE:
+            res = SPI_DMA_BUFFER_SIZE;
+            break;
 
         case ChannelConstants_I2C_OPEN:
             i2c_open();
             break;
         case ChannelConstants_I2C_CLOSE:
             i2c_close();
-			break;
+            break;
         case ChannelConstants_I2C_SET_CLOCK_SPEED:
             // clock speed in i1
             i2c_setClockSpeed(i1);
-		    break;
+            break;
         case ChannelConstants_I2C_READ:
             // slave address in i1
-			// internal address in i2
-			// internal address size in i3
-	    	// rx offset in i4
-	    	// rx size in i5
-	    	// rx data in receive
+            // internal address in i2
+            // internal address size in i3
+            // rx offset in i4
+            // rx size in i5
+            // rx data in receive
             res = i2c_read(i1, i2, i3, i4, i5, receive);
-		    break;
+            break;
         case ChannelConstants_I2C_WRITE:
             // slave address in i1
-			// internal address in i2
-			// internal address size in i3
+            // internal address in i2
+            // internal address size in i3
             // tx offset in i4
-	    	// tx size in i5
-	    	// tx data in send
+            // tx size in i5
+            // tx data in send
             res = i2c_write(i1, i2, i3, i4, i5, send);
-		    break;
+            break;
         case ChannelConstants_I2C_BUSY:
             res = i2c_busy();
-		    break;
+            break;
         case ChannelConstants_I2C_PROBE:
             // slave address in i1
-            res = i2c_probe(i1);
-		    break;
+            // probe data in i2
+            res = i2c_probe(i1, i2);
+            break;
 
     	case ChannelConstants_FLASH_ERASE:
-    		data_cache_disable();
-    		res = flash_erase_sector((Flash_ptr)i2);
-    		data_cache_enable();
-    		// the 9200 seems to lose time during flash operations, so need to reset the clock
-    		synchroniseWithAVRClock();
-    		break;
+            data_cache_disable();
+            res = flash_erase_sector((Flash_ptr)i2);
+            data_cache_enable();
+            // the 9200 seems to lose time during flash operations, so need to reset the clock
+            synchroniseWithAVRClock();
+            break;
     	case ChannelConstants_FLASH_WRITE: {
-				int i, d, address = i1, size = i2, offset = i3;
-				char *buffer = (char*) send;
-	    		data_cache_disable();
-	    		res = flash_write_words((Flash_ptr)address, (unsigned char*)(((int)send)+offset), size);
-	    		data_cache_enable();
-    			// the 9200 seems to lose time during flash operations, so need to reset the clock
-	    		synchroniseWithAVRClock();
-	    	}
-    		break;
+                int i, d, address = i1, size = i2, offset = i3;
+                char *buffer = (char*) send;
+                data_cache_disable();
+                res = flash_write_words((Flash_ptr) address, (unsigned char*) (((int) send) + offset), size);
+                data_cache_enable();
+                // the 9200 seems to lose time during flash operations, so need to reset the clock
+                synchroniseWithAVRClock();
+            }
+            break;
     	case ChannelConstants_USB_GET_STATE:
-    		res = usb_get_state();
-    		break;
+            res = usb_get_state();
+            break;
 
     	case ChannelConstants_CONTEXT_GETERROR:
-    		res = *((char*)retValue);
-    		if (res == 0)
-    			retValue = 0;
-    		else
-    			retValue++;
-    		break;
+            res = *((char*) retValue);
+            if (res == 0)
+                retValue = 0;
+            else
+                retValue++;
+            break;
     		
     	case ChannelConstants_CONTEXT_GETRESULT:
     	case ChannelConstants_CONTEXT_GETRESULT_2:
-    		res = retValue;
-    		retValue = 0;
-    		break;
+            res = retValue;
+            retValue = 0;
+            break;
     	case ChannelConstants_GLOBAL_GETEVENT:
-    		// since this function gets called frequently it's a good place to put
-    		// the call that periodically resyncs our clock with the power controller
-    		maybeSynchroniseWithAVRClock();    		
-			// don't return any events other than FIQ while sleep manager is running because
-			// the sleep manager might call SHALLOW_SLEEP and any threads
-			// unblocked before that point will end up waiting for sleep to
-			// finish even though they are runnable
-			res = getEvent(true, sleepManagerRunning);
-//    		improve fairness of thread scheduling - see bugzilla #568
-    		bc = -TIMEQUANTA;
-    		break;
+            // since this function gets called frequently it's a good place to put
+            // the call that periodically resyncs our clock with the power controller
+            maybeSynchroniseWithAVRClock();
+            // don't return any events other than FIQ while sleep manager is running because
+            // the sleep manager might call SHALLOW_SLEEP and any threads
+            // unblocked before that point will end up waiting for sleep to
+            // finish even though they are runnable
+            res = getEvent(true, sleepManagerRunning);
+            // improve fairness of thread scheduling - see bugzilla #568
+            bc = -TIMEQUANTA;
+            break;
     	case ChannelConstants_GLOBAL_WAITFOREVENT: {
-			long long millisecondsToWait = rebuildLongParam(i1, i2);
-			long long target = ((long long)getMilliseconds()) + millisecondsToWait;
-        	if (target <= 0) target = 0x7FFFFFFFFFFFFFFFLL; // overflow detected
-//			diagnosticWithValue("GLOBAL_WAITFOREVENT - deepSleepEnabled", deepSleepEnabled);
-//			diagnosticWithValue("GLOBAL_WAITFOREVENT - sleepManagerRunning", sleepManagerRunning);
-//			diagnosticWithValue("GLOBAL_WAITFOREVENT - minimumDeepSleepMillis", minimumDeepSleepMillis);
-			if ((millisecondsToWait < 0x7FFFFFFFFFFFFFFFLL) && deepSleepEnabled && !sleepManagerRunning && (millisecondsToWait >= minimumDeepSleepMillis)) {
-//				diagnosticWithValue("GLOBAL_WAITFOREVENT - deep sleeping for", (int)millisecondsToWait);
-				setDeepSleepEventOutstanding(target);
-			} else {
-//				diagnosticWithValue("GLOBAL_WAITFOREVENT - shallow sleeping for", (int)millisecondsToWait);
-				doShallowSleep(target);
-			}
-   			res = 0;
-    		}
-    		break;
+                long long millisecondsToWait = rebuildLongParam(i1, i2);
+                long long target = ((long long) getMilliseconds()) + millisecondsToWait;
+                if (target <= 0) target = 0x7FFFFFFFFFFFFFFFLL; // overflow detected
+//		diagnosticWithValue("GLOBAL_WAITFOREVENT - deepSleepEnabled", deepSleepEnabled);
+//		diagnosticWithValue("GLOBAL_WAITFOREVENT - sleepManagerRunning", sleepManagerRunning);
+//		diagnosticWithValue("GLOBAL_WAITFOREVENT - minimumDeepSleepMillis", minimumDeepSleepMillis);
+                if ((millisecondsToWait < 0x7FFFFFFFFFFFFFFFLL) && deepSleepEnabled && !sleepManagerRunning && (millisecondsToWait >= minimumDeepSleepMillis)) {
+//		diagnosticWithValue("GLOBAL_WAITFOREVENT - deep sleeping for", (int)millisecondsToWait);
+                    setDeepSleepEventOutstanding(target);
+                } else {
+//		    diagnosticWithValue("GLOBAL_WAITFOREVENT - shallow sleeping for", (int)millisecondsToWait);
+                    doShallowSleep(target);
+                }
+                res = 0;
+            }
+            break;
     	case ChannelConstants_CONTEXT_DELETE:
     		// TODO delete all the outstanding events on the context
     		// But will have to wait until we have separate contexts for each isolate
