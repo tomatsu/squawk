@@ -160,6 +160,10 @@ public class VM {
         return verbose;
     }
 
+    public static void setVerbose(boolean verbose) {
+        VM.verbose = verbose;
+    }
+
     /**
      * Gets the flag indicating if the VM is running in verbose mode.
      *
@@ -167,6 +171,10 @@ public class VM {
      */
     public static boolean isVeryVerbose() {
         return veryverbose;
+    }
+
+    public static void setVeryVerbose(boolean veryverbose) {
+        VM.veryverbose = veryverbose;
     }
 
     /**
