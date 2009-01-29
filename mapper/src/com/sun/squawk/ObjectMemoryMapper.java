@@ -198,6 +198,8 @@ public class ObjectMemoryMapper {
         out.println("                    append to end of class path");
         out.println("    -cp/p:<directories and jar/zip files separated by '"+File.pathSeparatorChar+"'>");
         out.println("                    prepend in front of class path");
+        out.println("    -suitepath:<directories separated by '"+File.pathSeparatorChar+"'>");
+        out.println("                    path where suite files can be found");
         out.println("    -o:<file>       dump to 'file' (default=<object_memory_file>.map)");
         out.println("    -all            dump the complete chain of object memories");
         out.println("    -r:<file>       uses file or relocation info (default=squawk.reloc)");
@@ -209,6 +211,7 @@ public class ObjectMemoryMapper {
 /*if[TYPEMAP]*/
         out.println("    -notypemap      omit typemap info");
 /*end[TYPEMAP]*/
+        out.println("    -verbose, -v        provide more output while running");
         out.println("    -h              show this help message");
     }
     
@@ -345,6 +348,9 @@ public class ObjectMemoryMapper {
                 prependClassPath = arg.substring("-cp/p:".length());
             } else if (arg.startsWith("-cp/a:")) {
                 appendClassPath = arg.substring("-cp/a:".length());
+            } else if (arg.startsWith("-suitepath:")) {
+                String path = arg.substring("-suitepath:".length());
+                ObjectMemoryLoader.setFilePath(path);
             } else if (arg.startsWith("-r:")) {
                 relocationFile = arg.substring("-r:".length());
             } else if (arg.startsWith("-o:")) {
@@ -394,6 +400,10 @@ public class ObjectMemoryMapper {
                 showAllClassesAndPackages = false; // only show info for specified class(es)
                 showObjects = false;
                 fieldDefs = null;
+            } else if (arg.equals("-verbose") | arg.equals("-v")) {
+                    System.setProperty("translator.verbose", "true");
+                    VM.setVerbose(true);
+                    VM.setVeryVerbose(true);
             } else if (arg.equals("-h")) {
                 usage(null);
                 return false;
