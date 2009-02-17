@@ -502,7 +502,28 @@ public class VM implements GlobalStaticFields {
     static Object checkcast(Object obj, Klass klass) throws InterpreterInvokedPragma {
         Assert.that(obj != null);
         if (!klass.isAssignableFrom(GC.getKlass(obj))) {
-            throw new ClassCastException("Expected object of type " + klass.getName() + " but got object of type " + GC.getKlass(obj).getName());
+
+            println("=== temp extra debugging info ===");
+            print("target class: ");
+            printAddress(klass);
+            println();
+            Klass srcKlass = GC.getKlass(obj);
+            print("source class: ");
+            printAddress(srcKlass);
+            println();
+            Klass[] interfaces = srcKlass.getInterfaces();
+            if (interfaces != null) {
+                println("implements interfaces:");
+                for (int i = 0; i < interfaces.length; i++) {
+                    print("    ");
+                    print(interfaces[i].toString());
+                    print("    ");
+                    printAddress(interfaces[i]);
+                    println();
+                }
+            }
+
+            throw new ClassCastException("Expected object of type " + klass + " but got object of type " + GC.getKlass(obj));
         }
         return obj;
     }
