@@ -694,7 +694,8 @@ public class Build {
                 cp(new File(phoneMeSourceRoot + "midp/src/core/javautil/reference/classes", "com/sun/midp/util/DateParser.java"), new File("imp/phoneme", "com/sun/midp/util/DateParser.java"), false);
 
             	copy(phoneMeSourceRoot + "midp/src/protocol/http/classes", "imp/phoneme", "imp/src", "javax/microedition/io");
-            	copy(phoneMeSourceRoot + "midp/src/ams/ams_api/reference/classes", "imp/phoneme", "imp/src", "javax/microedition/midlet");
+            	cp(new File(phoneMeSourceRoot + "midp/src/ams/ams_api/reference/classes", "javax/microedition/midlet/MIDletStateChangeException.java"), new File("imp/phoneme", "javax/microedition/midlet/MIDletStateChangeException.java"), false);
+            	cp(new File(phoneMeSourceRoot + "midp/src/ams/ams_api/reference/classes", "javax/microedition/midlet/package.html"),                    new File("imp/phoneme", "javax/microedition/midlet/package.html"), false);
             	cp(new File(phoneMeSourceRoot + "midp/src/ams/ams_api/reference/classes", "com/sun/midp/midlet/MIDletTunnel.java"), new File("imp/phoneme", "com/sun/midp/midlet/MIDletTunnel.java"), false);
             	copy(phoneMeSourceRoot + "midp/src/rms/rms_api/classes", "imp/phoneme", "imp/src", "javax/microedition/rms");
             	copy(phoneMeSourceRoot + "midp/src/rms/rms_api/reference/classes", "imp/phoneme", "imp/src", "javax/microedition/rms");

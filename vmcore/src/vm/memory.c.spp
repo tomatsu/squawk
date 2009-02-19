@@ -723,7 +723,7 @@ INLINE boolean setArrayLength(Address _oop, int _size);
 INLINE_UNALIGNED void setUnalignedShort(Address base, Offset offset, int value) {
             signed char *ea = &((signed char *)base)[offset];
 
-            if (PLATFORM_UNALIGNED_LOADS /* || isAligned((UWord)ea, 2) */) {
+            if (PLATFORM_UNALIGNED_LOADS) {
                  setShortTyped(ea, 0, AddressType_SHORT, (short)value);
             } else {
                 int b0 =  value       & 0xFF;
@@ -749,7 +749,7 @@ INLINE_UNALIGNED void setUnalignedShort(Address base, Offset offset, int value) 
          */
 INLINE_UNALIGNED void setUnalignedInt(Address base, Offset offset, int value) {
             signed char *ea = &((signed char *)base)[offset];
-            if (PLATFORM_UNALIGNED_LOADS /*|| isAligned((UWord)ea, 4) */) {
+            if (PLATFORM_UNALIGNED_LOADS) {
                  setIntTyped(ea, 0, AddressType_INT, value);
             } else {
                 int b0 =  value        & 0xFF;
@@ -966,7 +966,7 @@ NOINLINE jlong getLongAtWordSpecial_mm(Address p1, Address p2) {
          */
 INLINE_UNALIGNED int getUnalignedShort(Address base, Offset offset) {
             signed char *ea = &((signed char *)base)[offset];
-            if (PLATFORM_UNALIGNED_LOADS || isAligned((UWord)ea, 2)) {
+            if (PLATFORM_UNALIGNED_LOADS) {
                  return getShortTyped(ea, 0, AddressType_ANY);
             } else {
                 if (PLATFORM_BIG_ENDIAN) {
@@ -990,7 +990,7 @@ INLINE_UNALIGNED int getUnalignedShort(Address base, Offset offset) {
          */
 INLINE_UNALIGNED int getUnalignedInt(Address base, Offset offset) {
             signed char *ea = &((signed char *)base)[offset];
-            if (PLATFORM_UNALIGNED_LOADS || isAligned((UWord)ea, 4)) {
+            if (PLATFORM_UNALIGNED_LOADS) {
                 return getIntTyped(ea, 0, AddressType_ANY);
             } else {
                 int b1 = getUByteTyped(ea, 0, AddressType_ANY);
@@ -1097,10 +1097,6 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
         void swap8(Address address) {
             char type = (TYPEMAP ? getType(address) : AddressType_UNDEFINED);
             if (!isAligned((UWord)address, 8)) {
-                /*
-                 * Is "& 0xff" necessary? getUByteTyped is already unsigned...
-                 * It's OK, gcc did the right thing (other compilers prob. do too).
-                 */
                 int b0 = getUByteTyped(address, 0, AddressType_ANY);
                 int b1 = getUByteTyped(address, 1, AddressType_ANY);
                 int b2 = getUByteTyped(address, 2, AddressType_ANY);

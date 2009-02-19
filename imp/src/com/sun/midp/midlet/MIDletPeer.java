@@ -39,4 +39,5 @@ package com.sun.midp.midlet;
  */
 
 public class MIDletPeer {
+    private MIDletPeer() {}
 }
