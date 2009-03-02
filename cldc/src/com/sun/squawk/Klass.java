@@ -1512,7 +1512,7 @@ public class Klass {
     /**
      * A flag that controls conditional features (mainly assertions).
      */
-    public static final boolean ASSERTIONS_ENABLED = /*VAL*/false/*ASSERTIONS_ENABLED*/;
+    public static final boolean ASSERTIONS_ENABLED = /*VAL*/true/*ASSERTIONS_ENABLED*/;
 
     /**
      * A flag specifying whether the {@link com.sun.squawk.util.Tracer Tracer} class is available.

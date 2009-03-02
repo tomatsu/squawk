@@ -710,14 +710,27 @@ public final class NativeUnsafe {
      */
     static void resolveClasses(ArrayHashtable classMap) throws HostedPragma {
         Enumeration keys = unresolvedClassPointers.keys();
+        Hashtable unresolvedLeft = new Hashtable();
         while (keys.hasMoreElements()) {
             Address address = (Address) keys.nextElement();
             Klass unresolvedClass = (Klass) unresolvedClassPointers.get(address);
             Address klassAddress = (Address) classMap.get(unresolvedClass);
             if (klassAddress == null) {
-            	throw new RuntimeException("Klass " + unresolvedClass.getName() + " was not serialied");
+                unresolvedLeft.put(unresolvedClass, unresolvedClass);
+                continue;
             }
             setAddress(address, 0, klassAddress);
+        }
+        if (unresolvedLeft.size() > 0) {
+            keys = unresolvedLeft.keys();
+            StringBuilder builder = new StringBuilder();
+            builder.append("The following Klasses were not serialized:");
+            while (keys.hasMoreElements()) {
+                builder.append("\n");
+                builder.append(keys.nextElement());
+            }
+            builder.append("\n------");
+            throw new RuntimeException(builder.toString());
         }
         unresolvedClassPointers.clear();
     }
