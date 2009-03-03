@@ -534,22 +534,16 @@ public class Preprocessor {
      * @return the converted line
      */
     private String prependContext(String line, int invoke, LineReader in) {
-
-        int quote = line.indexOf('"', invoke);
         File inFile = new File(in.getSource());
-        String context = "\"[" + inFile.getName() + ":" + in.getLastLineNumber() + "] ";
-        if (quote != -1) {
-            line = line.substring(0, quote) + context + line.substring(quote + 1);
-        } else {
+        String context = "\"" + inFile.getName() + "\", " + in.getLastLineNumber();
             int bracket = line.lastIndexOf(");");
             if (bracket != -1) {
                 String comma = ", ";
                 if (line.charAt(bracket - 1) == '(') {
                     comma = "";
                 }
-                line = line.substring(0, bracket) + comma + context + '"' + line.substring(bracket);
+                line = line.substring(0, bracket) + comma + context + line.substring(bracket);
             }
-        }
         return line;
     }
 
@@ -591,6 +585,10 @@ public class Preprocessor {
                         newLine = line.substring(0, invoke) + "if (Assert.SHOULD_NOT_REACH_HERE_ALWAYS_ENABLED) " + line.substring(invoke);
                     }
                     line = newLine;
+                } else if (method.startsWith("always")) {
+                    if (showLineNumbers) {
+                        line = prependContext(line, invoke, in);
+                    }
                 }
             } else {
                 if (makeAssertionsFatal) {

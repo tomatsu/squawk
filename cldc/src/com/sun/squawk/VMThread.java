@@ -1157,7 +1157,7 @@ VM.println();
     /**
      * Determines if this thread is the service thread.
      */
-    boolean isServiceThread() {
+    public boolean isServiceThread() {
         return this == serviceThread;
     }
 

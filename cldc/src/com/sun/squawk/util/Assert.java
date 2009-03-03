@@ -31,6 +31,9 @@ import com.sun.squawk.pragma.*;
  * Provides support for assertions that can be removed on demand in order for
  * building a release version.
  *
+ * If the preprocessor is running with showLineNumbers=true, it will call the versions
+ * of these methods that take a filename and linenumber argument.
+ *
  * @version  1.00
  */
 public class Assert {
@@ -46,6 +49,11 @@ public class Assert {
     public static final boolean SHOULD_NOT_REACH_HERE_ALWAYS_ENABLED = true;
 
     /**
+     * Whether Assert.always is a fatal error or throws an exception (usually TRUE)
+     */
+    public static final boolean ASSERT_ALWAYS_IS_FATAL = true;
+
+    /**
      * Don't let anyone instantiate this class.
      */
     private Assert() {}
@@ -57,7 +65,29 @@ public class Assert {
      * @param message
      */
     protected static void throwAssertFailedException(String message)  throws NotInlinedPragma {
+        System.err.flush();
+        System.out.flush();
         throw new RuntimeException(message);
+    }
+
+    /**
+     * Create one centralized place where an exception is thrown in case of Assert failure.
+     * Makes it easier to place a single breakpoint and debug.
+     *
+     * @param message
+     */
+    private static void throwAssertFailedException(String systemMessage, String message)  throws NotInlinedPragma {
+        throwAssertFailedException(systemMessage + message);
+    }
+
+    /**
+     * Create one centralized place where an exception is thrown in case of Assert failure.
+     * Makes it easier to place a single breakpoint and debug.
+     *
+     * @param message
+     */
+    private static void throwAssertFailedException(String systemMessage, String message, String filename, int lineno)  throws NotInlinedPragma {
+        throwAssertFailedException(systemMessage + "(" + filename + ":" + lineno + "): " + message);
     }
     
     /**
@@ -71,9 +101,16 @@ public class Assert {
      */
     public static void that(boolean cond, String msg) {
         if (ASSERTS_ENABLED && !cond) {
-            System.err.flush();
-            System.out.flush();
-            throwAssertFailedException("Assertion failed: " + msg);
+            throwAssertFailedException("Assertion failed: ", msg);
+        }
+    }
+
+    /**
+     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
+     */
+    public static void that(boolean cond, String msg, String filename, int lineno) {
+        if (ASSERTS_ENABLED && !cond) {
+            throwAssertFailedException("Assertion failed: ", msg, filename, lineno);
         }
     }
 
@@ -92,6 +129,15 @@ public class Assert {
     }
 
     /**
+     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #cond, __FILE__, __LINE__); fatalVMError(""); } )
+     */
+    public static void that(boolean cond, String filename, int lineno) {
+        if (ASSERTS_ENABLED && !cond) {
+            throwAssertFailedException("Assertion failed ", "", filename, lineno);
+        }
+    }
+
+    /**
      * Asserts that the compiler should never reach this point.
      *
      * @param   msg   message that explains the failure
@@ -103,7 +149,16 @@ public class Assert {
      * @vm2c macro( { fprintf(stderr, "shouldNotReachHere: %s -- %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
      */
     public static RuntimeException shouldNotReachHere(String msg) throws NotInlinedPragma {
-        throwAssertFailedException("Assertion failed: should not reach here: " + msg);
+        throwAssertFailedException("Assertion failed: should not reach here: ", msg);
+        // NO-OP
+        return null;
+    }
+
+    /**
+     * @vm2c macro( { fprintf(stderr, "shouldNotReachHere: %s -- %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
+     */
+    public static RuntimeException shouldNotReachHere(String msg, String filename, int lineno) throws NotInlinedPragma {
+        throwAssertFailedException("Assertion failed: should not reach here: ", msg, filename, lineno);
         // NO-OP
         return null;
     }
@@ -119,7 +174,16 @@ public class Assert {
      * @vm2c macro( { fprintf(stderr, "shouldNotReachHere -- %s:%d\n", __FILE__, __LINE__); fatalVMError(""); } )
      */
     public static RuntimeException shouldNotReachHere() {
-        throwAssertFailedException("Assertion failed: should not reach here");
+        throwAssertFailedException("Assertion failed: ", "should not reach here");
+        // NO-OP
+        return null;
+    }
+
+    /**
+     * @vm2c macro( { fprintf(stderr, "shouldNotReachHere -- %s:%d\n", __FILE__, __LINE__); fatalVMError(""); } )
+     */
+    public static RuntimeException shouldNotReachHere(String filename, int lineno) {
+        throwAssertFailedException("Assertion failed: ", "should not reach here", filename, lineno);
         // NO-OP
         return null;
     }
@@ -146,6 +210,26 @@ public class Assert {
         }
     }
 
+    private static void printContext(String filename, int lineno) {
+        VM.print("(");
+        VM.print(filename);
+        VM.print(":");
+        VM.print(lineno);
+        VM.print("): ");
+    }
+
+    /**
+     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
+     */
+    public static void thatFatal(boolean cond, String msg, String filename, int lineno) {
+        if (!cond) {
+            VM.print("Assertion failed: ");
+            printContext(filename, lineno);
+            VM.println(msg);
+            VM.fatalVMError();
+        }
+    }
+
     /**
      * Asserts that the specified condition is true. If the condition is false
      * the VM is halted.
@@ -162,6 +246,17 @@ public class Assert {
     }
 
     /**
+     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #cond, __FILE__, __LINE__); fatalVMError(""); } )
+     */
+    public static void thatFatal(boolean cond, String filename, int lineno) {
+        if (!cond) {
+            VM.println("Assertion failed");
+            printContext(filename, lineno);
+            VM.fatalVMError();
+        }
+    }
+
+    /**
      * Asserts that the compiler should never reach this point.
      *
      * @param   msg   message that explains the failure
@@ -173,7 +268,20 @@ public class Assert {
      * @vm2c macro( { fprintf(stderr, "shouldNotReachHere: %s -- %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
      */
     public static RuntimeException shouldNotReachHereFatal(String msg) {
-        VM.print("Assertion failed: should not reach here: ");
+        VM.print("Assertion failed: ");
+        VM.print("should not reach here: ");
+        VM.println(msg);
+        VM.fatalVMError();
+        return null;
+    }
+
+    /**
+     * @vm2c macro( { fprintf(stderr, "shouldNotReachHere: %s -- %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
+     */
+    public static RuntimeException shouldNotReachHereFatal(String msg, String filename, int lineno) {
+        VM.print("Assertion failed: ");
+        VM.print("should not reach here: ");
+        printContext(filename, lineno);
         VM.println(msg);
         VM.fatalVMError();
         return null;
@@ -190,7 +298,19 @@ public class Assert {
      * @vm2c macro( { fprintf(stderr, "shouldNotReachHere -- %s:%d\n", __FILE__, __LINE__); fatalVMError(""); } )
      */
     public static RuntimeException shouldNotReachHereFatal() {
-        VM.println("Assertion failed: should not reach here");
+        VM.print("Assertion failed: ");
+        VM.println("should not reach here: ");
+        VM.fatalVMError();
+        return null;
+    }
+
+    /**
+     * @vm2c macro( { fprintf(stderr, "shouldNotReachHere -- %s:%d\n", __FILE__, __LINE__); fatalVMError(""); } )
+     */
+    public static RuntimeException shouldNotReachHereFatal(String filename, int lineno) {
+        VM.print("Assertion failed: ");
+        VM.print("should not reach here: ");
+        printContext(filename, lineno);
         VM.fatalVMError();
         return null;
     }
@@ -213,9 +333,29 @@ public class Assert {
      */
     public static void always(boolean cond, String msg) {
         if (!cond) {
-            VM.print("Assertion failed: ");
-            VM.println(msg);
-            VM.fatalVMError();
+            if (ASSERT_ALWAYS_IS_FATAL || VMThread.currentThread().isServiceThread()) {
+                VM.print("Assertion failed: ");
+                VM.println(msg);
+                VM.fatalVMError();
+            } else {
+                throwAssertFailedException("Assertion failed: ", msg);
+            }
+        }
+    }
+
+    /**
+     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
+     */
+    public static void always(boolean cond, String msg, String filename, int lineno) {
+        if (!cond) {
+            if (ASSERT_ALWAYS_IS_FATAL || VMThread.currentThread().isServiceThread()) {
+                VM.print("Assertion failed: ");
+                printContext(filename, lineno);
+                VM.println(msg);
+                VM.fatalVMError();
+            } else {
+                throwAssertFailedException("Assertion failed: ", msg, filename, lineno);
+            }
         }
     }
 
@@ -232,8 +372,27 @@ public class Assert {
      */
     public static void always(boolean cond) {
         if (!cond) {
-            VM.println("Assertion failed");
-            VM.fatalVMError();
+            if (ASSERT_ALWAYS_IS_FATAL || VMThread.currentThread().isServiceThread()) {
+                VM.println("Assertion failed");
+                VM.fatalVMError();
+            } else {
+                throwAssertFailedException("Assertion failed");
+            }
+        }
+    }
+
+   /**
+     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #cond, __FILE__, __LINE__); fatalVMError(""); } )
+     */
+    public static void always(boolean cond, String filename, int lineno) {
+        if (!cond) {
+            if (ASSERT_ALWAYS_IS_FATAL || VMThread.currentThread().isServiceThread()) {
+                VM.println("Assertion failed");
+                printContext(filename, lineno);
+                VM.fatalVMError();
+            } else {
+                throwAssertFailedException("Assertion failed", "", filename, lineno);
+            }
         }
     }
 }

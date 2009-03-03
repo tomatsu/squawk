@@ -153,13 +153,14 @@ public class Build {
 
     /**
      * Gets the instance through which JDK tools can be accessed.
+     * @return the JDK instance
      */
     public JDK getJDK() {
         return jdk;
     }
 
     /**
-     * The host platform. This is used to access tools required for running the builder and has not
+     * The host platform. This is used to access tools required for running the builder and has no
      * relationship with the target platform that a Squawk executable will be built for.
      */
     private final Platform platform;
@@ -387,6 +388,7 @@ public class Build {
      * @param extraVMArgs String
      * @param mainClassName String
      * @param args String
+     * @param description 
      * @return the created and installed command
      */
     public Command addSquawkCommand(String name, String classPath, String extraVMArgs, String mainClassName, String args, final String description) {
@@ -860,7 +862,7 @@ public class Build {
                     argi++;
                 }
                 String userBaseDir = args[argi];
-                System.out.println("Compiling user project at " + userBaseDir);
+                log(brief, "[compiling user project at " + userBaseDir + "...]");
                 
                 Target compileTarget = addTarget(true, userBaseDir, "cldc imp", cp);
                 compileTarget.run(NO_ARGS);
@@ -934,7 +936,7 @@ public class Build {
             }
             public void run(String[] args) {
                 String userBaseDir = args[0];
-                System.out.println("Cleaning user project at " + userBaseDir);
+                log(brief, "[cleaning user project at " + userBaseDir + ']');
                 
                 Target compileTarget = addTarget(true, userBaseDir, "cldc imp");
                 compileTarget.clean();
@@ -1113,6 +1115,7 @@ public class Build {
      *    normal. To me it looks like a bug, but, anyway, I am taking measure here.
      *
      * @param path the path to fix
+     * @return fixed URL
      */
     public String fixURL(String path) {
         if (getPlatform() instanceof Windows_X86) {
@@ -1425,8 +1428,6 @@ public class Build {
 
     /**
      * Prints some information describing the builder's configuration.
-     *
-     * @param stdout  where to print
      */
     private void printConfiguration() {
 
@@ -1664,7 +1665,7 @@ public class Build {
      *
      * @param name    the property's name
      * @param value   the property's new value
-     * @return isBooleanProperty specifies if this is a boolean property
+     * @param isBooleanProperty specifies if this is a boolean property
      */
     private void updateProperty(String name, String value, boolean isBooleanProperty) {
         String old = isBooleanProperty ? properties.getProperty(name, "true") : properties.getProperty(name);
@@ -2096,10 +2097,11 @@ public class Build {
      *
      * @param   classPath  the class path
      * @param   baseDir    the base directory for generated directories (i.e. "preprocessed", "classes" and "j2meclasses")
-     * @param   srcDirs the set of directories that are searched recursively for the Java source files to be compiled
+     * @param   srcDirs    the set of directories that are searched recursively for the Java source files to be compiled
      * @param   j2me       specifies if the classes being compiled are to be deployed on a J2ME platform
+     * @param   version    set the java language version (default is 1.5 if version is null)
+     * @param   extraArgs  extra javac arguments
      * @param   preprocess runs the {@link Preprocessor} over the sources if true
-     * @return the directory the compiled classes were written to
      */
     public void javac(String classPath, File baseDir, File[] srcDirs, boolean j2me, String version, List extraArgs, boolean preprocess) {
 
@@ -2164,7 +2166,7 @@ public class Build {
         preprocessor.processAssertions = j2me;
         preprocessor.verbose = verbose;
         // @TODO: Should be true for desktop builds. host == target?
-        preprocessor.showLineNumbers = false;
+        preprocessor.showLineNumbers = true;
 
         for (int i = 0; i != srcDirs.length; ++i) {
 
@@ -2235,7 +2237,7 @@ public class Build {
      * functionality of the jar command line tool when using the 'c' switch.
      *
      * @param out      the jar file to create
-     * @param files    the files to put in the jar file
+     * @param fileSets    the files to put in the jar file
      * @param manifest the entries that will used to create manifest in the jar file.
      *                 If this value is null, then no manifest will be created
      */
