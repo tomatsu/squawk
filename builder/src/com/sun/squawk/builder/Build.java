@@ -487,7 +487,7 @@ public class Build {
     	} catch (IOException e) {
     	}
     	if (in != null) {
-    		try {in.close();} catch (IOException e) {};
+    		try {in.close();} catch (IOException e) {}
     		in = null;
     	}
     	int propertyIndex = 0;
@@ -1268,7 +1268,7 @@ public class Build {
                     throw new BuildException("cannot remove file/directory " + file.getPath());
                 }
                 return true;
-    		};
+    		}
     	}).run(file);
     }
 
