@@ -1,22 +1,22 @@
 /*
  * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -64,18 +64,18 @@ import com.sun.squawk.vm.*;
  *  }
  *</pre>
  *
- * Note that the last two arguments to the constructor are a classpath, and a URI, which specify where the isolate's main class can be found. The classpath is used when Squawk is 
- * configured with a class {@link TranslatorInterface}, while the URI specifies the {@link Suite} which contains the translated class file org.example.App. In this example code 
+ * Note that the last two arguments to the constructor are a classpath, and a URI, which specify where the isolate's main class can be found. The classpath is used when Squawk is
+ * configured with a class {@link TranslatorInterface}, while the URI specifies the {@link Suite} which contains the translated class file org.example.App. In this example code
  * we specified that the child isolate will use the same suite as the parent Isolate.<p>
  *
  * <h3>Hibernation</h3>
  * An isolate may be suspended in hibernation. Hibernation removes the isolate and all of the isolate's threads from further execution. Once an isolate is hibernated, it can be
  * serialized using the {@link Isolate#save(DataOutputStream, String)} method. The saved form of the isolate includes all reachable objects, the state of all static variables, and
- * the current execution context of all of the isolate's threads (the thread stacks, etc). The saved form can be stored in a file, sent over a network, etc. 
- * {@link Isolate#load(DataInputStream, String)} can be used reconstruct the saved isolate.<p> 
+ * the current execution context of all of the isolate's threads (the thread stacks, etc). The saved form can be stored in a file, sent over a network, etc.
+ * {@link Isolate#load(DataInputStream, String)} can be used reconstruct the saved isolate.<p>
  *
  * <h3>Isolate Lifecycle</h3>
- * 
+ *
  * An Isolate may be in one of several states: NEW, ALIVE, HIBERNATED, and EXITED. The methods {@link Isolate#isNew()}, {@link Isolate#isAlive()}, {@link Isolate#isHibernated()},
  * {@link Isolate#isExited()} can be used to determine an isolate's current state. An Isolate starts out in the NEW state. When the {@link Isolate#start()} method is called the isolate
  * becomes ALIVE. {@link Isolate#hibernate()} causes an isolate to become HIBERNATED, while {@link Isolate#unhibernate()} brings a HIBERNATED back to ALIVE. An ALIVE
@@ -84,14 +84,14 @@ import com.sun.squawk.vm.*;
  * <h4>Isolate LifecycleNotification</h4>
  * An isolate can register listeners to be notified of changes in an isolate's lifecycle, such as hibernating, unhibernating, or exiting. An isolate can listen for it's own events,
  * or for events on another isolate. To receive notifications of lifecycle events, create a class that implements {@link Isolate.LifecycleListener}, and register the listener using
- * {@link #addLifecycleListener} and one or more of the lifecycle event masks (such as {@link #SHUTDOWN_EVENT_MASK}). When the isolate state changes to the specified event, the system 
+ * {@link #addLifecycleListener} and one or more of the lifecycle event masks (such as {@link #SHUTDOWN_EVENT_MASK}). When the isolate state changes to the specified event, the system
  * will call the listener's {@link Isolate.LifecycleListener#handleLifecycleListenerEvent} method, passing in the appropriate isolate and event kind.
  *
  * <h3>Inter-Isolate Communication</h3>
- * Isolates may communicate between each other using {@link com.sun.squawk.io.mailboxes.Channel} and {@link com.sun.squawk.io.mailboxes.ServerChannel} instances, 
+ * Isolates may communicate between each other using {@link com.sun.squawk.io.mailboxes.Channel} and {@link com.sun.squawk.io.mailboxes.ServerChannel} instances,
  * or a parent isolate may pass arguments to the main method of the child isolate, or add properties to a child isolate be calling {@link Isolate#setProperty(String, String)}.<p>
  *
- * The properties parameter to the Isolate constructor provides another way to set the system properties of the new isolate. If this parameter is not specified, the child 
+ * The properties parameter to the Isolate constructor provides another way to set the system properties of the new isolate. If this parameter is not specified, the child
  * isolate starts with the same set of system properties that it would have if initiated as a standalone application. If this parameter is specified, this default set of
  * properties is augmented with those specified in the parameter, in the same way as if they had been specified with -D on a command line invocation. In addition, all isolate's
  * inherit the properties defined on the Squawk command line using the -D option.
@@ -129,7 +129,7 @@ public final class Isolate implements Runnable {
      * Constant denoting that an isolate has been {@link #exit exited}.
      */
     private final static int EXITED = 3;
-    
+
     /**
      * The name of the wrapper class used to start up midlets.
      */
@@ -293,13 +293,13 @@ public final class Isolate implements Runnable {
      * The state that we are transitioning to, or NEW if not transitioning
      */
     private int transitioningState;
-    
+
     /**
      * Table of registered & anonymous mailboxes owned by this isolate.
      * This is a table of all inward links to this isolate.
      */
     private SquawkHashtable mailboxes;
-        
+
     /**
      * Table of all MailboxAddresses that this Isolate uses to refer to other Isolates.
      * This is a table of all outward links.
@@ -307,19 +307,19 @@ public final class Isolate implements Runnable {
      * refered to by a MailboxAddress may in fact be local to the isolate.)
      */
     private SquawkHashtable mailboxAddresses;
-    
+
     /**
      * Isolate lifecycle callback handlers.
      */
     private CallbackManager shutdownHooks;
     private CallbackManager suspendHooks;
     private CallbackManager resumeHooks;
-    
+
     /**
      * Registered to run at VM.exit() time.
      */
     private Runnable shutdownHook;
-    
+
     /**
      * is this an isoalte created to run a midlet?
      */
@@ -359,7 +359,7 @@ public final class Isolate implements Runnable {
     /**
      * Add the properties in the hashtable to this isolate, copying strings
      * when nededed to ensure isolate hygene.
-     * 
+     *
      * @param properties
      */
     private void addProperties(Hashtable properties) {
@@ -372,11 +372,11 @@ public final class Isolate implements Runnable {
             }
         }
     }
-    
+
     /**
      * Creates an new isolate. {@link Isolate#start()} will create a new execution context, and start executing the <code>main</code> method of the class
      * specified by <code>mainClassName</code>. System properties can be set for the isolate by passing in a hashtable where the keys are strings of property names
-     * and the values are strings containing property values. The passed in property values will override any property values that the isolate inherits 
+     * and the values are strings containing property values. The passed in property values will override any property values that the isolate inherits
      * from the command line properties.
      *
      * <p> Note that system properties are disjoint from manifest properties.
@@ -410,7 +410,7 @@ public final class Isolate implements Runnable {
         // Initialize the leafSuite to be the bootstrap suite for now in case it
         // is required sometime between now and 'updateLeafSuite'.
         //leafSuite = bootstrapSuite;
-        
+
         /*
          * Copy in command line properties and passed in properties now.
          * Do this eagerly instead of at getProeprty() time to preserve
@@ -421,8 +421,8 @@ public final class Isolate implements Runnable {
         addProperties(VM.getCommandLineProperties());
         // now add in specified properties (may override the command line properties)
         addProperties(properties);
-        
-        
+
+
         try {
            updateLeafSuite(true); // TO DO: Also updated in run, but that is too late to find the main class
         } catch (Error e) {
@@ -433,7 +433,7 @@ public final class Isolate implements Runnable {
 
         VM.registerIsolate(this);
     }
-    
+
     /**
      * Creates an new isolate. {@link Isolate#start()} will create a new execution context, and start executing the <code>main</code> method of the class
      * specified by <code>mainClassName</code>.
@@ -448,11 +448,11 @@ public final class Isolate implements Runnable {
     public Isolate(String mainClassName, String[] args,  String classPath, String parentSuiteSourceURI) {
         this(null, mainClassName, args, classPath, parentSuiteSourceURI);
     }
-    
+
     /**
      * Creates an new isolate. {@link Isolate#start()} will create a new execution context, and start executing the <code>startApp</code> method of the MIDlet
-     * specified by the manifest property named <code>MIDlet-</code><i>midletNum</i>. System properties can be set for the isolate by passing in a hashtable where 
-     * the keys are strings of property names and the values are strings containing property values.  The passed in property values will override any property 
+     * specified by the manifest property named <code>MIDlet-</code><i>midletNum</i>. System properties can be set for the isolate by passing in a hashtable where
+     * the keys are strings of property names and the values are strings containing property values.  The passed in property values will override any property
      * values that the isolate inherits from the command line properties.
      *
      * <p> Note that system properties are disjoint from manifest properties.
@@ -470,7 +470,7 @@ public final class Isolate implements Runnable {
         args = new String[1];
         args[0] = "MIDlet-" + midletNum;
     }
-    
+
     /**
      * Determines if the current thread is not owned by this isolate.
      *
@@ -535,7 +535,7 @@ public final class Isolate implements Runnable {
     public String getName() {
         return copyIfCurrentThreadIsExternal(name);
     }
-    
+
     /**
      * Sets name of the isolate.
      *
@@ -547,7 +547,7 @@ public final class Isolate implements Runnable {
         }
         name = copyIfCurrentThreadIsExternal(newName);
     }
-    
+
     /**
      * Gets the class path for the isolate.
      *
@@ -559,8 +559,8 @@ public final class Isolate implements Runnable {
 
     /**
      * Returns an array of Isolate objects. The array contains one entry for each isolate
-     * object that is currently reachable in the system. These isolates may be in the <code>NEW</code>, <code>ALIVE</code>, 
-     * <code>HIBERNATED</code>, or <code>EXITED</code> states. The system only keeps <code>ALIVE</code> isolates reachable, 
+     * object that is currently reachable in the system. These isolates may be in the <code>NEW</code>, <code>ALIVE</code>,
+     * <code>HIBERNATED</code>, or <code>EXITED</code> states. The system only keeps <code>ALIVE</code> isolates reachable,
      * so isolates in other states may become unreachable unless referenced by an <code>ALIVE</code> isolate.
      * New isolates may have been constructed or existing ones terminated by the time method returns.
      *
@@ -646,7 +646,7 @@ public final class Isolate implements Runnable {
 
     /**
      * Gets the monitor hash table for the isolate
-     * 
+     *
      * The monitorHashtable holds the monitors for objects that are in ROM.
      *
      * @return the hash table
@@ -676,8 +676,8 @@ public final class Isolate implements Runnable {
         }
         this.translatorClass = translatorClass;
     }
-    
-    
+
+
     /**
      * Gets a translator that is to be used to locate, load and convert
      * classes that are not currently installed in this isolate's runtime
@@ -707,7 +707,7 @@ public final class Isolate implements Runnable {
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         return null;
     }
-    
+
     /**
      * Gets a translator that is to be used to locate, load and convert
      * classes that are not currently installed in this isolate's runtime
@@ -735,7 +735,7 @@ public final class Isolate implements Runnable {
         } catch (InstantiationException ex) {
             ex.printStackTrace();
         }
- 
+
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         return null;
     }
@@ -764,7 +764,7 @@ public final class Isolate implements Runnable {
     /**
      * Gets a named property of this isolate.
      * <p>
-     * Isolate properties include those passed into the isolate's constructor, 
+     * Isolate properties include those passed into the isolate's constructor,
      * properties inhertited from the squawk command line, and properties set
      * by {@link Isolate#setProperty()}.
      *
@@ -778,7 +778,7 @@ public final class Isolate implements Runnable {
 
         return copyIfCurrentThreadIsExternal((String)properties.get(key));
     }
-    
+
     /**
      * Enumeration wrapper over an isolate's property keys, that handles
      * copying strings when needed (copyIfCurrentThreadIsExternal).
@@ -786,7 +786,7 @@ public final class Isolate implements Runnable {
     static class PropEnumeration implements Enumeration {
         private Enumeration realEnum;
         private Isolate iso;
-        
+
         PropEnumeration(Isolate iso) {
             this.iso = iso;
             this.realEnum = iso.properties.keys();
@@ -799,37 +799,37 @@ public final class Isolate implements Runnable {
         public Object nextElement() {
             return iso.copyIfCurrentThreadIsExternal((String)realEnum.nextElement());
         }
-        
+
     }
-    
+
     /**
      * Get an enumeration of isolate property keys. These keys can be used with {@link Isolate#getProperty(String)} to get the
      * property values.
      * <p>
-     * Isolate properties include those passed into the isolate's constructor, 
+     * Isolate properties include those passed into the isolate's constructor,
      * properties inhertited from the squawk command line, and properties set
      * by {@link Isolate#setProperty()}.
-     * 
+     *
      * @return enumeration of property keys
      */
     public Enumeration getProperties() {
-        return new PropEnumeration(this);        
+        return new PropEnumeration(this);
     }
 
     /*---------------------------------------------------------------------------*\
      *                        Isolate life-cycle support                         *
     \*---------------------------------------------------------------------------*/
-    
+
     /**
      * Event kind indicating that an isolate is exiting.
      *
      * Used for {@link Isolate.LifecycleListener}s that will be called when the Isolate terminates via
      * {@link #exit}, {@link com.sun.squawk.VM#stopVM}, or when the last non-daemon thread in this isolate ends.
-     * All other ways to terminate an isolate, 
+     * All other ways to terminate an isolate,
      * including {@link com.sun.squawk.VM#haltVM} do not cause the shutdown hooks to be run.
      */
     public final static int SHUTDOWN_EVENT_MASK = 1;
-    
+
     /**
      * Event kind indicating that an isolate is hibernating.
      *
@@ -837,7 +837,7 @@ public final class Isolate implements Runnable {
      * {@link #hibernate}.
      */
     public final static int HIBERNATE_EVENT_MASK = 2;
-    
+
     /**
      * Event kind indicating that an isolate is unhibernating.
      *
@@ -845,16 +845,16 @@ public final class Isolate implements Runnable {
      * {@link #unhibernate}.
      */
     public final static int UNHIBERNATE_EVENT_MASK = 4;
-    
+
     /**
      * Monitor isolate lifecycle events such as shutdown, hibernate, and unhibernate. Isolate life-cycle events can be
-     * monitored by implementing LifecycleListener, and registering it with the isolate using 
+     * monitored by implementing LifecycleListener, and registering it with the isolate using
      * {@link Isolate#addLifecycleListener}, specifying the kind of event to monitor.<p>
      *
      * An LifecycleListener can be registered for more than one event kind.
      */
     public interface LifecycleListener {
-        
+
         /**
          * This method will be called when the lifecycle event occurs on the isolate that this listener
          * was registered for using <code>addLifecycleListener</code>.
@@ -870,7 +870,7 @@ public final class Isolate implements Runnable {
          */
         public void handleLifecycleListenerEvent(Isolate iso, int eventKind);
     }
-    
+
     private CallbackManager getCallbackManager(int eventKind) {
         switch (eventKind) {
             case SHUTDOWN_EVENT_MASK: {
@@ -896,14 +896,14 @@ public final class Isolate implements Runnable {
         }
     }
 
-        
+
     /**
      * A LocalListenerWrapper simply calls the wrapped listener's handleLifecycleListenerEvent method with the correct arguments.
      */
     static class LocalListenerWrapper implements HookWrapper {
         final LifecycleListener listener;
         final int eventKind;
-        
+
         /**
          * Create a wrapper for a listener that is intended to run in connection with events in THIS isolates.
          *
@@ -914,14 +914,14 @@ public final class Isolate implements Runnable {
             this.listener = listener;
             this.eventKind = eventKind;
         }
-        
+
         /**
          * Called by system, will call the wrapped listener when the event occurs.
          */
         public void run() {
             listener.handleLifecycleListenerEvent(Isolate.currentIsolate(), eventKind);
         }
-        
+
         /**
          * Return the wrapped listener.
          */
@@ -930,20 +930,20 @@ public final class Isolate implements Runnable {
         }
     } /* LocalListenerWrapper */
 
-    
+
     /**
      * A RemoteListenerWrapper is used to wrap a listener that is supposed to run due to events in another isolate. The listener will run in
      * the isolate that created the RemoteHookWrapper. Remote listener need to ensure that they are removed if the creating isolate exits before
      * the remote isolate does. The RemoteHookWrapper helps ensure that this happens by creating a "cleanup hook", and registering the
      * cleanup hook in the local isolate.
      *
-     * RemoteListenerWrapper objects should not be reused for different event types. 
+     * RemoteListenerWrapper objects should not be reused for different event types.
      */
     static final class RemoteListenerWrapper extends LocalListenerWrapper {
         private final Runnable cleanupHook;
         private final Isolate local;
         private final Isolate remote;
-        
+
         final class RemoteListenerCleanupHook implements Runnable {
             /**
              * This cleanup hook will remove the user's listener (actually the wrapper around it) from the remote isolate.
@@ -973,7 +973,7 @@ public final class Isolate implements Runnable {
             this.cleanupHook = new RemoteListenerCleanupHook();
             Assert.that(local != remote); // RemoteListenerWrapper is only needed for remote isolates.
         }
-        
+
         /**
          * Called by system, will call the listener when the event occurs on the remote isolate.
          */
@@ -984,27 +984,27 @@ public final class Isolate implements Runnable {
                 local.getCallbackManager(SHUTDOWN_EVENT_MASK).remove(getCleanupHook());
             }
         }
-        
+
         /**
          * Return the cleanup hook.
          */
         Runnable getCleanupHook() {
             return cleanupHook;
         }
-        
+
     } /* RemoteListenerWrapper */
-    
+
     /**
      * Add a listener to be run when this isolate terminates, hibernates, or unhibernates, depending on <code>evenSet</code>. <p>
      *
      * The listener may listen to multiple events by using bitwise OR to construct a set of events from the various event masks.<p>
      *
      * This isolate may be the current isolate (the local case) or another isolate (the remote case).
-     * If this isolate is remote, then this method will also add a listener to the local isolate that will 
+     * If this isolate is remote, then this method will also add a listener to the local isolate that will
      * remove this listener on the remote isolate. This cleans up the listeners if
      * the local isolate exits before the remote isolate does.<p>
      *
-     * <b>Execution:</b><p> 
+     * <b>Execution:</b><p>
      * The listener will run in the current Isolate's context.
      * All listener from the same Isolate may run in the same thread. Any RuntimeExceptions thrown
      * by the listener will be printed to System.err, but are otherwise ignored.
@@ -1015,15 +1015,15 @@ public final class Isolate implements Runnable {
      * @throws IllegalArgumentException when eventSet does not contain {@link #SHUTDOWN_EVENT_MASK}, {@link #HIBERNATE_EVENT_MASK}, or {@link #UNHIBERNATE_EVENT_MASK}
      *
      * @see #removeLifecycleListener
-     * @see #exit 
-     * @see #hibernate 
-     * @see #unhibernate 
+     * @see #exit
+     * @see #hibernate
+     * @see #unhibernate
      */
     public void addLifecycleListener(LifecycleListener listener, int eventSet) {
         if ((eventSet & (SHUTDOWN_EVENT_MASK | HIBERNATE_EVENT_MASK | UNHIBERNATE_EVENT_MASK)) == 0) {
             throw new IllegalArgumentException("Illegal isolate event set " + eventSet);
         }
-        
+
         if ((eventSet & SHUTDOWN_EVENT_MASK) != 0) {
             addLifecycleListener0(listener, SHUTDOWN_EVENT_MASK);
         }
@@ -1034,7 +1034,7 @@ public final class Isolate implements Runnable {
             addLifecycleListener0(listener, UNHIBERNATE_EVENT_MASK);
         }
     }
-    
+
     /**
      * Add a listener to be run when one particular event occurs. <p>
      *
@@ -1046,8 +1046,8 @@ public final class Isolate implements Runnable {
     private void addLifecycleListener0(LifecycleListener listener, int eventKind) {
         CallbackManager cbm = getCallbackManager(eventKind);
         Isolate currentIsolate = Isolate.currentIsolate();
-        
-        
+
+
         if (this == currentIsolate) { // local
             // add (wrapper) hook to local isolate
 //System.out.println("Adding LocalListenerWrapper for " + listener + " kind: " + eventKind + " on isolate " + this);
@@ -1057,12 +1057,12 @@ public final class Isolate implements Runnable {
 //System.out.println("Adding RemoteListenerWrapper for " + listener + " kind: " + eventKind + " on isolate " + this);
             // add cleanup hook in current isolate
             currentIsolate.getCallbackManager(SHUTDOWN_EVENT_MASK).add(currentIsolate, rlw.getCleanupHook());
-            
+
             // add (wrapper) hook to remote isolate
             cbm.add(currentIsolate, rlw);
         }
     }
-    
+
     /**
      * Remove an <code>Isolate.LifecycleListener</code> from this isolate. Must be called from the same isolate that added the listener.
      *
@@ -1078,7 +1078,7 @@ public final class Isolate implements Runnable {
         if ((eventSet & (SHUTDOWN_EVENT_MASK | HIBERNATE_EVENT_MASK | UNHIBERNATE_EVENT_MASK)) == 0) {
             throw new IllegalArgumentException("Illegal isolate event set " + eventSet);
         }
-        
+
         boolean result = true;
         if ((eventSet & SHUTDOWN_EVENT_MASK) != 0) {
             result &= removeLifecycleListener0(listener, SHUTDOWN_EVENT_MASK);
@@ -1089,10 +1089,10 @@ public final class Isolate implements Runnable {
         if ((eventSet & UNHIBERNATE_EVENT_MASK) != 0) {
             result &= removeLifecycleListener0(listener, UNHIBERNATE_EVENT_MASK);
         }
-        
+
         return result;
     }
-    
+
     /**
      * Remove an <code>Isolate.LifecycleListener</code> from this isolate. Must be called from the same isolate that added the listener.
      *
@@ -1119,15 +1119,15 @@ public final class Isolate implements Runnable {
             RemoteListenerWrapper rlw = (RemoteListenerWrapper)hw;
             // remove the cleanup hook in current Isolate
             currentIsolate.getCallbackManager(SHUTDOWN_EVENT_MASK).remove(rlw.getCleanupHook());
-            
+
             // remove remote hook in this Isolate
             return cbm.remove(rlw);
         } else {
            throw Assert.shouldNotReachHere();
         }
     }
- 
- 
+
+
     /*---------------------------------------------------------------------------*\
      *                           Class state management                          *
     \*---------------------------------------------------------------------------*/
@@ -1140,7 +1140,7 @@ public final class Isolate implements Runnable {
      */
     Object getClassState(Klass klass) {
         VM.extendsEnabled = false; //------------------------ NO CALL ZONE ---------------------------
-        
+
         Object first = classStateQueue;
         Object res = null;
 
@@ -1250,7 +1250,7 @@ public final class Isolate implements Runnable {
     /**
      * Returns a canonical representation for the string object from the current isolate.
      *
-     * @param value 
+     * @param value
      * @return  a string that has the same contents as this string, but is
      *          guaranteed to be from a pool of unique strings.
      *
@@ -1264,7 +1264,7 @@ public final class Isolate implements Runnable {
         }
         return internedString;
     }
-    
+
     /**
      * Returns a previously interened version for the string object, or null.
      *
@@ -1283,7 +1283,7 @@ public final class Isolate implements Runnable {
         }
         return (String)internedStrings.get(value);
     }
-    
+
     /**
      * Returns a canonical representation for the string object from the current isolate.
      * <p>
@@ -1305,14 +1305,14 @@ public final class Isolate implements Runnable {
      * <a href="http://java.sun.com/docs/books/jls/html/">Java Language
      * Specification</a>
      *
-     * @param value 
+     * @param value
      * @return  a string that has the same contents as this string, but is
      *          guaranteed to be from a pool of unique strings.
      */
     public static String intern(String value) {
         return VM.getCurrentIsolate().intern0(value);
     }
-    
+
     /**
      * Returns a previously interened version for the string object, or null.
      * <p>
@@ -1441,7 +1441,7 @@ public final class Isolate implements Runnable {
             } else {
                 leafSuite = new Suite(leafSuiteName, parent);
             }
-            
+
 //            System.out.println("In updateLeafSuite(" + prepass + "):");
 //            System.out.println("    isolate: " + this);
 //            System.out.println("    parent: " + parent);
@@ -1459,14 +1459,13 @@ public final class Isolate implements Runnable {
         Assert.that(this.shutdownHook == null);
         shutdownHook = new Runnable() {
             public void run() {
-//                System.out.println("Calling Isolate.runShutdownListeners:");
                 runShutdownListeners();
             }
         };
-        
+
         VM.addShutdownHook(this, shutdownHook);
     }
-    
+
     /**
      * When Isolate termitaes or hibernates, call this to remove the VM shutdown hook.
      */
@@ -1507,7 +1506,7 @@ public final class Isolate implements Runnable {
         System.currentTimeMillis();
 
         String initializerClassName = VM.getIsolateInitializerClassName();
-         
+
         // Verbose trace.
         if (VM.isVeryVerbose()) {
             System.out.print("[Starting isolate for '" + mainClassName);
@@ -1530,7 +1529,7 @@ public final class Isolate implements Runnable {
 
             System.out.println("]");
         }
-        
+
         addVMShutdownHook();
 
         // Invoke the main of the specified Isolate initializer specified on command line as -isolateinit:
@@ -1548,7 +1547,7 @@ public final class Isolate implements Runnable {
             }
             klass.main(new String[] {wasFirstInitialized?"false":"true"});
         }
-        
+
 /*if[ENABLE_SDA_DEBUGGER]*/
         // Notify debugger of event:
         if (debugger != null && !isMidlet()) {
@@ -1559,7 +1558,7 @@ public final class Isolate implements Runnable {
 //            debugger.notifyEvent(new Debugger.Event(Debugger.Event.THREAD_START, Thread.currentThread()));
         }
 /*end[ENABLE_SDA_DEBUGGER]*/
-        
+
         // Find the main class and call it's main().
         Klass klass = null;
         try {
@@ -1576,7 +1575,7 @@ public final class Isolate implements Runnable {
 
     /**
      * Waits for all the other threads and child isolates belonging to this isolate to stop.
-     * 
+     *
      * WARNING: Only one thread can join an isolate, becuase this method clears the childIsolates list
      */
     public void join() {
@@ -1653,7 +1652,7 @@ public final class Isolate implements Runnable {
         if (thread.isDaemon()) {
             return false; // exiting a daemon thread can't cause isolate to exit
         }
-        
+
         for (Enumeration e = childThreads.elements(); e.hasMoreElements(); ) {
             thread = (VMThread)e.nextElement();
             if (!thread.isDaemon()) {
@@ -1664,7 +1663,7 @@ public final class Isolate implements Runnable {
         /*
          * If all the non-daemon threads are dead then stop the isolate.
          */
-        return true;    
+        return true;
     }
 
     /**
@@ -1676,23 +1675,40 @@ public final class Isolate implements Runnable {
         return classKlassInitialized;
     }
 
-    /** 
+    private void runHooks(CallbackManager cbm, String label) {
+        if (VM.isVerbose()) {
+            System.out.print("Running isolate");
+            System.out.print(label);
+            System.out.print(" hooks for ");
+            System.out.println(this);
+        }
+        cbm.runHooks();
+        if (VM.isVerbose()) {
+            System.out.print("Done with isolate");
+            System.out.print(label);
+            System.out.print(" hooks for ");
+            System.out.println(this);
+        }
+    }
+
+    /**
      * Call any registered LifecyleListeners.
      */
     private void runShutdownListeners() {
         if (shutdownHooks != null) {
-//System.out.println("In Isolate.runShutdownListeners(). Count: " + shutdownHooks.count());
-            shutdownHooks.runHooks();
+            runHooks(shutdownHooks, "SHUTDOWN_EVENT");
             shutdownHooks.removeAll();
             shutdownHooks = null;
         } else {
-//            System.out.println("In Isolate.runShutdownListeners(). NULL! isolate: " + this);
+            if (VM.isVerbose()) {
+                System.out.println("No isolate SHUTDOWN_EVENT hooks for " + this);
+            }
         }
     }
-    
+
     /**
      * Stop the isolate. The <code>handleLifecycleListenerEvent()</code> method will be called on any {@link LifecycleListener LifecycleListeners} registered
-     * to handle <code>EXIT</code> events on this isolate.  
+     * to handle <code>EXIT</code> events on this isolate.
      *
      * @param code the exit code
      * @throws IllegalStateException if this isolate is not <code>ALIVE</code>
@@ -1712,7 +1728,7 @@ public final class Isolate implements Runnable {
     void abort(int code) {
         shutdown(code, false);
     }
-    
+
     /**
      * Stop the isolate.
      *
@@ -1731,7 +1747,7 @@ public final class Isolate implements Runnable {
             debugger.notifyEvent(new Debugger.Event(Debugger.Event.VM_DEATH, this));
         }
 /*end[ENABLE_SDA_DEBUGGER]*/
-        
+
         try {
             hibernate(false, EXITED, doExitHooks);
         } catch (IOException e) {
@@ -1747,7 +1763,7 @@ public final class Isolate implements Runnable {
      * @param  dos       the DataOutputStream to which the serialized isolate should be written
      * @param  uri       a URI identifying the serialized isolate
      *
-     * @throws java.io.IOException 
+     * @throws java.io.IOException
      * @throws IllegalStateException if this isolate is not currently hibernated or exited
      */
     public void save(DataOutputStream dos, String uri) throws java.io.IOException {
@@ -1761,7 +1777,7 @@ public final class Isolate implements Runnable {
      * @param  uri       a URI identifying the serialized isolate
      * @param  bigEndian the endianess to be used when serializing this isolate
      *
-     * @throws java.io.IOException 
+     * @throws java.io.IOException
      * @throws IllegalStateException if this isolate is not currently hibernated or exited
      */
     public void save(DataOutputStream dos, String uri, boolean bigEndian) throws java.io.IOException {
@@ -1828,7 +1844,7 @@ public final class Isolate implements Runnable {
 
     /**
      * Hibernate the isolate. The <code>handleLifecycleListenerEvent()</code> method will be called on any {@link LifecycleListener LifecycleListeners} registered
-     * to handle <code>HIBERNATE</code> events on this isolate.  Any Channel I/O will be hibernated, and interisolate communication {@link com.sun.squawk.io.mailboxes.Channel channels} will be broken. 
+     * to handle <code>HIBERNATE</code> events on this isolate.  Any Channel I/O will be hibernated, and interisolate communication {@link com.sun.squawk.io.mailboxes.Channel channels} will be broken.
      * If the current thread is in this isolate then this function will only return when the isolate is unhibernated.
      *
      * @throws IOException if the underlying IO system cannot be serialized
@@ -1877,7 +1893,7 @@ public final class Isolate implements Runnable {
             }
             System.out.println("]");
         }
-        
+
         if ((state != newState) && (newState > transitioningState)) {
             // note that while in transition to exit, a concurrent call to exit or hibernate will be ignored.
             transitioningState = newState; // we are in process of moving to newState;
@@ -1885,7 +1901,7 @@ public final class Isolate implements Runnable {
                 switch (newState) {
                     case HIBERNATED: {
                         if (suspendHooks != null) {
-                            suspendHooks.runHooks();
+                            runHooks(suspendHooks, "HIBERNATE_EVENT");
                         }
                         break;
                     }
@@ -1896,7 +1912,7 @@ public final class Isolate implements Runnable {
                 }
             }
             removeVMShutdownHook();
-            
+
             cleanupMailboxes();
 
             /*
@@ -1916,7 +1932,7 @@ public final class Isolate implements Runnable {
                 VM.deleteChannelContext(channelContextToSave);
                 this.channelContext = 0;
             }
-            
+
            /*
             * Remove this isolate from its parent's list of children. The parentIsolate pointer
             * will be null for the bootstrap isolate as well as for unhibernated isolates
@@ -1957,7 +1973,7 @@ public final class Isolate implements Runnable {
 
     /**
      * Unhibernate the isolate. The <code>handleLifecycleListenerEvent()</code> method will be called on any {@link LifecycleListener LifecycleListeners} registered
-     * to handle <code>UNHIBERNATE</code> events on this isolate.  
+     * to handle <code>UNHIBERNATE</code> events on this isolate.
      *
      * @throws IllegalStateException if the isolate is not <code>HIBERNATED</code>
      */
@@ -1974,11 +1990,11 @@ public final class Isolate implements Runnable {
         currentIsolate.addIsolate(this);
 
         VMThread.unhibernateIsolate(this);
-        
+
         addVMShutdownHook();
-        
+
         if (resumeHooks != null) {
-            resumeHooks.runHooks();
+            runHooks(resumeHooks, "UNHIBERNATE_EVENT");
         }
     }
 
@@ -2042,13 +2058,13 @@ public final class Isolate implements Runnable {
 
     /**
      * Determines whether this isolate is being debugged
-     * 
+     *
      * @return true if it is
      */
     public boolean isBeingDebugged() {
     	return debugger != null;
     }
-    
+
     /**
      * Return true if this isolate was created to run a midlet.
      * @return true if a midlet
@@ -2104,7 +2120,7 @@ public final class Isolate implements Runnable {
 
     /**
      * Get all the joining threads.
-     * 
+     *
      * WARNING: THIS CLEARS THE LIST OF JOINERS, SO ONLY CALL ONCE!
      *
      * @return all the threads
@@ -2275,7 +2291,7 @@ public final class Isolate implements Runnable {
      * Removes the connection identified by <code>url</code> (if any) to which {@link System#out}
      * is currently sending its output. The removed connection is immediately flushed and closed. Any
      * IO exceptions are caught and might be printed.
-     * 
+     *
      * @param url     the URL identifying the connection to be removed
      *
      * @see #listOut
@@ -2410,7 +2426,7 @@ public final class Isolate implements Runnable {
         return names;
     }
 
-    
+
     /*---------------------------------------------------------------------------*\
      *                            Inter-isolate messages                         *
     \*---------------------------------------------------------------------------*/
@@ -2426,10 +2442,10 @@ public final class Isolate implements Runnable {
         } else if (mailboxes.get(mailbox) != null) {
             throw new IllegalStateException(mailbox + " is already recorded");
         }
-        
+
         mailboxes.put(mailbox, mailbox);
     }
-    
+
     /**
      * Tell the system to forget about this mailbox. Called by Mailbox.close().
      *
@@ -2440,10 +2456,10 @@ public final class Isolate implements Runnable {
             mailboxes.get(mailbox) == null) {
             throw new IllegalStateException(mailbox + " is not recorded");
         }
-        
+
         mailboxes.remove(mailbox);
     }
-    
+
     /**
      * Record all MailboxAddress objects that this Isolate uses to send messages to.
      *
@@ -2455,10 +2471,10 @@ public final class Isolate implements Runnable {
         } else if (mailboxAddresses.get(address) != null) {
             throw new IllegalStateException(address + " is already recorded");
         }
-        
+
         mailboxAddresses.put(address, address);
     }
-    
+
     /**
      * Tell the system to forget about this mailbox. Called by Mailbox.close().
      *
@@ -2469,15 +2485,15 @@ public final class Isolate implements Runnable {
             mailboxAddresses.get(address) == null) {
             throw new IllegalStateException(address + " is not recorded");
         }
-        
+
         mailboxAddresses.remove(address);
     }
-    
+
     /**
      * Tell remote isolates that we won't talk to them again,
      * and close our Mailboxes.
      *
-     * After this call, remote isolates may have MailboxAddress objects that refer 
+     * After this call, remote isolates may have MailboxAddress objects that refer
      * to the closed mailboxes, but when they try to use the address, they will get an exception.
      */
     public void cleanupMailboxes() {
@@ -2497,7 +2513,7 @@ public final class Isolate implements Runnable {
                     address.close(); // tolerant of double closes()
                 }
             }
-            
+
             // close all local Mailboxes
             if (mailboxes != null) {
                 if (VM.isVeryVerbose()) {
@@ -2516,162 +2532,163 @@ public final class Isolate implements Runnable {
             System.err.println("Uncaught exception while cleaning up mailboxes: " + e);
             e.printStackTrace();
         }
-        
+
         // TODO: What about hibernation, where server may have thread(s) waiting for messages in inbox.
         // we just threw away unhandled messages in mailbox.close(). Upon unhibernation,
         // will threads wake up still waiting for messages? And what about re-registering the
         // Mailbox?
     }
-    
-/*if[EXCLUDE]*/
 
-    // Notes from Doug: This is still a work in progress and depending on resources/requirements, may
-    // take quite some time for extra thought/design/implementation. My main concern with what exists
-    // so far is that we are introducing more inter-isolate pointers which have not-yet-thought-out
-    // implications for isolate hibernation & migration.
-    //
-    // In the long run, I think an implementation closer to that of MVM will be required to make
-    // reasoning and robustness of true isolation better. That implementation does not have
-    // inter-isolate pointers (within Java code & data structures at least) and instead employs
-    // the concept of 'task IDs' and 'link IDs' to refer to objects not owned by the current
-    // isolate.
-
-    /*---------------------------------------------------------------------------*\
-     *                            Inter-isolate messages                         *
-    \*---------------------------------------------------------------------------*/
-
-    /**
-     * A FIFO queue for the inbox of an isolate. This implementation is derived
-     * the standard J2SE java.util.LinkedList class.
-     */
-    static final class ParcelQueue {
-
-        Entry header = new Entry(null, null, null);
-        int size = 0;
-
-        public ParcelQueue() {
-            header.next = header.previous = header;
-        }
-
-        public Parcel removeLast() {
-            return remove(header.previous);
-        }
-
-        public void addFirst(Parcel parcel) {
-            addBefore(parcel, header.next);
-        }
-
-        /**
-         * Removes all of the elements from this list.
-        public void clear() {
-            Entry e = header.next;
-            while (e != header) {
-                Entry next = e.next;
-                e.next = e.previous = null;
-                e.element = null;
-                e = next;
-            }
-            header.next = header.previous = header;
-            size = 0;
-        }
-        */
-
-        static class Entry {
-            Parcel parcel;
-            Entry next;
-            Entry previous;
-
-            Entry(Parcel parcel, Entry next, Entry previous) {
-                this.parcel = parcel;
-                this.next = next;
-                this.previous = previous;
-            }
-        }
-
-        private Entry addBefore(Parcel parcel, Entry e) {
-            Entry newEntry = new Entry(parcel, e, e.previous);
-            newEntry.previous.next = newEntry;
-            newEntry.next.previous = newEntry;
-            size++;
-            return newEntry;
-        }
-
-        private Parcel remove(Entry e) {
-            Assert.that(e != header, "can remove element from empty queue");
-            Parcel result = e.parcel;
-            e.previous.next = e.next;
-            e.next.previous = e.previous;
-            e.next = e.previous = null;
-            e.parcel = null;
-            size--;
-            return result;
-        }
-    }
-
-    private final ParcelQueue messageInbox = new ParcelQueue();
-
-    public static class Message {
-        Message copy() {
-            return null;
-        }
-    }
-
-    /**
-     * A <code>Parcel</code> encapsulates a {@link Message} posted to an isolate
-     * and contains a reference to the sending isolate.
-     */
-    public final static class Parcel {
-        public final Message message;
-        public final Isolate sender;
-        Parcel(Message message, Isolate sender) {
-            this.message = message;
-            this.sender = sender;
-        }
-    }
-
-    public static void sendMessage(Isolate to, Message message) {
-        if (to == null || message == null) {
-            throw new NullPointerException();
-        }
-        synchronized (message) {
-            synchronized (to.messageInbox) {
-                to.messageInbox.addFirst(new Parcel(message.copy(), VM.getCurrentIsolate()));
-
-                // notify any thread (in the receiving isolate) that another
-                // message has been deposited in its inbox
-
-                to.messageInbox.notifyAll();
-            }
-        }
-    }
-
-    /**
-     * Retrieves the next available message sent to this isolate, blocking until
-     * a message is available. Once a message has been retrieved, it is removed from
-     * the receiving isolate's <i>inbox</i>.
-     *
-     * @param from  if not <code>null</code>, only a message sent by <code>from</code>
-     *              will be returned
-     * @return the retrieved message
-     */
-    public static Parcel receiveMessage(Isolate from) {
-        Isolate current = VM.getCurrentIsolate();
-        ParcelQueue inbox = current.messageInbox;
-        synchronized (inbox) {
-            while (inbox.size == 0) {
-                if (!current.isAlive()) {
-                    // throw something???
-                }
-                try {
-                    inbox.wait();
-                } catch (InterruptedException e) {
-                }
-            }
-
-        }
-        return null;
-    }
-/*end[EXCLUDE]*/
+/*if[TRUE]*/
+/*else[TRUE]*/
+//
+//    // Notes from Doug: This is still a work in progress and depending on resources/requirements, may
+//    // take quite some time for extra thought/design/implementation. My main concern with what exists
+//    // so far is that we are introducing more inter-isolate pointers which have not-yet-thought-out
+//    // implications for isolate hibernation & migration.
+//    //
+//    // In the long run, I think an implementation closer to that of MVM will be required to make
+//    // reasoning and robustness of true isolation better. That implementation does not have
+//    // inter-isolate pointers (within Java code & data structures at least) and instead employs
+//    // the concept of 'task IDs' and 'link IDs' to refer to objects not owned by the current
+//    // isolate.
+//
+//    /*---------------------------------------------------------------------------*\
+//     *                            Inter-isolate messages                         *
+//    \*---------------------------------------------------------------------------*/
+//
+//    /**
+//     * A FIFO queue for the inbox of an isolate. This implementation is derived
+//     * the standard J2SE java.util.LinkedList class.
+//     */
+//    static final class ParcelQueue {
+//
+//        Entry header = new Entry(null, null, null);
+//        int size = 0;
+//
+//        public ParcelQueue() {
+//            header.next = header.previous = header;
+//        }
+//
+//        public Parcel removeLast() {
+//            return remove(header.previous);
+//        }
+//
+//        public void addFirst(Parcel parcel) {
+//            addBefore(parcel, header.next);
+//        }
+//
+//        /**
+//         * Removes all of the elements from this list.
+//        public void clear() {
+//            Entry e = header.next;
+//            while (e != header) {
+//                Entry next = e.next;
+//                e.next = e.previous = null;
+//                e.element = null;
+//                e = next;
+//            }
+//            header.next = header.previous = header;
+//            size = 0;
+//        }
+//        */
+//
+//        static class Entry {
+//            Parcel parcel;
+//            Entry next;
+//            Entry previous;
+//
+//            Entry(Parcel parcel, Entry next, Entry previous) {
+//                this.parcel = parcel;
+//                this.next = next;
+//                this.previous = previous;
+//            }
+//        }
+//
+//        private Entry addBefore(Parcel parcel, Entry e) {
+//            Entry newEntry = new Entry(parcel, e, e.previous);
+//            newEntry.previous.next = newEntry;
+//            newEntry.next.previous = newEntry;
+//            size++;
+//            return newEntry;
+//        }
+//
+//        private Parcel remove(Entry e) {
+//            Assert.that(e != header, "can remove element from empty queue");
+//            Parcel result = e.parcel;
+//            e.previous.next = e.next;
+//            e.next.previous = e.previous;
+//            e.next = e.previous = null;
+//            e.parcel = null;
+//            size--;
+//            return result;
+//        }
+//    }
+//
+//    private final ParcelQueue messageInbox = new ParcelQueue();
+//
+//    public static class Message {
+//        Message copy() {
+//            return null;
+//        }
+//    }
+//
+//    /**
+//     * A <code>Parcel</code> encapsulates a {@link Message} posted to an isolate
+//     * and contains a reference to the sending isolate.
+//     */
+//    public final static class Parcel {
+//        public final Message message;
+//        public final Isolate sender;
+//        Parcel(Message message, Isolate sender) {
+//            this.message = message;
+//            this.sender = sender;
+//        }
+//    }
+//
+//    public static void sendMessage(Isolate to, Message message) {
+//        if (to == null || message == null) {
+//            throw new NullPointerException();
+//        }
+//        synchronized (message) {
+//            synchronized (to.messageInbox) {
+//                to.messageInbox.addFirst(new Parcel(message.copy(), VM.getCurrentIsolate()));
+//
+//                // notify any thread (in the receiving isolate) that another
+//                // message has been deposited in its inbox
+//
+//                to.messageInbox.notifyAll();
+//            }
+//        }
+//    }
+//
+//    /**
+//     * Retrieves the next available message sent to this isolate, blocking until
+//     * a message is available. Once a message has been retrieved, it is removed from
+//     * the receiving isolate's <i>inbox</i>.
+//     *
+//     * @param from  if not <code>null</code>, only a message sent by <code>from</code>
+//     *              will be returned
+//     * @return the retrieved message
+//     */
+//    public static Parcel receiveMessage(Isolate from) {
+//        Isolate current = VM.getCurrentIsolate();
+//        ParcelQueue inbox = current.messageInbox;
+//        synchronized (inbox) {
+//            while (inbox.size == 0) {
+//                if (!current.isAlive()) {
+//                    // throw something???
+//                }
+//                try {
+//                    inbox.wait();
+//                } catch (InterruptedException e) {
+//                }
+//            }
+//
+//        }
+//        return null;
+//    }
+/*end[TRUE]*/
 
     /*---------------------------------------------------------------------------*\
      *                            Debugger Support                               *
@@ -2679,7 +2696,7 @@ public final class Isolate implements Runnable {
 
     /**
      * Print out the thread state and stack trace for each thread belonging this isolate.
-     * 
+     *
      * @param out stream to print on
      */
     public void printAllThreadStates(PrintStream out) {
@@ -2692,11 +2709,11 @@ public final class Isolate implements Runnable {
             }
         }
     }
-    
+
     /**
      * Print out the thread state and stack trace for each thread of each isolate
      * in the system.
-     * 
+     *
      * @param out stream to print on
      */
     public static void printAllIsolateStates(PrintStream out) {
@@ -2726,7 +2743,7 @@ public final class Isolate implements Runnable {
         /**
          * Constructor.
          * @param mp
-         * @param ip 
+         * @param ip
          */
         public Breakpoint(Object mp, int ip) {
             this.mp = mp;
@@ -2735,7 +2752,7 @@ public final class Isolate implements Runnable {
 
         /**
          * {@inheritDoc}
-         * @param o 
+         * @param o
          */
         public boolean equals(Object o) {
             if (o instanceof Breakpoint) {
@@ -2802,7 +2819,7 @@ public final class Isolate implements Runnable {
     public int getChildThreadCount() {
         return childThreads.size();
     }
-    
+
     /**
      * Gets the unique id for this isolate. The id is only unique among isolates that have allocated in the current run of this VM.
      * @return the id of this isolate

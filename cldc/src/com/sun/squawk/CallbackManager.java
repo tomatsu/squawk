@@ -1,22 +1,22 @@
 /*
  * Copyright 2007-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -33,22 +33,22 @@ import com.sun.squawk.util.Assert;
  * This class manages executing callbacks in the context of the isolate that registered the callback.
  */
 public final class CallbackManager {
-    
+
     /**
      * If runHooks is only called once, then we can clean up and clear as we go.
      */
     private final boolean runOnce;
-    
+
     /**
      * Set to true by runHooks().
      */
     private boolean ran;
-    
+
     /**
      * The set of CallbackGroups (never null).
      */
-    private final SquawkVector hooks; 
-    
+    private final SquawkVector hooks;
+
     /**
      * Creates a new instance of CallbackManager
      *
@@ -58,7 +58,7 @@ public final class CallbackManager {
         this.runOnce = runOnce;
         this.hooks = new SquawkVector();
     }
-   
+
     /**
      * Return the callback group for this isolate.
      *
@@ -75,15 +75,15 @@ public final class CallbackManager {
         }
         return null;
     }
-    
+
     /**
      * Should only be run once, like for a shutdown hook.
-     * @return true if this callback should be 
+     * @return true if this callback should be
      */
     public boolean isRunOnce() {
         return runOnce;
     }
-    
+
 //    /**
 //     * Return true if this should only be run once, like for a shutdown hook.
 //     */
@@ -96,9 +96,9 @@ public final class CallbackManager {
 //        }
 //        return count;
 //    }
-    
+
     /**
-     * Add a hook to run in isolate <code>iso</code>. 
+     * Add a hook to run in isolate <code>iso</code>.
      *
      * @param iso the isolate context in which to run hook
      * @param hook the Runnable to run
@@ -108,7 +108,7 @@ public final class CallbackManager {
         if (hook == null) {
             throw new IllegalArgumentException();
         }
-        
+
         CallbackGroup cbg = findGroup(iso);
         if (cbg == null) {
             cbg = new CallbackGroup(iso);
@@ -116,9 +116,9 @@ public final class CallbackManager {
         }
         cbg.add(hook);
     }
-    
+
     /**
-     * Add a hook to run in the current isolate's context. 
+     * Add a hook to run in the current isolate's context.
      *
      * @param hook
      * @throws IllegalArgumentException if the hook is already registered to run in this isolate.
@@ -126,7 +126,7 @@ public final class CallbackManager {
     public void add(Runnable hook) {
         add(Isolate.currentIsolate(), hook);
     }
-    
+
     /**
      * Remove a hook previously-registered for the isolate <ocde>iso</code>.  Like the add method, this method
      * does not do any security checks.
@@ -139,7 +139,7 @@ public final class CallbackManager {
         if (hook == null) {
             throw new IllegalArgumentException();
         }
-        
+
         CallbackGroup cbg = findGroup(iso);
 //        if (cbg == null) {
 //            System.out.println("findGroup FAILED for " + iso + " " + hook);
@@ -153,9 +153,9 @@ public final class CallbackManager {
 //        System.out.println("cbg.remove FAILED for " + iso + " " + hook);
         return false;
     }
-    
+
     /**
-     * Remove a hook previously-registered for the isolate <ocde>iso</code>. The wrapped hook 
+     * Remove a hook previously-registered for the isolate <ocde>iso</code>. The wrapped hook
      * implements some callback interface, but we don't care which.
      *
      * @param iso the isolate context to search
@@ -166,20 +166,20 @@ public final class CallbackManager {
         if (hook == null) {
             throw new IllegalArgumentException();
         }
-        
+
         CallbackGroup cbg = findGroup(iso);
         if (cbg != null) {
             return cbg.findHookWrapper(hook);
         }
-        
+
         return null;
     }
-    
-    
+
+
     /**
      * Remove an actual hook based on some wrapped hook.
      */
-    
+
     /**
      * Remove a hook previously-registered for the current isolate.  Like the add method, this method
      * does not do any security checks.
@@ -190,9 +190,9 @@ public final class CallbackManager {
     public boolean remove(Runnable hook) {
         return remove(Isolate.currentIsolate(), hook);
     }
-    
+
     /**
-     * Remove all hooks previously-registered for the given isolate. 
+     * Remove all hooks previously-registered for the given isolate.
      *
      * @param iso the isolate context to search
      * @return true if any hooks were registered in the iso context.
@@ -205,21 +205,21 @@ public final class CallbackManager {
         }
         return false;
     }
-    
+
     /**
      * Remove all hooks.
      */
     public synchronized void removeAll() {
         hooks.removeAllElements();
     }
-    
+
     /*
      * Run all registered hooks. Can be called from a different isolate than the isolate that registered the callbacks.
      * Any hooks added or removed by calling the hooks are ignoreed during the execution of this method.
      */
     public void runHooks() {
         CallbackGroup[] grps; // snapshot of groups;
-        
+
         synchronized (this) {
             if (runOnce & ran) {
                 // can happen as a race...
@@ -232,7 +232,7 @@ public final class CallbackManager {
             grps = new CallbackGroup[hooks.size()];
             hooks.copyInto(grps);
         }
-        
+
         for (int i = 0; i < grps.length; i++) {
             CallbackGroup cbg = grps[i];
             if (cbg.iso.isAlive()) {
@@ -246,7 +246,7 @@ public final class CallbackManager {
             }
         }
     }
-    
+
     /**
      * If this CallbackManager contains any callbacks to be run in a context other than the current context, return true.
      * @return true if contains cross-isolate callback.
@@ -262,7 +262,7 @@ public final class CallbackManager {
         }
         return false;
     }
-    
+
 }
 
 /**
@@ -270,28 +270,28 @@ public final class CallbackManager {
  */
 class CallbackThread extends CrossIsolateThread {
     CallbackGroup cbg;
-    
+
     CallbackThread(CallbackGroup cbg) {
         super(cbg.iso, "callback thread");
         this.cbg = cbg;
     }
-    
+
     public void run() {
         cbg.runAllHooksInContext();
     }
-    
+
 }
 
 /**
  * Interface for hooks that are wrappers on other hooks. The type of the wrapped hook
- * could be any interface. We need to be able to remove a wrpeer hook based on looking up the wrapped hook, 
- * so this interface 
+ * could be any interface. We need to be able to remove a wrpeer hook based on looking up the wrapped hook,
+ * so this interface
  */
 interface HookWrapper extends Runnable {
-    
+
     /**
      * Return the wrapped hoook that the user may have registered.
-     * Used for finding the actual hook (a HookWrapper) based on 
+     * Used for finding the actual hook (a HookWrapper) based on
      * the wrapped hook. The wrapped hook might be a Runnable, or it may implement some other interface.
      * At this level, we don't care.
      */
@@ -302,11 +302,11 @@ interface HookWrapper extends Runnable {
  * A group of callbacks to be called in the context of the same Isolate.
  */
 final class CallbackGroup {
-    
+
     final Isolate iso;
-    
+
     SquawkVector hooks;
-    
+
     /**
      * Creat a proup.
      *
@@ -316,16 +316,16 @@ final class CallbackGroup {
         this.iso = iso;
         this.hooks = new SquawkVector();
     }
-    
+
     /**
      * Return the number of hooks in this group.
      */
     int count() {
         return hooks.size();
     }
-    
+
     /**
-     * Add a hook to this group. 
+     * Add a hook to this group.
      * @param hook
      * @throws IllegalArgumentException if the hook is already registered to run in this group.
      */
@@ -335,7 +335,7 @@ final class CallbackGroup {
         }
         hooks.addElement(hook);
     }
-    
+
     private int findHook(Runnable hook) {
         int len = hooks.size();
         for (int i = 0; i < len; i++) {
@@ -345,7 +345,7 @@ final class CallbackGroup {
         }
         return -1;
     }
-    
+
     /**
      * Remove a hook from this group.
      * @param hook
@@ -359,7 +359,7 @@ final class CallbackGroup {
         }
         return false;
     }
-    
+
     /**
      * Find the index of a HookWrapper that wraps this hook.
      *
@@ -387,17 +387,20 @@ final class CallbackGroup {
         Assert.that(Isolate.currentIsolate() == iso);
         // run serially, to minimize memory overhead.
         Runnable[] hks; // snapshot of hooks;
-        
+
         synchronized (this) {
             hks = new Runnable[hooks.size()];
             hooks.copyInto(hks);
         }
-        
+
         int len = hooks.size();
         for (int i = 0; i < len; i++) {
             Runnable hook = hks[i];
             try {
-//                System.out.println("Running a hook in runAllHooksInContext" + hook);
+//              System.out.println("Running a hook in runAllHooksInContext" + hook);
+                if (VM.isVerbose()) {
+                    System.out.println("Running hook: " + hook);
+                }
                 hook.run();
             } catch (RuntimeException e) {
                 System.err.print("Exception thrown executing callback. Exception printed and ignored:");
@@ -405,7 +408,7 @@ final class CallbackGroup {
             }
         }
     }
-    
+
     /**
      * Run all of the callbacks in this group's isolate context.
      */
@@ -421,7 +424,7 @@ final class CallbackGroup {
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
             }
-            
+
         }
     }
 }

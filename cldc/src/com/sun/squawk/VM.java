@@ -2334,8 +2334,13 @@ hbp.dumpState();
         }
         
         executingHooks = true;
-        
+        if (VM.isVerbose()) {
+            System.out.println("Running top-level shutdown hooks:");
+        }
         shutdownHooks.runHooks();
+        if (VM.isVerbose()) {
+            System.out.println("Done running top-level shutdown hooks.");
+        }
         haltVM(code);
     }
     
