@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>How to build and run Squawk3G</title>
+    <title>How to build and run Squawk</title>
     <style type="text/css">
         table.console {
             border: solid 1px;
@@ -13,7 +13,7 @@
 
 <body>
 
-<h1>How to Build and Run Squawk3G</h1>
+<h1>How to Build and Run Squawk</h1>
 
 <p>
     This version of the Squawk VM is very much a pre-alpha, "work in progress" release
@@ -30,11 +30,11 @@
 
 <p>
     The current version of Squawk uses a temporary core virtual machine called the 'Slow VM'.
-    This is an interpreter for the Squawk3G Java virtual machine. As the name suggests it is
+    This is an interpreter for the Squawk Java virtual machine. As the name suggests it is
     not optimized for speed and runs at about the same speed as the
     <a href="http://java.sun.com/products/cldc/">CLDC 1.0.4 Reference Implementation</a>
     This is a temporary program written in C that will be replaced once
-    the full Squawk3G architecture is complete. The full Squawk3G architecture will include
+    the full Squawk architecture is complete. The full Squawk architecture will include
     an interpreter and compiler that are all written in Java and can compile itself in such
     a way that no C code will be required.
 </p>
@@ -99,26 +99,26 @@ It appears that both the Sun and IBM Java implementations must be used in the bu
 </p>
 
 <table class="console"><tr><td><pre><code>
-~/work/Squawk3G$ export PATH=.:$PATH
-~/work/Squawk3G$ export JITC_PROCESSOR_TYPE=6
-~/work/Squawk3G$ ln -s /usr/local/IBMJava2-ppc-142/bin/javac javac
-~/work/Squawk3G$ ln -s /usr/local/java-ppc-sun-1.4.2/bin/java java
-~/work/Squawk3G$ ln -s /usr/local/java-ppc-sun-1.4.2/bin/jar jar
-~/work/Squawk3G$
+~/work/Squawk$ export PATH=.:$PATH
+~/work/Squawk$ export JITC_PROCESSOR_TYPE=6
+~/work/Squawk$ ln -s /usr/local/IBMJava2-ppc-142/bin/javac javac
+~/work/Squawk$ ln -s /usr/local/java-ppc-sun-1.4.2/bin/java java
+~/work/Squawk$ ln -s /usr/local/java-ppc-sun-1.4.2/bin/jar jar
+~/work/Squawk$
 </code></pre></td></tr></table>
 </p>
 </blockquote>
 
 
 <table class="console"><tr><td><pre><code>
-~/work/Squawk3G$ java -jar build.jar
+~/work/Squawk$ java -jar build.jar
 [building j2me...]
 [building compiler...]
 [building compilertests...]
 [building graphics...]
 [building translator...]
 [building j2se...]
-Note: /Users/dsimon/work/Squawk3G/j2se/preprocessed/com/sun/squawk/vm/GUIOutputChannel.java uses or overrides a deprecated API.
+Note: /Users/dsimon/work/Squawk/j2se/preprocessed/com/sun/squawk/vm/GUIOutputChannel.java uses or overrides a deprecated API.
 Note: Recompile with -deprecation for details.
 [running squawk.jar...]
 [building mapper...]
@@ -127,7 +127,7 @@ Note: Recompile with -deprecation for details.
 [building samples...]
 [building tck...]
 [building vmgen...]
-~/work/Squawk3G$
+~/work/Squawk$
 </code></pre></td></tr></table>
 
 <p>
@@ -135,7 +135,7 @@ Note: Recompile with -deprecation for details.
 </p>
 
 <table class="console"><tr><td><pre><code>
-~/work/Squawk3G$ java -jar build.jar -DTRACING_ENABLED=true -DASSERTIONS_ENABLED=true -DDEBUG_CODE_ENABLED=true
+~/work/Squawk$ java -jar build.jar -DTRACING_ENABLED=true -DASSERTIONS_ENABLED=true -DDEBUG_CODE_ENABLED=true
 </code></pre></td></tr></table>
 
 <p>
@@ -155,7 +155,7 @@ Note: Recompile with -deprecation for details.
 </p>
 
 <table class="console"><tr><td><pre><code>
-~/work/Squawk3G$ java -jar build.jar -prod -o2 -mac rom j2me translator graphics
+~/work/Squawk$ java -jar build.jar -prod -o2 -mac rom j2me translator graphics
 [running rom...]
 [running romize...]
 excluding: com.sun.squawk.compiler.*
@@ -164,13 +164,13 @@ excluding: java.lang.BytecodeTracer
 excluding: java.lang.Lisp2*
 [translating suite squawk ...]
 Romizer processed 564 classes and generated these files:
-  /Users/dsimon/work/Squawk3G/squawk.sym
-  /Users/dsimon/work/Squawk3G/squawk.suite
-  /Users/dsimon/work/Squawk3G/squawk_classes.jar
-  /Users/dsimon/work/Squawk3G/slowvm/src/vm/rom.h
-  /Users/dsimon/work/Squawk3G/squawk_rt.jar
+  /Users/dsimon/work/Squawk/squawk.sym
+  /Users/dsimon/work/Squawk/squawk.suite
+  /Users/dsimon/work/Squawk/squawk_classes.jar
+  /Users/dsimon/work/Squawk/slowvm/src/vm/rom.h
+  /Users/dsimon/work/Squawk/squawk_rt.jar
 [running squawk.jar...]
-~/work/Squawk3G$
+~/work/Squawk$
 </code></pre></td></tr></table>
 
 <h2>3. Configuring the environment for use of the embedded VM</h2>
@@ -182,13 +182,13 @@ Romizer processed 564 classes and generated these files:
 </p>
 
 <table class="console"><tr><td><pre><code>
-C:\work\Squawk3G&gt; java -jar build.jar jvmenv
+C:\work\Squawk&gt; java -jar build.jar jvmenv
 
 To configure the environment for Squawk, try the following command:
 
     set JVMDLL=C:\j2sdk1.4.2_01\jre\bin\server\jvm.dll
 
-C:\work\Squawk3G&gt;
+C:\work\Squawk&gt;
 </code></pre></td></tr></table>
 
 <p>
@@ -196,7 +196,7 @@ C:\work\Squawk3G&gt;
 </p>
 
 <table class="console"><tr><td><pre><code>
-[pn13]dsimon:/home/dsimon/work/Squawk3G&gt;java -jar build.jar jvmenv
+[pn13]dsimon:/home/dsimon/work/Squawk&gt;java -jar build.jar jvmenv
 os=SunOS
 java.home=/home/dsimon/j2sdk1.4.2_04
 java.vm.version=1.4.2_04-b05
@@ -210,7 +210,7 @@ or in csh/tcsh
 
     setenv LD_LIBRARY_PATH /home/dsimon/j2sdk1.4.2_04/jre/lib/sparc:$LD_LIBRARY_PATH
 
-[pn13]dsimon:/home/dsimon/work/Squawk3G&gt;
+[pn13]dsimon:/home/dsimon/work/Squawk&gt;
 </code></pre></td></tr></table>
 
 <p>
@@ -218,13 +218,13 @@ or in csh/tcsh
 </p>
 
 <table class="console"><tr><td><pre><code>
-~/work/Squawk3G$ java -jar build.jar jvmenv
+~/work/Squawk$ java -jar build.jar jvmenv
 [running jvmenv...]
 
 There is no need to configure the environment for Squawk on Mac OS X as the location of the
 JavaVM framework is built into the executable.
 
-~/work/Squawk3G$
+~/work/Squawk$
 </code></pre></td></tr></table>
 
 <h2>3. Running squawk</h2>
@@ -235,7 +235,7 @@ JavaVM framework is built into the executable.
 </p>
 
 <table class="console"><tr><td><pre><code>
-~/work/Squawk3G$ squawk
+~/work/Squawk$ squawk
 
 Copyright (c) Sun Microsystems, Inc.   All  rights  reserved.
 Unpublished - rights reserved under the Copyright Laws of the
@@ -270,7 +270,7 @@ where options include:
 Hits   -   Class:0.92%  Monitor:0.100%  Exit:0%  New:0.100%
 GCs: 0 full, 0 partial
 ** VM stopped: exit code = 0 **
-~/work/Squawk3G$
+~/work/Squawk$
 </code></pre></td></tr></table>
 
 <p>
@@ -279,7 +279,7 @@ GCs: 0 full, 0 partial
 </p>
 
 <table class="console"><tr><td><pre><code>
-~/work/Squawk3G$ squawk -X
+~/work/Squawk$ squawk -X
     -Xmx:&lt;size&gt;    set Squawk RAM size (default=8192Kb)
     -Xmxnvm:&lt;size&gt; set Squawk NVM size (default=8192Kb)
     -Xboot:&lt;file&gt;  load bootstrap suite from file (default=squawk.suite)
@@ -303,7 +303,7 @@ GCs: 0 full, 0 partial
 Hits   -   Class:0%  Monitor:0%  Exit:0%  New:0%
 GCs: 0 full, 0 partial
 ** VM stopped: exit code = 0 **
-~/work/Squawk3G$
+~/work/Squawk$
 </code></pre></td></tr></table>
 
 <p>
@@ -314,7 +314,7 @@ GCs: 0 full, 0 partial
 </p>
 
 <table class="console"><tr><td><pre><code>
-~/work/Squawk3G$ squawk -X
+~/work/Squawk$ squawk -X
     -Xmx:&lt;size&gt;    set Squawk RAM size (default=8192Kb)
     -Xmxnvm:&lt;size&gt; set Squawk NVM size (default=8192Kb)
     -Xboot:&lt;file&gt;  load bootstrap suite from file (default=squawk.suite)
@@ -345,7 +345,7 @@ Hits   -   Class:0%  Monitor:0%  Exit:0%  New:0%
 Extends: 0 (slots as % of extends = 0.00%)
 GCs: 0 full, 0 partial
 ** VM stopped after 0 branches: exit code = 0 **
-~/work/Squawk3G$
+~/work/Squawk$
 </code></pre></td></tr></table>
 
 <h2>5. Running the demo</h2>
@@ -354,7 +354,7 @@ The demo application is comprised of a graphical shell that is used to launch a 
 It can be started as follows:
 
 <table class="console"><tr><td><pre><code>
-~/work/Squawk3G$ squawk -verbose -cp:samples/j2meclasses example.shell.Main
+~/work/Squawk$ squawk -verbose -cp:samples/j2meclasses example.shell.Main
 [Loaded example.shell.Main]
 [Loaded example.shell.Shell]
 [Loaded example.shell.Shell$Registration]
@@ -412,7 +412,7 @@ It can be started as follows:
 </p>
 
 <table class="console"><tr><td><pre><code>
-C:\work\Squawk3G>java -jar build.jar -nocomp -mac rom j2me graphics samples
+C:\work\Squawk>java -jar build.jar -nocomp -mac rom j2me graphics samples
 [running rom...]
 [running romize...]
 excluding: com.sun.squawk.compiler.*
@@ -421,14 +421,14 @@ excluding: java.lang.BytecodeTracer
 excluding: java.lang.CheneyCollector*
 [translating suite squawk ...]
 Romizer processed 662 classes and generated these files:
-  C:\work\Squawk3G\squawk.sym
-  C:\work\Squawk3G\squawk.suite
-  C:\work\Squawk3G\squawk_classes.jar
-  C:\work\Squawk3G\slowvm\src\vm\rom.h
-  C:\work\Squawk3G\squawk_rt.jar
+  C:\work\Squawk\squawk.sym
+  C:\work\Squawk\squawk.suite
+  C:\work\Squawk\squawk_classes.jar
+  C:\work\Squawk\slowvm\src\vm\rom.h
+  C:\work\Squawk\squawk_rt.jar
 [running squawk.jar...]
 
-C:\work\Squawk3G>java -jar build.jar -prod -o2 -mac rom squawk_classes.jar
+C:\work\Squawk>java -jar build.jar -prod -o2 -mac rom squawk_classes.jar
 [running rom...]
 [running romize...]
 excluding: com.sun.squawk.compiler.*
@@ -438,16 +438,16 @@ excluding: java.lang.CheneyCollector*
 [translating suite squawk ...]
 warning: existing file 'squawk_classes.jar' not overwritten
 Romizer processed 662 classes and generated these files:
-  C:\work\Squawk3G\squawk.sym
-  C:\work\Squawk3G\squawk.suite
-  C:\work\Squawk3G\slowvm\src\vm\rom.h
-  C:\work\Squawk3G\squawk_rt.jar
+  C:\work\Squawk\squawk.sym
+  C:\work\Squawk\squawk.suite
+  C:\work\Squawk\slowvm\src\vm\rom.h
+  C:\work\Squawk\squawk_rt.jar
 [compiling 'slowvm\src\vm\squawk.c' ...]
 squawk.c
    Creating library squawk.lib and object squawk.exp
 [running squawk.jar...]
 
-C:\work\Squawk3G>
+C:\work\Squawk>
 </code></pre></td></tr></table>
 
 <p>
@@ -464,7 +464,7 @@ C:\work\Squawk3G>
 
 
 <table class="console"><tr><td><pre><code>
-C:\work\Squawk3G>squawk example.shell.LookupServer -verbose
+C:\work\Squawk>squawk example.shell.LookupServer -verbose
 [starting shell lookup service on 129.146.72.195]
 [listening on port 9999]
 </code></pre></td></tr></table>
@@ -474,7 +474,7 @@ C:\work\Squawk3G>squawk example.shell.LookupServer -verbose
 </p>
 
 <table class="console"><tr><td><pre><code>
-C:\work\Squawk3G>squawk example.shell.Main -verbose -register:129.146.72.195
+C:\work\Squawk>squawk example.shell.Main -verbose -register:129.146.72.195
 [Connecting to lookup server socket://129.146.72.195:9999]
 [registering with lookup server at socket://129.146.72.195:9999]
 [registered with lookup server as 129.146.72.195]
@@ -506,7 +506,7 @@ The name server can also be used to coordinate load balancing amongst the runnin
 </p>
 
 <table class="console"><tr><td><pre><code>
-C:\work\Squawk3G>squawk example.shell.LookupServer -verbose -loadbalance:Isolate
+C:\work\Squawk>squawk example.shell.LookupServer -verbose -loadbalance:Isolate
 [starting shell lookup service on 129.146.72.195]
 [listening on port 9999]
 

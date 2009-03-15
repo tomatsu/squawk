@@ -338,7 +338,7 @@ public class Jam extends Thread {
     /**
      * Return the name of the Squawk VM executable that can be used to invoke it from within a
      * shell/command box. Use the squawk executable from the current directory assuming you are
-     * running from the Squawk3G directory
+     * running from the Squawk directory
      * 
      * @return Name of the Squawk VM executable
      */

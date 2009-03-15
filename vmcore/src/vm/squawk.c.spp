@@ -94,7 +94,7 @@ void printStackTracePrim(int opcode, ByteAddress traceIP, UWordAddress traceFP, 
 /*
     This is the 'slow' Squawk VM that is implemented in C. The techniques used in
     this VM are such that it should be expected that it will be several times slower
-    than other VMs implemented in C. Its purpose is only to have an initial Squawk3G
+    than other VMs implemented in C. Its purpose is only to have an initial Squawk
     implementation running quickly, and to provide a reference implementation
     to test the final system against.
 
