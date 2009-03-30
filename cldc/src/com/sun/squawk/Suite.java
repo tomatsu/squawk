@@ -454,7 +454,7 @@ public final class Suite {
         System.arraycopy(resourceFiles, 0, resourceFiles = new ResourceFile[resourceFiles.length + 1], 0, resourceFiles.length - 1);
         resourceFiles[resourceFiles.length - 1] = resourceFile;
         Arrays.sort(resourceFiles, ResourceFile.comparer);
-        if (resourceFile.name.equalsIgnoreCase(PROPERTIES_MANIFEST_RESOURCE_NAME)) {
+        if (resourceFile.name.toUpperCase().equals(PROPERTIES_MANIFEST_RESOURCE_NAME)) {
             isPropertiesManifestResourceInstalled = true;
             // Add the properties defined in the manifest file
             loadProperties(resourceFile.data);
