@@ -241,6 +241,9 @@ public class ArgsUtilities {
                     int baseDirPrefix = arg.length() + 1;
                     while (true) {
                         String fullName = dis.readUTF();
+                        if (fullName.indexOf(".svn/") != -1) {
+                            continue;
+                        }
                         /*
                          * Strip off the base directory name
                          */
