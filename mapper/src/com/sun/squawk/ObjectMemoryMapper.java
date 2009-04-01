@@ -950,7 +950,28 @@ public class ObjectMemoryMapper {
         OwnerStats[] stats  = mapToArray(ClassOwnerStats.allKlassStats);
         Arrays.sort(stats, new OwnerStats.CompareByName());
         
-        out.println("Class statistics (bytes):");
+        out.println("# classes:" + stats.length);
+        out.println("Class statistics sorted alphabetically (bytes):");
+        for (int i = 0; i < stats.length; i++) {
+            OwnerStats stat = stats[i];
+            out.println(stat.name + ": " + stat.size);
+        }
+        Arrays.sort(stats, new Comparer(){
+            public int compare(Object o1, Object o2) {
+                OwnerStats stat1 = (OwnerStats) o1;
+                OwnerStats stat2 = (OwnerStats) o2;
+                if (stat1.size == stat2.size) {
+                    return 0;
+                }
+                if (stat1.size < stat2.size) {
+                    return +1;
+                }
+                return -1;
+            }
+        });
+        out.println();
+        out.println("# classes:" + stats.length);
+        out.println("Class statistics sorted by size (bytes):");
         for (int i = 0; i < stats.length; i++) {
             OwnerStats stat = stats[i];
             out.println(stat.name + ": " + stat.size);
