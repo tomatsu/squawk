@@ -215,7 +215,7 @@ public class Build {
     private String specfifiedBuildDotOverrideFileName;
     
     /**
-     * Gets the name of the build.override file specified by the -override: arg. Or null if no
+     * Gets the name of the build.override file specified by the -override: or -override arg. Or null if no
      * -override: arg was specified.
      *
      * @return String or null
@@ -1464,6 +1464,15 @@ public class Build {
 		        System.arraycopy(args, 1, newArgs, 0, newArgs.length);
 		        args = newArgs;
 	        }
+            if (arg.startsWith("-override")) {
+                if (args.length == 1) {
+                    throw new BuildException("Did not specify override file name for -override");
+                }
+                buildDotOverrideFileName = args[1];
+                String[] newArgs = new String[args.length - 2];
+                System.arraycopy(args, 2, newArgs, 0, newArgs.length);
+                args = newArgs;
+            }
         }
         Build builder = new Build(buildDotOverrideFileName);
         try {
@@ -1549,6 +1558,7 @@ public class Build {
         out.println("    -nodeps             do not check dependencies (default for commands)");
         out.println("    -deps               check dependencies (default for targets)");
         out.println("    -plugins:<file>     load commands from properties in 'file'");
+        out.println("    -override <file>");
         out.println("    -override:<file>    file to use to override the build.properties file found locally, defaults to build.override");
         out.println("                        MUST BE SPECIFIED AS FIRST BUILD-OPTION");
         out.println("    -D<name>=<value>    sets a builder property");
