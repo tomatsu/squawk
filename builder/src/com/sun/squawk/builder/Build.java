@@ -1879,8 +1879,24 @@ public class Build {
             properties.setProperty("LISP2_BITMAP", "false");
         }
 
+        String optimize;
+        optimize = properties.getProperty("O1");
+        if (optimize !=null && optimize.equals("true")) {
+            cOptions.o1 = true;
+        }
+        optimize = properties.getProperty("O2");
+        if (optimize !=null && optimize.equals("true")) {
+            cOptions.o2 = true;
+        }
+        optimize = properties.getProperty("O3");
+        if (optimize !=null && optimize.equals("true")) {
+            cOptions.o2 = true;
+            cOptions.o3 = true;
+        }
+
         // The -tracing, and -assume options are turned on by default if -production was not specified
-        if (!production) {
+        String productionProperty = properties.getProperty("PRODUCTION");
+        if (!production && (productionProperty == null || !productionProperty.equals("true"))) {
             cOptions.tracing = true;
             cOptions.assume = true;
         }
