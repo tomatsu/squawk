@@ -35,7 +35,8 @@ import java.io.IOException;
 public class MscCompiler extends CCompiler {
 	public static final String VISUAL_STUDIO_80_TOOLS_ENVIRONMENT_VARIABLE = "VS80COMNTOOLS";
 	public static final String VISUAL_STUDIO_90_TOOLS_ENVIRONMENT_VARIABLE = "VS90COMNTOOLS";
-    
+    public static final String MS_PLATFORM_SDK_VARIABLE = "Mstools";
+
     protected String clCommandString;
 
     public MscCompiler(Build env, Platform platform) {
@@ -57,7 +58,6 @@ public class MscCompiler extends CCompiler {
         if (options.macroize)           { buf.append("/DMACROIZE ");       }
         if (options.assume)             { buf.append("/DASSUME ");         }
         if (options.typemap)            { buf.append("/DTYPEMAP ");        }
-        if (options.ioport)             { buf.append("/DIOPORT ");         }
 
         if (options.kernel) {
             throw new BuildException("-kernel option not supported by MscCompiler");
@@ -75,8 +75,6 @@ public class MscCompiler extends CCompiler {
             throw new BuildException("-64 option not supported by MscCompiler");
         }
 
-        //buf.append("/DIOPORT "); // this is optional
-
         buf.append("/DPLATFORM_BIG_ENDIAN=" + platform.isBigEndian()).append(' ');
         buf.append("/DPLATFORM_UNALIGNED_LOADS=" + platform.allowUnalignedLoads()).append(' ');
 
@@ -85,17 +83,25 @@ public class MscCompiler extends CCompiler {
 
     public String getClCommandString() {
         if (clCommandString == null) {
+            final String[] envvars = {
+                VISUAL_STUDIO_90_TOOLS_ENVIRONMENT_VARIABLE,
+                VISUAL_STUDIO_80_TOOLS_ENVIRONMENT_VARIABLE,
+                MS_PLATFORM_SDK_VARIABLE};
+
             clCommandString = "cl";
-            String toolsDirectory = System.getProperty(VISUAL_STUDIO_90_TOOLS_ENVIRONMENT_VARIABLE);
-            if (toolsDirectory == null) {
-            	toolsDirectory = System.getProperty(VISUAL_STUDIO_80_TOOLS_ENVIRONMENT_VARIABLE);
+            String toolsDirectory = null;
+            for (int i = 0; i < envvars.length; i++) {
+                toolsDirectory = System.getProperty(envvars[i]);
+                if (toolsDirectory == null) {
+                    toolsDirectory = System.getenv(envvars[i]);
+                    if (toolsDirectory != null) {
+                        break;
+                    }
+                } else {
+                    break;
+                }
             }
-            if (toolsDirectory == null) {
-            	toolsDirectory = System.getenv(VISUAL_STUDIO_90_TOOLS_ENVIRONMENT_VARIABLE);
-            }
-            if (toolsDirectory == null) {
-            	toolsDirectory = System.getenv(VISUAL_STUDIO_80_TOOLS_ENVIRONMENT_VARIABLE);
-            }
+           
             if (toolsDirectory == null) {
             	toolsDirectory = "";
             }
@@ -140,7 +146,7 @@ public class MscCompiler extends CCompiler {
             exec = " /Fe" + output + " /LD " + Build.join(objects) + " /link wsock32.lib /IGNORE:4089";
         } else {
             output = out + platform.getExecutableExtension();
-            exec = " /Fe" + output + " " + Build.join(objects) + " /link wsock32.lib /IGNORE:4089";
+            exec = " /Fe" + output + " " + Build.join(objects) + " /link /OPT:REF /OPT:NOWIN98 wsock32.lib /IGNORE:4089";
         }
         env.exec(getClCommandString() + " " + exec);
         return new File(output);
