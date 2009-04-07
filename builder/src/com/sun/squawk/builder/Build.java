@@ -1463,8 +1463,7 @@ public class Build {
 		        String[] newArgs = new String[args.length - 1];
 		        System.arraycopy(args, 1, newArgs, 0, newArgs.length);
 		        args = newArgs;
-	        }
-            if (arg.startsWith("-override")) {
+	        } else if (arg.startsWith("-override")) {
                 if (args.length == 1) {
                     throw new BuildException("Did not specify override file name for -override");
                 }
