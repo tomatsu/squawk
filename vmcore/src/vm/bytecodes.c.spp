@@ -3195,7 +3195,12 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                     }
                 }
                 klass = com_sun_squawk_Klass_superType(klass);
-                assume(klass != null);
+                if (klass == null) {
+                    /* this can occur if malicious bytecode takes advantage of "interface type erasure" in the preverifier,
+                     * so the object doesn't actually implement the expected interface. The runtime has to check this case
+                     */
+                    return -1;
+                }
             }
 foundSlot:
            return slot;
@@ -3217,13 +3222,20 @@ foundSlot:
 
             nullCheck(oop);
             slot = do_findslot0(oop, interfaceKlass, iparm);
-            pushInt(slot);
+            if (likely(slot >= 0)) {
+                pushInt(slot);
+            } else {
+                pushAddress(oop);
+                pushAddress(interfaceKlass);
+                pushInt(iparm);
+                call(com_sun_squawk_VM_findSlot); /* will throw error for us */
+            }
 /*else[FAST_INVOKEINTERFACE]*/
-//          Address cls = popAddress();
+//          Address interfaceKlass = popAddress();
 //          Address oop = popAddress();
 //          nullCheck(oop);
 //          pushAddress(oop);
-//          pushAddress(cls);
+//          pushAddress(interfaceKlass);
 //          pushInt(iparm);
 //          call(com_sun_squawk_VM_findSlot);
 /*end[FAST_INVOKEINTERFACE]*/

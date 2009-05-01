@@ -1527,7 +1527,7 @@ public final class IRBuilder {
             Klass localType = frame.getLocalTypeFor(declaredType);
             boolean valid;
             if (localType == Klass.REFERENCE) {
-                valid = declaredType.isAssignableFrom(value.getType());
+                valid = declaredType.isInterface() || declaredType.isAssignableFrom(value.getType());
             } else {
                 valid = localType.isAssignableFrom(value.getType());
             }

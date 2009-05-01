@@ -180,6 +180,21 @@ public class DeadMethodEliminator {
         }
     }
     
+    /**
+     * Return true if the class has any constructior taht has not been eliminated
+     * @param klass
+     * @return true if still any constructors...
+     */
+    private boolean hasUsedConstructor(Klass klass) {
+        for (int j = klass.getMethodCount(true) - 1; j >= 0; j--) {
+            Method m = klass.getMethod(j, true);
+            if (m.isConstructor() && isMarkedUsed(m)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void computeMethodsUsed() {
         boolean trace = (Translator.TRACING_ENABLED && Tracer.isTracing("DME")) || VM.isVeryVerbose();
         usedMethods = new Hashtable();
@@ -248,7 +263,30 @@ public class DeadMethodEliminator {
             Tracer.traceln("[translator DME: ==== Class Mandated roots:  " + foundMethods.size() + " =====");
             printVectorSorted(foundMethods, "Class root: ");
         }
-        
+
+        // NOT READY FOR PRIME-TIME
+//        // look for classes that are no longer instantiable, becuase constructors were eliminated:
+//        Suite ste = translator.getSuite();
+//        foundMethods.removeAllElements();
+//        for (int i = ste.getClassCount() - 1; i >= 0; i--) {
+//            Klass klass = ste.getKlass(i);
+//            if (klass.isInstantiable()) {
+//                if (!hasUsedConstructor(klass)) {
+//                    for (int j = klass.getMethodCount(false) - 1; j >= 0; j--) {
+//                        Method m = klass.getMethod(j, false);
+//                        MethodDB.Entry mw = methodDB.lookupMethodEntry(m);
+//                        if (isMarkedUsed(mw) && !isBasicRoot(mw)) {
+//                            foundMethods.addElement(mw.toString() + " size: " + mw.getSize());
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        if (foundMethods.size() != 0) {
+//            Tracer.traceln("[translator DME: ==== MAYBE UNCALLABLE METHODS?:  " + foundMethods.size() + " (called methods: " + usedMethods.size() + ") =====");
+//            printVectorSorted(foundMethods, "    ");
+//        }
+
         
         // report unused methods:
         if (trace || VM.isVeryVerbose()) {
@@ -256,7 +294,7 @@ public class DeadMethodEliminator {
             foundMethods.removeAllElements();
             while (e.hasMoreElements()) {
                 MethodDB.Entry mw = (MethodDB.Entry)e.nextElement();
-                if (!isMarkedUsed(mw)) {
+                if (!isMarkedUsed(mw) && !mw.m.isAbstract()) {
                     foundMethods.addElement(mw.toString() + " size: " + mw.getSize());
                 }
             }

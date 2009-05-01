@@ -1336,7 +1336,7 @@ public class Klass {
      *
      * @param iklass the interface class
      * @param islot  the virtual slot of the interface
-     * @return the virtual slot of this class
+     * @return the virtual slot of this class, or -1 if not found
      */
     final int findSlot(Klass iklass, int islot) {
         int icount = interfaces.length;
@@ -1345,7 +1345,11 @@ public class Klass {
                 return interfaceVTableMaps[i][islot];
             }
         }
-        Assert.that(superType != null);
+        if (superType == null) {
+            // protect against malicious code that got past "interface type erasure" in the preverifier
+            // it's possible that *this* klass does not implement iklass
+           return -1;
+        }
         return superType.findSlot(iklass, islot);
     }
     
@@ -1971,6 +1975,8 @@ public class Klass {
                 case CID.OFFSET:
                 case CID.UWORD:
                     Assert.shouldNotReachHere();
+                    table = null;
+                    break;
                     
                 case CID.BYTE:    // fall through ...
                 case CID.BOOLEAN: // fall through ...
