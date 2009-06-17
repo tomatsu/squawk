@@ -1,0 +1,16 @@
+syntax: glob
+.svn/
+ide-classes/
+uei/build/
+.DS_Store
+nbproject/private/
+preprocessed/
+classes/
+j2meclasses/
+classes.jar
+vmcore/src/vm/buildflags.h
+vmcore/src/vm/rom.h
+vmcore/src/vm/vm2c.c.spp
+
+syntax: re
+^squawk
