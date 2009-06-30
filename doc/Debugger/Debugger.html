@@ -49,58 +49,16 @@ that talks to the SDA on Squawk.</p>
 <h2>Building the debugger</h2>
 
 <p>The debugger suite must be built with the bootstrap suite as it references parts of the
-core classes whose linkage information is subsequently stripped. This is similiar to the
-intimate relationship the translator has to the bootstrap suite. Due a current restriction
-with the Sun Spot system, only two suites may be downloaded, so the debugger must be built
-as part of the bootstrap suite. <i>Also, the SuiteCreator (see later) needs to have the translator
-available, so create a translator suite along with the bootstrap suite. All of these pieces
-should come pre-built in the Dev Kit.</i> As such, the building of
+core classes whose linkage information is subsequently stripped. As such, the building of
 the bootstrap suite will be something like the following:</p>
 
 <table border="1" cellspacing="0" cellpadding="5" width="100%" bgcolor="#CCCCCC"><tr><td><pre><code>
-$ <b>java -jar build.jar -prod -o2 -mac rom j2me debugger -- translator</b>
+$ <b>java -jar build.jar -prod -o2 -mac rom cldc imp debugger</b>
 [running rom...]
 [running romize...]
-excluding: com.sun.squawk.compiler.*
-excluding: com.sun.squawk.os.*
-[translating suite squawk ...]
-Romizer processed 473 classes and generated these files:
-  /lab/corc/derek/src/mysquawk/Squawk/squawk.sym
-  /lab/corc/derek/src/mysquawk/Squawk/squawk.suite
-  /lab/corc/derek/src/mysquawk/Squawk/squawk_classes.jar
-  /lab/corc/derek/src/mysquawk/Squawk/slowvm/src/vm/rom.h
-  /lab/corc/derek/src/mysquawk/Squawk/squawk_rt.jar
-[compiling 'slowvm/src/vm/squawk.c' ...]
-[running squawk.jar...]
+...
 </code></pre></td></tr></table>
 
-<blockquote>
-The following is closer to what the build procedure will be, but doesn't work yet:
-
-<table border="1" cellspacing="0" cellpadding="5" width="100%" bgcolor="#CCCCCC"><tr><td><pre><code>
-$ <b>java -jar build.jar -prod -o2 -mac rom squawk_classes.jar -- debugger_classes.jar</b>
-[running rom...]
-[running romize...]
-excluding: com.sun.squawk.compiler.*
-excluding: com.sun.squawk.os.*
-excluding: java.lang.BytecodeTracer
-[translating suite squawk ...]
-warning: existing file 'squawk_classes.jar' not overwritten
-Romizer processed 311 classes and generated these files:
-  /Users/dsimon/work/Squawk/squawk.sym
-  /Users/dsimon/work/Squawk/squawk.suite
-  /Users/dsimon/work/Squawk/slowvm/src/vm/rom.h
-  /Users/dsimon/work/Squawk/squawk_rt.jar
-[translating suite debugger_classes ...]
-Romizer processed 151 classes and generated these files:
-  /Users/dsimon/work/Squawk/debugger_classes.sym
-  /Users/dsimon/work/Squawk/debugger_classes.suite
-  /Users/dsimon/work/Squawk/debugger_classes_classes.jar
-  /Users/dsimon/work/Squawk/debugger_classes_rt.jar
-[compiling 'slowvm/src/vm/squawk.c' ...]
-[running squawk.jar...]
-</code></pre></td></tr></table>
-</blockquote>
 
 <h2>Running the debugger</h2>
 
@@ -109,7 +67,8 @@ Romizer processed 151 classes and generated these files:
 <ol>
 <li><a href="#start-sda">Start an application under control of the SDA in the Squawk VM.</a></li>
 <li><a href="#start-sdp">Start the SDP.</a></li>
-<li><a href="#start-jdb">The JPDA debugger client of your choice (i.e. jdb, NetBeans, JBuilder, Eclipse, etc).</a></li>
+<li><a href="#start-jdb">The JPDA debugger client of your choice
+(i.e. NetBeans, JBuilder, Eclipse, jdb, etc).</a></li>
 </ol></p>
 
 <h3><a name="start-sda">Starting an application to be debugged.</a></h3>
@@ -129,12 +88,14 @@ where options include:
                    listen on for a connection from a debugger proxy.
                    (default is serversocket://:2800)
     -log:&lt;level&gt;   sets logging level to 'none, 'info', 'verbose' or 'debug'
-    -logURL:&lt;url&gt;  where messages should be logged (default is stdout),
+    -logURL:&lt;url&gt;  where messages should be logged (default is stdout)
+    -outURL:&lt;url&gt;    where the debugee's output stream should be logged. If no url
+                     is specified, then output is dropped. (default is stdout)
+    -errURL:&lt;url&gt;    where the debugee's err stream should be logged. If no url
+                     is specified, then err is dropped. (default is stderr)
+    -D&lt;name&gt;=&lt;value&gt; set a system property in the application being debugged
     -h             shows this usage message
 </code></pre></td></tr></table>
-
-<p>For the rest of these examples, we will assume that the debugger was built as part of the bootstrap suite.
-If that is not the case, then the <code>-suite:debugger</code> must be passed as the first argument to squawk.</p>
 
 <p>Here's an example of how to start an application <code>com.sun.squawk.debugger.sda.TestApp</code> (which
 happens to be included in the debugger's suite) under the SDA:</p>
@@ -153,18 +114,6 @@ Waiting for connection on serversocket://:2800
 <p>The TestApp program sits in a loop, throwing and catching exceptions, initiating garbage collections
 every now and then. Some JDB commands to try include <code>catch java.lang.Throwable</code>,
 <code>stop at tests.TestApp:66</code> and <code>cont</code>.</p>
-
-<blockquote>
-<p>Here's an example of how to build and start a simple non-graphical sample application, Hanoi. First a
-suite must be created containing the application. Then squawk can be started with the sample running under the SDA:</p>
-
-<table border="1" cellspacing="0" cellpadding="5" width="100%" bgcolor="#CCCCCC"><tr><td><pre><code>
-$ <b>squawk java.lang.SuiteCreator -cp:samples/j2meclasses hanoi bench.hanoi</b>
-Created suite and wrote it into hanoi.suite
-<b>squawk com.sun.squawk.debugger.sda.SDA -suite:file://hanoi.suite bench.hanoi.Main</b>
-***Waiting for proxy on channel serversocket://:2800
-</code></pre></td></tr></table>
-</blockquote>
 
 
 <h3><a name="start-sdp">Starting the SDP.</a></h3>
@@ -189,15 +138,21 @@ where options include:
     -cp:&lt;path&gt;      a list of paths separated by : where the
                     debug proxy can class files
                     (default is '.')
+    -singlesession  allow only one connection from a debugger before exiting
+    -sniffer        act as a JDWP packet sniffer between a JVM and a debugger,
+                    logging packets as specified by -log and -logfile options.
+    -quitOnError:&lt;b&gt;  If false, the proxy will try to ignore certain proxy errors.
+                    (default is true).
     -h              shows this usage message
 </code></pre></td></tr></table>
 
-<p>The proxy needs to find squawk class files for all classes that might be running in the
+<p><p>The proxy needs to find squawk class files for all classes that might be running in the
 application being debugged. This is done by specifying a classpath using the <code>-cp:</code>
-option.
+option. In the example below, replace "samples/j2meclasses" with the
+path to your application's class files.<p>
 
 <table border="1" cellspacing="0" cellpadding="5" width="100%" bgcolor="#CCCCCC"><tr><td><pre><code>
-$ <b>java -jar build.jar sdproxy -log:info -cp:j2me/j2meclasses:debugger/j2meclasses:samples/j2meclasses </b>
+$ <b>java -jar build.jar sdproxy -log:info -cp:cldc/j2meclasses:imp/j2meclasses:debugger/j2meclasses:samples/j2meclasses </b>
 [running sdproxy...]
 Connecting to socket://localhost:2800
 Waiting for debugger on port serversocket://:2900
@@ -209,7 +164,12 @@ Thread[Thread-0,5,main] is waiting for state 1
 
 <h3><a name="start-jdb">Starting a JPDA debugger client</a></h3>
 
-<p>This step is described using <i>jdb</i> as the debugger client. It must be started by specifying
+<h4>Configuring NetBeans as a debug client</h4>
+Select the “Run” menu item and the sub-item “Attach Debugger…” Enter 2900 as the port number
+and 5000ms as the timeout. The connector field should be set to “socket attach”.<p>
+
+<h4>Configuring jdb as a debug client</h4>
+This step is described using <i>jdb</i> as the debugger client. It must be started by specifying
 the socket that the SDP has opened for connections (2900 by default). If the SDP and
 jdb are running on different machines, then you will need to specify the host running the SDP
 instead of "localhost":</p>
