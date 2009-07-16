@@ -72,6 +72,7 @@
 #include <string.h>
 #include <signal.h>
 #include <math.h>
+#include <setjmp.h>
 
 #ifdef _MSC_VER
 #    include <io.h>
