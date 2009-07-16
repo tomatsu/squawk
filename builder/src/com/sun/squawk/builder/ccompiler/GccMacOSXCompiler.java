@@ -41,7 +41,7 @@ public class GccMacOSXCompiler extends GccCompiler {
      * {@inheritDoc}
      */
     public String getLinkSuffix() {
-        return " -framework CoreFoundation -framework JavaVM";
+        return " -framework CoreFoundation -framework JavaVM -dead-strip ";
     }
 
     /**
