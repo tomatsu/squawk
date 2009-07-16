@@ -933,31 +933,6 @@ INLINE_UNALIGNED void setUnalignedLong(Address base, Offset offset, jlong value)
         }
 
         /**
-         * Special for popLong.
-         *
-         */
-#if !SQUAWK_64
-NOINLINE jlong getLongAtWordSpecial_pp(Address p1, Address p2) {
-            if (C_PARMS_LEFT_TO_RIGHT) {
-                return getLongAtWord(p1, 0);
-            } else if (C_PARMS_RIGHT_TO_LEFT) {
-                return getLongAtWord(p2, 0);
-            } else {
-                return getLongAtWord(p1<p2 ? p1 : p2, 0);
-            }
-        }
-NOINLINE jlong getLongAtWordSpecial_mm(Address p1, Address p2) {
-            if (C_PARMS_LEFT_TO_RIGHT) {
-                return getLongAtWord(p2, 0);
-            } else if (C_PARMS_RIGHT_TO_LEFT) {
-                return getLongAtWord(p1, 0);
-            } else {
-                return getLongAtWord(p1<p2 ? p1 : p2, 0);
-            }
-        }
-#endif
-
-        /**
          * Gets a signed 16 bit value from memory.
          *
          * @param base   the base address
@@ -1195,17 +1170,17 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
          * @param   arrayLength the number of elements in the array being allocated or -1 if a non-array object is being allocated
          * @return a pointer to a well-formed object or null if the allocation failed
          */
-/*MAC*/ Address allocate(int $size, Address $klass, int $arrayLength) {
+        Address allocate(int size, Address klass, int arrayLength) {
             Address block = com_sun_squawk_GC_allocTop;
             Offset available = Address_diff(com_sun_squawk_GC_allocEnd, block);
             Address oop;
-            assume($size >= 0);
+            assume(size >= 0);
 		
-            if (unlikely(lt(available, $size))) {
+            if (unlikely(lt(available, size))) {
 
                 if (available < 0) {
                     /* The last allocation overflowed the allocEnd boundary */
-/*traceAllocation(false, $size);*/
+/*traceAllocation(false, size);*/
                     return null;
                 } else {
                     /*
@@ -1215,27 +1190,27 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
                      * the allocation space would never succeed.
                      */
                     available = Address_diff(com_sun_squawk_GC_heapEnd, block);
-                    if (lt(available, $size)) {
-/*traceAllocation(false, $size);*/
+                    if (lt(available, size)) {
+/*traceAllocation(false, size);*/
                         return null;
                     }
                 }
             }
 
-            if ($arrayLength == -1) {
+            if (arrayLength == -1) {
                 oop = Address_add(block, HDR_basicHeaderSize);
-                setObject(oop, HDR_klass, $klass);
+                setObject(oop, HDR_klass, klass);
             } else {
                 oop = Address_add(block, HDR_arrayHeaderSize);
-                setObject(oop, HDR_klass, $klass);
-                if (!setArrayLength(oop, $arrayLength)) {
+                setObject(oop, HDR_klass, klass);
+                if (!setArrayLength(oop, arrayLength)) {
                     return 0;
                 }
             }
-            com_sun_squawk_GC_allocTop = Address_add(block, $size);
+            com_sun_squawk_GC_allocTop = Address_add(block, size);
             zeroWords(oop, com_sun_squawk_GC_allocTop);
             newCount++;
-/*traceAllocation(true, $size);*/
+/*traceAllocation(true, size);*/
             return oop;
         }
 
@@ -1250,7 +1225,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
          */
 /*MAC*/ Address allocateFast(int $size, Address $klass, int $arrayLength) {
             if (
-                com_sun_squawk_GC_excessiveGC == true        ||
+                com_sun_squawk_GC_excessiveGC != false       ||
                 com_sun_squawk_GC_allocationEnabled == false ||
                 (com_sun_squawk_GC_GC_TRACING_SUPPORTED && com_sun_squawk_GC_traceFlags != 0)
                ) {

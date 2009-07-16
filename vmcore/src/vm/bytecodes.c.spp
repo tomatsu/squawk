@@ -361,9 +361,9 @@
 #else
 /*MAC*/ jlong popLong() {
 /*if[REVERSE_PARAMETERS]*/
-            return getLongAtWordSpecial_pp(sp++, sp++);
+            return getLongAtWord(sp = sp + 2, -2);
 /*else[REVERSE_PARAMETERS]*/
-//          return getLongAtWordSpecial_mm(--sp, --sp);
+//          return getLongAtWord(sp = sp - 2, 0);
 /*end[REVERSE_PARAMETERS]*/
         }
 #endif
