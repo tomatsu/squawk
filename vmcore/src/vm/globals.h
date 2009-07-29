@@ -346,7 +346,7 @@ int setStream(int stream) {
             }
 #endif /* FLASH_MEMORY */
             default: {
-                void fatalVMError(char *msg);
+                NORETURN void fatalVMError(char *msg);
                 fatalVMError("Bad INTERNAL_SETSTREAM");
             }
         }

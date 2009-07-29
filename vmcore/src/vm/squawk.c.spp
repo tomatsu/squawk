@@ -187,7 +187,7 @@ const char *format(const char* fmt);
 /*
  * Forward declaration of VM exit routine.
  */
-void stopVM(int);
+NORETURN void stopVM(int);
 
 /*
  * Include all the globals.
