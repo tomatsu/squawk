@@ -174,10 +174,13 @@
          * @return true if bit <code>n</code> was set before this call
          */
 /*MAC*/ boolean testAndSetNthBit(UWord $n) {
-            if (testNthBit($n)) {
+            UWord oldval;
+            assume(isNthBitInRange($n));
+            oldval = getUWord(bitmapBase, getBitmapWordIndex($n));
+            if ((oldval & getBitmapMask($n)) != 0) {
                 return true;
             } else {
-                setNthBit($n);
+                setUWord(bitmapBase, getBitmapWordIndex($n), oldval | getBitmapMask($n));
                 return false;
             }
         }
@@ -353,23 +356,40 @@
          * finished, then the value of the variable will be 0.
          */
 /*MAC*/ Address bitmapIterate() {
+            Address next = com_sun_squawk_Lisp2Bitmap_Iterator_next; // does caching globals make big diff?
+            Address end = com_sun_squawk_Lisp2Bitmap_Iterator_end;
+            UWord word = getUWord(bitmapBase, getBitmapWordIndex(asBitIndex(next)));
+            UWord mask = getBitmapMask(asBitIndex(next));
             while (true) {
-/*fprintf(stderr, format("bitmapIterate - next = %A\n"), com_sun_squawk_Lisp2Bitmap_Iterator_next);*/
-                if (com_sun_squawk_Lisp2Bitmap_Iterator_next >= com_sun_squawk_Lisp2Bitmap_Iterator_end) {
+                if (unlikely(next >= end)) { // end of Bitmap range
                     com_sun_squawk_Lisp2Bitmap_Iterator_next = 0;
                     com_sun_squawk_Lisp2Bitmap_Iterator_inUse = false;
                     return 0;
                 } else {
-                    if (testBitFor(com_sun_squawk_Lisp2Bitmap_Iterator_next)) {
-                        Address value = com_sun_squawk_Lisp2Bitmap_Iterator_next;
-                        com_sun_squawk_Lisp2Bitmap_Iterator_next = Address_add(com_sun_squawk_Lisp2Bitmap_Iterator_next, HDR_BYTES_PER_WORD);
-                        return value;
+                    assume(testBitFor(next) == ((word & mask) != 0));
+
+                    if (unlikely(word & mask)) {    // found bit!
+                        com_sun_squawk_Lisp2Bitmap_Iterator_next = Address_add(next, HDR_BYTES_PER_WORD);
+                        return next;
                     }
-                    com_sun_squawk_Lisp2Bitmap_Iterator_next = Address_add(com_sun_squawk_Lisp2Bitmap_Iterator_next, HDR_BYTES_PER_WORD);
+
+                    next = Address_add(next, HDR_BYTES_PER_WORD);
+                    mask = mask << 1;
+
+                    if (unlikely(mask == 0)) { // get next word
+                        mask = 1;
+                        word = getUWord(bitmapBase, getBitmapWordIndex(asBitIndex(next)));
+                        while (word == 0 && next < end) { // skip empty words
+                            next = Address_add(next, HDR_BYTES_PER_WORD * HDR_BITS_PER_WORD);
+                            word = getUWord(bitmapBase, getBitmapWordIndex(asBitIndex(next)));
+                        }
+                    } else {
+                        // still working on the same word...
+                        assume(getBitmapWordIndex(asBitIndex(next)) == getBitmapWordIndex(asBitIndex(Address_sub(next, HDR_BYTES_PER_WORD))));
+                    }
                 }
             }
         }
-
 
 NOINLINE static boolean collectGarbage(Address this, Address allocTop, boolean forceFullGC);
 NOINLINE static Address copyObjectGraph(Address this, Address object, Address cb, Address allocTop);

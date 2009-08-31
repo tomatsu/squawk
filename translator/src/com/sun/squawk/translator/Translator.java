@@ -172,7 +172,7 @@ public final class Translator implements TranslatorInterface {
     private void setOptions() {
         Arg.setOptions();
         
-        if (/*Arg.get(Arg.DEAD_CLASS_ELIMINATION).getBool() ||*/  Arg.get(Arg.DEAD_METHOD_ELIMINATION).getBool() /* || (Arg.get(Arg.INLINE_METHOD_LIMIT).getInt() > 0)*/) {
+        if (Arg.get(Arg.DEAD_CLASS_ELIMINATION).getBool() ||  Arg.get(Arg.DEAD_METHOD_ELIMINATION).getBool() /* || (Arg.get(Arg.INLINE_METHOD_LIMIT).getInt() > 0)*/) {
             translationStrategy = BY_SUITE;
         } else if (Arg.get(Arg.OPTIMIZE_CONSTANT_OBJECTS).getBool()) {
             translationStrategy = BY_CLASS;
@@ -441,6 +441,11 @@ public final class Translator implements TranslatorInterface {
                 dme.computeMethodsUsed();
             }
             
+            if (Arg.get(Arg.DEAD_CLASS_ELIMINATION).getBool()) {
+                    DeadClassEliminator dce = new DeadClassEliminator(this);
+                    dce.computeClassesUsed();
+            }
+
             if (verbose()) {
                 time = System.currentTimeMillis() - time;
                 Tracer.traceln(time + "ms.]");
@@ -479,7 +484,8 @@ public final class Translator implements TranslatorInterface {
             out.println("    -traceir2             trace optimized IR with Squawk bytcode offsets");
             out.println("    -tracemethods         trace emitted Squawk bytecode methods");
             out.println("    -tracemaps            trace stackmaps read from class files");
-            out.println("    -traceDME             trace trace Dead Method Elimination");
+            out.println("    -traceDME             trace Dead Method Elimination");
+            out.println("    -traceDCE             trace Dead Class Elimination");
             out.println("    -tracecallgraph       print table of methods and callees (only when doing DME)");
             out.println("    -tracefilter:<string> filter trace with simple string filter");
         }
@@ -629,6 +635,20 @@ public final class Translator implements TranslatorInterface {
             classFile = new ClassFile(klass);
             classFiles.put(name, classFile);
         }
+        return classFile;
+    }
+
+    /**
+     * Like
+     * <code>klass</code> must not yet be converted and it must not be a
+     * {@link Klass#isSynthetic() synthetic} class.
+     *
+     * @param   klass  the instance class for which a class file is requested
+     * @return  the class file for <code>klass</code>, or null if that ClassFile has not been translated by this translator.
+     */
+    ClassFile lookupClassFile(Klass klass) {
+        Assert.that(!klass.isSynthetic(), "synthethic class has no classfile");
+        ClassFile classFile = (ClassFile)classFiles.get(klass.getInternalName());
         return classFile;
     }
 

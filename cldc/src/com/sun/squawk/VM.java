@@ -37,6 +37,7 @@ import com.sun.squawk.peripheral.PeripheralRegistry;
 import com.sun.squawk.pragma.GlobalStaticFields;
 import com.sun.squawk.pragma.InterpreterInvokedPragma;
 import com.sun.squawk.pragma.NotInlinedPragma;
+import com.sun.squawk.pragma.AllowInlinedPragma;
 import com.sun.squawk.util.Assert;
 import com.sun.squawk.util.IntHashtable;
 import com.sun.squawk.util.SquawkHashtable;
@@ -1269,7 +1270,7 @@ hbp.dumpState();
      *
      * @return true if running in a hosted environment, ie in a JSE VM
      */
-    public static boolean isHosted() {
+    public static boolean isHosted() throws AllowInlinedPragma {
         return false;
     }
 
@@ -1322,7 +1323,7 @@ hbp.dumpState();
      *
      * @vm2c code( return getObject(_fp, FP_returnFP); )
      */
-    native static Address getPreviousFP(Address fp);
+    native static Address getPreviousFP(Address fp) throws AllowInlinedPragma;
 
     /**
      * Gets the previous instruction pointer from a frame pointer.
@@ -1332,7 +1333,7 @@ hbp.dumpState();
      *
      * @vm2c code( return getObject(_fp, FP_returnIP); )
      */
-    native static Address getPreviousIP(Address fp);
+    native static Address getPreviousIP(Address fp) throws AllowInlinedPragma;
 
     /**
      * Set the previous frame pointer.

@@ -24,6 +24,8 @@
 
 package com.sun.squawk;
 
+import com.sun.squawk.pragma.AllowInlinedPragma;
+
 /**
  * The Modifier class provides
  * constants to decode class and member access modifiers.  The sets of
@@ -483,7 +485,7 @@ public final class Modifier {
      * @return <tt>true</tt> if <code>mod</code> includes the
      * <tt>ARRAY</tt> modifier; <tt>false</tt> otherwise.
      */
-    public static boolean isArray(int mod) {
+    public static boolean isArray(int mod) throws AllowInlinedPragma {
         return (mod & ARRAY) != 0;
     }
 
@@ -496,7 +498,7 @@ public final class Modifier {
      * @return <tt>true</tt> if <code>mod</code> includes the
      * <tt>SQUAWKARRAY</tt> modifier; <tt>false</tt> otherwise.
      */
-    public static boolean isSquawkArray(int mod) {
+    public static boolean isSquawkArray(int mod) throws AllowInlinedPragma {
         return (mod & SQUAWKARRAY) != 0;
     }
 
@@ -509,7 +511,7 @@ public final class Modifier {
      * @return <tt>true</tt> if <code>mod</code> includes the
      * <tt>SQUAWKPRIMITIVE</tt> modifier; <tt>false</tt> otherwise.
      */
-    public static boolean isSquawkPrimitive(int mod) {
+    public static boolean isSquawkPrimitive(int mod) throws AllowInlinedPragma {
         return (mod & SQUAWKPRIMITIVE) != 0;
     }
 

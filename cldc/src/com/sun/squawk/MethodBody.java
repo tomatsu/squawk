@@ -26,6 +26,8 @@ package com.sun.squawk;
 
 import com.sun.squawk.util.*;
 import com.sun.squawk.vm.*;
+import com.sun.squawk.pragma.NotInlinedPragma;
+import com.sun.squawk.pragma.AllowInlinedPragma;
 
 
 /**
@@ -573,7 +575,7 @@ public final class MethodBody {
      * @param oop the pointer to the method
      * @return the number of parameters
      */
-    static int decodeParameterCount(Object oop) {
+    static int decodeParameterCount(Object oop) throws AllowInlinedPragma {
         int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
         if (b0 < 128) {
             return b0 >> 2;
@@ -588,7 +590,7 @@ public final class MethodBody {
      * @param oop the pointer to the method
      * @return the number of locals
      */
-    static int decodeLocalCount(Object oop) {
+    static int decodeLocalCount(Object oop) throws AllowInlinedPragma {
         int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
         if (b0 < 128) {
             int b1 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart-1);
@@ -604,7 +606,7 @@ public final class MethodBody {
      * @param oop the pointer to the method
      * @return the number of stack words
      */
-    static int decodeStackCount(Object oop) {
+    static int decodeStackCount(Object oop) throws AllowInlinedPragma {
         int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
         if (b0 < 128) {
             int b1 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart-1);
@@ -620,7 +622,7 @@ public final class MethodBody {
      * @param oop the pointer to the method
      * @return the number of bytes
      */
-    static int decodeExceptionTableSize(Object oop) {
+    static int decodeExceptionTableSize(Object oop) throws AllowInlinedPragma {
         int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
         if (b0 < 128 || ((b0 & FMT_E) == 0)) {
             return 0;
@@ -687,7 +689,7 @@ public final class MethodBody {
      * @param offset the ordinal offset of the counter (e.g. 1st, 2nd, ...  etc.)
      * @return the value
      */
-    private static int minfoValue(Object oop, int offset) {
+    private static int minfoValue(Object oop, int offset) throws NotInlinedPragma {
         int p = HDR.methodInfoStart - 1;
         int val = -1;
         Assert.that((NativeUnsafe.getUByte(oop, p+1) & FMT_LARGE) != 0);
@@ -706,7 +708,7 @@ public final class MethodBody {
         return val;
     }
     
-    private static int minfoValue1(Object oop) {
+    private static int minfoValue1(Object oop) throws NotInlinedPragma {
         int p = HDR.methodInfoStart - 1;
         int val;
         Assert.that((NativeUnsafe.getUByte(oop, p+1) & FMT_LARGE) != 0);
@@ -720,7 +722,7 @@ public final class MethodBody {
         return val;
     }
     
-    private static int minfoValue2(Object oop) {
+    private static int minfoValue2(Object oop) throws NotInlinedPragma {
         int p = HDR.methodInfoStart - 1;
         int val;
         Assert.that((NativeUnsafe.getUByte(oop, p+1) & FMT_LARGE) != 0);
@@ -737,7 +739,7 @@ public final class MethodBody {
         return val;
     }
     
-    private static int minfoValue3(Object oop) {
+    private static int minfoValue3(Object oop) throws NotInlinedPragma {
         int p = HDR.methodInfoStart - 1;
         int val;
         Assert.that(((NativeUnsafe.getUByte(oop, p+1)) & FMT_LARGE) != 0);
@@ -757,7 +759,7 @@ public final class MethodBody {
         return val;
     }
     
-    private static int minfoValue4(Object oop) {
+    private static int minfoValue4(Object oop) throws NotInlinedPragma  {
         int p = HDR.methodInfoStart - 1;
         int val;
         Assert.that(((NativeUnsafe.getByte(oop, p+1)) & FMT_LARGE) != 0);
@@ -790,8 +792,19 @@ public final class MethodBody {
         int p = HDR.methodInfoStart;
         int b0 = NativeUnsafe.getUByte(oop, p--);
         if (b0 < 128) {
-            p--;
+            return p;
         } else {
+            return getOffsetToLastMinfoByte0(oop, p, b0);
+        }
+    }
+
+        /**
+     * Get the offset to the last byte of the Minfo area.
+     *
+     * @param oop the pointer to the method
+     * @return the length in bytes
+     */
+    private static int getOffsetToLastMinfoByte0(Object oop, int p, int b0) throws NotInlinedPragma {
             int offset = 3;
             if ((b0 & FMT_E) != 0) {
                 offset++;
@@ -808,7 +821,6 @@ public final class MethodBody {
                     p--;
                 }
             }
-        }
         return p + 1;
     }
 
@@ -923,7 +935,7 @@ public final class MethodBody {
      * @param oop the pointer to the method
      * @return the VM address of the header
      */
-    static Address oopToBlock(Address oop) {
+    static Address oopToBlock(Address oop) throws NotInlinedPragma {
         int offset = decodeTypeTableOffset(oop.toObject());
         while ((offset % HDR.BYTES_PER_WORD) != 0) {
             --offset;

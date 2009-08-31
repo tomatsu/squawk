@@ -215,9 +215,10 @@ public class GC implements GlobalStaticFields {
      *         or the collection count threshold has been met
      */
     static boolean isTracing(int option) {
-        if ((GarbageCollector.HEAP_TRACE || GC.GC_TRACING_SUPPORTED) && (traceFlags & option) != 0) {
-            final int basicOptions = (TRACE_BASIC | TRACE_ALLOCATION);
-            if ((option & basicOptions) != 0) {
+        if ((traceFlags & option & TRACE_BASIC) != 0) {
+            return true;
+        } else if ((GarbageCollector.HEAP_TRACE || GC.GC_TRACING_SUPPORTED) && (traceFlags & option) != 0) {
+            if ((traceFlags & option & TRACE_ALLOCATION) != 0) {
                 return true;
             } else {
                 return (collector == null || getTotalCount() >= traceThreshold);
@@ -987,6 +988,11 @@ public class GC implements GlobalStaticFields {
         cb.memory = (byte[])copiedObjects.toObject();
     }
 
+    private static void encodeLengthWordError() throws NotInlinedPragma {
+			VM.println("encodeLengthWord");
+            throw VM.getOutOfMemoryError();
+    }
+
     /**
      * Encode an array length word.
      *
@@ -998,7 +1004,7 @@ public class GC implements GlobalStaticFields {
         // an out of memory error is the cleanest way to handle this situtation
         // in the rare case that there was enough memory to allocate the array
         if (length > 0x3FFFFFF) {
-            throw VM.getOutOfMemoryError();
+            encodeLengthWordError();
         }
         return UWord.fromPrimitive((length << HDR.headerTagBits) | HDR.arrayHeaderTag);
     }
@@ -1867,10 +1873,12 @@ public class GC implements GlobalStaticFields {
      * @return the address of the block of memory allocated for <code>object</code>
      */
     static Address oopToBlock(Klass klass, Address object) {
-        if (Klass.getSystemID(klass) == CID.BYTECODE_ARRAY) {
-            return MethodBody.oopToBlock(object);   // Method
-        } else if (Klass.isSquawkArray(klass)) {
-            return object.sub(HDR.arrayHeaderSize); // Array
+        if (Klass.isSquawkArray(klass)) {
+            if (Klass.getSystemID(klass) == CID.BYTECODE_ARRAY) {
+                return MethodBody.oopToBlock(object);   // Method
+            } else {
+                return object.sub(HDR.arrayHeaderSize); // Array
+            }
         } else {
             return object.sub(HDR.basicHeaderSize); // Instance
         }
@@ -2102,6 +2110,7 @@ public class GC implements GlobalStaticFields {
      */
     static int getObjectBytes(Object object) {
         Klass klass = GC.getKlass(object);
+        Assert.that(Klass.getSystemID(klass) != CID.BYTECODE_ARRAY); //  Doesn't calculate headers sizes for methods correctly
         int blkSize = GC.getBodySize(klass, Address.fromObject(object));
         return blkSize + (klass.isArray() ? HDR.arrayHeaderSize : HDR.basicHeaderSize);
     }
@@ -2113,6 +2122,7 @@ public class GC implements GlobalStaticFields {
      * @return the size in bytes
      */
     static int getObjectBytes(Klass klass) {
+        Assert.that(Klass.getSystemID(klass) != CID.BYTECODE_ARRAY); //  Doesn't calculate headers sizes for methods correctly
         int size = klass.getInstanceSize() << HDR.LOG2_BYTES_PER_WORD;
         return size += HDR.basicHeaderSize;
     }

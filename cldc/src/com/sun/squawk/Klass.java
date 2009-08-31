@@ -1010,7 +1010,7 @@ public class Klass {
      * Static version of {@link #getSystemID()} so that garbage collector can
      * invoke this method on a possibly forwarded Klass object.
      */
-    static int getSystemID(Klass klass) {
+    static int getSystemID(Klass klass) throws AllowInlinedPragma {
         return klass.id;
     }
 

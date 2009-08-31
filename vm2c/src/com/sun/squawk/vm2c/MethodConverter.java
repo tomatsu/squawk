@@ -242,6 +242,10 @@ public class MethodConverter extends Tree.Visitor {
             (method.enclClass().flags() & Flags.FINAL) == 0;
     }
 
+    private final static int NEVER_INLINE = -1;
+    private final static int MAY_INLINE = 0;
+    private final static int MUST_INLINE = 1;
+
     public void visitMethodDef(Tree.MethodDef tree) {
 
         Map<String, String> annotations = new AnnotationParser().parse(method);
@@ -252,7 +256,7 @@ public class MethodConverter extends Tree.Visitor {
         List<ProcessedMethod> impls = conv.getImplementersOf(method);
 
 		List<Tree> thrown = tree.thrown;
-		boolean shouldInline = false;
+		int shouldInline = MAY_INLINE;
 
 		if (thrown != null) {
 		    Iterator<Tree> iter = thrown.iterator();
@@ -262,7 +266,11 @@ public class MethodConverter extends Tree.Visitor {
 				if (name.equals("ForceInlinedPragma") ||
                     name.equals("AllowInlinedPragma") ||
 					name.equals("NativePragma")) {
-					shouldInline = true;
+					shouldInline = MUST_INLINE;
+					// System.out.println("Auto inlining " + method);
+					break;
+				} else if (name.equals("NotInlinedPragma")) {
+					shouldInline = NEVER_INLINE;
 					// System.out.println("Auto inlining " + method);
 					break;
 				}
@@ -293,7 +301,9 @@ public class MethodConverter extends Tree.Visitor {
             ccode.print("#define ");
             ccode.print(" " + conv.asString(method));
         } else {
-			if (proxy != null || shouldInline) {
+            if (shouldInline == NEVER_INLINE) {
+				ccode.print("NOINLINE ");
+            } else if (proxy != null || shouldInline == MUST_INLINE) {
 				ccode.print("INLINE ");
 			} else {
 				ccode.print("static ");

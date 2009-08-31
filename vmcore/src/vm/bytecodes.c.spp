@@ -774,6 +774,7 @@
 static int             MethodBody_minfoValue1_L(Address);
 static int             MethodBody_minfoValue2_L(Address);
 static int             MethodBody_minfoValue3_L(Address);
+static int             MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int p, int b0);
 /*else[VM2C]*/
 //static int NativeUnsafe_getByte_LI(Address base, int offset) {
 //    return getByte(base, offset);
@@ -834,6 +835,27 @@ static int             MethodBody_minfoValue3_L(Address);
 //    }
 //    
 //    return val;
+//}
+//static int MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int p, int b0) {
+//    int offset;
+//    offset = 3;
+//    if ((b0 & 1) != 0) {
+//        offset++;
+//    }
+//    if ((b0 & 2) != 0) {
+//        offset++;
+//    }
+//    if ((b0 & 4) != 0) {
+//        offset++;
+//    }
+//    while (offset-- > 0) {
+//        int val;
+//        val = NativeUnsafe_getUByte_LI(oop, p--);
+//        if (val > 127) {
+//            p--;
+//        }
+//    }
+//    return p + 1;
 //}
 /*end[VM2C]*/
 
@@ -946,26 +968,10 @@ static int             MethodBody_minfoValue3_L(Address);
             int p = HDR_methodInfoStart;
             int b0 = getUByte($mp, p--);
             if (b0 < 128) {
-                p--;
+                return p;
             } else {
-                int offset = 3;
-                if ((b0 & com_sun_squawk_MethodBody_FMT_E) != 0) {
-                    offset++;
-                }
-                if ((b0 & com_sun_squawk_MethodBody_FMT_R) != 0) {
-                    offset++;
-                }
-                if ((b0 & com_sun_squawk_MethodBody_FMT_T) != 0) {
-                    offset++;
-                }
-                while(offset-- > 0) {
-                    int val = getUByte($mp, p--);
-                    if (val > 127) {
-                        p--;
-                    }
-                }
+                return MethodBody_getOffsetToLastMinfoByte0_LII($mp, p, b0);
             }
-            return p + 1;
         }
 
 #ifdef _MSC_VER

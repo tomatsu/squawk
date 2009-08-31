@@ -391,7 +391,7 @@ public class Converter {
 
         // Int and long division
         out.println();
-        out.println("int div_i(int lhs, int rhs) {");
+        out.println("INLINE int div_i(int lhs, int rhs) {");
         out.println("    if (rhs == 0) {");
         out.println("        fatalVMError(\"divide by zero\");");
         out.println("    }");
@@ -402,7 +402,7 @@ public class Converter {
         out.println("}");
 
         out.println();
-        out.println("long div_l(jlong lhs, jlong rhs) {");
+        out.println("INLINE long div_l(jlong lhs, jlong rhs) {");
         out.println("    if (rhs == 0) {");
         out.println("        fatalVMError(\"divide by zero\");");
         out.println("    }");
@@ -415,7 +415,7 @@ public class Converter {
         out.println("}");
 
         out.println();
-        out.println("int rem_i(int lhs, int rhs) {");
+        out.println("INLINE int rem_i(int lhs, int rhs) {");
         out.println("    if (rhs == 0) {");
         out.println("        fatalVMError(\"divide by zero\");");
         out.println("    }");
@@ -426,7 +426,7 @@ public class Converter {
         out.println("}");
 
         out.println();
-        out.println("long rem_l(jlong lhs, jlong rhs) {");
+        out.println("INLINE long rem_l(jlong lhs, jlong rhs) {");
         out.println("    if (rhs == 0) {");
         out.println("        fatalVMError(\"divide by zero\");");
         out.println("    }");
@@ -440,7 +440,7 @@ public class Converter {
 
         // Array length
         out.println();
-        out.println("UWord Array_length(Address oop) {");
+        out.println("INLINE UWord Array_length(Address oop) {");
         out.println("    return (getUWord(oop, HDR_length) >> 2);");
         out.println("}");
 
@@ -450,7 +450,7 @@ public class Converter {
             out.println("#define arrayBoundsCheck(oop, index)");
         } else {
             out.println();
-            out.println("Address nullPointerCheck(Address oop) {");
+            out.println("INLINE Address nullPointerCheck(Address oop) {");
             out.println("    if (oop == null) {");
             out.println("        fatalVMError(\"null pointer exception\");");
             out.println("    }");
@@ -459,7 +459,7 @@ public class Converter {
 
             // Array index out of bounds check (includes null pointer check)
             out.println();
-            out.println("void arrayBoundsCheck(Address oop, int index) {");
+            out.println("INLINE void arrayBoundsCheck(Address oop, int index) {");
             out.println("    UWord length;");
             out.println("    nullPointerCheck(oop);");
             out.println("    length = Array_length(oop);");
