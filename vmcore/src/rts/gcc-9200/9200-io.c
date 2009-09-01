@@ -26,6 +26,7 @@
 #include "i2c.h"
 #include "flash.h"
 #include "avr.h"
+#include "system.h"
 #include "9200-io.h"
 
 // Forward declarations
@@ -468,6 +469,12 @@ int avr_low_result = 0;
             // rx data in receive
             spi_sendAndReceiveWithDeviceSelect(i1, i2, i3, i4, i5, i6, send, receive);
             break;
+        case ChannelConstants_SPI_PULSE_WITH_DEVICE_SELECT:
+            // CE pin in i1
+            // device address in i2
+            // pulse duration in i3
+            spi_pulseWithDeviceSelect(i1, i2, i3);
+            break;
         case ChannelConstants_SPI_GET_MAX_TRANSFER_SIZE:
             res = SPI_DMA_BUFFER_SIZE;
             break;
@@ -509,7 +516,11 @@ int avr_low_result = 0;
             res = i2c_probe(i1, i2);
             break;
 
-    	case ChannelConstants_FLASH_ERASE:
+        case ChannelConstants_GET_HARDWARE_REVISION:
+        	res = get_hardware_revision();
+    		break;
+
+        case ChannelConstants_FLASH_ERASE:
             data_cache_disable();
             res = flash_erase_sector((Flash_ptr)i2);
             data_cache_enable();
