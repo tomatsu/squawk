@@ -1204,7 +1204,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
      * @return the value of the oop after visit is complete
      */
     private void visitOops(int visitor, Address base, int len) {
-
+        Address pointerAddress;
         Address object;
 
         switch (visitor) {
@@ -1254,7 +1254,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
             case WRITE_BARRIER_VERIFY_VISITOR: {
                 for (int i = 0; i < len; i++) {
                     object = NativeUnsafe.getAddress(base, i);
-                    Address pointerAddress = base.add(i * HDR.BYTES_PER_WORD);
+                    pointerAddress = base.add(i * HDR.BYTES_PER_WORD);
 
                     if (GC.GC_TRACING_SUPPORTED && tracing()) {
                         VM.print("WriteBarrierVerificationVisitor::visitOops - ");
