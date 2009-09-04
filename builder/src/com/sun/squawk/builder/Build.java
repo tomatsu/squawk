@@ -631,7 +631,7 @@ public class Build {
                         Command cmd = iterator.next();
                         cmd.clean();
                     }
-                    clearFilesMarkedAsSvnIgnore(new File("."), "build.override", ".hg");
+                    clearFilesMarkedAsSvnIgnore(new File("."));
                     Build.clear(new File("builder", "classes"), true);
                 } else {
                     for (int i = 0; i != args.length; ++i) {
@@ -1310,25 +1310,26 @@ public class Build {
      * @throws BuildException if the <code>dir</code> is a file or clearing did not succeed
      */
     public static void clearFilesMarkedAsSvnIgnore(final File dir, String... except) throws BuildException {
-    	if (!dir.exists()) {
-    		return;
-    	}
+        if (!dir.exists()) {
+            return;
+        }
         if (!dir.isDirectory()) {
             throw new BuildException("cannot clear non-directory " + dir.getPath());
         }
         List<File> ignoreEntries = SvnUtil.getIgnoreEntries(new File("."));
-        for (File file: ignoreEntries) {
-        	String name = file.getName();
-        	boolean delete = true;
-	        for (String doNotDeleteName: except) {
-	        	if (name.equals(doNotDeleteName)) {
-	        		delete = false;
-	        		break;
-	        	}
-	        }
-	        if (delete) {
-	        	delete(file);
-	        }
+        ignoreEntries.remove(new File("./.hg"));
+        for (File file : ignoreEntries) {
+            String name = file.getName();
+            boolean delete = true;
+            for (String doNotDeleteName : except) {
+                if (name.equals(doNotDeleteName)) {
+                    delete = false;
+                    break;
+                }
+            }
+            if (delete) {
+                delete(file);
+            }
         }
     }
 
