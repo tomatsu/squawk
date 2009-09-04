@@ -631,7 +631,7 @@ public class Build {
                         Command cmd = iterator.next();
                         cmd.clean();
                     }
-                    clearFilesMarkedAsSvnIgnore(new File("."), "build.override");
+                    clearFilesMarkedAsSvnIgnore(new File("."), "build.override", ".hg");
                     Build.clear(new File("builder", "classes"), true);
                 } else {
                     for (int i = 0; i != args.length; ++i) {
