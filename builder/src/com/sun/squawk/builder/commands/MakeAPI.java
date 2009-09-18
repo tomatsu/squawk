@@ -1004,6 +1004,10 @@ public class MakeAPI extends Command {
     }
 
     public void run(String[] args) throws BuildException {
+        if (env.isJava5Supported()) {
+            // TODO Fix MAKEAPI for Java5
+            return;
+        }
         parseArgs(args);
         run();
     }
