@@ -29,6 +29,7 @@ import java.net.*;
 import javax.microedition.io.*;
 import com.sun.squawk.io.j2se.*;
 import com.sun.squawk.io.*;
+import com.sun.squawk.util.UnexpectedException;
 
 /**
  * GenericStreamConnection to the J2SE socket API.
@@ -109,13 +110,12 @@ public class Protocol extends ConnectionBase implements StreamConnection {
      * The name string for this protocol should be:
      * "<name or IP number>:<port number>
      */
-    public Connection open(String protocol, String name, int mode, boolean timeouts) throws IOException {
-
-        if(name.charAt(0) != '/' || name.charAt(1) != '/') {
-            throw new IllegalArgumentException("Protocol must start with \"//\" "+name);
+    public Connection open(String protocol, String originalName, int mode, boolean timeouts) throws IOException {
+        if(originalName.charAt(0) != '/' || originalName.charAt(1) != '/') {
+            throw new IllegalArgumentException("Protocol must start with \"//\" "+originalName);
         }
 
-        name = name.substring(2);
+        String name = originalName.substring(2);
 
         try {
             /* Host name or IP number */
@@ -141,7 +141,7 @@ public class Protocol extends ConnectionBase implements StreamConnection {
                  */
                 com.sun.squawk.io.j2se.serversocket.Protocol con =
                     new com.sun.squawk.io.j2se.serversocket.Protocol();
-                con.open("socket://", name, mode, timeouts);
+                con.open("socket", originalName, mode, timeouts);
                 return con;
             }
 

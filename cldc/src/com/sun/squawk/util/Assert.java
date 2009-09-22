@@ -96,18 +96,19 @@ public class Assert {
      *
      * @param   cond  condition to be tested
      * @param   msg   message that explains the failure
-     *
-     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static void that(boolean cond, String msg) {
         if (ASSERTS_ENABLED && !cond) {
             throwAssertFailedException("Assertion failed: ", msg);
         }
     }
 
-    /**
-     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
-     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c (macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: \"%s\", at %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static void that(boolean cond, String msg, String filename, int lineno) {
         if (ASSERTS_ENABLED && !cond) {
             throwAssertFailedException("Assertion failed: ", msg, filename, lineno);
@@ -119,18 +120,19 @@ public class Assert {
      * a RuntimeException is thrown.
      *
      * @param   cond  condition to be tested
-     *
-     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #cond, __FILE__, __LINE__); fatalVMError(""); } )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", #cond, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static void that(boolean cond) {
         if (ASSERTS_ENABLED && !cond) {
             throwAssertFailedException("Assertion failed");
         }
     }
 
-    /**
-     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #cond, __FILE__, __LINE__); fatalVMError(""); } )
-     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c (macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: \"%s\", at %s:%d\n\", #cond, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static void that(boolean cond, String filename, int lineno) {
         if (ASSERTS_ENABLED && !cond) {
             throwAssertFailedException("Assertion failed ", "", filename, lineno);
@@ -145,18 +147,19 @@ public class Assert {
      *         as <code>throw Assert.shouldNotReachHere()</code> will
      *         be legal and thus avoid the need to return meaningless
      *         values from functions that have failed.
-     *
-     * @vm2c macro( { fprintf(stderr, "shouldNotReachHere: %s -- %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(macro="{ fprintf(stderr, \"shouldNotReachHere: %s -- %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHere(String msg) throws NotInlinedPragma {
         throwAssertFailedException("Assertion failed: should not reach here: ", msg);
         // NO-OP
         return null;
     }
 
-    /**
-     * @vm2c macro( { fprintf(stderr, "shouldNotReachHere: %s -- %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
-     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c (macro="{ fprintf(stderr, \"shouldNotReachHere: %s -- %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHere(String msg, String filename, int lineno) throws NotInlinedPragma {
         throwAssertFailedException("Assertion failed: should not reach here: ", msg, filename, lineno);
         // NO-OP
@@ -170,18 +173,19 @@ public class Assert {
      *         as <code>throw Assert.shouldNotReachHere()</code> will
      *         be legal and thus avoid the need to return meaningless
      *         values from functions that have failed.
-     *
-     * @vm2c macro( { fprintf(stderr, "shouldNotReachHere -- %s:%d\n", __FILE__, __LINE__); fatalVMError(""); } )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(macro="{ fprintf(stderr, \"shouldNotReachHere -- %s:%d\n\", __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHere() {
         throwAssertFailedException("Assertion failed: ", "should not reach here");
         // NO-OP
         return null;
     }
 
-    /**
-     * @vm2c macro( { fprintf(stderr, "shouldNotReachHere -- %s:%d\n", __FILE__, __LINE__); fatalVMError(""); } )
-     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c (macro="{ fprintf(stderr, \"shouldNotReachHere -- %s:%d\n\", __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHere(String filename, int lineno) {
         throwAssertFailedException("Assertion failed: ", "should not reach here", filename, lineno);
         // NO-OP
@@ -199,9 +203,10 @@ public class Assert {
      *
      * @param   cond  condition to be tested
      * @param   msg   message that explains the failure
-     *
-     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static void thatFatal(boolean cond, String msg) {
         if (!cond) {
             VM.print("Assertion failed: ");
@@ -218,9 +223,9 @@ public class Assert {
         VM.print("): ");
     }
 
-    /**
-     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
-     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c (macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static void thatFatal(boolean cond, String msg, String filename, int lineno) {
         if (!cond) {
             VM.print("Assertion failed: ");
@@ -235,9 +240,10 @@ public class Assert {
      * the VM is halted.
      *
      * @param   cond  condition to be tested
-     *
-     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #cond, __FILE__, __LINE__); fatalVMError(""); } )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", #cond, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static void thatFatal(boolean cond) {
         if (!cond) {
             VM.println("Assertion failed");
@@ -245,9 +251,9 @@ public class Assert {
         }
     }
 
-    /**
-     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #cond, __FILE__, __LINE__); fatalVMError(""); } )
-     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c (macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", #cond, __FILE__, __LINE__); fatalVMError(\"\"); })")
+/*end[JAVA5SYNTAX]*/
     public static void thatFatal(boolean cond, String filename, int lineno) {
         if (!cond) {
             VM.println("Assertion failed");
@@ -264,9 +270,10 @@ public class Assert {
      *         as <code>throw Assert.shouldNotReachHere()</code> will
      *         be legal and thus avoid the need to return meaningless
      *         values from functions that have failed.
-     *
-     * @vm2c macro( { fprintf(stderr, "shouldNotReachHere: %s -- %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(macro="{ fprintf(stderr, \"shouldNotReachHere: %s -- %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHereFatal(String msg) {
         VM.print("Assertion failed: ");
         VM.print("should not reach here: ");
@@ -275,9 +282,9 @@ public class Assert {
         return null;
     }
 
-    /**
-     * @vm2c macro( { fprintf(stderr, "shouldNotReachHere: %s -- %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
-     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c (macro="{ fprintf(stderr, \"shouldNotReachHere: %s -- %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHereFatal(String msg, String filename, int lineno) {
         VM.print("Assertion failed: ");
         VM.print("should not reach here: ");
@@ -294,9 +301,10 @@ public class Assert {
      *         as <code>throw Assert.shouldNotReachHere()</code> will
      *         be legal and thus avoid the need to return meaningless
      *         values from functions that have failed.
-     *
-     * @vm2c macro( { fprintf(stderr, "shouldNotReachHere -- %s:%d\n", __FILE__, __LINE__); fatalVMError(""); } )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(macro="{ fprintf(stderr, \"shouldNotReachHere -- %s:%d\n\", __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHereFatal() {
         VM.print("Assertion failed: ");
         VM.println("should not reach here: ");
@@ -304,9 +312,9 @@ public class Assert {
         return null;
     }
 
-    /**
-     * @vm2c macro( { fprintf(stderr, "shouldNotReachHere -- %s:%d\n", __FILE__, __LINE__); fatalVMError(""); } )
-     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c (macro="{ fprintf(stderr, \"shouldNotReachHere -- %s:%d\n\", __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHereFatal(String filename, int lineno) {
         VM.print("Assertion failed: ");
         VM.print("should not reach here: ");
@@ -328,9 +336,10 @@ public class Assert {
      *
      * @param   cond  condition to be tested
      * @param   msg   message that explains the failure
-     *
-     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static void always(boolean cond, String msg) {
         if (!cond) {
             if (ASSERT_ALWAYS_IS_FATAL || VMThread.currentThread().isServiceThread()) {
@@ -343,9 +352,9 @@ public class Assert {
         }
     }
 
-    /**
-     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", msg, __FILE__, __LINE__); fatalVMError(""); } )
-     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c (macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static void always(boolean cond, String msg, String filename, int lineno) {
         if (!cond) {
             if (ASSERT_ALWAYS_IS_FATAL || VMThread.currentThread().isServiceThread()) {
@@ -367,9 +376,10 @@ public class Assert {
      * such should only be placed in frequent execution paths absolutely necessary.
      *
      * @param   cond  condition to be tested
-     *
-     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #cond, __FILE__, __LINE__); fatalVMError(""); } )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", #cond, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static void always(boolean cond) {
         if (!cond) {
             if (ASSERT_ALWAYS_IS_FATAL || VMThread.currentThread().isServiceThread()) {
@@ -381,9 +391,9 @@ public class Assert {
         }
     }
 
-   /**
-     * @vm2c macro( if (!(cond)) { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #cond, __FILE__, __LINE__); fatalVMError(""); } )
-     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c (macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", #cond, __FILE__, __LINE__); fatalVMError(\"\"); }")
+/*end[JAVA5SYNTAX]*/
     public static void always(boolean cond, String filename, int lineno) {
         if (!cond) {
             if (ASSERT_ALWAYS_IS_FATAL || VMThread.currentThread().isServiceThread()) {
@@ -396,4 +406,3 @@ public class Assert {
         }
     }
 }
-

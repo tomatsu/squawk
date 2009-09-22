@@ -366,7 +366,7 @@ public class ChannelIO implements java.io.Serializable {
         } catch (Throwable ex) {
 //System.out.println("Exception -\n"+ex);
 //ex.printStackTrace();
-            status = raiseException(ex.getClass().getName());
+            status = raiseException(ex.getLocalizedMessage());
         }
         theResult = channel.getResult();
 

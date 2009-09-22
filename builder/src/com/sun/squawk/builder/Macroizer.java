@@ -131,25 +131,25 @@ public class Macroizer {
                     macro.parseStatements(st);
 
                     if (macro.nestingLevel == 0) {
-                        Enumeration e = macro.lines.elements();
-                        String macroDecl = (String)e.nextElement();
+                        Iterator<String> e = macro.lines.listIterator();
+                        String macroDecl = e.next();
                         // Emit inlined function or macro definition
                         if (macro.inline()) {
                             line = macro.functionDeclLine;
                             line = "INLINE "+line.replace('$', ' ');
                         } else {
                             line = "#define " + macroDecl;
-                            if (e.hasMoreElements()) {
+                            if (e.hasNext()) {
                                 line += " \\";
                             }
                         }
                         writeLine(out, line);
 
                         // Emit the rest of the lines
-                        while (e.hasMoreElements()) {
-                            line = (String)e.nextElement();
+                        while (e.hasNext()) {
+                            line = e.next();
 
-                            if (!macro.inline() && e.hasMoreElements()) {
+                            if (!macro.inline() && e.hasNext()) {
                                 // Macro lines cannot use C++ style comments
                                 if (line.indexOf("//") != -1) {
                                     throw new IOException("Cannot use C++ style comments inside a macro");
@@ -270,7 +270,7 @@ class MacroDefinition {
     /** */
 //        String macroDeclLine;
     /** The lines of the macro with the parameter substitution. */
-    Vector lines;
+    ArrayList<String> lines;
     /** The block of inner locals declaration and initialisations. */
     String innerLocals;
     /** A flag determining whether or not the macro actual needs to
@@ -281,11 +281,11 @@ class MacroDefinition {
     /** A flag determining if the macro return type is void. */
     boolean isVoid;
     /** A remembered set of the parameters that have been used. */
-    Vector usedParms;
+    List<String> usedParms;
     /** A map from parameter names (without the leading '$') to the
         name of the inner scope local variable used to guarantee
         the idempotent semantics of the actual parameter. */
-    Hashtable locals;
+    Hashtable<String, String> locals;
     int statementCount;
 
     StringBuffer currentLine;
@@ -316,18 +316,18 @@ class MacroDefinition {
         currentLine = new StringBuffer(100);
 
         // Parse the access modifiers, return type and name of the function
-        Vector tokens = new Vector();
+        List<String> tokens = new ArrayList<String>();
         int token;
         while ((token = st.nextToken()) != '(') {
-            if (token == st.TT_WORD) {
-                tokens.addElement(st.getSpaces()+st.sval);
+            if (token == SpaceStreamTokenizer.TT_WORD) {
+                tokens.add(st.getSpaces()+st.sval);
             }
         }
 
         // Build the first line of the macro definition
-        for (Enumeration e = tokens.elements(); e.hasMoreElements();) {
-            String t = (String)e.nextElement();
-            if (e.hasMoreElements()) {
+        for (Iterator<String> e = tokens.listIterator(); e.hasNext();) {
+            String t = e.next();
+            if (e.hasNext()) {
                 if (t.endsWith("void")) {
                     isVoid = true;
                 }
@@ -337,9 +337,9 @@ class MacroDefinition {
             }
         }
 
-        locals = new Hashtable();
+        locals = new Hashtable<String, String>();
         if (!isVoid) {
-            usedParms = new Vector();
+            usedParms = new ArrayList<String>();
         }
 
         // Parse the function parameters
@@ -348,7 +348,7 @@ class MacroDefinition {
         StringBuffer localsDecl = (isVoid ? new StringBuffer() : null);
         do {
             token = st.nextToken();
-            if (token == st.TT_WORD) {
+            if (token == SpaceStreamTokenizer.TT_WORD) {
                 parm = st.sval;
                 if (isVoid) {
                     st.appendSpaces(localsDecl);
@@ -368,7 +368,7 @@ class MacroDefinition {
                     dims++;
                 }
             } else {
-                if (token == st.TT_EOF || token == st.TT_EOL) {
+                if (token == SpaceStreamTokenizer.TT_EOF || token == SpaceStreamTokenizer.TT_EOL) {
                     throw new IOException("Macro declaration (up to '{') must be on one line");
                 } else {
                     throw new IOException("Unexpected token while parsing macro declaration: "+st.sval);
@@ -398,7 +398,7 @@ class MacroDefinition {
      */
     void parseStatements(SpaceStreamTokenizer st) throws IOException {
         int token = -1;
-        while ((token = st.nextToken()) != st.TT_EOF) {
+        while ((token = st.nextToken()) != SpaceStreamTokenizer.TT_EOF) {
             switch (token) {
                 case SpaceStreamTokenizer.TT_WORD: {
                     st.appendSpaces(currentLine);
@@ -466,9 +466,9 @@ class MacroDefinition {
         }
 
         if (lines == null) {
-            lines = new Vector();
+            lines = new ArrayList<String>();
         }
-        lines.addElement(currentLine.toString());
+        lines.add(currentLine.toString());
 
         if (nestingLevel == 0) {
             currentLine = null;
@@ -546,7 +546,7 @@ class MacroDefinition {
         // Transform return statements
         if (!inline) {
             for (int i = 0; i != lines.size(); i++) {
-                String line = (String)lines.elementAt(i);
+                String line = lines.get(i);
                 int retIndex = line.indexOf("return");
                 if (retIndex != -1) {
                     if (!isVoid) {
@@ -563,7 +563,7 @@ class MacroDefinition {
                                 replace('}', ')').
                                 replace(';', ' ');
                 }
-                lines.setElementAt(line, i);
+                lines.set(i, line);
             }
         }
     }

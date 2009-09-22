@@ -50,9 +50,18 @@ import com.sun.squawk.util.*;
  * @version 1.106, 12/04/99 (CLDC 1.0, Spring 2000)
  * @since   JDK1.0, CLDC 1.0
  */
-public final class Class {
+/*if[JAVA5SYNTAX]*/
+@Java5Marker("Added <T>")
+public final class Class<T> {
+/*else[JAVA5SYNTAX]*/
+//public final class Class {
+/*end[JAVA5SYNTAX]*/
 
-    private Klass klass;
+/*if[JAVA5SYNTAX]*/
+    private Klass<T> klass;
+/*else[JAVA5SYNTAX]*/
+//    private Klass klass;
+/*end[JAVA5SYNTAX]*/
 
     private Class() {}
 
@@ -110,7 +119,13 @@ public final class Class {
      *               instantiation fails for some other reason.
      * @since     JDK1.0
      */
-    public Object newInstance() throws InstantiationException, IllegalAccessException {
+    public 
+/*if[JAVA5SYNTAX]*/
+    T
+/*else[JAVA5SYNTAX]*/
+//    Object
+/*end[JAVA5SYNTAX]*/
+    newInstance() throws InstantiationException, IllegalAccessException {
         /*
          * Check for a sensible object type.
          */
@@ -120,7 +135,12 @@ public final class Class {
 
         ExecutionPoint[] trace = VM.reifyCurrentStack(2);
         Assert.always(trace.length == 2);
-        Klass callersClass = trace[1].getKlass();
+/*if[JAVA5SYNTAX]*/
+        Klass<?> callersClass;
+/*else[JAVA5SYNTAX]*/
+//      Klass callersClass;
+/*end[JAVA5SYNTAX]*/
+        callersClass= trace[1].getKlass();
 
         /*
          * Check that the calling method can access this klass and the constructor
@@ -132,7 +152,7 @@ public final class Class {
             * can only be accessed from within the constructor of a direct
             * subclass of a class. They cannot be accessed via reflection.
             */
-            !klass.isAccessibleFrom(klass, klass.getDefaultConstructorModifiers() & ~Modifier.PROTECTED, callersClass)
+            !Klass.isAccessibleFrom(klass, klass.getDefaultConstructorModifiers() & ~Modifier.PROTECTED, callersClass)
         ) {
             throw new IllegalAccessException();
         }
@@ -200,7 +220,11 @@ public final class Class {
      *            null.
      * @since JDK1.1
      */
-    public boolean isAssignableFrom(Class cls) {
+/*if[JAVA5SYNTAX]*/
+    public boolean isAssignableFrom(Class<?> cls) {
+/*else[JAVA5SYNTAX]*/
+//    public boolean isAssignableFrom(Class cls) {
+/*end[JAVA5SYNTAX]*/
         if (cls == null) {
             throw new NullPointerException();
         }
@@ -287,6 +311,55 @@ public final class Class {
     public java.io.InputStream getResourceAsStream(String name) {
         return klass.getResourceAsStream(name);
     }
+    
+    /**
+     * Returns the <code>Class</code> representing the component type of an
+     * array.  If this class does not represent an array class this method
+     * returns null.
+     *
+     * @return the <code>Class</code> representing the component type of this
+     * class if this class is an array
+     * @see     java.lang.reflect.Array
+     * @since JDK1.1
+     */
+/*if[JAVA5SYNTAX]*/
+    public Class<?> getComponentType() {
+/*else[JAVA5SYNTAX]*/
+//        public Class getComponentType() {
+/*end[JAVA5SYNTAX]*/
+        return Klass.asClass(klass.getComponentType());
+    }
+
+    /**
+     * Returns the assertion status that would be assigned to this
+     * class if it were to be initialized at the time this method is invoked.
+     * If this class has had its assertion status set, the most recent
+     * setting will be returned; otherwise, if any package default assertion
+     * status pertains to this class, the most recent setting for the most
+     * specific pertinent package default assertion status is returned;
+     * otherwise, if this class is not a system class (i.e., it has a
+     * class loader) its class loader's default assertion status is returned;
+     * otherwise, the system class default assertion status is returned.
+     *
+     * Few programmers will have any need for this method; it is provided
+     * for the benefit of the JRE itself.  (It allows a class to determine at
+     * the time that it is initialized whether assertions should be enabled.)
+     * Note that this method is not guaranteed to return the actual
+     * assertion status that was (or will be) associated with this class when
+     * it was (or will be) initialized.
+     *
+     * @return the desired assertion status of the specified class.
+     * @see    setClassAssertionStatus
+     * @see    setPackageAssertionStatus
+     * @see    setDefaultAssertionStatus
+     */
+/*if[JAVA5SYNTAX]*/
+    @Java5Marker
+/*end[JAVA5SYNTAX]*/
+    public boolean desiredAssertionStatus() {
+        return false;
+    }
+    
 }
 
 

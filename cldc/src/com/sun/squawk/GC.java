@@ -631,9 +631,10 @@ public class GC implements GlobalStaticFields {
 
     /**
      * Determines if a given object is in RAM.
-     *
-     * @vm2c code( fatalVMError("hosted-only method"); return false; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="fatalVMError(\"hosted-only method\"); return false;")
+/*end[JAVA5SYNTAX]*/
     static boolean inRamHosted(Object object) throws HostedPragma {
         return !(object instanceof Address);
     }
@@ -1044,9 +1045,10 @@ public class GC implements GlobalStaticFields {
      *
      * @param object the object
      * @return its class
-     *
-     * @vm2c proxy( getClass )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(proxy="getClass")
+/*end[JAVA5SYNTAX]*/
     public static Klass getKlass(Object object)  throws ForceInlinedPragma {
         Assert.that(object != null);
         Address classOrAssociation = NativeUnsafe.getAddress(object, HDR.klass);

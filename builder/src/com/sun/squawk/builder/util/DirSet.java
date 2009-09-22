@@ -60,8 +60,8 @@ public class DirSet extends FileSet {
      *
      * @return the directories in the set
      */
-    public List list() {
-        final ArrayList list = new ArrayList();
+    public List<File> list() {
+        final ArrayList<File> list = new ArrayList<File>();
         final Selector selector = getSelector();
         new FileVisitor() {
             public boolean visit(File file) {

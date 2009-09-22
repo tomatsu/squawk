@@ -77,7 +77,11 @@ import java.util.NoSuchElementException;
  * @see     SquawkHashtable#rehash()
  * @since   JDK1.0, CLDC 1.0
  */
-public class SquawkHashtable {
+/*if[JAVA5SYNTAX]*/
+public class SquawkHashtable<K, V> {
+/*else[JAVA5SYNTAX]*/
+//public class SquawkHashtable {
+/*end[JAVA5SYNTAX]*/
 
     public static interface Rehasher {
         public void rehash();
@@ -87,12 +91,20 @@ public class SquawkHashtable {
      * The hash table data. This field is zeroed when object deserialization
      * occurs and is reformed from backupTable.
      */
-    private transient HashtableEntry[] entryTable;
+/*if[JAVA5SYNTAX]*/
+    private transient HashtableEntry<K, V>[] entryTable;
+/*else[JAVA5SYNTAX]*/
+//    private transient HashtableEntry[] entryTable;
+/*end[JAVA5SYNTAX]*/
 
     /**
      * The backup hash table data.
      */
-    private HashtableEntry[] backupTable;
+/*if[JAVA5SYNTAX]*/
+    private HashtableEntry<K, V>[] backupTable;
+/*else[JAVA5SYNTAX]*/
+//    private HashtableEntry[] backupTable;
+/*end[JAVA5SYNTAX]*/
 
     /**
      * The total number of entries in the hash table.
@@ -124,6 +136,9 @@ public class SquawkHashtable {
      *             than zero
      * @since      JDK1.0
      */
+/*if[JAVA5SYNTAX]*/
+    @SuppressWarnings("unchecked")
+/*end[JAVA5SYNTAX]*/
     public SquawkHashtable(int initialCapacity) {
         if (initialCapacity < 0) {
             throw new IllegalArgumentException();
@@ -135,7 +150,11 @@ public class SquawkHashtable {
         threshold = ((initialCapacity * loadFactorPercent) / 100);
     }
 
-    public final SquawkHashtable setRehasher(Rehasher rehasher) {
+/*if[JAVA5SYNTAX]*/
+    public final SquawkHashtable<K, V> setRehasher(Rehasher rehasher) {
+/*else[JAVA5SYNTAX]*/
+//    public final SquawkHashtable setRehasher(Rehasher rehasher) {
+/*end[JAVA5SYNTAX]*/
         this.rehasher = rehasher;
         return this;
     }
@@ -145,7 +164,11 @@ public class SquawkHashtable {
      *
      * @param table the new array of hash table entires
      */
-    private void setTable(HashtableEntry[] table) {
+/*if[JAVA5SYNTAX]*/
+    private void setTable(HashtableEntry<K, V>[] table) {
+/*else[JAVA5SYNTAX]*/
+//    private void setTable(HashtableEntry[] table) {
+/*end[JAVA5SYNTAX]*/
         entryTable  = table;
         backupTable = table;
     }
@@ -155,7 +178,11 @@ public class SquawkHashtable {
      *
      * @return the array of hash table entires
      */
-    private HashtableEntry[] getTable() {
+/*if[JAVA5SYNTAX]*/
+    private HashtableEntry<K, V>[] getTable() {
+/*else[JAVA5SYNTAX]*/
+//        private HashtableEntry[] getTable() {
+/*end[JAVA5SYNTAX]*/
         if (entryTable == null) {
             rehash(backupTable, backupTable.length);
         }
@@ -200,8 +227,13 @@ public class SquawkHashtable {
      * @see java.util.Enumeration
      * @see java.util.Hashtable#elSquawkHashtable@since JDK1.0
      */
-    public Enumeration keys() {
-        return new HashtableEnumerator(getTable(), true);
+/*if[JAVA5SYNTAX]*/
+    public Enumeration<K> keys() {
+        return new HashtableEnumerator<K>(getTable(), true);
+/*else[JAVA5SYNTAX]*/
+//    public Enumeration keys() {
+//        return new HashtableEnumerator(getTable(), true);
+/*end[JAVA5SYNTAX]*/
     }
 
     /**
@@ -213,8 +245,13 @@ public class SquawkHashtable {
      * @see java.util.Enumeration
      * @see java.util.Hashtable#keSquawkHashtablece JDK1.0
      */
-    public Enumeration elements() {
-        return new HashtableEnumerator(getTable(), false);
+/*if[JAVA5SYNTAX]*/
+    public Enumeration<V> elements() {
+        return new HashtableEnumerator<V>(getTable(), false);
+/*else[JAVA5SYNTAX]*/
+//    public Enumeration elements() {
+//        return new HashtableEnumerator(getTable(), false);
+/*end[JAVA5SYNTAX]*/
     }
 
     /**
@@ -235,13 +272,21 @@ public class SquawkHashtable {
             throw new NullPointerException();
         }
 
-        HashtableEntry tab[] = getTable();
+/*if[JAVA5SYNTAX]*/
+        HashtableEntry<K, V> tab[] = getTable();
+/*else[JAVA5SYNTAX]*/
+//        HashtableEntry tab[] = getTable();
+/*end[JAVA5SYNTAX]*/
         for (int i = tab.length ; i-- > 0 ;) {
-            for (HashtableEntry e = tab[i] ; e != null ; e = e.next) {
-                if (e.value.equals(value)) {
-                    return true;
-                }
-            }
+/*if[JAVA5SYNTAX]*/
+            for (HashtableEntry<K, V> e = tab[i] ; e != null ; e = e.next) {
+/*else[JAVA5SYNTAX]*/
+//        	for (HashtableEntry e = tab[i] ; e != null ; e = e.next) {
+/*end[JAVA5SYNTAX]*/
+	            if (e.value.equals(value)) {
+	                return true;
+	            }
+        	}
         }
         return false;
     }
@@ -273,10 +318,18 @@ public class SquawkHashtable {
      * @since JDK1.0
      */
     public Object get(Object key) {
-        HashtableEntry tab[] = getTable();
+/*if[JAVA5SYNTAX]*/
+        HashtableEntry<K, V> tab[] = getTable();
+/*else[JAVA5SYNTAX]*/
+//        HashtableEntry tab[] = getTable();
+/*end[JAVA5SYNTAX]*/
         int hash = key.hashCode();
         int index = (hash & 0x7FFFFFFF) % tab.length;
-        for (HashtableEntry e = tab[index] ; e != null ; e = e.next) {
+/*if[JAVA5SYNTAX]*/
+        for (HashtableEntry<K, V> e = tab[index] ; e != null ; e = e.next) {
+/*else[JAVA5SYNTAX]*/
+//        for (HashtableEntry e = tab[index] ; e != null ; e = e.next) {
+/*end[JAVA5SYNTAX]*/
             if ((e.hash == hash) && e.key.equals(key)) {
                 return e.value;
             }
@@ -295,7 +348,11 @@ public class SquawkHashtable {
      * @since JDK1.0
      */
     public void rehash() {
-        HashtableEntry[] oldTable = getTable();
+/*if[JAVA5SYNTAX]*/
+        HashtableEntry<K, V>[] oldTable = getTable();
+/*else[JAVA5SYNTAX]*/
+//        HashtableEntry[] oldTable = getTable();
+/*end[JAVA5SYNTAX]*/
         rehash(oldTable, oldTable.length * 2 + 1);
     }
 
@@ -305,14 +362,28 @@ public class SquawkHashtable {
      * @param oldTable the HashtableEntry to be rehashed
      * @param newCapacity the size of the new table
      */
-    private void rehash(HashtableEntry[] oldTable, int newCapacity) {
+/*if[JAVA5SYNTAX]*/
+    @SuppressWarnings("unchecked")
+    private void rehash(HashtableEntry<K, V>[] oldTable, int newCapacity) {
+/*else[JAVA5SYNTAX]*/
+//    private void rehash(HashtableEntry[] oldTable, int newCapacity) {
+/*end[JAVA5SYNTAX]*/
         setTable(null); // safety
         int oldCapacity = oldTable.length;
-        HashtableEntry[] newTable = new HashtableEntry[newCapacity];
+/*if[JAVA5SYNTAX]*/
+        HashtableEntry<K, V>[] newTable = new HashtableEntry[newCapacity];
+/*else[JAVA5SYNTAX]*/
+//        HashtableEntry[] newTable = new HashtableEntry[newCapacity];
+/*end[JAVA5SYNTAX]*/
         threshold = ((newCapacity * loadFactorPercent) / 100);
         for (int i = oldCapacity ; i-- > 0 ;) {
-            for (HashtableEntry old = oldTable[i] ; old != null ; ) {
-                HashtableEntry e = old;
+/*if[JAVA5SYNTAX]*/
+            for (HashtableEntry<K, V> old = oldTable[i] ; old != null ; ) {
+                HashtableEntry<K, V> e = old;
+/*else[JAVA5SYNTAX]*/
+//            for (HashtableEntry old = oldTable[i] ; old != null ; ) {
+//                HashtableEntry e = old;
+/*end[JAVA5SYNTAX]*/
                 old = old.next;
                 int index = (e.hash & 0x7FFFFFFF) % newCapacity;
                 e.next = newTable[index];
@@ -339,21 +410,38 @@ public class SquawkHashtable {
      * @see java.lang.Object#equals(java.lang.Object)
      * @see java.util.Hashtable#get(java.lang.ObjecSquawkHashtable JDK1.0
      */
-    public Object put(Object key, Object value) {
+/*if[JAVA5SYNTAX]*/
+    @SuppressWarnings("unchecked")
+    public V put(K key, V value) {
+/*else[JAVA5SYNTAX]*/
+//    public Object put(Object key, Object value) {
+/*end[JAVA5SYNTAX]*/
         // Make sure the value is not null
         if (value == null) {
             throw new NullPointerException();
         }
 
         // Makes sure the key is not already in the hashtable.
-        HashtableEntry tab[] = getTable();
+/*if[JAVA5SYNTAX]*/
+        HashtableEntry<K, V> tab[] = getTable();
+/*else[JAVA5SYNTAX]*/
+//        HashtableEntry tab[] = getTable();
+/*end[JAVA5SYNTAX]*/
         int hash = key.hashCode();
         int index = (hash & 0x7FFFFFFF) % tab.length;
-        for (HashtableEntry e = tab[index] ; e != null ; e = e.next) {
+/*if[JAVA5SYNTAX]*/
+        for (HashtableEntry<K, V> e = tab[index] ; e != null ; e = e.next) {
+/*else[JAVA5SYNTAX]*/
+//        for (HashtableEntry e = tab[index] ; e != null ; e = e.next) {
+/*end[JAVA5SYNTAX]*/
             if ((e.hash == hash) && e.key.equals(key)) {
                 Object old = e.value;
                 e.value = value;
-                return old;
+/*if[JAVA5SYNTAX]*/
+                return (V) old;
+/*else[JAVA5SYNTAX]*/
+//                return old;
+/*end[JAVA5SYNTAX]*/
             }
         }
 
@@ -369,7 +457,11 @@ public class SquawkHashtable {
         }
 
         // Creates the new entry.
-        HashtableEntry e = new HashtableEntry();
+/*if[JAVA5SYNTAX]*/
+        HashtableEntry<K, V> e = new HashtableEntry<K, V>();
+/*else[JAVA5SYNTAX]*/
+//        HashtableEntry e = new HashtableEntry();
+/*end[JAVA5SYNTAX]*/
         e.hash = hash;
         e.key = key;
         e.value = value;
@@ -388,11 +480,20 @@ public class SquawkHashtable {
      *          or <code>null</code> if the key did not have a mapping.
      * @since   JDK1.0
      */
-    public Object remove(Object key) {
-        HashtableEntry tab[] = getTable();
+/*if[JAVA5SYNTAX]*/
+    public V remove(K key) {
+        HashtableEntry<K, V> tab[] = getTable();
+/*else[JAVA5SYNTAX]*/
+//        public Object remove(Object key) {
+//            HashtableEntry tab[] = getTable();
+/*end[JAVA5SYNTAX]*/
         int hash = key.hashCode();
         int index = (hash & 0x7FFFFFFF) % tab.length;
-        for (HashtableEntry e = tab[index], prev = null ; e != null ; prev = e, e = e.next) {
+/*if[JAVA5SYNTAX]*/
+        for (HashtableEntry<K, V> e = tab[index], prev = null ; e != null ; prev = e, e = e.next) {
+/*else[JAVA5SYNTAX]*/
+//        for (HashtableEntry e = tab[index], prev = null ; e != null ; prev = e, e = e.next) {
+/*end[JAVA5SYNTAX]*/
             if ((e.hash == hash) && e.key.equals(key)) {
                 if (prev != null) {
                     prev.next = e.next;
@@ -412,7 +513,11 @@ public class SquawkHashtable {
      * @since   JDK1.0
      */
     public void clear() {
-        HashtableEntry tab[] = getTable();
+/*if[JAVA5SYNTAX]*/
+        HashtableEntry<K, V> tab[] = getTable();
+/*else[JAVA5SYNTAX]*/
+//        HashtableEntry tab[] = getTable();
+/*end[JAVA5SYNTAX]*/
         for (int index = tab.length; --index >= 0; ) {
             tab[index] = null;
         }
@@ -444,7 +549,11 @@ public class SquawkHashtable {
      * 
      * @return the internal table
      */
-    public final Object getEntryTable() {
+/*if[JAVA5SYNTAX]*/
+    public final HashtableEntry<K, V>[] getEntryTable() {
+/*else[JAVA5SYNTAX]*/
+//    public final HashtableEntry[] getEntryTable() {
+/*end[JAVA5SYNTAX]*/
         return entryTable;
     }
 
@@ -457,7 +566,11 @@ public class SquawkHashtable {
      * @return  a string representation of this hashtable.
      * @since   JDK1.0
      */
-    public static String enumerationsToString(Enumeration keys, Enumeration elements, int size) {
+/*if[JAVA5SYNTAX]*/
+    public static String enumerationsToString(Enumeration<?> keys, Enumeration<?> elements, int size) {
+/*else[JAVA5SYNTAX]*/
+//    public static String enumerationsToString(Enumeration keys, Enumeration elements, int size) {
+/*end[JAVA5SYNTAX]*/
         int max = size - 1;
         StringBuffer buf = new StringBuffer();
         buf.append("{");
@@ -478,13 +591,26 @@ public class SquawkHashtable {
      * A hashtable enumerator class.  This class should remain opaque
      * to the client. It will use the Enumeration interface.
      */
-    static class HashtableEnumerator implements Enumeration {
+/*if[JAVA5SYNTAX]*/
+    class HashtableEnumerator<E> implements Enumeration<E> {
+/*else[JAVA5SYNTAX]*/
+//    class HashtableEnumerator implements Enumeration {
+/*end[JAVA5SYNTAX]*/
         boolean keys;
         int index;
-        HashtableEntry table[];
-        HashtableEntry entry;
+/*if[JAVA5SYNTAX]*/
+        HashtableEntry<K, V>[] table;
+        HashtableEntry<K, V> entry;
+/*else[JAVA5SYNTAX]*/
+//        HashtableEntry[] table;
+//        HashtableEntry entry;
+/*end[JAVA5SYNTAX]*/
 
-        HashtableEnumerator(HashtableEntry table[], boolean keys) {
+/*if[JAVA5SYNTAX]*/
+        HashtableEnumerator(HashtableEntry<K, V>[] table, boolean keys) {
+/*else[JAVA5SYNTAX]*/
+//        HashtableEnumerator(HashtableEntry[] table, boolean keys) {
+/*end[JAVA5SYNTAX]*/
             this.table = table;
             this.keys = keys;
             this.index = table.length;
@@ -502,16 +628,27 @@ public class SquawkHashtable {
             return false;
         }
 
-        public Object nextElement() {
+/*if[JAVA5SYNTAX]*/
+        @SuppressWarnings("unchecked")
+        public E nextElement() {
+/*else[JAVA5SYNTAX]*/
+//        public Object nextElement() {
+/*end[JAVA5SYNTAX]*/
             if (entry == null) {
                 while ((index-- > 0) && ((entry = table[index]) == null)) {
                     // skip empty
                 }
             }
             if (entry != null) {
-                HashtableEntry e = entry;
+/*if[JAVA5SYNTAX]*/
+                HashtableEntry<K, V> e = entry;
                 entry = e.next;
-                return keys ? e.key : e.value;
+                return (E) (keys ? e.key : e.value);
+/*else[JAVA5SYNTAX]*/
+//                HashtableEntry e = entry;
+//                entry = e.next;
+//                return keys ? e.key : e.value;
+/*end[JAVA5SYNTAX]*/
             }
             throw new NoSuchElementException();
         }
@@ -521,11 +658,17 @@ public class SquawkHashtable {
 /**
  * SquawkHashtable collision list.
  */
-class HashtableEntry {
+/*if[JAVA5SYNTAX]*/
+class HashtableEntry<K, V> {
     int hash;
-    Object key;
-    Object value;
-    HashtableEntry next;
+    K key;
+    V value;
+    HashtableEntry<K, V> next;
+/*else[JAVA5SYNTAX]*/
+//class HashtableEntry {
+//    int hash;
+//    Object key;
+//    Object value;
+//    HashtableEntry next;
+/*end[JAVA5SYNTAX]*/
 }
-
-

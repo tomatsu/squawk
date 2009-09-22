@@ -89,7 +89,7 @@ public class UEICommand extends Command {
     public void run(String args[]) throws BuildException {
         stdout = System.out;
         stderr = System.err;
-        vbsout = new PrintStream(new OutputStream() { public void write(int b) {;} });
+        vbsout = new PrintStream(new OutputStream() { public void write(int b) {} });
         
         if (args.length > 1) {
             usage();

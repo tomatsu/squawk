@@ -26,7 +26,6 @@ package com.sun.squawk.builder;
 
 import java.io.*;
 import java.lang.reflect.*;
-import java.net.*;
 import java.util.*;
 
 import com.sun.squawk.builder.util.*;
@@ -53,7 +52,7 @@ public class JavaCompiler {
     /**
      * The set of compiler options.
      */
-    private List args = new ArrayList();
+    private List<String> args = new ArrayList<String>();
 
     /**
      * Creates an object for performing Java source compilations.
@@ -81,7 +80,7 @@ public class JavaCompiler {
     }
 
     private Method javacMethod;
-    private Class  javamakeClass;
+    private Class<?>  javamakeClass;
     private Method javamakeMethod;
     private Method javadocMethod;
 
@@ -100,7 +99,7 @@ public class JavaCompiler {
         String javadocClassName = System.getProperty("builder.tools.javadoc.class", "com.sun.tools.javadoc.Main");
         String javadocMethodName = System.getProperty("builder.tools.javadoc.method", "execute");
         try {
-            Class javadocClass = Class.forName(javadocClassName);
+            Class<?> javadocClass = Class.forName(javadocClassName);
             javadocMethod = javadocClass.getMethod(javadocMethodName, new Class[] {String[].class});
             if (!Modifier.isStatic(javadocMethod.getModifiers())) {
                 throw new BuildException("javadoc entry method must be static");
@@ -139,7 +138,7 @@ public class JavaCompiler {
         String javacClassName = System.getProperty("builder.tools.javac.class", "com.sun.tools.javac.Main");
         String javacMethodName = System.getProperty("builder.tools.javac.method", "compile");
         try {
-            Class javacClass = Class.forName(javacClassName);
+            Class<?> javacClass = Class.forName(javacClassName);
             javacMethod = javacClass.getMethod(javacMethodName, new Class[] {String[].class});
             if (!Modifier.isStatic(javacMethod.getModifiers())) {
                 throw new BuildException("javac entry method must be static");
@@ -156,7 +155,7 @@ public class JavaCompiler {
      * Resets the arguments to be empty.
      */
     public void reset() {
-        args = new ArrayList();
+        args = new ArrayList<String>();
     }
 
     /**
@@ -264,7 +263,7 @@ public class JavaCompiler {
             append(" -d ").
             append(outputDir.getPath());
 
-        for (Iterator iterator = this.args.iterator(); iterator.hasNext(); ) {
+        for (Iterator<String> iterator = this.args.iterator(); iterator.hasNext(); ) {
             String arg = (String)iterator.next();
             if (arg.equals("-bootclasspath")) {
                 args.append(' ').append(arg);
@@ -281,9 +280,9 @@ public class JavaCompiler {
         // Add the source files to the args
         for (int i = 0; i != srcDirs.length; ++i) {
             File srcDir = srcDirs[i];
-            List files = new FileSet(srcDir, Build.JAVA_SOURCE_SELECTOR).list();
-            for (Iterator iterator = files.iterator(); iterator.hasNext(); ) {
-                args.append(' ').append(((File)iterator.next()).getPath());
+            List<File> files = new FileSet(srcDir, Build.JAVA_SOURCE_SELECTOR).list();
+            for (File file: files) {
+                args.append(' ').append(file.getPath());
             }
         }
         // Generate the args file for javamake
@@ -334,8 +333,8 @@ public class JavaCompiler {
      * @param outputDir  the output directory where the classes reside
      * @return the set of Java source files in <code>srcDir</code> that were modified more recently than their corresponding class files
      */
-    private List getModifiedFiles(File[] srcDirs, File outputDir) {
-        List modifiedFiles = null;
+    private List<File> getModifiedFiles(File[] srcDirs, File outputDir) {
+        List<File> modifiedFiles = null;
         for (int i = 0; i != srcDirs.length; ++i) {
             File srcDir = srcDirs[i];
             FileSet.Selector outOfDate = new FileSet.AndSelector(Build.JAVA_SOURCE_SELECTOR, new FileSet.DependSelector(new FileSet.SourceDestDirMapper(srcDir, outputDir) {
@@ -372,7 +371,7 @@ public class JavaCompiler {
         File primarySrcDir = srcDirs[0];
 
         // Refine the sources to be compiled to those whose class files are out of date
-        List files = getModifiedFiles(srcDirs, outputDir);
+        List<File> files = getModifiedFiles(srcDirs, outputDir);
         if (files.isEmpty()) {
             // Nothing needs to be recompiled
             env.log(env.info, "[no javac recompilation necessary]");
@@ -388,13 +387,13 @@ public class JavaCompiler {
         args.append(outputDir.getPath());
 
         // Add the other args
-        for (Iterator iterator = this.args.iterator(); iterator.hasNext(); ) {
-            args.append(' ').append((String)iterator.next());
+        for (String arg: this.args) {
+            args.append(' ').append(arg);
         }
 
         // Add the sources files
-        for (Iterator iterator = files.iterator(); iterator.hasNext(); ) {
-            args.append(' ').append(((File)iterator.next()).getPath());
+        for (File file: files) {
+            args.append(' ').append(file.getPath());
         }
 
         // Generate the args file for javac
@@ -410,7 +409,7 @@ public class JavaCompiler {
             } else {
                 int result = ((Integer)javacMethod.invoke(null, new Object[] { new String[] {"@" + argsFile} })).intValue();
                 if (result != 0) {
-                    throw new BuildException("javamake compilation failed", result);
+                    throw new BuildException("compilation failed", result);
                 }
             }
         } catch (IllegalAccessException e) {
@@ -441,10 +440,10 @@ public class JavaCompiler {
         }
     }
 
-    public static void createArgsFile(Collection args, File argsFile) {
+    public static void createArgsFile(Collection<String> args, File argsFile) {
         StringBuffer buf = new StringBuffer(1000);
-        for (Iterator iter = args.iterator(); iter.hasNext(); ) {
-            buf.append(iter.next()).append(' ');
+        for (String arg: args) {
+            buf.append(arg).append(' ');
         }
         createArgsFile(buf.toString(), argsFile);
     }

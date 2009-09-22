@@ -41,7 +41,7 @@ JAR=$JAVA_HOME/bin/jar
 #echo JAR=$JAR
 
 #----------------------------------------------------------#
-#              Go ahead and build build.ja                 #
+#              Go ahead and build build.jar                #
 #----------------------------------------------------------#
 rm -rf classes
 mkdir classes
@@ -49,6 +49,9 @@ $JAVAC -target 1.5 -source 1.5 -d classes -g src/com/sun/squawk/builder/launcher
 $JAR cfm ../build.jar build-manifest.mf -C classes .
 rm -fr classes
 mkdir classes
-$JAVAC -target 1.5 -source 1.5 -d classes -g `find src -name '*.java'`
+cd classes
+$JAR xf ../../tools/retroweaver-all-squawk.jar
+cd ..
+$JAVAC -cp classes -target 1.5 -source 1.5 -d classes -g `find src -name '*.java'`
 $JAR cfm ../build-commands.jar build-commands-manifest.mf -C classes .
 rm -fr classes

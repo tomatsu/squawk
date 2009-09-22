@@ -42,6 +42,7 @@ if [ -z "$JAVA_HOME" ]; then
 fi
 
 #echo "JAVA_HOME=$JAVA_HOME"
+#-client -XX:+PrintCompilation
 builder="${JAVA_HOME}/bin/java $EXTRA_BUILDER_VMFLAGS -Xms128M -Xmx256M -ea -jar build.jar $BUILDER_FLAGS"
 #echo $builder
 

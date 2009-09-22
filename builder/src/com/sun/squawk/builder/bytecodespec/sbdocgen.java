@@ -30,23 +30,23 @@ import java.util.*;
 import com.sun.squawk.builder.Build;
 
 public class sbdocgen {
-    private static final Set opcodes = new java.util.HashSet();
+    private static final Set<Integer> opcodes = new java.util.HashSet<Integer>();
 
     public static void reportOpcode(int opcode) {
-        opcodes.add(new Integer(opcode));
+        opcodes.add(opcode);
     }
 
     public static void main (String args[]) throws IOException {
-        List insns = Instructions.getInstructions();
+        List<Instruction> insns = Instructions.getInstructions();
         Collections.sort(insns);
 
-        List startLetters = new java.util.ArrayList();
+        List<Character> startLetters = new java.util.ArrayList<Character>();
         char last = 0;
         for (int i = 0; i < insns.size(); i++) {
             Instruction insn = (Instruction)insns.get(i);
             char leadChar = insn.getName().charAt(0);
             if (last != leadChar) {
-                startLetters.add(new Character(leadChar));
+                startLetters.add(leadChar);
                 last = leadChar;
             }
         }
@@ -72,7 +72,7 @@ public class sbdocgen {
         out.println();
         for (int i = 0; i < startLetters.size(); i++) {
             Character c = (Character)startLetters.get(i);
-            out.println("<a href=\"Instructions2.doc" + (i+1) + ".html\">" + c.toUpperCase(c.charValue()) + "</a>");
+            out.println("<a href=\"Instructions2.doc" + (i+1) + ".html\">" + Character.toUpperCase(c.charValue()) + "</a>");
         }
         out.println();
         out.println("<hr><br>");
@@ -105,8 +105,8 @@ public class sbdocgen {
         indexPage.println("<hr><br>");
         indexPage.println();
 
-        Iterator iter = insns.iterator();
-        Instruction insn = (iter.hasNext()) ? (Instruction)iter.next() : null;
+        Iterator<Instruction> iter = insns.iterator();
+        Instruction insn = (iter.hasNext()) ? iter.next() : null;
         for (int i = 0; i < startLetters.size(); i++) {
             String thisPage = "Instructions2.doc" + (i+1) + ".html";
             String prevPage = "Instructions2.doc" + i + ".html";
@@ -139,7 +139,7 @@ public class sbdocgen {
             out.println();
             for (int j = 0; j < startLetters.size(); j++) {
                 Character c = (Character)startLetters.get(j);
-                out.println("<a href=\"Instructions2.doc" + (j+1) + ".html\">" + c.toUpperCase(c.charValue()) + "</a>");
+                out.println("<a href=\"Instructions2.doc" + (j+1) + ".html\">" + Character.toUpperCase(c.charValue()) + "</a>");
             }
             out.println();
 

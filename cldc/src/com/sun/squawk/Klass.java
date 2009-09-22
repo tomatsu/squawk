@@ -48,7 +48,11 @@ import com.sun.squawk.vm.*;
  * @version 1.0
  * @see     com.sun.squawk.KlassMetadata
  */
-public class Klass {
+/*if[JAVA5SYNTAX]*/
+public class Klass<T> {
+/*else[JAVA5SYNTAX]*/
+//public class Klass {
+/*end[JAVA5SYNTAX]*/
 
     /*---------------------------------------------------------------------------*\
      *      Fields of Klass, some of which may be accessed directly by the VM    *
@@ -417,9 +421,19 @@ public class Klass {
      * @throws java.lang.InstantiationException
      * @throws java.lang.IllegalAccessException 
      */
-    public final Object newInstance() throws InstantiationException, IllegalAccessException {
+    public final
+/*if[JAVA5SYNTAX]*/
+T
+/*else[JAVA5SYNTAX]*/
+//Object
+/*end[JAVA5SYNTAX]*/
+	newInstance() throws InstantiationException, IllegalAccessException {
         Assert.always(!(isSquawkArray() || isInterface() || isAbstract()) && hasDefaultConstructor());
-        Object res = GC.newInstance(this);
+/*if[JAVA5SYNTAX]*/
+        T res = (T) GC.newInstance(this);
+/*else[JAVA5SYNTAX]*/
+//        Object res = GC.newInstance(this);
+/*end[JAVA5SYNTAX]*/
         try {
             VM.callStaticOneParm(this, indexForInit & 0xFF, res);
         } catch (NoClassDefFoundError e) {
@@ -757,6 +771,24 @@ public class Klass {
             suite = isolate.getBootstrapSuite();
         }
         return suite.getResourceAsStream(name, this);
+    }
+
+    /**
+     * Looks to see if we have any resources contained within a directory of name.
+     * If there are no resources, then we assume its not a directory we know anything about.
+     *
+     * @param name  name of the directory
+     * @param klass Used to get the absolute path to resource if name is not absolute, if null, then assume resource name is absolute
+     * @return      boolean
+     */
+    public final boolean isPossibleResourceDirectory(String name) {
+        Assert.that(getState() != STATE_ERROR);
+        Isolate isolate = VM.getCurrentIsolate();
+        Suite suite = isolate.getLeafSuite();
+        if (suite == null) {
+            suite = isolate.getBootstrapSuite();
+        }
+        return suite.isPossibleResourceDirectory(name, this);
     }
 
     /*---------------------------------------------------------------------------*\

@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.io.Connector;
 
 import com.sun.squawk.pragma.HostedPragma;
@@ -193,10 +194,15 @@ public class ObjectMemoryLoader {
         if (url.startsWith("file://") && filePathelements != null) {
         	url += ";" + filePathelements;
         }
-        DataInputStream dis = Connector.openDataInputStream(url);
-        ObjectMemoryFile result = load(dis, uri, loadIntoReadOnlyMemory);
-        dis.close();
-        return result;
+        try {
+            DataInputStream dis = Connector.openDataInputStream(url);
+            ObjectMemoryFile result = load(dis, uri, loadIntoReadOnlyMemory);
+            dis.close();
+            return result;
+        } catch (ConnectionNotFoundException e) {
+System.out.println("filePathelements=" + filePathelements);
+            throw e;
+        }
     }
     
     /**
@@ -490,6 +496,29 @@ public class ObjectMemoryLoader {
      * Expecting a string that looks something like "c:\dev\1${File.separatorChar}c:\windows".
      * @param path entries
      */
+    public static void addFilePath(String path) {
+        if (path == null) {
+            return;
+        }
+        StringBuffer buffer = new StringBuffer();
+        if (filePathelements != null) {
+            buffer.append(filePathelements);
+        }
+        StringTokenizer tokenizer = new StringTokenizer(path, "" + VM.getPathSeparatorChar());
+        while (tokenizer.hasMoreTokens()) {
+            if (buffer.length() > 0) {
+                buffer.append(';');
+            }
+            buffer.append("pathelement=");
+            buffer.append(tokenizer.nextToken());
+        }
+        filePathelements = buffer.toString();
+    }
+    
+    /**
+     * Expecting a string that looks something like "c:\dev\1${File.separatorChar}c:\windows".
+     * @param path entries
+     */
     public static void setFilePath(String path) {
         if (path == null) {
             filePathelements = null;
@@ -498,11 +527,12 @@ public class ObjectMemoryLoader {
         StringBuffer buffer = new StringBuffer(path.length());
         StringTokenizer tokenizer = new StringTokenizer(path, "" + VM.getPathSeparatorChar());
         while (tokenizer.hasMoreTokens()) {
+            if (buffer.length() > 0) {
+                buffer.append(';');
+            }
             buffer.append("pathelement=");
             buffer.append(tokenizer.nextToken());
-            buffer.append(';');
         }
-        buffer.deleteCharAt(buffer.length() - 1);
         filePathelements = buffer.toString();
     }
     

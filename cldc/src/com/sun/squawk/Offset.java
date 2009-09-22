@@ -82,9 +82,10 @@ public final class Offset {
      *
      * @param  value   an offset expressed as an int or long
      * @return the canonical Offset instance for <code>offset</code>
-     *
-     * @vm2c code( return (Offset)value; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (Offset)value;")
+/*end[JAVA5SYNTAX]*/
     public static Offset fromPrimitive(int/*S64*/ value) throws NativePragma {
         return get(value);
     }
@@ -95,9 +96,10 @@ public final class Offset {
      * truncating its magnitude.
      *
      * @return this Offset value as an int or long
-     *
-     * @vm2c code( return this; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this;")
+/*end[JAVA5SYNTAX]*/
     public int/*S64*/ toPrimitive() throws NativePragma {
         return value;
     }
@@ -108,9 +110,10 @@ public final class Offset {
      * truncating its magnitude.
      *
      * @return this Offset value as an int
-     *
-     * @vm2c code( assume((int)this == this); return (int)this; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="assume((int)this == this); return (int)this;")
+/*end[JAVA5SYNTAX]*/
     public int toInt() throws NativePragma {
         Assert.that((int)value == value);
         return (int)value;
@@ -120,9 +123,10 @@ public final class Offset {
      * Casts a value of type Offset into a UWord.
      *
      * @return this Offset value as a UWord
-     *
-     * @vm2c code( return (UWord)this; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (UWord)this;")
+/*end[JAVA5SYNTAX]*/
     public UWord toUWord() throws NativePragma {
         return UWord.fromPrimitive(value);
     }
@@ -131,9 +135,10 @@ public final class Offset {
      * Gets the canonical Offset representation of <code>null</code>.
      *
      * @return the canonical Offset representation of <code>null</code>
-     *
-     * @vm2c code( return 0; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return 0;")
+/*end[JAVA5SYNTAX]*/
     public static Offset zero() throws NativePragma {
         return get(0);
     }
@@ -143,9 +148,10 @@ public final class Offset {
      *
      * @param delta   the signed value to add
      * @return the result of adding <code>delta</code> to this offset
-     *
-     * @vm2c code( return this + delta; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this + delta;")
+/*end[JAVA5SYNTAX]*/
     public Offset add(int delta) throws NativePragma {
         return get(value + delta);
     }
@@ -155,9 +161,10 @@ public final class Offset {
      *
      * @param delta   the signed value to subract
      * @return the result of subtracting <code>delta</code> from this offset
-     *
-     * @vm2c code( return this - delta; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this - delta;")
+/*end[JAVA5SYNTAX]*/
     public Offset sub(int delta) throws NativePragma {
         return get(value - delta);
     }
@@ -168,9 +175,10 @@ public final class Offset {
      * the number of bytes in a machine word.
      *
      * @return  the scaled up offset
-     *
-     * @vm2c code( return this << HDR_LOG2_BYTES_PER_WORD; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this << HDR_LOG2_BYTES_PER_WORD;")
+/*end[JAVA5SYNTAX]*/
     public Offset wordsToBytes() throws NativePragma {
         return get(value << HDR.LOG2_BYTES_PER_WORD);
     }
@@ -182,9 +190,10 @@ public final class Offset {
      * which are guaranteed to be a muliple of the number of bytes in a machine word.
      *
      * @return  the scaled down offset
-     *
-     * @vm2c code( return this >> HDR_LOG2_BYTES_PER_WORD; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this >> HDR_LOG2_BYTES_PER_WORD;")
+/*end[JAVA5SYNTAX]*/
     public Offset bytesToWords() throws NativePragma {
         Assert.that((value % HDR.BYTES_PER_WORD) == 0);
         return get(value >> HDR.LOG2_BYTES_PER_WORD);
@@ -194,9 +203,10 @@ public final class Offset {
      * Determines if this offset is 0.
      *
      * @return true if this offset is 0.
-     *
-     * @vm2c code( return this == 0; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this == 0;")
+/*end[JAVA5SYNTAX]*/
     public boolean isZero() throws NativePragma {
         return this == zero();
     }
@@ -206,9 +216,10 @@ public final class Offset {
      *
      * @param offset2   the offset to compare this offset against
      * @return true if this offset is equal to <code>offset2</code>
-     *
-     * @vm2c code( return this == offset2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this == offset2;")
+/*end[JAVA5SYNTAX]*/
     public boolean eq(Offset offset2) throws NativePragma {
         return this == offset2;
     }
@@ -218,9 +229,10 @@ public final class Offset {
      *
      * @param offset2   the offset to compare this offset against
      * @return true if this offset is not equal to <code>offset2</code>
-     *
-     * @vm2c code( return this != offset2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this != offset2;")
+/*end[JAVA5SYNTAX]*/
     public boolean ne(Offset offset2) throws NativePragma {
         return this != offset2;
     }
@@ -230,9 +242,10 @@ public final class Offset {
      *
      * @param offset2   the offset to compare this offset against
      * @return true if this offset is less than or equals to <code>offset2</code>
-     *
-     * @vm2c code( return this < offset2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this < offset2;")
+/*end[JAVA5SYNTAX]*/
     public boolean lt(Offset offset2) throws NativePragma {
         return this.value < offset2.value;
     }
@@ -242,9 +255,10 @@ public final class Offset {
      *
      * @param offset2   the offset to compare this offset against
      * @return true if this offset is less than or equal to <code>offset2</code>
-     *
-     * @vm2c code( return this <= offset2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this <= offset2;")
+/*end[JAVA5SYNTAX]*/
     public boolean le(Offset offset2) throws NativePragma {
         return (this == offset2) || lt(offset2);
     }
@@ -254,9 +268,10 @@ public final class Offset {
      *
      * @param offset2   the offset to compare this offset against
      * @return true if this offset is greater than <code>offset2</code>
-     *
-     * @vm2c code( return this > offset2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this > offset2;")
+/*end[JAVA5SYNTAX]*/
     public boolean gt(Offset offset2) throws NativePragma {
         return offset2.lt(this);
     }
@@ -266,9 +281,10 @@ public final class Offset {
      *
      * @param offset2   the offset to compare this offset against
      * @return true if this offset is greater than or equal to <code>offset2</code>
-     *
-     * @vm2c code( return this >= offset2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this >= offset2;")
+/*end[JAVA5SYNTAX]*/
     public boolean ge(Offset offset2) throws NativePragma {
         return offset2.le(this);
     }

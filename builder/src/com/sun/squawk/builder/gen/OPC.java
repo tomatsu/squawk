@@ -38,9 +38,9 @@ public class OPC extends Generator {
      */
     void generate(PrintWriter out) {
 
-        List instructions = Instruction.getInstructions();
-        List floatInstructions = Instruction.getFloatInstructions();
-        List allInstructions = Instruction.getAllInstructions();
+        List<Instruction> instructions = Instruction.getInstructions();
+        List<Instruction> floatInstructions = Instruction.getFloatInstructions();
+        List<Instruction> allInstructions = Instruction.getAllInstructions();
 
         printCopyright(out);
 
@@ -125,10 +125,9 @@ public class OPC extends Generator {
         out.println("}");
     }
 
-    private String getWideTable(List list) {
+    private String getWideTable(List<Instruction> list) {
         byte[] widened = new byte[(list.size() + 7) / 8];
-        for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
-            Instruction instruction = (Instruction) iterator.next();
+        for (Instruction instruction: list) {
             if (instruction.wide() != null) {
                 int bit = instruction.opcode;
                 widened[bit / 8] |= (byte)(1 << (bit % 8));
@@ -156,11 +155,11 @@ public class OPC extends Generator {
      * @param list     a list of Instructions
      * @param comment  a string that will be prepended to the definitions as a javadoc comment
      */
-    private static void printOpcodes(PrintWriter out, List list, String comment) {
+    private static void printOpcodes(PrintWriter out, List<Instruction> list, String comment) {
         out.println("    /** " + comment + ". */");
         out.println("    public final static int");
-        for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
-            Instruction instruction = (Instruction) iterator.next();
+        for (Iterator<Instruction> iterator = list.iterator(); iterator.hasNext(); ) {
+            Instruction instruction = iterator.next();
             out.print(pad("        " + instruction.mnemonic.toUpperCase(), 30) + " = " + instruction.opcode);
             if (iterator.hasNext()) {
                 out.println(",");
@@ -177,9 +176,8 @@ public class OPC extends Generator {
      * @param list  a list of instructions
      * @return the delta
      */
-    private static void calculateWideDelta(List list, int[] deltas) {
-        for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
-            Instruction instruction = (Instruction) iterator.next();
+    private static void calculateWideDelta(List<Instruction> list, int[] deltas) {
+        for (Instruction instruction: list) {
             if (instruction.compact != null) {
                 int index = (instruction.compact.opcode < 256 ? 0 : 1);
                 if (deltas[index] == 0) {
@@ -194,10 +192,9 @@ public class OPC extends Generator {
         }
     }
 
-    private static int printSizesDef(PrintWriter out, List list, int opcodeCheck) {
+    private static int printSizesDef(PrintWriter out, List<Instruction> list, int opcodeCheck) {
 
-        for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
-            Instruction instruction = (Instruction) iterator.next();
+        for (Instruction instruction: list) {
             if (opcodeCheck != instruction.opcode) {
                 throw new RuntimeException("instructions are not ordered by opcode");
             }

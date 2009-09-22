@@ -25,6 +25,7 @@
 package com.sun.squawk.builder.launcher;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -34,56 +35,90 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.StringTokenizer;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 public class Launcher {
 
     public static void main(String[] args) {
         ClassLoader loader;
-		List<URL> urls = new ArrayList<URL>();
-    	try {
-            URL toolsJar = getToolsJar();
-	        if (toolsJar != null) {
-	        	urls.add(toolsJar);
-	        }
-	        URL buildCommandsJar = getBuildCommandsJar();
-	        urls.add(buildCommandsJar);
-    	} catch (MalformedURLException e) {
-    		throw new RuntimeException("Problems building class path to launch builder", e);
-    	}
-		loader = new URLClassLoader(urls.toArray(new URL[urls.size()]));
-		Thread.currentThread().setContextClassLoader(loader);
+        List<URL> urls = new ArrayList<URL>();
+        boolean verbose = false;
+        for (String arg: args) {
+            if (arg.equalsIgnoreCase("-v") || arg.equalsIgnoreCase("-verbose")) {
+                verbose = true;
+            }
+        }
         try {
-        	Class<?> buildClass = loader.loadClass("com.sun.squawk.builder.Build");
+            URL toolsJar = getToolsJar(verbose);
+            if (toolsJar != null) {
+                urls.add(toolsJar);
+            }
+            addBuildCommandsJars(urls);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Problems building class path to launch builder", e);
+        }
+        loader = new URLClassLoader(urls.toArray(new URL[urls.size()]));
+        Thread.currentThread().setContextClassLoader(loader);
+        try {
+            Class<?> buildClass = loader.loadClass("com.sun.squawk.builder.Build");
             Method mainMethod = buildClass.getMethod("main", String[].class);
             mainMethod.invoke(null, (Object) args);
         } catch (ClassNotFoundException e) {
-        	throw new RuntimeException("Problems finding builder", e);
-		} catch (SecurityException e) {
-        	throw new RuntimeException("Problems finding builder", e);
-		} catch (NoSuchMethodException e) {
-        	throw new RuntimeException("Problems finding builder", e);
-		} catch (IllegalArgumentException e) {
-        	throw new RuntimeException("Problems finding builder", e);
-		} catch (IllegalAccessException e) {
-        	throw new RuntimeException("Problems finding builder", e);
-		} catch (InvocationTargetException e) {
-			throw new RuntimeException(e);
-		}
+            throw new RuntimeException("Problems finding builder", e);
+        } catch (SecurityException e) {
+            throw new RuntimeException("Problems finding builder", e);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException("Problems finding builder", e);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Problems finding builder", e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("Problems finding builder", e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static URL getBuildCommandsJar() throws MalformedURLException {
+    public static void addBuildCommandsJars(List<URL> urls) throws MalformedURLException {
+        try {
+            Class.forName("com.sun.squawk.builder.Build");
+            // If Build class is already on my classpath, then go ahead and use it then.
+            return;
+        } catch (ClassNotFoundException e1) {
+        }
 		URL launcherJarUrl = Launcher.class.getProtectionDomain().getCodeSource().getLocation();
         try {
             // URL's don't handle encoded spaces well, switch to URI:
             File launcherJarFile = new File(launcherJarUrl.toURI().getPath());
             File buildCommandsJarFile = new File(launcherJarFile.getParent(), "build-commands.jar");
-            if (buildCommandsJarFile.exists()) {
-                return buildCommandsJarFile.toURL();
+            if (!buildCommandsJarFile.exists()) {
+                // the above doesn't work if path has space! ???!.
+                buildCommandsJarFile = new File("build-commands.jar");
             }
-            // the above doesn't work if path has space! ???!.
-            buildCommandsJarFile = new File("build-commands.jar");
             if (buildCommandsJarFile.exists()) {
-                return buildCommandsJarFile.toURL();
+                try {
+                    JarFile jar = new JarFile(buildCommandsJarFile);
+                    Manifest manifest = jar.getManifest();
+                    if (manifest != null) {
+                        Attributes attributes = manifest.getMainAttributes();
+                        if (attributes != null) {
+                            String classPathString = attributes.getValue(Attributes.Name.CLASS_PATH);
+                            if (classPathString != null) {
+                                StringTokenizer tokenizer = new StringTokenizer(classPathString, " ");
+                                while (tokenizer.hasMoreTokens()) {
+                                    String token = tokenizer.nextToken();
+                                    File file = new File(token);
+                                    urls.add(file.toURI().toURL());
+                                }
+                            }
+                        }
+                    }
+                    urls.add(buildCommandsJarFile.toURI().toURL());
+                    return;
+                } catch (IOException e) {
+                }
             }
 		   throw new RuntimeException("Unable to locate build-commands.jar.  Expected to find it at " + buildCommandsJarFile.getPath());
         } catch (URISyntaxException uRISyntaxException) {
@@ -91,42 +126,100 @@ public class Launcher {
         }
     }
     
-    public static URL getToolsJar() throws MalformedURLException {
+    public static URL getToolsJar(boolean verbose) throws MalformedURLException {
         // firstly check if the tools jar is already in the classpath
         boolean toolsJarAvailable = false;
+        if (verbose) {
+            System.out.print("java.version=");
+            System.out.print(System.getProperty("java.version"));
+            System.out.println();
+            System.out.print("java.home=");
+            System.out.print(System.getProperty("java.home"));
+            System.out.println();
+        }
+        String javacClassName = "com.sun.tools.javac.Main";
         try {
+            if (verbose) {
+                System.out.print("Looking for ");
+                System.out.print(javacClassName);
+                System.out.print(" in classpath");
+                System.out.println();
+            }
             // just check whether this throws an exception
-            Class.forName("com.sun.tools.javac.Main");
-            System.out.println("Launcher: com.sun.tools.javac.Main already in classpath.");
+            Class.forName(javacClassName);
+            if (verbose) {
+                System.out.print("  Found it");
+                System.out.println();
+            }
             toolsJarAvailable = true;
         } catch (Exception e1) {
             try {
-                Class.forName("sun.tools.javac.Main");
-                System.out.println("Launcher: sun.tools.javac.Main already in classpath.");
+                javacClassName = "sun.tools.javac.Main";
+                if (verbose) {
+                    System.out.print("  Failed");
+                    System.out.println();
+                    System.out.print("Now looking for ");
+                    System.out.print(javacClassName);
+                    System.out.print(" in classpath");
+                    System.out.println();
+                }
+                Class.forName(javacClassName);
                 toolsJarAvailable = true;
             } catch (Exception e2) {
                 // ignore
             }
         }
         if (toolsJarAvailable) {
+            if (verbose) {
+                System.out.print("Found compiler, no need to extend classpath");
+                System.out.print(javacClassName);
+                System.out.print(" in classpath");
+                System.out.println();
+            }
             return null;
         }
         String javaHome = System.getProperty("java.home");
-        File toolsJar = new File(javaHome + "/lib/tools.jar");
-        if (toolsJar.exists()) {
-            System.out.println("Launcher: Found tools.har in " + toolsJar.getPath() + ".");
-            return toolsJar.toURL();
+        Throwable cause = null;
+        try {
+            File toolsJar = new File(javaHome + "/lib/tools.jar").getCanonicalFile();
+            if (verbose) {
+                System.out.print("Looking for tools.jar in ");
+                System.out.print(toolsJar);
+                System.out.println();
+            }
+            if (toolsJar.exists()) {
+                if (verbose) {
+                    System.out.print("  Found it, adding to classpath");
+                    System.out.println();
+                }
+                return toolsJar.toURI().toURL();
+            }
+            if (verbose) {
+                System.out.print("  Failed");
+                System.out.println();
+            }
+            String lookFor = File.separator + "jre";
+            if (javaHome.toLowerCase(Locale.US).endsWith(lookFor)) {
+                javaHome = javaHome.substring(0, javaHome.length() - lookFor.length());
+                toolsJar = new File(javaHome + "/lib/tools.jar").getCanonicalFile();
+                if (verbose) {
+                    System.out.print("Now looking for tools.jar in ");
+                    System.out.print(toolsJar);
+                    System.out.println();
+                }
+                if (toolsJar.exists()) {
+                    if (verbose) {
+                        System.out.print("Looking for tools.jar in ");
+                        System.out.print(toolsJar);
+                        System.out.println();
+                    }
+                    return toolsJar.toURI().toURL();
+                }
+            }
+        } catch (IOException e) {
+            cause = e;
         }
-        String lookFor = File.separator + "jre";
-        if (javaHome.toLowerCase(Locale.US).endsWith(lookFor)) {
-            javaHome = javaHome.substring(0, javaHome.length() - lookFor.length());
-            toolsJar = new File(javaHome + "/lib/tools.jar");
-        }
-        if (!toolsJar.exists()) {
-        	throw new RuntimeException("Unable to locate tools.jar. Expected to find it in " + toolsJar.getPath());
-        }
-        System.out.println("Launcher: Found tools.jar in " + toolsJar.getPath() + ", by popping up a level from jre.");
-        return toolsJar.toURL();
+        throw new RuntimeException("Unable to locate tools.jar.  Try -v or -verbose and relaunch to see where attempts to locate were made", cause);
     }
     
 }

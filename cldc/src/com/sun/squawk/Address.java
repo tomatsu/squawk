@@ -84,9 +84,10 @@ public final class Address {
      *
      * @param  value an address expressed as an int or long
      * @return the canonical Address instance for <code>value</code>
-     *
-     * @vm2c code( return (Address)value; )
      */
+/*if[JAVA5SYNTAX]*/
+	@Vm2c(code="return (Address)value;")
+/*end[JAVA5SYNTAX]*/
     public static Address fromPrimitive(int/*S64*/ value) throws NativePragma {
         return get(value);
     }
@@ -96,9 +97,10 @@ public final class Address {
      *
      * @param object   the object reference to cast
      * @return the object reference as an address
-     *
-     * @vm2c code( return (Address)object; )
      */
+/*if[JAVA5SYNTAX]*/
+	@Vm2c(code="return (Address)object;")
+/*end[JAVA5SYNTAX]*/
     public static Address fromObject(Object object) throws NativePragma {
         Assert.that(object instanceof Address);
         return (Address)object;
@@ -108,9 +110,10 @@ public final class Address {
      * Gets the canonical Address representation of <code>null</code>.
      *
      * @return the canonical Address representation of <code>null</code>
-     *
-     * @vm2c code( return (Address)0; )
      */
+/*if[JAVA5SYNTAX]*/
+	@Vm2c(code="return (Address)0;")
+/*end[JAVA5SYNTAX]*/
     public static Address zero() throws NativePragma {
         return get(0);
     }
@@ -119,9 +122,10 @@ public final class Address {
      * Gets the largest possible machine address.
      *
      * @return  the largest possible machine address
-     *
-     * @vm2c code( return (Address)-1; )
      */
+/*if[JAVA5SYNTAX]*/
+	@Vm2c(code="return (Address)-1;")
+/*end[JAVA5SYNTAX]*/
     public static Address max() throws NativePragma {
         return get(-1);
     }
@@ -131,6 +135,7 @@ public final class Address {
      *
      * @return this address as an object reference
      */
+	
     public Object toObject() throws NativePragma {
         return this;
     }
@@ -139,9 +144,10 @@ public final class Address {
      * Casts this address to a UWord.
      *
      * @return this address as a UWord
-     *
-     * @vm2c code( return (UWord)this; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (UWord)this;")
+/*end[JAVA5SYNTAX]*/
     public UWord toUWord() throws NativePragma {
         return UWord.fromPrimitive(value);
     }
@@ -151,9 +157,10 @@ public final class Address {
      *
      * @param offset   the offset to add
      * @return the result of adding <code>offset</code> to this address
-     *
-     * @vm2c code( return Address_add(this, offset); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return Address_add(this, offset);")
+/*end[JAVA5SYNTAX]*/
     public Address add(int offset) throws NativePragma {
         return get(value + offset);
     }
@@ -163,9 +170,10 @@ public final class Address {
      *
      * @param offset   the offset to subract
      * @return the result of subtracting <code>offset</code> to this address
-     *
-     * @vm2c code( return Address_sub(this, offset); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return Address_sub(this, offset);")
+/*end[JAVA5SYNTAX]*/
     public Address sub(int offset) throws NativePragma {
         return get(value - offset);
     }
@@ -175,9 +183,10 @@ public final class Address {
      *
      * @param offset   the offset to add
      * @return the result of adding <code>offset</code> to this address
-     *
-     * @vm2c code( return Address_add(this, offset); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return Address_add(this, offset);")
+/*end[JAVA5SYNTAX]*/
     public Address addOffset(Offset offset) throws NativePragma {
         return get(value + offset.toPrimitive());
     }
@@ -187,9 +196,10 @@ public final class Address {
      *
      * @param offset   the offset to subract
      * @return the result of subtracting <code>offset</code> to this address
-     *
-     * @vm2c code( return Address_sub(this, offset); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return Address_sub(this, offset);")
+/*end[JAVA5SYNTAX]*/
     public Address subOffset(Offset offset) throws NativePragma {
         return get(value - offset.toPrimitive());
     }
@@ -199,9 +209,10 @@ public final class Address {
      *
      * @param word   the word to OR this address with
      * @return       the result of the OR operation
-     *
-     * @vm2c code( return (Address)((UWord)this | word); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (Address)((UWord)this | word);")
+/*end[JAVA5SYNTAX]*/
     public Address or(UWord word) throws NativePragma {
         return get(value | word.toPrimitive());
     }
@@ -211,9 +222,10 @@ public final class Address {
      *
      * @param word   the word to AND this address with
      * @return       the result of the AND operation
-     *
-     * @vm2c code( return (Address)((UWord)this & word); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (Address)((UWord)this & word);")
+/*end[JAVA5SYNTAX]*/
     public Address and(UWord word) throws NativePragma {
         return get(value & word.toPrimitive());
     }
@@ -223,9 +235,10 @@ public final class Address {
      *
      * @param address2   the address to compare this address with
      * @return the offset that must be applied to this address to get <code>address2</code>
-     *
-     * @vm2c code( return Address_diff(this, address2); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return Address_diff(this, address2);")
+/*end[JAVA5SYNTAX]*/
     public Offset diff(Address address2) throws NativePragma {
         Assert.that(value >= address2.value);
         return Offset.fromPrimitive(value - address2.value);
@@ -235,9 +248,10 @@ public final class Address {
      * Determines if this address is <code>null</code>.
      *
      * @return true if this address is <code>null</code>
-     *
-     * @vm2c code( return this == 0; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this == 0;")
+/*end[JAVA5SYNTAX]*/
     public boolean isZero() throws NativePragma {
         return this == zero();
     }
@@ -246,9 +260,10 @@ public final class Address {
      * Determines if this address is equals to {@link #max() max}.
      *
      * @return true if this address is equals to {@link #max() max}
-     *
-     * @vm2c code( return this == (Address)-1; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this == (Address)-1;")
+/*end[JAVA5SYNTAX]*/
     public boolean isMax() throws NativePragma {
         return this == max();
     }
@@ -258,9 +273,10 @@ public final class Address {
      *
      * @param address2   the address to compare this address against
      * @return true if this address is equal to <code>address2</code>
-     *
-     * @vm2c code( return this == address2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this == address2;")
+/*end[JAVA5SYNTAX]*/
     public boolean eq(Address address2) throws NativePragma {
         return this == address2;
     }
@@ -270,9 +286,10 @@ public final class Address {
      *
      * @param address2   the address to compare this address against
      * @return true if this address is not equal to <code>address2</code>
-     *
-     * @vm2c code( return this != address2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this != address2;")
+/*end[JAVA5SYNTAX]*/
     public boolean ne(Address address2) throws NativePragma {
         return this != address2;
     }
@@ -282,9 +299,10 @@ public final class Address {
      *
      * @param address2   the address to compare this address against
      * @return true if this address is lower than or equals to <code>address2</code>
-     *
-     * @vm2c code( return this < address2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this < address2;")
+/*end[JAVA5SYNTAX]*/
     public boolean lo(Address address2) throws NativePragma {
         if (value >= 0 && address2.value >= 0) return value < address2.value;
         if (value < 0 && address2.value < 0) return value < address2.value;
@@ -297,9 +315,10 @@ public final class Address {
      *
      * @param address2   the address to compare this address against
      * @return true if this address is lower than or equal to <code>address2</code>
-     *
-     * @vm2c code( return this <= address2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this <= address2;")
+/*end[JAVA5SYNTAX]*/
     public boolean loeq(Address address2) throws NativePragma {
         return (this == address2) || lo(address2);
     }
@@ -309,9 +328,10 @@ public final class Address {
      *
      * @param address2   the address to compare this address against
      * @return true if this address is higher than <code>address2</code>
-     *
-     * @vm2c code( return this > address2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this > address2;")
+/*end[JAVA5SYNTAX]*/
     public boolean hi(Address address2) throws NativePragma {
         return address2.lo(this);
     }
@@ -321,9 +341,10 @@ public final class Address {
      *
      * @param address2   the address to compare this address against
      * @return true if this address is higher than or equal to <code>address2</code>
-     *
-     * @vm2c code( return this >= address2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this >= address2;")
+/*end[JAVA5SYNTAX]*/
     public boolean hieq(Address address2) throws NativePragma {
         return address2.loeq(this);
     }
@@ -333,9 +354,10 @@ public final class Address {
      *
      * @param alignment  this address is rounded up to be a multiple of this value
      * @return the new address
-     *
-     * @vm2c code( return (Address)roundUp((UWord)this, alignment); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (Address)roundUp((UWord)this, alignment);")
+/*end[JAVA5SYNTAX]*/
     public Address roundUp(int alignment) throws NativePragma {
         return get((value + (alignment-1)) & ~(alignment-1));
     }
@@ -344,9 +366,10 @@ public final class Address {
      * Rounds this address up to a machine word boundary.
      *
      * @return the new address
-     *
-     * @vm2c code( return (Address)roundUpToWord((UWord)this); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (Address)roundUpToWord((UWord)this);")
+/*end[JAVA5SYNTAX]*/
     public Address roundUpToWord() throws NativePragma {
         return get((value + (HDR.BYTES_PER_WORD-1)) & ~(HDR.BYTES_PER_WORD-1));
     }
@@ -356,9 +379,10 @@ public final class Address {
      *
      * @param alignment  this address is rounded down to be a multiple of this value
      * @return the new address
-     *
-     * @vm2c code( return (Address)roundDown((UWord)this, alignment); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (Address)roundDown((UWord)this, alignment);")
+/*end[JAVA5SYNTAX]*/
     public Address roundDown(int alignment) throws NativePragma {
         return get(value & ~(alignment-1));
     }
@@ -367,9 +391,10 @@ public final class Address {
      * Rounds this address down to a machine word boundary.
      *
      * @return the new address
-     *
-     * @vm2c code( return (Address)roundDownToWord((UWord)this); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (Address)roundDownToWord((UWord)this);")
+/*end[JAVA5SYNTAX]*/
     public Address roundDownToWord() throws NativePragma {
         return get(value & ~(HDR.BYTES_PER_WORD-1));
     }

@@ -1888,6 +1888,20 @@ public class Arrays {
     }
 
     /**
+     * Make a new Object array and initialize its contents from the contents
+     * of a specified Object array.
+     * @param      src      the source array.
+     * @exception  NullPointerException if either <code>src</code> or
+     *               <code>dest</code> is <code>null</code>.
+     * @return     the initialized copy of <code>src</code>.
+     */
+    public static Object[] copy(Object[] array) {
+        Object[] newArray = new Object[array.length];
+        System.arraycopy(array, 0, newArray, 0, array.length);
+        return newArray;
+    }
+
+    /**
      * Make a new short array and initialize its contents from the contents
      * of a specified short array.
      * @param      src      the source array.

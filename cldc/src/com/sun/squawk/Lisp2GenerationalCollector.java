@@ -769,9 +769,9 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
     private final Timer fullCollectionTimer;
     private final Timer partialCollectionTimer;
 
-    /**
-     * @vm2c root( collectGarbage )
-     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="collectGarbage")
+/*end[JAVA5SYNTAX]*/
     boolean collectGarbageInJava (Address allocTop, boolean forceFullGC) {
 
         // Set up the limits of the space to be collected.
@@ -3471,9 +3471,9 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         timer.finish(Timer.MARK);
     }
 
-    /**
-     * @vm2c root( copyObjectGraph )
-     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="copyObjectGraph")
+/*end[JAVA5SYNTAX]*/
     Address copyObjectGraphInJava(Address object, ObjectMemorySerializer.ControlBlock cb, Address allocTop) {
 
         // Get the special classes if this is the first time a copy is being performed

@@ -24,6 +24,9 @@
 
 package java.util;
 
+/*if[JAVA5SYNTAX]*/
+import com.sun.squawk.Java5Marker;
+/*end[JAVA5SYNTAX]*/
 import com.sun.squawk.util.*;
 
 /**
@@ -71,12 +74,20 @@ import com.sun.squawk.util.*;
  * @see     java.util.Hashtable#rehash()
  * @since   JDK1.0, CLDC 1.0
  */
-public class Hashtable {
+/*if[JAVA5SYNTAX]*/
+public class Hashtable<K, V> {
+/*else[JAVA5SYNTAX]*/
+//public class Hashtable {
+/*end[JAVA5SYNTAX]*/
 
     /**
      * A non synchronized version of this type already exists in Squawk, delegate to it.
      */
-    final com.sun.squawk.util.SquawkHashtable delegate;
+/*if[JAVA5SYNTAX]*/
+    final com.sun.squawk.util.SquawkHashtable<K, V> delegate;
+/*else[JAVA5SYNTAX]*/
+//  final com.sun.squawk.util.SquawkHashtable delegate;
+/*end[JAVA5SYNTAX]*/
 
     /**
      * Constructs a new, empty hashtable with the specified initial
@@ -88,7 +99,11 @@ public class Hashtable {
      * @since      JDK1.0
      */
     public Hashtable(int initialCapacity) {
-        delegate = new com.sun.squawk.util.SquawkHashtable(initialCapacity);
+/*if[JAVA5SYNTAX]*/
+        delegate = new com.sun.squawk.util.SquawkHashtable<K, V>(initialCapacity);
+/*else[JAVA5SYNTAX]*/
+//        delegate = new com.sun.squawk.util.SquawkHashtable(initialCapacity);
+/*end[JAVA5SYNTAX]*/
         delegate.setRehasher(new com.sun.squawk.util.SquawkHashtable.Rehasher() {
             public void rehash() {
                 Hashtable.this.rehash();
@@ -114,7 +129,11 @@ public class Hashtable {
      * @see     java.util.Hashtable#elements()
      * @since   JDK1.0
      */
-    public synchronized Enumeration keys() {
+/*if[JAVA5SYNTAX]*/
+    public synchronized Enumeration<K> keys() {
+/*else[JAVA5SYNTAX]*/
+//    public synchronized Enumeration keys() {
+/*end[JAVA5SYNTAX]*/
         return delegate.keys();
     }
 
@@ -128,7 +147,11 @@ public class Hashtable {
      * @see     java.util.Hashtable#keys()
      * @since   JDK1.0
      */
-    public synchronized Enumeration elements() {
+/*if[JAVA5SYNTAX]*/
+    public synchronized Enumeration<V> elements() {
+/*else[JAVA5SYNTAX]*/
+//    public synchronized Enumeration elements() {
+/*end[JAVA5SYNTAX]*/
         return delegate.elements();
     }
 
@@ -172,8 +195,14 @@ public class Hashtable {
      * @see     java.util.Hashtable#put(java.lang.Object, java.lang.Object)
      * @since   JDK1.0
      */
-    public synchronized Object get(Object key) {
-        return delegate.get(key);
+/*if[JAVA5SYNTAX]*/
+    @SuppressWarnings("unchecked")
+    public synchronized V get(K key) {
+        return (V) delegate.get(key);
+/*else[JAVA5SYNTAX]*/
+//    public synchronized Object get(Object key) {
+//        return delegate.get(key);
+/*end[JAVA5SYNTAX]*/
     }
 
     /**
@@ -194,9 +223,15 @@ public class Hashtable {
      * @see     java.util.Hashtable#get(java.lang.Object)
      * @since   JDK1.0
      */
-    public synchronized Object put(Object key, Object value) {
-        return delegate.put(key, value);
+/*if[JAVA5SYNTAX]*/
+    public synchronized V put(K key, V value) {
+        return (V) delegate.put(key, value);
     }
+/*else[JAVA5SYNTAX]*/
+//    public synchronized Object put(Object key, Object value) {
+//        return delegate.put(key, value);
+//    }
+/*end[JAVA5SYNTAX]*/
 
     /**
      * Removes the key (and its corresponding value) from this
@@ -207,7 +242,11 @@ public class Hashtable {
      *          or <code>null</code> if the key did not have a mapping.
      * @since   JDK1.0
      */
-    public synchronized Object remove(Object key) {
+/*if[JAVA5SYNTAX]*/
+    public synchronized V remove(K key) {
+/*else[JAVA5SYNTAX]*/
+//    public synchronized Object remove(Object key) {
+/*end[JAVA5SYNTAX]*/
         return delegate.remove(key);
     }
 

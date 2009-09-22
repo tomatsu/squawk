@@ -54,11 +54,10 @@ public class BytecodeRoutines extends Verifier {
         out.println("}");
     }
 
-    private Set functionDefs = new HashSet();
+    private Set<String> functionDefs = new HashSet<String>();
 
-    void printCases(PrintWriter out, List list) {
-        for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
-            Instruction instruction = (Instruction) iterator.next();
+    void printCases(PrintWriter out, List<Instruction> list) {
+        for (Instruction instruction: list) {
             if (instruction.compact == null) {
                 String functionDef = getFunction(instruction, false);
                 if (!functionDefs.contains(functionDef)) {

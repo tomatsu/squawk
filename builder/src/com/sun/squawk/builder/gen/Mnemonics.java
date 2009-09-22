@@ -98,10 +98,10 @@ public class Mnemonics extends Generator {
         return new File(baseDir, "com/sun/squawk/vm/Mnemonics.java");
     }
 
-    private static int printMnemonics(PrintWriter out, List list, int opcodeCheck, boolean closeArrayInitializer) {
+    private static int printMnemonics(PrintWriter out, List<Instruction> list, int opcodeCheck, boolean closeArrayInitializer) {
 
-        for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
-            Instruction instruction = (Instruction) iterator.next();
+        for (Iterator<Instruction> iterator = list.iterator(); iterator.hasNext(); ) {
+            Instruction instruction = iterator.next();
             if (opcodeCheck != instruction.opcode) {
                 throw new RuntimeException("instructions are not ordered by opcode");
             }

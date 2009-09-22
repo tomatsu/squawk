@@ -24,6 +24,10 @@
 
 package com.sun.squawk.util;
 
+/*if[JAVA5SYNTAX]*/
+import com.sun.squawk.Vm2c;
+/*end[JAVA5SYNTAX]*/
+
 /**
  * This class provides mechanisms for manipulating a bit set.
  *
@@ -188,9 +192,10 @@ public final class BitSet {
      * @param bytesRequired  the minimum new size
      * @throws IndexOutOfBoundsException if this is an {@link #areBitsExternal() external}
      *              BitSet instance and <code>bitIndex >= this.size()</code>
-     *
-     * @vm2c code( fatalVMError("cannot grow bit set"); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="fatalVMError(\"cannot grow bit set\");")
+/*end[JAVA5SYNTAX]*/
     private void grow(int bitIndex, int bytesRequired) throws IndexOutOfBoundsException {
         // Cannot grow a bit set whose bits are external
         if (bitsAreExternal) {

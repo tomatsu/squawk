@@ -24,11 +24,8 @@
 
 package com.sun.squawk.builder.gen;
 
-import java.io.PrintStream;
-import java.io.ByteArrayOutputStream;
 import java.util.Vector;
 import java.util.Hashtable;
-import java.util.Enumeration;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -39,7 +36,7 @@ public class NativeGen {
     /**
      * Hashtable of methods to exclude,
      */
-    Hashtable exclude = new Hashtable();
+    Hashtable<String, NativeGen> exclude = new Hashtable<String, NativeGen>();
 
     /**
      * Native method id allocator.
@@ -50,7 +47,7 @@ public class NativeGen {
      * The table of native methods defined so far. The identifier for each method is given
      * by its index in this vector.
      */
-    Vector nativeMethods = new Vector();
+    Vector<String> nativeMethods = new Vector<String>();
 
     /**
      * Output option.
@@ -153,7 +150,7 @@ public class NativeGen {
         }
 
         lookup(Class.forName("com.sun.squawk.NativeUnsafe"));
-        Class VM = Class.forName("com.sun.squawk.VM");
+        Class<?> VM = Class.forName("com.sun.squawk.VM");
         lookup(VM);
         lookup(Class.forName("com.sun.squawk.CheneyCollector"));
         lookup(Class.forName("com.sun.squawk.ServiceOperation"));
@@ -185,7 +182,7 @@ public class NativeGen {
      *
      * @param methods   the methods to put in the table
      */
-    void defineLinkableNativeMethodTable(Vector methods) {
+    void defineLinkableNativeMethodTable(Vector<String> methods) {
 
         System.out.println();
         System.out.println("    /**");
@@ -199,9 +196,7 @@ public class NativeGen {
 
         String previous = "";
         int id = 0;
-        for (Enumeration e = methods.elements(); e.hasMoreElements(); ) {
-            String method = (String)e.nextElement();
-
+        for (String method: methods) {
             int substring = 0;
             while (previous.regionMatches(false, 0, method, 0, substring + 1)) {
                 substring++;
@@ -248,11 +243,11 @@ public class NativeGen {
      *
      * @param cls the class to lookup
      */
-    void lookup(Class cls) throws Exception {
+    void lookup(Class<?> cls) throws Exception {
         Method[] methods = cls.getDeclaredMethods();
-        Arrays.sort(methods, new Comparator() {
-            public int compare(Object o1, Object o2) {
-                return ((Method)o1).getName().compareTo(((Method)o2).getName());
+        Arrays.sort(methods, new Comparator<Method>() {
+            public int compare(Method o1, Method o2) {
+                return o1.getName().compareTo(o2.getName());
             }
         });
         for (int i = 0 ; i < methods.length ; i++) {
@@ -270,9 +265,9 @@ public class NativeGen {
      * @return boolean
      */
     private boolean hasNativePragma(Method method) {
-        Class[] exceptionTypes = method.getExceptionTypes();
+        Class<?>[] exceptionTypes = method.getExceptionTypes();
         for (int i = 0; i != exceptionTypes.length; ++i) {
-            Class type = exceptionTypes[i];
+            Class<?> type = exceptionTypes[i];
             if (type.getName().equals("com.sun.squawk.pragma.NativePragma")) {
                 return true;
             }
@@ -309,11 +304,11 @@ public class NativeGen {
      * @param method the method
      */
     void output(Method method) throws Exception {
-        Class cls        = method.getDeclaringClass();
+        Class<?> cls        = method.getDeclaringClass();
         String mname     = method.getName();
         boolean isStatic = Modifier.isStatic(method.getModifiers());
-        Class[] parms    = method.getParameterTypes();
-        Class ret        = method.getReturnType();
+        Class<?>[] parms    = method.getParameterTypes();
+        Class<?> ret        = method.getReturnType();
         output(cls, mname, isStatic, parms, ret);
     }
 
@@ -326,7 +321,7 @@ public class NativeGen {
      * @param parms     the types of the method's parameters
      * @param ret       the return type of the method
      */
-    void output(Class cls, String mname, boolean isStatic, Class[] parms, Class ret) throws Exception {
+    void output(Class<?> cls, String mname, boolean isStatic, Class<?>[] parms, Class<?> ret) throws Exception {
         if (mname.indexOf('_') != -1 ||  mname.indexOf('$') != -1) {
             System.err.println("Must not have '.' or '$' in native method name: "+mname);
             System.exit(-1);
@@ -342,7 +337,7 @@ if (symbol.equals("java_lang_VM$executeCIO")) {
 }
 
             for (int i = parms.length - 1 ; i >= 0 ; --i) {
-                Class parm = parms[i];
+                Class<?> parm = parms[i];
                 String type = getType(parm);
                 System.out.println("            nativepop("+type+"); // "+parm.getName());
             }
@@ -367,7 +362,7 @@ if (symbol.equals("java_lang_VM$executeCIO")) {
 //   System.out.println("/*if[INCLUDE_EXECUTECIO_PARMS]*/");
 //}
             for (int i = parms.length - 1; i >= 0; i--) {
-                Class parm = parms[i];
+                Class<?> parm = parms[i];
                 String type = getType(parm, false);
                 System.out.println("            frame.pop(" + type + "); // " + parm.getName());
             }
@@ -409,7 +404,7 @@ if (symbol.equals("java_lang_VM$executeCIO")) {
      * @param cls the class
      * @return the type
      */
-    String getType(Class cls) {
+    String getType(Class<?> cls) {
         return getType(cls, true);
     }
 
@@ -420,7 +415,7 @@ if (symbol.equals("java_lang_VM$executeCIO")) {
      * @param grow whether to grow integer types smaller than INT up to INT
      * @return the type
      */
-    String getType(Class cls, boolean grow) {
+    String getType(Class<?> cls, boolean grow) {
         if (cls == Float.TYPE) {
             return "FLOAT";
         }

@@ -718,9 +718,10 @@ public class VM {
      * @param      dstPos       start position in the destination data.
      * @param      length       the number of bytes to be copied.
      * @param      nvmDst       the destination buffer is in NVM
-     *
-     * @vm2c proxy
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(proxy="")
+/*end[JAVA5SYNTAX]*/
     static void copyBytes(Object src, int srcPos, Object dst, int dstPos, int length, boolean nvmDst) {
     }
 

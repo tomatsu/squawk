@@ -22,6 +22,9 @@
  * information or have any questions.
  */
 
+/**
+ * Hello
+ */
 package com.sun.cldc.i18n;
 
 import java.io.*;

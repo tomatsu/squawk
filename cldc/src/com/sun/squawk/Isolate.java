@@ -33,8 +33,6 @@ import com.sun.squawk.io.mailboxes.Mailbox;
 import com.sun.squawk.io.mailboxes.MailboxAddress;
 import com.sun.squawk.pragma.*;
 import com.sun.squawk.util.*;
-import com.sun.squawk.util.SquawkVector;
-import com.sun.squawk.util.SquawkHashtable;
 import com.sun.squawk.vm.*;
 
 /************************************ WARNING: THIS CLASS CAN'T REQUIRE A STATIC INITIALIZER! ***********************************************/
@@ -587,9 +585,10 @@ public final class Isolate implements Runnable {
      * Get the name of the main class.
      *
      * @return the name
-     *
-     * @vm2c code( return com_sun_squawk_Isolate_mainClassName(this); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return com_sun_squawk_Isolate_mainClassName(this);")
+/*end[JAVA5SYNTAX]*/
     public String getMainClassName() {
         return copyIfCurrentThreadIsExternal(mainClassName);
     }

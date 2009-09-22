@@ -135,7 +135,7 @@ public class ToDoTaglet implements Taglet {
      * Register this Taglet.
      * @param tagletMap  the map to register this tag to.
      */
-    public static void register(Map tagletMap) {
+    public static void register(Map<String, ToDoTaglet> tagletMap) {
        ToDoTaglet tag = new ToDoTaglet();
        Taglet t = (Taglet) tagletMap.get(tag.getName());
        if (t != null) {
@@ -176,4 +176,3 @@ public class ToDoTaglet implements Taglet {
         return result + "</td></tr></table></DD>\n";
     }
 }
-

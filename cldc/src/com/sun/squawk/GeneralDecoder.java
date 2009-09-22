@@ -37,9 +37,10 @@ public abstract class GeneralDecoder {
      * Gets the next byte.
      *
      * @return the next byte
-     *
-     * @vm2c implementers( com.sun.squawk.VMBufferDecoder )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(implementers="com.sun.squawk.VMBufferDecoder")
+/*end[JAVA5SYNTAX]*/
     abstract int nextByte();
 
     /**

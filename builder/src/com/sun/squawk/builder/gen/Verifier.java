@@ -135,9 +135,8 @@ public class Verifier extends AbstractSwitch {
      * @param out      where to print
      * @param list     a list of Instructions
      */
-    void printCases(PrintWriter out, List list) {
-        for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
-            Instruction instruction = (Instruction) iterator.next();
+    void printCases(PrintWriter out, List<Instruction> list) {
+        for (Instruction instruction: list) {
             if (instruction.compact == null) {
                 out.print(pad("            " + startCase(instruction), 50));
                 Instruction wide = instruction.wide();

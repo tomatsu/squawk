@@ -29,8 +29,8 @@ import java.util.ArrayList;
 import java.io.PrintWriter;
 
 public class Instructions {
-    public static List getInstructions() {
-        ArrayList l = new ArrayList();
+    public static List<Instruction> getInstructions() {
+        ArrayList<Instruction> l = new ArrayList<Instruction>();
 
         l.add(new CONST_I());
         l.add(new OBJECT_I());
@@ -2917,4 +2917,3 @@ public class Instructions {
 
 
 }
-

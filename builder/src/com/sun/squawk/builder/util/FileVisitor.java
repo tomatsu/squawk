@@ -87,7 +87,11 @@ public abstract class FileVisitor {
         		parent = new File(".");
         	}
         	String pattern = file.getName();
-        	for (File eachFile: parent.listFiles()) {
+        	File[] files = parent.listFiles();
+        	if (files == null) {
+        	    return;
+        	}
+        	for (File eachFile: files) {
         		if (matchGlob(eachFile.getName(), pattern, 0, 0)) {
         			run0(eachFile);
         		}

@@ -26,6 +26,10 @@
 
 package java.lang;
 
+/*if[JAVA5SYNTAX]*/
+import com.sun.squawk.Java5Marker;
+/*end[JAVA5SYNTAX]*/
+
 /**
  * The Long class wraps a value of the primitive type <code>long</code>
  * in an object. An object of type <code>Long</code> contains a single
@@ -40,6 +44,9 @@ package java.lang;
  * @version 12/17/01 (CLDC 1.1)
  * @since   JDK1.0, CLDC 1.0
  */
+/*if[JAVA5SYNTAX]*/
+@Java5Marker
+/*end[JAVA5SYNTAX]*/
 public final class Long {
     /**
      * The smallest value of type <code>long</code>.
@@ -330,7 +337,6 @@ public final class Long {
         return (long)value;
     }
 
-/*if[FLOATS]*/
     /**
      * Returns the value of this Long as a float.
      *
@@ -354,7 +360,6 @@ public final class Long {
     public double doubleValue() {
         return (double)value;
     }
-/*end[FLOATS]*/
 
     /**
      * Returns a String object representing this Long's value.
@@ -399,6 +404,13 @@ public final class Long {
             return value == ((Long)obj).longValue();
         }
         return false;
+    }
+
+/*if[JAVA5SYNTAX]*/
+    @Java5Marker
+/*end[JAVA5SYNTAX]*/
+    public static Long valueOf(final long val) {
+        return new Long(val);
     }
 
 }

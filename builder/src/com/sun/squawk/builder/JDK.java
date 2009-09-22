@@ -45,9 +45,6 @@ public class JDK {
         File home = new File(System.getProperty("java.home"));
         if (home.getPath().endsWith("jre")) {
             home = home.getParentFile();
-        	System.out.println("Builder.JDK: Looking for JDK in " + home.getPath() + ", popped up a level from jre");
-        } else {
-        	System.out.println("Builder.JDK: Looking for JDK in " + home.getPath());
         }
         this.home = home;
         this.executableExtension = executableExtension;

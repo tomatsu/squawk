@@ -51,7 +51,7 @@ public abstract class AbstractInstruction implements Instruction {
         out.println(" (0x" + h + ")");
     }
 
-    static final Class opcClass;
+    static final Class<?> opcClass;
     static {
         try {
             opcClass = Class.forName("com.sun.squawk.vm.OPC");
@@ -101,12 +101,8 @@ public abstract class AbstractInstruction implements Instruction {
         return;
     }
 
-    public int compareTo(Object o) {
-        Instruction i = (Instruction)o;
+    public int compareTo(Instruction i) {
         return getName().toLowerCase().compareTo(i.getName().toLowerCase());
     }
+
 }
-
-
-
-

@@ -102,11 +102,7 @@ public class Preprocessor {
      * @param destDir     the directory where the processed files are to be written
      */
     public void execute(FileSet inputFiles, File destDir) {
-
-//        printProperties();
-        Iterator iterator = inputFiles.list().iterator();
-        while (iterator.hasNext()) {
-            File inputFile = (File)iterator.next();
+        for (File inputFile: inputFiles.list()) {
             if (inputFile.length() != 0) {
                 File outputFile = inputFiles.replaceBaseDir(inputFile, destDir);
                 execute(inputFile, outputFile);
@@ -119,8 +115,7 @@ public class Preprocessor {
      *
      */
     protected void printProperties() {
-        for (Iterator entries = properties.entrySet().iterator(); entries.hasNext(); ) {
-            Map.Entry entry = (Map.Entry) entries.next();
+        for (Map.Entry<?, ?> entry: properties.entrySet()) {
             System.out.print(entry.getKey());
             System.out.print("=");
             System.out.println(entry.getValue());

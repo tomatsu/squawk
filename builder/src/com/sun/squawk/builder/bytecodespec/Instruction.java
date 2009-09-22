@@ -26,7 +26,7 @@ package com.sun.squawk.builder.bytecodespec;
 
 import java.io.PrintWriter;
 
-public interface Instruction extends Comparable {
+public interface Instruction extends Comparable<Instruction> {
     abstract public String getName();
     abstract public void printOperation(PrintWriter out);
     abstract public void printFormat(PrintWriter out);

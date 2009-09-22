@@ -26,6 +26,10 @@
 
 package java.util;
 
+/*if[JAVA5SYNTAX]*/
+import com.sun.squawk.Java5Marker;
+/*end[JAVA5SYNTAX]*/
+
 /**
  * The <code>Stack</code> class represents a last-in-first-out 
  * (LIFO) stack of objects. It extends class <tt>Vector</tt> with five 
@@ -40,8 +44,13 @@ package java.util;
  * @version 12/17/01 (CLDC 1.1)
  * @since   JDK1.0, CLDC 1.0
  */
-public
-class Stack extends Vector {
+
+/*if[JAVA5SYNTAX]*/
+@Java5Marker
+public class Stack<E> extends Vector<E> {
+/*else[JAVA5SYNTAX]*/
+//public class Stack extends Vector {
+/*end[JAVA5SYNTAX]*/
 
     /**
      * Creates an empty Stack.
@@ -59,7 +68,11 @@ class Stack extends Vector {
      * @return  the <code>item</code> argument.
      * @see     java.util.Vector#addElement
      */
-    public Object push(Object item) {
+/*if[JAVA5SYNTAX]*/
+    public E push(E item) {
+/*else[JAVA5SYNTAX]*/
+//    public Object push(Object item) {
+/*end[JAVA5SYNTAX]*/
         addElement(item);
         return item;
     }
@@ -72,14 +85,23 @@ class Stack extends Vector {
      *             of the <tt>Vector</tt> object).
      * @exception  EmptyStackException  if this stack is empty.
      */
-    public synchronized Object pop() {
+/*if[JAVA5SYNTAX]*/
+    @SuppressWarnings("unchecked")
+    public synchronized E pop() {
+/*else[JAVA5SYNTAX]*/
+//    public synchronized Object pop() {
+/*end[JAVA5SYNTAX]*/
         Object obj;
         int    len = size();
 
         obj = peek();
         removeElementAt(len - 1);
 
-        return obj;
+/*if[JAVA5SYNTAX]*/
+        return (E) obj;
+/*else[JAVA5SYNTAX]*/
+//        return obj;
+/*end[JAVA5SYNTAX]*/
     }
 
     /**

@@ -40,8 +40,8 @@ public class SwitchDotC extends Generator {
      */
     void generate(PrintWriter out) {
 
-        List instructions = Instruction.getInstructions();
-        List floatInstructions = Instruction.getFloatInstructions();
+        List<Instruction> instructions = Instruction.getInstructions();
+        List<Instruction> floatInstructions = Instruction.getFloatInstructions();
 
         printCopyright(out);
 
@@ -137,9 +137,8 @@ public class SwitchDotC extends Generator {
      * @param out      where to print
      * @param list     a list of Instructions
      */
-    private static void printCases(PrintWriter out, List list) {
-        for (Iterator iterator = list.iterator(); iterator.hasNext(); ) {
-            Instruction instruction = (Instruction) iterator.next();
+    private static void printCases(PrintWriter out, List<Instruction> list) {
+        for (Instruction instruction: list) {
             if (instruction.compact == null) {
                 out.print(pad("            case OPC_" + instruction.mnemonic.toUpperCase() + ": ", 50));
                 Instruction wide = instruction.wide();

@@ -121,15 +121,15 @@ public class SppFilePreprocessCommand extends Command {
         Macroizer macroizer = env.getMacroizer();
         CCompiler ccompiler = env.getCCompiler();
 
-        List generatedFiles = new ArrayList();
-        for (int i = 0; i != args.length; ++i) {
-            File file = new File(args[i]);
+        List<File> generatedFiles = new ArrayList<File>();
+        for (String arg: args) {
+            File file = new File(arg);
             preprocess(file, generatedFiles, preprocessor, macroizer, ccompiler.options.macroize);
         }
 
         env.log(env.verbose, "Generated the following files:");
-        for (Iterator iterator = generatedFiles.iterator(); iterator.hasNext(); ) {
-            env.log(env.verbose, "    " + iterator.next());
+        for (File file: generatedFiles) {
+            env.log(env.verbose, "    " + file);
         }
 
     }

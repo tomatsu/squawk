@@ -51,7 +51,11 @@ package java.util;
  * @see     java.util.Vector#elements()
  * @since   JDK1.0, CLDC 1.0
  */
-public interface Enumeration {
+/*if[JAVA5SYNTAX]*/
+public interface Enumeration<E> {
+/*else[JAVA5SYNTAX]*/
+//public interface Enumeration {
+/*end[JAVA5SYNTAX]*/
 
     /**
      * Tests if this enumeration contains more elements.
@@ -69,5 +73,9 @@ public interface Enumeration {
      * @return     the next element of this enumeration.
      * @exception  NoSuchElementException  if no more elements exist.
      */
-    Object nextElement();
+/*if[JAVA5SYNTAX]*/
+    E nextElement();
+/*else[JAVA5SYNTAX]*/
+//    Object nextElement();
+/*end[JAVA5SYNTAX]*/
 }

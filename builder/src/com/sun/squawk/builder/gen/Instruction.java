@@ -70,20 +70,20 @@ public final class Instruction {
      */
     public final String operandStackEffect;
 
-    public void widen(int opcode, List list) {
+    public void widen(int opcode, List<Instruction> list) {
         Instruction wide = new Instruction(opcode, mnemonic+"_wide", iparm, this, null, operandStackEffect, flow);
         list.add(wide);
         this.wide = wide;
     }
 
-    private static List instructions;
-    private static List floatInstructions;
-    private static List allInstructions;
+    private static List<Instruction> instructions;
+    private static List<Instruction> floatInstructions;
+    private static List<Instruction> allInstructions;
 
     /**
      * Gets the list of instructions in the Squawk VM instruction set.
      */
-    public static List getInstructions() {
+    public static List<Instruction> getInstructions() {
         if (instructions == null) {
 
             Factory f = new Factory(0);
@@ -309,10 +309,10 @@ public final class Instruction {
         return instructions;
     }
 
-    public static List getFloatInstructions() {
+    public static List<Instruction> getFloatInstructions() {
         if (floatInstructions == null) {
 
-            List nonFloatInstructions = getInstructions();
+            List<Instruction> nonFloatInstructions = getInstructions();
             Instruction last = (Instruction)nonFloatInstructions.get(nonFloatInstructions.size() - 1);
             Factory f = new Factory(last.opcode + 1);
 
@@ -395,9 +395,9 @@ public final class Instruction {
         return floatInstructions;
     }
 
-    public static List getAllInstructions() {
+    public static List<Instruction> getAllInstructions() {
         if (allInstructions == null) {
-            List list = new ArrayList(500);
+            List<Instruction> list = new ArrayList<Instruction>(500);
             list.addAll(getInstructions());
             list.addAll(getFloatInstructions());
             allInstructions = list;
@@ -508,8 +508,8 @@ public final class Instruction {
 
         private int nextOpcode;
 
-        private final List defs = new ArrayList();
-        private final List wides = new ArrayList();
+        private final List<Instruction> defs = new ArrayList<Instruction>();
+        private final List<Instruction> wides = new ArrayList<Instruction>();
 
         /**
          * Defines a range of instructions that have an implicit parameter in their opcode
@@ -552,9 +552,8 @@ public final class Instruction {
          *
          * @return  the list of instructions that have been defined
          */
-        List getDefinitions() {
-            for (Iterator iterator = wides.iterator(); iterator.hasNext();) {
-                Instruction compact = (Instruction)iterator.next();
+        List<Instruction> getDefinitions() {
+            for (Instruction compact: wides) {
                 compact.widen(nextOpcode++, defs);
 
             }

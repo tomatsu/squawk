@@ -161,7 +161,6 @@ public class Jam extends Thread {
                 } catch (IOException e) {
                 }
             }
-            ;
             input = null;
             if (output != null) {
                 try {
@@ -169,7 +168,6 @@ public class Jam extends Thread {
                 } catch (IOException e) {
                 }
             }
-            ;
             output = null;
         }
     }
@@ -455,7 +453,6 @@ public class Jam extends Thread {
         if (jarFile != null) {
             jarFile.delete();
         }
-        ;
         if (suitePath != null) {
             new File(suitePath + MakeAPI.SUITE_FILE_EXTENSION).delete();
             new File(suitePath + MakeAPI.SUITE_FILE_EXTENSION + MakeAPI.SUITE_FILE_EXTENSION_METADATA).delete();
@@ -533,7 +530,6 @@ public class Jam extends Thread {
                     if (jarFile != null) {
                         jarFile.delete();
                     }
-                    ;
                     if (suitePath != null) {
                         new File(suitePath + MakeAPI.SUITE_FILE_EXTENSION).delete();
                         new File(suitePath + MakeAPI.SUITE_FILE_EXTENSION + MakeAPI.SUITE_FILE_EXTENSION_API).delete();

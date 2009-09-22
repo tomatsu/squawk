@@ -78,9 +78,10 @@ public final class UWord {
      *
      * @param  value   a word expressed as an int or long
      * @return the canonical UWord instance for <code>value</code>
-     *
-     * @vm2c code( return (UWord)value; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (UWord)value;")
+/*end[JAVA5SYNTAX]*/
     public static UWord fromPrimitive(int/*S64*/ value) throws NativePragma {
         return get(value);
     }
@@ -91,9 +92,10 @@ public final class UWord {
      * truncating its magnitude.
      *
      * @return this UWord value as an int or long
-     *
-     * @vm2c code( return (Offset)this; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (Offset)this;")
+/*end[JAVA5SYNTAX]*/
     public int/*S64*/ toPrimitive() throws NativePragma {
         return value;
     }
@@ -104,9 +106,10 @@ public final class UWord {
      * truncating its magnitude.
      *
      * @return this UWord value as an int
-     *
-     * @vm2c code( assume((int)this == this); return (int)this; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="assume((int)this == this); return (int)this;")
+/*end[JAVA5SYNTAX]*/
     public int toInt() throws NativePragma {
         Assert.that((int)value == value);
         return (int)value;
@@ -117,9 +120,10 @@ public final class UWord {
      * as a signed quantity.
      *
      * @return this UWord value as an Offset
-     *
-     * @vm2c code( return (Offset)this; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (Offset)this;")
+/*end[JAVA5SYNTAX]*/
     public Offset toOffset() throws NativePragma {
         return Offset.fromPrimitive(value);
     }
@@ -128,9 +132,10 @@ public final class UWord {
      * Gets the canonical UWord representation of <code>null</code>.
      *
      * @return the canonical UWord representation of <code>null</code>
-     *
-     * @vm2c code( return 0; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return 0;")
+/*end[JAVA5SYNTAX]*/
     public static UWord zero() throws NativePragma {
         return get(0);
     }
@@ -139,9 +144,10 @@ public final class UWord {
      * Gets the largest possible machine word.
      *
      * @return  the largest possible machine word
-     *
-     * @vm2c code( return (UWord)-1; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return (UWord)-1;")
+/*end[JAVA5SYNTAX]*/
     public static UWord max() throws NativePragma {
         return get(-1);
     }
@@ -151,9 +157,10 @@ public final class UWord {
      *
      * @param word   the word to OR this word with
      * @return       the result of the OR operation
-     *
-     * @vm2c code( return this | word; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this | word;")
+/*end[JAVA5SYNTAX]*/
     public UWord or(UWord word) throws NativePragma {
         return get(this.value | word.value);
     }
@@ -163,9 +170,10 @@ public final class UWord {
      *
      * @param word   the word to AND this word with
      * @return       the result of the AND operation
-     *
-     * @vm2c code( return this & word; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this & word;")
+/*end[JAVA5SYNTAX]*/
     public UWord and(UWord word) throws NativePragma {
         return get(this.value & word.value);
     }
@@ -174,9 +182,10 @@ public final class UWord {
      * Determines if this word is 0.
      *
      * @return true if this word is 0.
-     *
-     * @vm2c code( return this == 0; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this == 0;")
+/*end[JAVA5SYNTAX]*/
     public boolean isZero() throws NativePragma {
         return this == zero();
     }
@@ -185,9 +194,10 @@ public final class UWord {
      * Determines if this word is equals to {@link #max() max}.
      *
      * @return true if this word is equals to {@link #max() max}
-     *
-     * @vm2c code( return this == ((UWord)-1); )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this == ((UWord)-1);")
+/*end[JAVA5SYNTAX]*/
     public boolean isMax() throws NativePragma {
         return this == max();
     }
@@ -197,9 +207,10 @@ public final class UWord {
      *
      * @param word2   the word to compare this word against
      * @return true if this word is equal to <code>word2</code>
-     *
-     * @vm2c code( return this == word2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this == word2;")
+/*end[JAVA5SYNTAX]*/
     public boolean eq(UWord word2) throws NativePragma {
         return this == word2;
     }
@@ -209,9 +220,10 @@ public final class UWord {
      *
      * @param word2   the word to compare this word against
      * @return true if this word is not equal to <code>word2</code>
-     *
-     * @vm2c code( return this != word2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this != word2;")
+/*end[JAVA5SYNTAX]*/
     public boolean ne(UWord word2) throws NativePragma {
         return this != word2;
     }
@@ -221,9 +233,10 @@ public final class UWord {
      *
      * @param word2   the word to compare this word against
      * @return true if this word is lower than or equals to <code>word2</code>
-     *
-     * @vm2c code( return this < word2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this < word2;")
+/*end[JAVA5SYNTAX]*/
     public boolean lo(UWord word2) throws NativePragma {
         if (value >= 0 && word2.value >= 0) return value < word2.value;
         if (value < 0 && word2.value < 0) return value < word2.value;
@@ -236,9 +249,10 @@ public final class UWord {
      *
      * @param word2   the word to compare this word against
      * @return true if this word is lower than or equal to <code>word2</code>
-     *
-     * @vm2c code( return this <= word2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this <= word2;")
+/*end[JAVA5SYNTAX]*/
     public boolean loeq(UWord word2) throws NativePragma {
         return (this == word2) || lo(word2);
     }
@@ -248,9 +262,10 @@ public final class UWord {
      *
      * @param word2   the word to compare this word against
      * @return true if this word is higher than <code>word2</code>
-     *
-     * @vm2c code( return this > word2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this > word2;")
+/*end[JAVA5SYNTAX]*/
     public boolean hi(UWord word2) throws NativePragma {
         return word2.lo(this);
     }
@@ -260,9 +275,10 @@ public final class UWord {
      *
      * @param word2   the word to compare this word against
      * @return true if this word is higher than or equal to <code>word2</code>
-     *
-     * @vm2c code( return this >= word2; )
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="return this >= word2;")
+/*end[JAVA5SYNTAX]*/
     public boolean hieq(UWord word2) throws NativePragma {
         return word2.loeq(this);
     }

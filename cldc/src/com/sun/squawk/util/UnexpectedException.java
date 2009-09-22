@@ -30,12 +30,12 @@ public class UnexpectedException extends RuntimeException {
     protected Throwable unexpected;
     
     public UnexpectedException(String message, Throwable unexpected) {
-        super(message);
+        super(message + ":" + unexpected.getClass() + ":" + unexpected.getMessage());
         this.unexpected = unexpected;
     }
 
     public UnexpectedException(Throwable unexpected) {
-        super(unexpected.getMessage());
+        super(unexpected.getClass() + ":" + unexpected.getMessage());
         this.unexpected = unexpected;
     }
 

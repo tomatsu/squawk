@@ -233,15 +233,18 @@ public class Connector {
         name = name.substring(colon+1);
 
         /* First try for specific host class */
-        Connection result = openPrim(protocol, protocol, name, mode, timeouts, host);
+        Connection result = openPrim(protocol, protocol, name, mode, timeouts, host, classRoot);
         if (result == null) {
-            if (!host.equals("j2me")) { // same as VM.isHosted()?
-                // make sure we try j2me before giving up, but don't search 2x if we don't have to
-                result = openPrim(protocol, protocol, name, mode, timeouts, "j2me");
+            if (host.equals("j2me")) {
+                // Try the phoneme set of protocols
+                result = openPrim(protocol, protocol, name, mode, timeouts, "j2me", "com.sun.midp.io");
+            } else {
+                // make sure we try j2me before giving up, but only if the first try was not already j2me
+                result = openPrim(protocol, protocol, name, mode, timeouts, "j2me", classRoot);
             }
             if (result == null) {
                 // try to channel out to embedded JVM
-                result = openPrim("channel", protocol, name, mode, timeouts, host);
+                result = openPrim("channel", protocol, name, mode, timeouts, host, classRoot);
             }
             if (result == null) {
                 throw new ConnectionNotFoundException("The '"+protocol+"' protocol does not exist");
@@ -264,7 +267,7 @@ public class Connector {
      *
      * @exception IOException If some other kind of I/O error occurs.
      */
-    private static Connection openPrim(String protocolClassName, String protocolName, String name, int mode, boolean timeouts, String platform) throws IOException {
+    private static Connection openPrim(String protocolClassName, String protocolName, String name, int mode, boolean timeouts, String platform, String packageRoot) throws IOException {
         try {
             ConnectionBase con;
 /*if[!REUSEABLE_MESSAGES]*/
@@ -278,7 +281,7 @@ public class Connector {
                  * Use the platform and protocol names to look up a class
                  * to implement the connection and construct a new instance
                  */
-                String fullclassname = classRoot + "." + platform + "." + protocolClassName + ".Protocol";
+                String fullclassname = packageRoot + "." + platform + "." + protocolClassName + ".Protocol";
                 Class clazz = null;
                 
                 if (protocolTable == null) { // bootstrapping gets in the way. Wait until class is initialized before getting fancy
