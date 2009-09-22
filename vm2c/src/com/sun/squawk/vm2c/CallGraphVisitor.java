@@ -21,12 +21,10 @@
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 package com.sun.squawk.vm2c;
 
 import java.util.*;
 
-import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.squawk.vm2c.ProcessedMethod.*;
 
@@ -40,7 +38,6 @@ public class CallGraphVisitor {
     private static final Object WHITE = null;
     private static final Object GREY = new Object();
     private static final Object BLACK = new Object();
-
     private final Map<ProcessedMethod, Object> colours;
 
     /**
@@ -51,7 +48,7 @@ public class CallGraphVisitor {
      *        successive call graph traversals
      */
     public CallGraphVisitor(boolean idempotentScans) {
-        colours = idempotentScans ? null : new HashMap<ProcessedMethod,Object>();
+        colours = idempotentScans ? null : new HashMap<ProcessedMethod, Object>();
     }
 
     /**
@@ -72,8 +69,7 @@ public class CallGraphVisitor {
     }
 
     private void scan(ProcessedMethod caller, Map<MethodSymbol, ProcessedMethod> methods,
-                      Map<ProcessedMethod, Object> colours, Stack<CallSite> calls)
-    {
+            Map<ProcessedMethod, Object> colours, Stack<CallSite> calls) {
         Object colour = colours.get(caller);
         if (colour == WHITE) {
             colours.put(caller, GREY);
@@ -96,5 +92,6 @@ public class CallGraphVisitor {
         }
     }
 
-    public void visitMethod(ProcessedMethod method, List<CallSite> calls) {}
+    public void visitMethod(ProcessedMethod method, List<CallSite> calls) {
+    }
 }

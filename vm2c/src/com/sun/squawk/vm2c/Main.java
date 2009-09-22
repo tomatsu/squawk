@@ -21,7 +21,6 @@
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 package com.sun.squawk.vm2c;
 
 import java.io.*;
@@ -35,10 +34,14 @@ import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Enter;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.Todo;
-import com.sun.tools.javac.main.*;
-import com.sun.tools.javac.tree.Tree;
-import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.main.CommandLine;
+import com.sun.tools.javac.main.JavaCompiler;
+import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
+import com.sun.tools.javac.util.Log;
+import com.sun.tools.javac.util.Options;
+import javax.tools.JavaFileObject;
 
 /**
  * The command line interface for the tool that converts the call graphs
@@ -79,7 +82,7 @@ public class Main {
             System.exit(1);
         }
 
-    	int argc = 0;
+        int argc = 0;
         String classPathArg = null;
         String sourcePathArg = null;
         String outFile = null;
@@ -134,25 +137,27 @@ public class Main {
             System.exit(1);
         }
 
-    	Context context = new Context();
+        Context context = new Context();
         Options options = Options.instance(context);
         options.put("-nowarn", "true"); // NOI18N
         options.put("-source", "1.5");
         options.put("-verbose", false ? "true" : null);  // dump out paths and classfile loading
-        options.put("-s", "");
+//        options.put("-s", "");
+        options.put("-printsource", "");
         options.put("-sourcepath", sourcePathArg);
         options.put("-classpath", "");
-        
-    	JavaCompiler compiler = JavaCompiler.instance(context);
-    	Log log = Log.instance(context);
 
-    	// Get the root class names
-    	List<Tree.TopLevel> units = List.nil();
-    	URLClassPath sourcePath = new URLClassPath(URLClassPath.pathToURLs(sourcePathArg));
+        JavaCompiler compiler = JavaCompiler.instance(context);
+        compiler.keepComments = true;
+        Log log = Log.instance(context);
+
+        // Get the root class names
+        List<JCTree.JCCompilationUnit> units = List.nil();
+        URLClassPath sourcePath = new URLClassPath(URLClassPath.pathToURLs(sourcePathArg));
         while (argc != args.length) {
-        	String arg = args[argc++];
-//            String rootFileName = arg.replace('.', File.separatorChar) + ".java";
-        	String rootFileName = arg;
+            String arg = args[argc++];
+//            String rootFileName = arg.replace('.', File.separatorChar) + ".java";            
+            String rootFileName = arg;
             URL resource = sourcePath.findResource(rootFileName, true);
             if (resource == null) {
                 System.err.println("Cannot find file: " + rootFileName);
@@ -160,27 +165,35 @@ public class Main {
             }
             InputStream input = resource.openStream();
             try {
-            	Tree.TopLevel unit = compiler.parse(rootFileName, input);
-            	checkErrorsDuringParsing(log);
+                javax.tools.JavaCompiler c = javax.tools.ToolProvider.getSystemJavaCompiler();
+                javax.tools.StandardJavaFileManager fileManager = c.getStandardFileManager(null, null, null);
+                Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(new File[]{new File(rootFileName)}));
+                fileManager.close();
+
+                JCTree.JCCompilationUnit unit = compiler.parse(compilationUnits.iterator().next());
+                checkErrorsDuringParsing(log);
                 units = units.prepend(unit);
             } finally {
-            	try {input.close();} catch (IOException e) {};
+                try {
+                    input.close();
+                } catch (IOException e) {
+                }
             }
         }
         Enter enter = Enter.instance(context);
-        List<Tree> trees = List.nil();
-        for (Tree.TopLevel unit: units) {
-        	trees = trees.prepend(unit);
+        List<JCTree.JCCompilationUnit> trees = List.nil();
+        for (JCTree.JCCompilationUnit unit : units) {
+            trees = trees.prepend(unit);
         }
         enter.main(trees);
-    	checkErrorsDuringParsing(log);
-        
+        checkErrorsDuringParsing(log);
+
         Todo todo = Todo.instance(context);
         Attr attr = Attr.instance(context);
         while (todo.nonEmpty()) {
             Env<AttrContext> env = todo.next();
-            attr.attribClass(env.tree.pos, env.enclClass.sym);
-        	checkErrorsDuringParsing(log);
+            attr.attribClass(env.tree.pos(), env.enclClass.sym);
+            checkErrorsDuringParsing(log);
         }
 
         Converter converter = new Converter(context);
@@ -189,7 +202,7 @@ public class Main {
         converter.parse(units, rootClassNames);
 
         StringWriter buf = new StringWriter();
-        PrintWriter out = new PrintWriter(buf);
+        PrintWriter out = new PrintWriter(buf);        
         converter.emit(out);
         out.close();
 
@@ -201,10 +214,10 @@ public class Main {
             System.exit(1);
         }
     }
-    
+
     protected static void checkErrorsDuringParsing(Log log) {
         if (log.nerrors > 0) {
-//        	throw new RuntimeException("Errors during parsing");
+            throw new RuntimeException("Errors during parsing");
         }
     }
 }

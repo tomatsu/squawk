@@ -21,7 +21,6 @@
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 package com.sun.squawk.vm2c;
 
 import java.util.*;
@@ -41,9 +40,9 @@ public class ProcessedMethod {
 
         final MethodSymbol callee;
         final MethodSymbol caller;
-        final Tree.Apply call;
+        final JCTree.JCMethodInvocation call;
 
-        public CallSite(MethodSymbol callee, MethodSymbol caller, Tree.Apply call) {
+        public CallSite(MethodSymbol callee, MethodSymbol caller, JCTree.JCMethodInvocation call) {
             assert callee != null;
             assert caller != null;
             assert call != null;
@@ -57,7 +56,7 @@ public class ProcessedMethod {
          */
         public int compareTo(Object o) {
             if (o instanceof CallSite) {
-                CallSite cs = (CallSite)o;
+                CallSite cs = (CallSite) o;
                 return call.pos - cs.call.pos;
             }
             return -1;
@@ -75,37 +74,32 @@ public class ProcessedMethod {
             return caller.hashCode() + call.pos;
         }
     }
-
     /**
      * The method's symbol.
      */
     final MethodSymbol sym;
-
     /**
      * The AST for this method.
      */
-    final Tree.MethodDef tree;
-
+    final JCTree.JCMethodDecl tree;
     /**
      * The compilation unit in which this method was defined.
      */
-    final Tree.TopLevel unit;
-
+    final JCTree.JCCompilationUnit unit;
     InconvertibleNodeException error;
-
     /**
      * The methods that this method (directly) calls.
      */
     final Set<CallSite> calls = new TreeSet<CallSite>();
 
-    public ProcessedMethod(MethodSymbol method, Tree.MethodDef tree, Tree.TopLevel unit) {
+    public ProcessedMethod(MethodSymbol method, JCTree.JCMethodDecl tree, JCTree.JCCompilationUnit unit) {
         this.sym = method;
         this.tree = tree;
         this.unit = unit;
     }
 
     public final boolean equals(Object o) {
-        return o instanceof ProcessedMethod && ((ProcessedMethod)o).sym == sym;
+        return o instanceof ProcessedMethod && ((ProcessedMethod) o).sym == sym;
     }
 
     public final int hashCode() {
@@ -113,6 +107,6 @@ public class ProcessedMethod {
     }
 
     public String toString() {
-        return sym.enclClass().fullName() + "." + sym;
+        return sym.enclClass().fullname + "." + sym;
     }
 }

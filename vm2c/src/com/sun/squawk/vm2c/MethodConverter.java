@@ -21,45 +21,42 @@
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 package com.sun.squawk.vm2c;
 
-import java.util.*;
-
-import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.TypeTags;
 import com.sun.tools.javac.tree.*;
-import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
-import java.util.regex.*;
+import java.util.Iterator;
+import java.util.Map;
+import com.sun.tools.javac.util.Convert;
 
 /**
  * Converts a Java method to C functions.
  *
  */
-public class MethodConverter extends Tree.Visitor {
+public class MethodConverter extends JCTree.Visitor {
 
     /**
      * The method being converted.
      */
     private final ProcessedMethod method;
-
     /**
      * A hashtable mapping the first statement in a block to the set of variable
      * declarations local to the block.
      */
-    private final Map<Tree, List<VarSymbol>> blockLocalDecls;
-
+    private final Map<JCTree, List<VarSymbol>> blockLocalDecls;
     /**
      * The conversion context.
      */
     private final Converter conv;
-
     /**
      * The buffer for the generated C functions.
      */
     private CCodeBuffer ccode;
-
     /**
      * Resolves character positions to source file line numbers.
      */
@@ -89,20 +86,17 @@ public class MethodConverter extends Tree.Visitor {
         return ccode.toString();
     }
 
-    static void inconvertible(Tree inconvertibleNode, String desc) {
+    static void inconvertible(JCTree inconvertibleNode, String desc) {
         String message = "converter cannot handle " + desc;
         throw new InconvertibleNodeException(inconvertibleNode, message);
     }
-
     /**************************************************************************
      * Traversal methods
      *************************************************************************/
-
     /** Visitor argument: the current precedence level.
      */
     int parentsPrec = TreeInfo.notExpression;
     int prec = TreeInfo.notExpression;
-
     /**
      * Visitor argument: denotes if the current expression is an lvalue or rvalue
      */
@@ -111,7 +105,7 @@ public class MethodConverter extends Tree.Visitor {
     /** Visitor method: traverse expression tree.
      *  @param prec  The current precedence level.
      */
-    public void doExpr(Tree tree, int prec, boolean lvalue) {
+    public void doExpr(JCTree tree, int prec, boolean lvalue) {
         int prevParentsPrec = this.parentsPrec;
         int prevPrec = this.prec;
         boolean prevLvalue = this.lvalue;
@@ -119,9 +113,9 @@ public class MethodConverter extends Tree.Visitor {
             this.parentsPrec = this.prec;
             this.prec = prec;
             this.lvalue = lvalue;
-            if (tree == null)
+            if (tree == null) {
                 ccode.print("/*missing*/");
-            else {
+            } else {
                 tree.accept(this);
             }
         } catch (Error e) {
@@ -144,11 +138,11 @@ public class MethodConverter extends Tree.Visitor {
         }
     }
 
-    public void doExpr(Tree tree, int prec) {
+    public void doExpr(JCTree tree, int prec) {
         doExpr(tree, prec, false);
     }
 
-    public String exprToString(Tree tree, int prec, boolean lvalue) {
+    public String exprToString(JCTree tree, int prec, boolean lvalue) {
         ccode = ccode.enter();
         doExpr(tree, prec, lvalue);
         String value = ccode.toString();
@@ -159,20 +153,20 @@ public class MethodConverter extends Tree.Visitor {
     /** Derived visitor method: print expression tree at minimum precedence level
      *  for expression.
      */
-    public void doExpr(Tree tree) {
+    public void doExpr(JCTree tree) {
         doExpr(tree, TreeInfo.notExpression, false);
     }
 
     /** Derived visitor method: print statement tree.
      */
-    public void doStatement(Tree tree) {
+    public void doStatement(JCTree tree) {
         doExpr(tree, TreeInfo.notExpression, false);
     }
 
     /** Derived visitor method: print list of expression trees, separated by given string.
      *  @param sep the separator string
      */
-    public <T extends Tree> void doExprs(List<T> trees, String sep) {
+    public <T extends JCTree> void doExprs(List<T> trees, String sep) {
         if (trees.nonEmpty()) {
             doExpr(trees.head);
             for (List<T> l = trees.tail; l.nonEmpty(); l = l.tail) {
@@ -184,14 +178,14 @@ public class MethodConverter extends Tree.Visitor {
 
     /** Derived visitor method: print list of expression trees, separated by commas.
      */
-    public <T extends Tree> void doExprs(List<T> trees) {
+    public <T extends JCTree> void doExprs(List<T> trees) {
         doExprs(trees, ", ");
     }
 
     /** Derived visitor method: print list of statements, each on a separate line.
      */
-    public void doStatements(List<? extends Tree> trees, String sep) {
-        for (List<? extends Tree> l = trees; l.nonEmpty(); l = l.tail) {
+    public void doStatements(List<? extends JCTree> trees, String sep) {
+        for (List<? extends JCTree> l = trees; l.nonEmpty(); l = l.tail) {
             ccode.align();
             doStatement(l.head);
             ccode.println();
@@ -200,7 +194,7 @@ public class MethodConverter extends Tree.Visitor {
 
     /** Print a block.
      */
-    public void doBlock(List<? extends Tree> stats) {
+    public void doBlock(List<? extends JCTree> stats) {
         ccode.println("{");
         ccode.indent();
 
@@ -227,26 +221,24 @@ public class MethodConverter extends Tree.Visitor {
         ccode.print(" " + conv.subVarName(var.name));
     }
 
-
     /**************************************************************************
      * Visitor methods
      *************************************************************************/
-
-    public void visitClassDef(Tree.ClassDef tree) {
+    public void visitClassDef(JCTree.JCClassDecl tree) {
         inconvertible(tree, "method-local class definition");
     }
 
     private boolean isVirtual(MethodSymbol method) {
         return !method.isStatic() &&
-            (method.flags() & Flags.FINAL) == 0 &&
-            (method.enclClass().flags() & Flags.FINAL) == 0;
+                (method.flags() & Flags.FINAL) == 0 &&
+                (method.enclClass().flags() & Flags.FINAL) == 0;
     }
 
     private final static int NEVER_INLINE = -1;
     private final static int MAY_INLINE = 0;
     private final static int MUST_INLINE = 1;
 
-    public void visitMethodDef(Tree.MethodDef tree) {
+    public void visitMethodDef(JCTree.JCMethodDecl tree) {
 
         Map<String, String> annotations = new AnnotationParser().parse(method);
         String cRoot = annotations.get("root");
@@ -255,27 +247,23 @@ public class MethodConverter extends Tree.Visitor {
         assert tree.sym == method;
         List<ProcessedMethod> impls = conv.getImplementersOf(method);
 
-		List<Tree> thrown = tree.thrown;
-		int shouldInline = MAY_INLINE;
+        List<JCTree.JCExpression> thrown = tree.thrown;
+        boolean shouldInline = false;
 
-		if (thrown != null) {
-		    Iterator<Tree> iter = thrown.iterator();
-			while (iter.hasNext()) {
-				Tree.Ident t = (Tree.Ident)iter.next();
-				String name = t.name.toString();
-				if (name.equals("ForceInlinedPragma") ||
-                    name.equals("AllowInlinedPragma") ||
-					name.equals("NativePragma")) {
-					shouldInline = MUST_INLINE;
-					// System.out.println("Auto inlining " + method);
-					break;
-				} else if (name.equals("NotInlinedPragma")) {
-					shouldInline = NEVER_INLINE;
-					// System.out.println("Auto inlining " + method);
-					break;
-				}
-			}
-		}
+        if (thrown != null) {
+            Iterator<JCTree.JCExpression> iter = thrown.iterator();
+            while (iter.hasNext()) {
+                JCTree.JCIdent t = (JCTree.JCIdent) iter.next();
+                String name = t.name.toString();
+                if (name.equals("ForceInlinedPragma") ||
+                        name.equals("AllowInlinedPragma") ||
+                        name.equals("NativePragma")) {
+                    shouldInline = true;
+                    // System.out.println("Auto inlining " + method);
+                    break;
+                }
+            }
+        }
 
         String code = annotations.get("code");
         String proxy = annotations.get("proxy");
@@ -301,18 +289,16 @@ public class MethodConverter extends Tree.Visitor {
             ccode.print("#define ");
             ccode.print(" " + conv.asString(method));
         } else {
-            if (shouldInline == NEVER_INLINE) {
-				ccode.print("NOINLINE ");
-            } else if (proxy != null || shouldInline == MUST_INLINE) {
-				ccode.print("INLINE ");
-			} else {
-				ccode.print("static ");
-			}
-            ccode.print(conv.asString(tree.sym.type.restype()));
+            if (proxy != null || shouldInline) {
+                ccode.print("INLINE ");
+            } else {
+                ccode.print("static ");
+            }
+            ccode.print(conv.asString(tree.sym.type.getReturnType()));
             ccode.print(" " + (isRoot ? cRoot : conv.asString(method)));
         }
         if (conv.asString(method).equals("GC_isTracing_I")) {
-        	int a = 1;
+            int a = 1;
         }
         ccode.print("(");
 
@@ -336,7 +322,7 @@ public class MethodConverter extends Tree.Visitor {
             ccode.println("{");
             ccode.indent();
             StringBuilder buf = new StringBuilder();
-            if (tree.sym.type.restype().tag != TypeTags.VOID) {
+            if (tree.sym.type.getReturnType().tag != TypeTags.VOID) {
                 buf.append("return ");
             }
             buf.append(proxy.length() == 0 ? method.name.toString() : proxy);
@@ -348,13 +334,13 @@ public class MethodConverter extends Tree.Visitor {
             // A sanity check as some C compilers quietly accept non-void functions without a return statement!
             boolean hasReturn = false;
             String[] idents = code.split("\\W+");
-            for (String ident: idents) {
+            for (String ident : idents) {
                 if (ident.equals("return")) {
                     hasReturn = true;
                     break;
                 }
             }
-            if (method.type.restype().tag != TypeTags.VOID && !hasReturn) {
+            if (method.type.getReturnType().tag != TypeTags.VOID && !hasReturn) {
                 throw new InconvertibleNodeException(tree, "code annotation for non-void function does not include a return statement");
             }
             ccode.printFunctionBody(code);
@@ -365,7 +351,7 @@ public class MethodConverter extends Tree.Visitor {
         }
     }
 
-    private String makePassThroughInvocation(Tree.MethodDef tree) {
+    private String makePassThroughInvocation(JCTree.JCMethodDecl tree) {
         StringBuilder buf = new StringBuilder();
         buf.append('(');
 
@@ -376,7 +362,7 @@ public class MethodConverter extends Tree.Visitor {
                 buf.append(", ");
             }
         }
-        for (Tree.VarDef var: tree.params) {
+        for (JCTree.JCVariableDecl var : tree.params) {
             buf.append(var.name.toString());
             if (--params != 0) {
                 buf.append(", ");
@@ -385,7 +371,7 @@ public class MethodConverter extends Tree.Visitor {
         return buf.append(")").toString();
     }
 
-    private void dispatchAbstractMethod(Tree.MethodDef tree, List<ProcessedMethod> impls) {
+    private void dispatchAbstractMethod(JCTree.JCMethodDecl tree, List<ProcessedMethod> impls) {
 
         String invocation = makePassThroughInvocation(tree);
         String ret = tree.sym.type.tag != TypeTags.VOID ? "return " : "";
@@ -397,7 +383,7 @@ public class MethodConverter extends Tree.Visitor {
         ccode.aprintln("int suiteID = id >= 0 ? id : -(id + 1);");
         ccode.aprintln("switch (suiteID) {");
         ccode.indent();
-        for (ProcessedMethod impl: impls) {
+        for (ProcessedMethod impl : impls) {
             ccode.aprintln("case " + conv.asString(impl.sym.enclClass()) + ": " + ret + conv.asString(impl.sym) + invocation + ";");
         }
         ccode.aprintln("default: fatalVMError(\"bad abstract method dispatch\"); ");
@@ -407,7 +393,7 @@ public class MethodConverter extends Tree.Visitor {
         ccode.aprintln("}");
     }
 
-    public void visitVarDef(Tree.VarDef tree) {
+    public void visitVarDef(JCTree.JCVariableDecl tree) {
         if (tree.sym.isLocal()) {
             // A parameter
             if ((tree.sym.flags() & Flags.PARAMETER) != 0) {
@@ -426,11 +412,11 @@ public class MethodConverter extends Tree.Visitor {
         }
     }
 
-    public void visitSkip(Tree.Skip tree) {
+    public void visitSkip(JCTree.JCSkip tree) {
         ccode.print(";");
     }
 
-    public void visitBlock(Tree.Block tree) {
+    public void visitBlock(JCTree.JCBlock tree) {
         if ((tree.flags & Flags.STATIC) != 0) {
             // This is a static initialization block
             return;
@@ -438,12 +424,12 @@ public class MethodConverter extends Tree.Visitor {
         doBlock(tree.stats);
     }
 
-    public void visitDoLoop(Tree.DoLoop tree) {
+    public void visitDoLoop(JCTree.JCDoWhileLoop tree) {
         ccode.print("do ");
         doStatement(tree.body);
         ccode.align();
         ccode.print(" while ");
-        if (tree.cond.tag == Tree.PARENS) {
+        if (tree.cond.tag == JCTree.PARENS) {
             doExpr(tree.cond);
         } else {
             ccode.print("(");
@@ -453,9 +439,9 @@ public class MethodConverter extends Tree.Visitor {
         ccode.print(";");
     }
 
-    public void visitWhileLoop(Tree.WhileLoop tree) {
+    public void visitWhileLoop(JCTree.JCWhileLoop tree) {
         ccode.print("while ");
-        if (tree.cond.tag == Tree.PARENS) {
+        if (tree.cond.tag == JCTree.PARENS) {
             doExpr(tree.cond);
         } else {
             ccode.print("(");
@@ -465,19 +451,18 @@ public class MethodConverter extends Tree.Visitor {
         ccode.print(" ");
         doStatement(tree.body);
     }
-
     boolean inForInitOrStep;
 
-    public void visitForLoop(Tree.ForLoop tree) {
+    public void visitForLoop(JCTree.JCForLoop tree) {
         ccode.print("for (");
         if (tree.init.nonEmpty()) {
             assert inForInitOrStep == false;
             inForInitOrStep = true;
             try {
-                if (tree.init.head.tag == Tree.VARDEF) {
+                if (tree.init.head.tag == JCTree.VARDEF) {
                     doExpr(tree.init.head);
-                    for (List<Tree> l = tree.init.tail; l.nonEmpty(); l = l.tail) {
-                        Tree.VarDef vdef = (Tree.VarDef) l.head;
+                    for (List<JCTree.JCStatement> l = tree.init.tail; l.nonEmpty(); l = l.tail) {
+                        JCTree.JCVariableDecl vdef = (JCTree.JCVariableDecl) l.head;
                         ccode.print(", " + vdef.name + " = ");
                         doExpr(vdef.init);
                     }
@@ -504,17 +489,17 @@ public class MethodConverter extends Tree.Visitor {
         doStatement(tree.body);
     }
 
-    public void visitForeachLoop(Tree.ForeachLoop tree) {
+    public void visitForeachLoop(JCTree.JCEnhancedForLoop tree) {
         inconvertible(tree, "enhanced for loop");
     }
 
-    public void visitLabelled(Tree.Labelled tree) {
+    public void visitLabelled(JCTree.JCLabeledStatement tree) {
         inconvertible(tree, "label");
     }
 
-    public void visitSwitch(Tree.Switch tree) {
+    public void visitSwitch(JCTree.JCSwitch tree) {
         ccode.print("switch ");
-        if (tree.selector.tag == Tree.PARENS) {
+        if (tree.selector.tag == JCTree.PARENS) {
             doExpr(tree.selector);
         } else {
             ccode.print("(");
@@ -527,7 +512,7 @@ public class MethodConverter extends Tree.Visitor {
         ccode.print("}");
     }
 
-    public void visitCase(Tree.Case tree) {
+    public void visitCase(JCTree.JCCase tree) {
         if (tree.pat == null) {
             ccode.print("default");
         } else {
@@ -541,19 +526,19 @@ public class MethodConverter extends Tree.Visitor {
         ccode.align();
     }
 
-    public void visitSynchronized(Tree.Synchronized tree) {
+    public void visitSynchronized(JCTree.JCSynchronized tree) {
         inconvertible(tree, "synchronized block");
     }
 
-    public void visitTry(Tree.Try tree) {
+    public void visitTry(JCTree.JCTry tree) {
         inconvertible(tree, "try block");
     }
 
-    public void visitCatch(Tree.Catch tree) {
+    public void visitCatch(JCTree.JCCatch tree) {
         inconvertible(tree, "catch statement");
     }
 
-    public void visitConditional(Tree.Conditional tree) {
+    public void visitConditional(JCTree.JCConditional tree) {
         ccode.open(prec, TreeInfo.condPrec);
         doExpr(tree.cond, TreeInfo.condPrec);
         ccode.print(" ? ");
@@ -563,16 +548,15 @@ public class MethodConverter extends Tree.Visitor {
         ccode.close(prec, TreeInfo.condPrec);
     }
 
-    public void visitIf(Tree.If tree) {
+    public void visitIf(JCTree.JCIf tree) {
         boolean doThen = !tree.cond.type.isFalse();
         boolean doElse = !tree.cond.type.isTrue();
 
         if (doThen) {
             ccode.print("if ");
-            if (tree.cond.tag == Tree.PARENS) {
+            if (tree.cond.tag == JCTree.PARENS) {
                 doExpr(tree.cond);
-            }
-            else {
+            } else {
                 ccode.print("(");
                 doExpr(tree.cond);
                 ccode.print(")");
@@ -588,14 +572,14 @@ public class MethodConverter extends Tree.Visitor {
         }
     }
 
-    public void visitExec(Tree.Exec tree) {
+    public void visitExec(JCTree.JCExpressionStatement tree) {
         doExpr(tree.expr);
         if (prec == TreeInfo.notExpression && !inForInitOrStep) {
             ccode.print(";");
         }
     }
 
-    public void visitBreak(Tree.Break tree) {
+    public void visitBreak(JCTree.JCBreak tree) {
         ccode.print("break");
         if (tree.label != null) {
             inconvertible(tree, "labelled break");
@@ -603,7 +587,7 @@ public class MethodConverter extends Tree.Visitor {
         ccode.print(";");
     }
 
-    public void visitContinue(Tree.Continue tree) {
+    public void visitContinue(JCTree.JCContinue tree) {
         ccode.print("continue");
         if (tree.label != null) {
             inconvertible(tree, "labelled continue");
@@ -611,7 +595,7 @@ public class MethodConverter extends Tree.Visitor {
         ccode.print(";");
     }
 
-    public void visitReturn(Tree.Return tree) {
+    public void visitReturn(JCTree.JCReturn tree) {
         ccode.print("return");
         if (tree.expr != null) {
             ccode.print(" ");
@@ -620,16 +604,16 @@ public class MethodConverter extends Tree.Visitor {
         ccode.print(";");
     }
 
-    public void visitThrow(Tree.Throw tree) {
-        ccode.print("fatalVMError(\"" + tree.expr.type.tsym.fullName() + "\");");
+    public void visitThrow(JCTree.JCThrow tree) {
+        ccode.print("fatalVMError(\"" + tree.expr.type.tsym.flatName() + "\");");
     }
 
-    public void visitAssert(Tree.Assert tree) {
+    public void visitAssert(JCTree.JCAssert tree) {
         inconvertible(tree, "assertion");
     }
 
-    public void visitApply(Tree.Apply tree) {
-        MethodSymbol method = (MethodSymbol)Converter.getSymbol(tree.meth);
+    public void visitApply(JCTree.JCMethodInvocation tree) {
+        MethodSymbol method = (MethodSymbol) Converter.getSymbol(tree.meth);
 
         if ((method.flags() & Flags.ABSTRACT) != 0) {
             List<ProcessedMethod> impls = conv.getImplementersOf(method);
@@ -646,7 +630,7 @@ public class MethodConverter extends Tree.Visitor {
             ccode.print("(");
         } else {
             String receiver;
-            if (tree.meth.tag == Tree.IDENT) {
+            if (tree.meth.tag == JCTree.IDENT) {
                 receiver = "this";
             } else {
                 receiver = exprToString(tree.meth, TreeInfo.noPrec, false);
@@ -666,21 +650,21 @@ public class MethodConverter extends Tree.Visitor {
         ccode.print(")");
     }
 
-    public void visitNewClass(Tree.NewClass tree) {
+    public void visitNewClass(JCTree.JCNewClass tree) {
         inconvertible(tree, "method-local class definition");
     }
 
-    public void visitNewArray(Tree.NewArray tree) {
+    public void visitNewArray(JCTree.JCNewArray tree) {
         inconvertible(tree, "array allocator");
     }
 
-    public void visitParens(Tree.Parens tree) {
+    public void visitParens(JCTree.JCParens tree) {
         ccode.print("(");
         doExpr(tree.expr);
         ccode.print(")");
     }
 
-    public void visitAssign(Tree.Assign tree) {
+    public void visitAssign(JCTree.JCAssign tree) {
         Symbol lhsSym = Converter.getSymbol(tree.lhs);
         boolean lhsLocal = lhsSym.isLocal();
         boolean lhsGlobal = !lhsLocal && conv.isGlobalVariable(lhsSym);
@@ -704,68 +688,68 @@ public class MethodConverter extends Tree.Visitor {
 
     public String operatorName(int tag) {
         switch (tag) {
-            case Tree.POS:
+            case JCTree.POS:
                 return "+";
-            case Tree.NEG:
+            case JCTree.NEG:
                 return "-";
-            case Tree.NOT:
+            case JCTree.NOT:
                 return "!";
-            case Tree.COMPL:
+            case JCTree.COMPL:
                 return "~";
-            case Tree.PREINC:
+            case JCTree.PREINC:
                 return "++";
-            case Tree.PREDEC:
+            case JCTree.PREDEC:
                 return "--";
-            case Tree.POSTINC:
+            case JCTree.POSTINC:
                 return "++";
-            case Tree.POSTDEC:
+            case JCTree.POSTDEC:
                 return "--";
-            case Tree.NULLCHK:
+            case JCTree.NULLCHK:
                 return "<*nullchk*>";
-            case Tree.OR:
+            case JCTree.OR:
                 return "||";
-            case Tree.AND:
+            case JCTree.AND:
                 return "&&";
-            case Tree.EQ:
+            case JCTree.EQ:
                 return "==";
-            case Tree.NE:
+            case JCTree.NE:
                 return "!=";
-            case Tree.LT:
+            case JCTree.LT:
                 return "<";
-            case Tree.GT:
+            case JCTree.GT:
                 return ">";
-            case Tree.LE:
+            case JCTree.LE:
                 return "<=";
-            case Tree.GE:
+            case JCTree.GE:
                 return ">=";
-            case Tree.BITOR:
+            case JCTree.BITOR:
                 return "|";
-            case Tree.BITXOR:
+            case JCTree.BITXOR:
                 return "^";
-            case Tree.BITAND:
+            case JCTree.BITAND:
                 return "&";
-            case Tree.SL:
+            case JCTree.SL:
                 return "<<";
-            case Tree.SR:
+            case JCTree.SR:
                 return ">>";
-            case Tree.USR:
+            case JCTree.USR:
                 return ">>>";
-            case Tree.PLUS:
+            case JCTree.PLUS:
                 return "+";
-            case Tree.MINUS:
+            case JCTree.MINUS:
                 return "-";
-            case Tree.MUL:
+            case JCTree.MUL:
                 return "*";
-            case Tree.DIV:
+            case JCTree.DIV:
                 return "/";
-            case Tree.MOD:
+            case JCTree.MOD:
                 return "%";
             default:
                 throw new Error();
         }
     }
 
-    public void visitAssignop(Tree.Assignop tree) {
+    public void visitAssignop(JCTree.JCAssignOp tree) {
         if (parentsPrec != TreeInfo.notExpression && !Converter.getSymbol(tree.lhs).isLocal()) {
             inconvertible(tree, "compound assignment to non-local variable as an expression");
         }
@@ -773,8 +757,8 @@ public class MethodConverter extends Tree.Visitor {
         ccode.open(prec, TreeInfo.assignopPrec);
         TreeMaker maker = TreeMaker.instance(conv.context);
         maker.pos = tree.pos;
-        Tree.Binary binary = maker.Binary(tree.tag - Tree.ASGOffset, tree.lhs, tree.rhs);
-        Tree.Assign assign = maker.Assign(tree.lhs, maker.Parens(binary));
+        JCTree.JCBinary binary = maker.Binary(tree.tag - JCTree.ASGOffset, tree.lhs, tree.rhs);
+        JCTree.JCAssign assign = maker.Assign(tree.lhs, maker.Parens(binary));
 
         // Visit the replacement node directly without going through doExpr so that
         // the precedence level is preserved
@@ -783,15 +767,15 @@ public class MethodConverter extends Tree.Visitor {
         ccode.close(prec, TreeInfo.assignopPrec);
     }
 
-    public void visitUnary(Tree.Unary tree) {
+    public void visitUnary(JCTree.JCUnary tree) {
         assert tree.arg.type.tag != TypeTags.FLOAT && tree.arg.type.tag != TypeTags.DOUBLE;
         String opname = operatorName(tree.tag).toString();
-        if (tree.tag >= Tree.PREINC && tree.tag <= Tree.POSTDEC && !Converter.getSymbol(tree.arg).isLocal()) {
+        if (tree.tag >= JCTree.PREINC && tree.tag <= JCTree.POSTDEC && !Converter.getSymbol(tree.arg).isLocal()) {
             inconvertible(tree, "side-effecting unary operator '" + opname + "' applied to non-local variable");
         }
         int ownprec = TreeInfo.opPrec(tree.tag);
         ccode.open(prec, ownprec);
-        if (tree.tag <= Tree.PREDEC) {
+        if (tree.tag <= JCTree.PREDEC) {
             ccode.print(opname);
             doExpr(tree.arg, ownprec);
         } else {
@@ -801,61 +785,60 @@ public class MethodConverter extends Tree.Visitor {
         ccode.close(prec, ownprec);
     }
 
-    public void visitBinary(Tree.Binary tree) {
+    public void visitBinary(JCTree.JCBinary tree) {
 
         int ownprec = TreeInfo.opPrec(tree.tag);
         String opname = operatorName(tree.tag).toString();
 
         ccode.open(prec, ownprec);
 
-        Tree lhs = tree.lhs;
-        Tree rhs = tree.rhs;
+        JCTree lhs = tree.lhs;
+        JCTree rhs = tree.rhs;
 
-        if (tree.tag == Tree.PLUS && (!lhs.type.isPrimitive() || !rhs.type.isPrimitive())) {
+        if (tree.tag == JCTree.PLUS && (!lhs.type.isPrimitive() || !rhs.type.isPrimitive())) {
             inconvertible(tree, "string concatenation");
         }
 
         if (lhs.type.tag == TypeTags.FLOAT || rhs.type.tag == TypeTags.FLOAT ||
-            lhs.type.tag == TypeTags.DOUBLE || rhs.type.tag == TypeTags.DOUBLE)
-        {
+                lhs.type.tag == TypeTags.DOUBLE || rhs.type.tag == TypeTags.DOUBLE) {
             inconvertible(tree, "float or double operations");
         }
 
         boolean isLong = (lhs.type.tag == TypeTags.LONG);
         boolean infix = true;
         switch (tree.tag) {
-            case Tree.PLUS:
-            case Tree.MINUS:
-            case Tree.MUL:
-            case Tree.OR:
-            case Tree.AND:
-            case Tree.BITOR:
-            case Tree.BITXOR:
-            case Tree.BITAND:
-            case Tree.EQ:
-            case Tree.NE:
-            case Tree.LT:
-            case Tree.GT:
-            case Tree.LE:
-            case Tree.GE: {
+            case JCTree.PLUS:
+            case JCTree.MINUS:
+            case JCTree.MUL:
+            case JCTree.OR:
+            case JCTree.AND:
+            case JCTree.BITOR:
+            case JCTree.BITXOR:
+            case JCTree.BITAND:
+            case JCTree.EQ:
+            case JCTree.NE:
+            case JCTree.LT:
+            case JCTree.GT:
+            case JCTree.LE:
+            case JCTree.GE: {
                 break;
             }
-            case Tree.SL: {
+            case JCTree.SL: {
                 ccode.print(isLong ? "slll" : "sll");
                 infix = false;
                 break;
             }
-            case Tree.SR: {
+            case JCTree.SR: {
                 ccode.print(isLong ? "sral" : "sra");
                 infix = false;
                 break;
             }
-            case Tree.USR: {
+            case JCTree.USR: {
                 ccode.print(isLong ? "srll" : "srl");
                 infix = false;
                 break;
             }
-            case Tree.DIV: {
+            case JCTree.DIV: {
                 if (isLong) {
                     ccode.print("div_l");
                 } else {
@@ -864,7 +847,7 @@ public class MethodConverter extends Tree.Visitor {
                 infix = false;
                 break;
             }
-            case Tree.MOD: {
+            case JCTree.MOD: {
                 if (isLong) {
                     ccode.print("rem_l");
                 } else {
@@ -896,7 +879,7 @@ public class MethodConverter extends Tree.Visitor {
         ccode.close(prec, ownprec);
     }
 
-    public void visitTypeCast(Tree.TypeCast tree) {
+    public void visitTypeCast(JCTree.JCTypeCast tree) {
         ccode.open(prec, TreeInfo.prefixPrec);
         ccode.print("(");
         ccode.print(conv.asString(tree.type));
@@ -905,21 +888,33 @@ public class MethodConverter extends Tree.Visitor {
         ccode.close(prec, TreeInfo.prefixPrec);
     }
 
-    public void visitTypeTest(Tree.TypeTest tree) {
+    public void visitTypeTest(JCTree.JCInstanceOf tree) {
         inconvertible(tree, "instanceof");
     }
 
-    public void visitIndexed(Tree.Indexed tree) {
+    public void visitIndexed(JCTree.JCArrayAccess tree) {
         char componentType;
         switch (tree.type.tag) {
             case TypeTags.BOOLEAN:
-            case TypeTags.BYTE:      componentType = 'b'; break;
+            case TypeTags.BYTE:
+                componentType = 'b';
+                break;
             case TypeTags.CHAR:
-            case TypeTags.SHORT:     componentType = 's'; break;
-            case TypeTags.INT:       componentType = 'i'; break;
-            case TypeTags.LONG:      componentType = 'l'; break;
-            case TypeTags.FLOAT:     componentType = 'f'; break;
-            case TypeTags.DOUBLE:    componentType = 'd'; break;
+            case TypeTags.SHORT:
+                componentType = 's';
+                break;
+            case TypeTags.INT:
+                componentType = 'i';
+                break;
+            case TypeTags.LONG:
+                componentType = 'l';
+                break;
+            case TypeTags.FLOAT:
+                componentType = 'f';
+                break;
+            case TypeTags.DOUBLE:
+                componentType = 'd';
+                break;
             default: {
                 if (conv.isReferenceType(tree.type)) {
                     componentType = 'o';
@@ -943,10 +938,10 @@ public class MethodConverter extends Tree.Visitor {
         }
     }
 
-    public void visitSelect(Tree.Select tree) {
+    public void visitSelect(JCTree.JCFieldAccess tree) {
         Symbol sym = tree.sym;
         if (sym instanceof VarSymbol) {
-            VarSymbol var = (VarSymbol)sym;
+            VarSymbol var = (VarSymbol) sym;
             String object = null;
             if (!var.isStatic()) {
                 object = exprToString(tree.selected, TreeInfo.noPrec, false);
@@ -960,11 +955,11 @@ public class MethodConverter extends Tree.Visitor {
         }
     }
 
-    public void visitIdent(Tree.Ident tree) {
+    public void visitIdent(JCTree.JCIdent tree) {
         assert tree.sym != null;
 
         if (tree.sym instanceof VarSymbol) {
-            VarSymbol var = (VarSymbol)tree.sym;
+            VarSymbol var = (VarSymbol) tree.sym;
             String object = null;
             if (!var.isStatic() && !var.isLocal()) {
                 object = "this";
@@ -975,7 +970,7 @@ public class MethodConverter extends Tree.Visitor {
         }
     }
 
-    public void visitLiteral(Tree.Literal tree) {
+    public void visitLiteral(JCTree.JCLiteral tree) {
         switch (tree.typetag) {
             case TypeTags.INT:
                 ccode.print(tree.value.toString());
@@ -990,52 +985,55 @@ public class MethodConverter extends Tree.Visitor {
                 ccode.print(tree.value.toString());
                 break;
             case TypeTags.CHAR:
-                ccode.print("\'" +
-                            Convert.quote(
-                                String.valueOf((char) ((Number) tree.value).intValue())) +
-                            "\'");
+                ccode.print("\'" + Convert.quote(String.valueOf((char) ((Number) tree.value).intValue())) + "\'");
+                break;
+            case TypeTags.BOOLEAN:
+                ccode.print(tree.value.toString());
+                break;
+            case TypeTags.BOT:
+                ccode.print("null");
                 break;
             default:
                 String literal = Convert.quote(tree.value.toString());
                 String key = conv.getLiteralKey(method.sym.enclClass(), literal);
-                String className = method.sym.enclClass().fullName().toString().replace('.', '_');
+                String className = method.sym.enclClass().fullname.toString().replace('.', '_');
                 ccode.print("getObjectForCStringLiteral(" + key + ", " + className + ", \"" + literal + "\")");
                 break;
         }
     }
 
-    public void visitTypeIdent(Tree.TypeIdent tree) {
+    public void visitTypeIdent(JCTree.JCPrimitiveTypeTree tree) {
         assert false;
     }
 
-    public void visitTypeArray(Tree.TypeArray tree) {
+    public void visitTypeArray(JCTree.JCArrayTypeTree tree) {
         inconvertible(tree, "generics");
     }
 
-    public void visitTypeApply(Tree.TypeApply tree) {
+    public void visitTypeApply(JCTree.JCTypeApply tree) {
         inconvertible(tree, "generics");
     }
 
-    public void visitTypeParameter(Tree.TypeParameter tree) {
+    public void visitTypeParameter(JCTree.JCTypeParameter tree) {
         inconvertible(tree, "generics");
     }
 
-    public void visitErroneous(Tree.Erroneous tree) {
+    public void visitErroneous(JCTree.JCErroneous tree) {
         ccode.print("(ERROR)");
     }
 
-    public void visitLetExpr(Tree.LetExpr tree) {
+    public void visitLetExpr(JCTree.LetExpr tree) {
         inconvertible(tree, "'let' expression");
     }
 
-    public void visitModifiers(Tree.Modifiers mods) {
+    public void visitModifiers(JCTree.JCModifiers mods) {
     }
 
-    public void visitAnnotation(Tree.Annotation tree) {
+    public void visitAnnotation(JCTree.JCAnnotation tree) {
         inconvertible(tree, "annotation");
     }
 
-    public void visitTree(Tree tree) {
+    public void visitTree(JCTree tree) {
         inconvertible(tree, "unknown construct");
     }
 }

@@ -21,7 +21,6 @@
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 package com.sun.squawk.vm2c;
 
 import java.io.*;
@@ -44,44 +43,36 @@ public class Converter {
      * Logger for displaying conversion error messages.
      */
     final Log log;
-
     /**
      * Table of type name substitutions.
      */
     private Map<Name, Name> typeSubs;
-
     /**
      * Table for substituting a given variable name with another if it clashes with a global variable.
      */
     private Map<Name, Name> localVarNameSubs;
-
     /**
      * The converted implementers of abstract methods denoted with the 'implementers' annotation.
      */
     private Map<MethodSymbol, List<ProcessedMethod>> abstractMethodImplementers = new HashMap<MethodSymbol, List<ProcessedMethod>>();
-
     /**
      * Objects for mapping input positions within each compilation unit
      * back to a source file and line number.
      */
-    private final Map<Tree.TopLevel, LineNumberTable> lineNumberTables = new HashMap<Tree.TopLevel,LineNumberTable>();
-
+    private final Map<JCTree.JCCompilationUnit, LineNumberTable> lineNumberTables = new HashMap<JCTree.JCCompilationUnit, LineNumberTable>();
     /**
      * Set of methods processed by this converter.
      */
     private final Map<MethodSymbol, ProcessedMethod> methods = new HashMap<MethodSymbol, ProcessedMethod>();
-
     /**
      * The list of methods that are annotated by the "@vm2c root" annotation.
      * These methods and all methods in their call graphs are converted.
      */
     private final SortedSet<MethodSymbol> roots;
-
     final Context context;
     boolean lineAndFile;
     boolean omitRuntimeChecks;
     final Types types;
-
     private Name COM_SUN_SQUAWK_ADDRESS;
     private Name COM_SUN_SQUAWK_OFFSET;
     private Name COM_SUN_SQUAWK_UWORD;
@@ -91,8 +82,9 @@ public class Converter {
         this.log = Log.instance(context);
         this.context = context;
         this.types = Types.instance(context);
-        methodNames = new HashMap<MethodSymbol,String>();
+        methodNames = new HashMap<MethodSymbol, String>();
         METHOD_COMPARATOR = new Comparator<MethodSymbol>() {
+
             public int compare(MethodSymbol o1, MethodSymbol o2) {
                 return asString(o1).compareTo(asString(o2));
             }
@@ -105,30 +97,35 @@ public class Converter {
      * parse tree associated with each method as well as which methods
      * are the roots for conversion.
      */
-    public void parse(Iterable<? extends Tree.TopLevel> units, final Set<String> rootClassNames) throws IOException {
+    public void parse(Iterable<? extends JCTree.JCCompilationUnit> units, final Set<String> rootClassNames) throws IOException {
 
         final Map<MethodSymbol, String[]> implementers = new HashMap<MethodSymbol, String[]>();
         TreeScanner scanner = new TreeScanner() {
-            private Tree.TopLevel unit;
+
+            private JCTree.JCCompilationUnit unit;
             private ProcessedMethod method;
             private AnnotationParser ap = new AnnotationParser();
-            @Override public void visitTopLevel(Tree.TopLevel tree) {
+
+            @Override
+            public void visitTopLevel(JCTree.JCCompilationUnit tree) {
                 assert unit == null;
                 unit = tree;
                 super.visitTopLevel(tree);
                 unit = null;
             }
 
-            @Override public void visitMethodDef(Tree.MethodDef tree) {
+            @Override
+            public void visitMethodDef(JCTree.JCMethodDecl tree) {
                 ProcessedMethod outerMethod = method;
                 method = new ProcessedMethod(tree.sym, tree, unit);
                 Object old = methods.put(tree.sym, method);
                 assert old == null;
+
                 try {
                     Map<String, String> annotations = ap.parse(method);
                     if (annotations.containsKey("root")) {
                         String enclClass = tree.sym.enclClass().fullname.toString();
-                        for (String s: rootClassNames) {
+                        for (String s : rootClassNames) {
                             if (enclClass.indexOf(s) != -1) {
                                 roots.add(tree.sym);
                             }
@@ -155,7 +152,8 @@ public class Converter {
                 }
             }
 
-            @Override public void visitApply(Tree.Apply tree) {
+            @Override
+            public void visitApply(JCTree.JCMethodInvocation tree) {
                 if (method != null) {
                     MethodSymbol callee = (MethodSymbol) getSymbol(tree);
                     CallSite call = new CallSite(callee, method.sym, tree);
@@ -167,7 +165,7 @@ public class Converter {
             }
         };
 
-        for (Tree.TopLevel unit: units) {
+        for (JCTree.JCCompilationUnit unit : units) {
             // Initialize the type substitution table if it isn't initialized
             if (typeSubs == null) {
                 nameTable = unit.packge.name.table;
@@ -178,12 +176,12 @@ public class Converter {
         }
 
         Types types = Types.instance(context);
-        for (Map.Entry<MethodSymbol, String[]> entry: implementers.entrySet()) {
+        for (Map.Entry<MethodSymbol, String[]> entry : implementers.entrySet()) {
             MethodSymbol abstractMethod = entry.getKey();
             List<ProcessedMethod> impls = List.nil();
-            for (String impl: entry.getValue()) {
+            for (String impl : entry.getValue()) {
                 boolean found = false;
-                for (ProcessedMethod method: methods.values()) {
+                for (ProcessedMethod method : methods.values()) {
                     if (method.sym != abstractMethod && overrides(method.sym, abstractMethod)) {
                         String implClass = method.sym.enclClass().fullname.toString();
                         if (implClass.equals(impl)) {
@@ -275,7 +273,7 @@ public class Converter {
      * @param method  the method to emit
      */
     private void emitFunctionDeclaration(PrintWriter out, MethodSymbol method) {
-        String retType = asString(method.type.restype());
+        String retType = asString(method.type.getReturnType());
         out.print("static ");
         out.print(retType);
         for (int i = 15 - retType.length(); i > 0; --i) {
@@ -308,12 +306,11 @@ public class Converter {
         log.useSource(lnt.file);
 
         try {
-            for (CallSite call: method.calls) {
+            for (CallSite call : method.calls) {
                 MethodSymbol callee = call.callee;
                 if (!methods.containsKey(callee)) {
                     PrintWriter err = log.errWriter;
-                    err.println("No definition found for " + callee.enclClass().fullname +
-                                "." + callee + " called from:");
+                    err.println("No definition found for " + callee.enclClass().fullname + "." + callee + " called from:");
                     ArrayList<CallSite> callsWithCM = new ArrayList<CallSite>(calls);
                     callsWithCM.add(new CallSite(callee, method.sym, call.call));
                     printStackTrace(err, callsWithCM);
@@ -343,7 +340,8 @@ public class Converter {
         final SortedSet<MethodSymbol> decls = declsOnly ? new TreeSet<MethodSymbol>(METHOD_COMPARATOR) : null;
         CallGraphVisitor cgv = new CallGraphVisitor(false) {
 
-            @Override public void visitMethod(ProcessedMethod method, java.util.List<CallSite> calls) {
+            @Override
+            public void visitMethod(ProcessedMethod method, java.util.List<CallSite> calls) {
                 if (declsOnly) {
                     decls.add(method.sym);
                 } else {
@@ -351,13 +349,13 @@ public class Converter {
                 }
             }
         };
-        for (MethodSymbol method: roots) {
+        for (MethodSymbol method : roots) {
             ProcessedMethod pmethod = methods.get(method);
             cgv.scan(pmethod, methods);
         }
 
         if (declsOnly) {
-            for (MethodSymbol method: decls) {
+            for (MethodSymbol method : decls) {
                 emitFunctionDeclaration(out, method);
             }
         }
@@ -372,7 +370,7 @@ public class Converter {
     }
 
     private void printStackTrace(PrintWriter out, java.util.List<CallSite> calls) {
-        for (CallSite call: calls) {
+        for (CallSite call : calls) {
             ProcessedMethod caller = methods.get(call.caller);
             LineNumberTable lnt = lnt(caller.unit);
             String file = lnt.file.toString();
@@ -380,11 +378,9 @@ public class Converter {
             if (index != -1) {
                 file = file.substring(index + 1);
             }
-            out.println("    " +  caller.sym.enclClass().className() + '.' +
-                        caller.sym.fullName() + '(' + file +':' + lnt.getLineNumber(call.call.pos) + ')');
+            out.println("    " + caller.sym.enclClass().className() + '.' + caller.sym.flatName() + '(' + file + ':' + lnt.getLineNumber(call.call.pos) + ')');
         }
     }
-
     private final Comparator<MethodSymbol> METHOD_COMPARATOR;
 
     private void emitBuiltins(PrintWriter out) {
@@ -537,10 +533,10 @@ public class Converter {
      * the special primitive types in Squawk to C type names.
      */
     private Map<Name, Name> initTypeSubs(final Name.Table t) {
-        Map<Name, Name> m = new HashMap<Name, Name> ();
+        Map<Name, Name> m = new HashMap<Name, Name>();
         m.put(COM_SUN_SQUAWK_ADDRESS = asName("com.sun.squawk.Address"), asName("Address"));
-        m.put(COM_SUN_SQUAWK_OFFSET = asName("com.sun.squawk.Offset"),  asName("Offset"));
-        m.put(COM_SUN_SQUAWK_UWORD = asName("com.sun.squawk.UWord"),   asName("UWord"));
+        m.put(COM_SUN_SQUAWK_OFFSET = asName("com.sun.squawk.Offset"), asName("Offset"));
+        m.put(COM_SUN_SQUAWK_UWORD = asName("com.sun.squawk.UWord"), asName("UWord"));
         return m;
     }
 
@@ -549,7 +545,7 @@ public class Converter {
      * corresponds with a global variable defined in vmcore/src/vm/global.h.
      */
     private Map<Name, Name> initLocalVarNameSubs(final Name.Table t) {
-        Map<Name, Name> m = new HashMap<Name, Name> ();
+        Map<Name, Name> m = new HashMap<Name, Name>();
         m.put(asName("memory"), asName("_memory"));
         m.put(asName("memoryEnd"), asName("_memoryEnd"));
         m.put(asName("memorySize"), asName("_memorySize"));
@@ -617,11 +613,11 @@ public class Converter {
         return m;
     }
 
-    private LineNumberTable lnt(Tree.TopLevel unit) {
+    private LineNumberTable lnt(JCTree.JCCompilationUnit unit) {
         LineNumberTable lnt = lineNumberTables.get(unit);
         if (lnt == null) {
             try {
-                lnt = new LineNumberTable(unit.sourcefile);
+                lnt = new LineNumberTable(unit.getSourceFile());
             } catch (IOException e) {
                 assert false : e;
             }
@@ -639,22 +635,30 @@ public class Converter {
      */
     public String asString(Type type) {
         switch (type.tag) {
-            case TypeTags.BYTE:      return "signed char";
-            case TypeTags.CHAR:      return "unsigned short";
-            case TypeTags.SHORT:     return "short";
-            case TypeTags.INT:       return "int";
-            case TypeTags.LONG:      return "jlong";
-            case TypeTags.BOOLEAN:   return "boolean";
-            case TypeTags.VOID:      return "void";
-            case TypeTags.DOUBLE:    return "double";
-            case TypeTags.FLOAT:     return "float";
+            case TypeTags.BYTE:
+                return "signed char";
+            case TypeTags.CHAR:
+                return "unsigned short";
+            case TypeTags.SHORT:
+                return "short";
+            case TypeTags.INT:
+                return "int";
+            case TypeTags.LONG:
+                return "jlong";
+            case TypeTags.BOOLEAN:
+                return "boolean";
+            case TypeTags.VOID:
+                return "void";
+            case TypeTags.DOUBLE:
+                return "double";
+            case TypeTags.FLOAT:
+                return "float";
             default: {
-                assert! type.isPrimitive();
-                Name name = typeSubs.get(type.tsym.fullName());
+                assert !type.isPrimitive();
+                Name name = typeSubs.get(type.tsym.flatName());
                 if (name != null) {
                     return name.toString();
-                }
-                else {
+                } else {
                     return "Address";
                 }
             }
@@ -666,22 +670,30 @@ public class Converter {
      */
     public char asChar(Type type) {
         switch (type.tag) {
-            case TypeTags.BYTE:      return 'B';
-            case TypeTags.CHAR:      return 'C';
-            case TypeTags.SHORT:     return 'S';
-            case TypeTags.INT:       return 'I';
-            case TypeTags.LONG:      return 'J';
-            case TypeTags.BOOLEAN:   return 'Z';
-            case TypeTags.VOID:      return 'V';
-            case TypeTags.DOUBLE:    return 'D';
-            case TypeTags.FLOAT:     return 'F';
+            case TypeTags.BYTE:
+                return 'B';
+            case TypeTags.CHAR:
+                return 'C';
+            case TypeTags.SHORT:
+                return 'S';
+            case TypeTags.INT:
+                return 'I';
+            case TypeTags.LONG:
+                return 'J';
+            case TypeTags.BOOLEAN:
+                return 'Z';
+            case TypeTags.VOID:
+                return 'V';
+            case TypeTags.DOUBLE:
+                return 'D';
+            case TypeTags.FLOAT:
+                return 'F';
             default: {
-                assert! type.isPrimitive();
-                Name name = typeSubs.get(type.tsym.fullName());
+                assert !type.isPrimitive();
+                Name name = typeSubs.get(type.tsym.flatName());
                 if (name != null) {
                     return name.toString().charAt(0);
-                }
-                else {
+                } else {
                     return 'L';
                 }
             }
@@ -695,11 +707,10 @@ public class Converter {
     boolean isReferenceType(Type type) {
         assert COM_SUN_SQUAWK_UWORD != null;
         return !type.isPrimitive() &&
-               type.tsym.fullName() != COM_SUN_SQUAWK_ADDRESS &&
-               type.tsym.fullName() != COM_SUN_SQUAWK_UWORD &&
-               type.tsym.fullName() != COM_SUN_SQUAWK_OFFSET;
+                type.tsym.flatName() != COM_SUN_SQUAWK_ADDRESS &&
+                type.tsym.flatName() != COM_SUN_SQUAWK_UWORD &&
+                type.tsym.flatName() != COM_SUN_SQUAWK_OFFSET;
     }
-
     private final Map<MethodSymbol, String> methodNames;
 
     /**
@@ -716,9 +727,8 @@ public class Converter {
                 }
             }
 
-            String qualifiedClassName = method.enclClass().fullName().toString();
+            String qualifiedClassName = method.enclClass().fullname.toString();
             String unqualifiedClassName = qualifiedClassName.substring(qualifiedClassName.lastIndexOf('.') + 1);
-
 
             String functionName = unqualifiedClassName + s;
             if (methodNames.containsValue(functionName)) {
@@ -746,19 +756,19 @@ public class Converter {
      * @param lvalue true if the variable is being assigned to, false if it is being read
      * @param object the object owning the variable if it is an instance field, null otherwise
      */
-    public String asString(Tree tree, VarSymbol var, boolean lvalue, String object) {
+    public String asString(JCTree tree, VarSymbol var, boolean lvalue, String object) {
         String s;
         if (var.isLocal()) {
             s = subVarName(var.name).toString();
-        } else if (var.name == nameTable._this || var.name == nameTable._null || var.name == nameTable._true || var.name == nameTable._false) {
+        } else if (var.name == nameTable._this || var.name.toString().equals("null") || var.name.toString().equals("true") || var.name.toString().equals("false")) {
             s = var.name.toString();
         } else {
             s = var.enclClass().className().replace('.', '_') + '_' + var.name;
             if (!isGlobalVariable(var)) {
                 if (var.isStatic()) {
-                    Object constant = var.constValue;
+                    Object constant = var.getConstantValue();
                     if (constant != null) {
-                        assert!lvalue;
+                        assert !lvalue;
                         if (s.startsWith("com_sun_squawk_vm_")) {
                             s = s.substring("com_sun_squawk_vm_".length());
                         }
@@ -775,13 +785,13 @@ public class Converter {
                             }
                         }
                         return s;
-/*
-                    } else if (var.type.tag == TypeTags.NULL) {
+                        /*
+                        } else if (var.type.tag == TypeTags.NULL) {
                         return "null";
-*/
+                         */
                     } else {
                         MethodConverter.inconvertible(tree, "access to non-constant static field");
-                    	throw new RuntimeException("No done");
+                        throw new RuntimeException("No done");
                     }
                 } else {
                     if (lvalue) {
@@ -833,7 +843,7 @@ public class Converter {
         if (b == null) {
             b = Boolean.FALSE;
             for (Type iface : ((Type.ClassType) clazz.type).interfaces_field) {
-                String ifaceName = iface.tsym.fullName().toString();
+                String ifaceName = iface.tsym.flatName().toString();
                 if (ifaceName.equals("com.sun.squawk.pragma.GlobalStaticFields")) {
                     b = Boolean.TRUE;
                     break;
@@ -843,14 +853,14 @@ public class Converter {
         }
         return b.booleanValue();
     }
-    private final Map<ClassSymbol, Boolean> globalStaticFields = new HashMap<ClassSymbol,Boolean>();
+    private final Map<ClassSymbol, Boolean> globalStaticFields = new HashMap<ClassSymbol, Boolean>();
 
     /**
      * Determines if a given variable is a global in Squawk.
      */
     public boolean isGlobalVariable(Symbol var) {
         if (var instanceof VarSymbol && var.isStatic()) {
-            if (((VarSymbol) var).constValue == null) {
+            if (((VarSymbol) var).getConstantValue() == null) {
                 return (hasGlobalStaticFields(var.enclClass()));
             }
         }
@@ -860,27 +870,26 @@ public class Converter {
     /**
      * Gets the symbol corresponding to a tree.
      */
-    public static Symbol getSymbol(Tree tree) {
+    public static Symbol getSymbol(JCTree tree) {
         switch (tree.tag) {
-            case Tree.CLASSDEF:
-                return ((Tree.ClassDef) tree).sym;
-            case Tree.METHODDEF:
-                return ((Tree.MethodDef) tree).sym;
-            case Tree.VARDEF:
-                return ((Tree.VarDef) tree).sym;
-            case Tree.SELECT:
-                return ((Tree.Select) tree).sym;
-            case Tree.IDENT:
-                return ((Tree.Ident) tree).sym;
-            case Tree.INDEXED:
-                return getSymbol(((Tree.Indexed) tree).indexed);
-            case Tree.APPLY:
-                return getSymbol(((Tree.Apply)tree).meth);
+            case JCTree.CLASSDEF:
+                return ((JCTree.JCClassDecl) tree).sym;
+            case JCTree.METHODDEF:
+                return ((JCTree.JCMethodDecl) tree).sym;
+            case JCTree.VARDEF:
+                return ((JCTree.JCVariableDecl) tree).sym;
+            case JCTree.SELECT:
+                return ((JCTree.JCFieldAccess) tree).sym;
+            case JCTree.IDENT:
+                return ((JCTree.JCIdent) tree).sym;
+            case JCTree.INDEXED:
+                return getSymbol(((JCTree.JCArrayAccess) tree).indexed);
+            case JCTree.APPLY:
+                return getSymbol(((JCTree.JCMethodInvocation) tree).meth);
             default:
                 return null;
         }
     }
-
     private final Map<ClassSymbol, ArrayList<String>> stringLiterals = new HashMap<ClassSymbol, ArrayList<String>>();
     private final Map<ClassSymbol, Integer> stringLiteralClasses = new HashMap<ClassSymbol, Integer>();
 
@@ -951,7 +960,7 @@ public class Converter {
         out.println("    if (!initialized) {");
         out.println("        initialized = true;");
 
-        for (Map.Entry<ClassSymbol, Integer> entry: stringLiteralClasses.entrySet()) {
+        for (Map.Entry<ClassSymbol, Integer> entry : stringLiteralClasses.entrySet()) {
             ClassSymbol clazz = entry.getKey();
             int classID = entry.getValue().intValue();
             String className = clazz.fullname.toString().replace('.', '_');

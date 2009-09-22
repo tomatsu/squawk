@@ -21,14 +21,21 @@
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 package com.sun.squawk.vm2c;
 
+import com.sun.tools.javac.code.Attribute;
+import com.sun.tools.javac.code.Attribute.Compound;
+import com.sun.tools.javac.code.Attribute.Constant;
+import com.sun.tools.javac.code.Symbol.MethodSymbol;
+import com.sun.tools.javac.code.Type.ClassType;
+import com.sun.tools.javac.tree.JCTree;
 import java.util.Collections;
-import com.sun.tools.javac.tree.Tree;
 import java.util.Map;
 import java.util.HashMap;
-import com.sun.tools.javac.tree.Tree.*;
+import java.util.List;
+
+import javax.lang.model.type.DeclaredType;
+
 import static com.sun.squawk.vm2c.CCodeBuffer.*;
 
 /**
@@ -41,14 +48,15 @@ import static com.sun.squawk.vm2c.CCodeBuffer.*;
 public class AnnotationParser {
 
     public static class Annotation {
+
         final String key;
         final boolean valueIsOptional;
+
         Annotation(String key, boolean valueIsOptional) {
             this.key = key;
             this.valueIsOptional = valueIsOptional;
         }
     }
-
     /**
      * The annotations understood by this parser.
      */
@@ -61,10 +69,10 @@ public class AnnotationParser {
     public AnnotationParser() {
         this(DEFAULT_ANNOTATIONS);
     }
-
     public static final Map<String, Annotation> DEFAULT_ANNOTATIONS;
+
     static {
-        Map<String, Annotation> m= new HashMap<String,Annotation>(5);
+        Map<String, Annotation> m = new HashMap<String, Annotation>(5);
         m.put("root", new Annotation("root", false));
         m.put("code", new Annotation("code", false));
         m.put("macro", new Annotation("macro", false));
@@ -73,7 +81,7 @@ public class AnnotationParser {
         DEFAULT_ANNOTATIONS = Collections.unmodifiableMap(m);
     }
 
-    private void error(Tree tree, String msg) {
+    private void error(JCTree tree, String msg) {
         throw new InconvertibleNodeException(tree, msg);
     }
 
@@ -82,86 +90,37 @@ public class AnnotationParser {
      * (if any) that this parser was configured with.
      */
     public Map<String, String> parse(ProcessedMethod method) {
-        return parse(method.unit, method.tree);
-    }
-
-    /**
-     * Parses the javadoc for an AST node and extracts the annotations
-     * (if any) that this parser was configured with.
-     */
-    public Map<String, String> parse(Tree.TopLevel unit, Tree node) {
-        if (unit.docComments != null) {
-            String dc = unit.docComments.get(node);
-            if (dc != null) {
-                int index = dc.indexOf("@vm2c ");
-                Map<String, String> result = null;
-                while (index != -1) {
-                    if (result == null) {
-                        result = new HashMap<String, String>();
-                    }
-
-                    index += "@vm2c ".length();
-                    try {
-                        while (Character.isWhitespace(dc.charAt(index))) {
-                            ++index;
-                        }
-
-                        if (!Character.isJavaIdentifierStart(dc.charAt(index))) {
-                            error(node, "invalid vm2c annotation key");
-                        }
-
-                        int keyStart = index;
-                        while (Character.isJavaIdentifierPart(dc.charAt(index))) {
-                            ++index;
-                        }
-
-                        String key = dc.substring(keyStart, index);
-                        Annotation annotation = annotations.get(key);
-                        if (annotation == null) {
-                            error(node, "unknown vm2c annotation: " + key);
-                        }
-
-                        String value;
-                        while (index != dc.length() && Character.isWhitespace(dc.charAt(index))) {
-                            index++;
-                        }
-
-                        if (index != dc.length() && dc.charAt(index) == '(') {
-                            index++;
-                            int valueStart = index;
-                            int nesting = 1;
-                            while (nesting != 0) {
-                                char c = dc.charAt(index++);
-                                if (c == '(') {
-                                    ++nesting;
-                                } else if (c == ')') {
-                                    --nesting;
-                                }
-                            }
-                            value = dc.substring(valueStart, index - 1).trim();
+        List<Compound> list = method.sym.getAnnotationMirrors();
+        Map<String, String> result = Collections.emptyMap();
+        for (Compound c : list) {
+            ClassType annotationType = (ClassType) c.getAnnotationType();
+            String annotationTypeName = annotationType.tsym.getQualifiedName().toString();
+            if (annotationTypeName.equals("com.sun.squawk.Vm2c")) {
+                String key = null;
+                String value = null;
+                for (Map.Entry<MethodSymbol, Attribute> entry : c.getElementValues().entrySet()) {
+                    key = entry.getKey().getQualifiedName().toString();
+                    ClassType valueType = (ClassType) entry.getValue().type;
+                    if (valueType.tsym.getQualifiedName().toString().equals("java.lang.String")) {
+                        value = entry.getValue().toString();
+                        if (value.isEmpty()) {
+                            value = null;
                         } else {
-                            if (!annotation.valueIsOptional) {
-                                error(node, "vm2c annotation '" + key + "' that is missing a non-optional value");
-                            }
-                            value = "";
+                            value = value.substring(1, value.length() - 1);
+                            value = value.replace("\\\"", "\"");
                         }
-                        result.put(key, value);
-                    } catch (StringIndexOutOfBoundsException e) {
-                        error(node, "malformed vm2c annotation");
-                    }
-                    if (index == dc.length()) {
-                        index = -1;
                     } else {
-                        index = dc.indexOf("@vm2c ", index);
+                        error(method.tree, "Vm2c annotation values should be strings");
+                        return null;
                     }
                 }
-                if (result != null) {
-                    return result;
+                if (result.isEmpty()) {
+                    result = new HashMap<String, String>();
                 }
+                result.put(key, value);
             }
         }
-        Map<String, String> m = Collections.emptyMap();
-        return m;
+        return result;
     }
 
     /**
@@ -177,7 +136,7 @@ public class AnnotationParser {
     /**
      * Parses the javadoc for an AST node and extracts the original javadoc (if any).
      */
-    public static String getDocComment(Tree.TopLevel unit, Tree node, int margin) {
+    public static String getDocComment(JCTree.JCCompilationUnit unit, JCTree node, int margin) {
         if (unit.docComments != null) {
             String dc = unit.docComments.get(node);
             if (dc != null) {
@@ -203,7 +162,9 @@ public class AnnotationParser {
 
     private static int lineEndPos(String s, int start) {
         int pos = s.indexOf('\n', start);
-        if (pos < 0) pos = s.length();
+        if (pos < 0) {
+            pos = s.length();
+        }
         return pos;
     }
 }

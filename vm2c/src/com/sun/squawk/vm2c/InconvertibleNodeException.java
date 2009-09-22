@@ -32,8 +32,8 @@ import com.sun.tools.javac.tree.*;
  *
  */
 public class InconvertibleNodeException extends RuntimeException {
-    public final Tree node;
-    public InconvertibleNodeException(Tree node, String message) {
+    public final JCTree node;
+    public InconvertibleNodeException(JCTree node, String message) {
         super(message);
         this.node = node;
     }

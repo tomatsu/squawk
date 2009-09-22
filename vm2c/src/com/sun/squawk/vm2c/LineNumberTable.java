@@ -21,12 +21,11 @@
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 package com.sun.squawk.vm2c;
 
 import java.io.*;
 
-import com.sun.tools.javac.util.Name;
+import javax.tools.JavaFileObject;
 
 /**
  * Maps character positions to line numbers within a Java source file.
@@ -34,19 +33,18 @@ import com.sun.tools.javac.util.Name;
  */
 public class LineNumberTable {
 
-    final Name file;
+    final JavaFileObject file;
     private final int maxPos;
-
     /**
      * Entry at index 'n' is position of first char in source line 'n+1'.
      */
     private final int[] table;
 
-    public LineNumberTable(Name file) throws IOException {
+    public LineNumberTable(JavaFileObject file) throws IOException {
         this.file = file;
         this.table = null;
         this.maxPos = -1;
-/*
+        /*
         char[] sourceBuf = file.getCharContent(true).toString().toCharArray();
         maxPos = sourceBuf.length - 1;
         ArrayList<Integer> newLinePosns = new ArrayList<Integer>();
@@ -54,31 +52,31 @@ public class LineNumberTable {
         int pos = 0;
         newLinePosns.add(new Integer(pos));
         while (pos < sourceBuf.length) {
-            if (sourceBuf[pos++] == '\n') {
-                if (pos < sourceBuf.length) {
-                    newLinePosns.add(new Integer(pos));
-                }
-            }
+        if (sourceBuf[pos++] == '\n') {
+        if (pos < sourceBuf.length) {
+        newLinePosns.add(new Integer(pos));
+        }
+        }
         }
 
         table = new int[newLinePosns.size()];
         int line = 0;
         for (Integer posn: newLinePosns) {
-            table[line++] = posn.intValue();
+        table[line++] = posn.intValue();
         }
-*/
+         */
     }
 
     public int getLineNumber(int pos) {
-    	if (true) {
-    		return 65535;
-    	}
+        if (true) {
+            return 65535;
+        }
         if (maxPos < pos || pos < 0) {
             return 0;
         }
 
         // Skip first line - always starts at pos 0
-        for (int line = 1; ; ++line) {
+        for (int line = 1;; ++line) {
             if (table[line] > pos) {
                 return line;
             }

@@ -25,9 +25,7 @@
 package com.sun.squawk.vm2c;
 
 import java.io.*;
-import java.util.*;
 
-import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.util.*;
 

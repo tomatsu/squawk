@@ -21,7 +21,6 @@
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 package com.sun.squawk.vm2c;
 
 import java.util.*;
@@ -40,7 +39,7 @@ import com.sun.tools.javac.util.List;
 public class LocalVarDeclScanner extends TreeScanner {
 
     private Scope scope;
-    private Map<Tree, List<VarSymbol>> blockDecls;
+    private Map<JCTree, List<VarSymbol>> blockDecls;
 
     /**
      * Parses a class tree to find the block local declarations.
@@ -49,18 +48,18 @@ public class LocalVarDeclScanner extends TreeScanner {
      * @return  a hashtable mapping the first statement in a block
      *          to the set of variable declared in the block
      */
-    public Map<Tree, List<VarSymbol>> run(Tree.MethodDef method) {
-        blockDecls = new HashMap<Tree, List<VarSymbol>> ();
+    public Map<JCTree, List<VarSymbol>> run(JCTree.JCMethodDecl method) {
+        blockDecls = new HashMap<JCTree, List<VarSymbol>>();
         scope = new Scope(method.sym);
         visitMethodDef(method);
         return blockDecls;
     }
 
-    public void visitClassDef(Tree.ClassDef tree) {
+    public void visitClassDef(JCTree.JCClassDecl tree) {
         // skip inner classes
     }
 
-    public void visitMethodDef(Tree.MethodDef tree) {
+    public void visitMethodDef(JCTree.JCMethodDecl tree) {
         if (tree.body != null) {
             enter();
             super.visitMethodDef(tree);
@@ -68,15 +67,15 @@ public class LocalVarDeclScanner extends TreeScanner {
         }
     }
 
-    public void visitBlock(Tree.Block tree) {
+    public void visitBlock(JCTree.JCBlock tree) {
         enter();
         super.visitBlock(tree);
         leave(tree.stats);
     }
 
-    public void visitVarDef(Tree.VarDef tree) {
+    public void visitVarDef(JCTree.JCVariableDecl tree) {
         if (tree.sym.isLocal()) {
-            if ( (tree.sym.flags() & Flags.PARAMETER) == 0) {
+            if ((tree.sym.flags() & Flags.PARAMETER) == 0) {
                 scope.enter(tree.sym);
             }
         }
@@ -86,14 +85,14 @@ public class LocalVarDeclScanner extends TreeScanner {
         scope = scope.dup();
     }
 
-    private void leave(List<? extends Tree> stats) {
+    private void leave(List<? extends JCTree> stats) {
         if (stats != null && !stats.isEmpty() && scope.nelems != 0) {
             List<VarSymbol> symbols = List.nil();
             int nelems = scope.nelems;
             for (Scope.Entry entry = scope.elems; nelems-- != 0; entry = entry.sibling) {
                 assert entry.scope == scope;
                 assert entry.sym.kind == Kinds.VAR;
-                symbols = symbols.prepend( (VarSymbol) entry.sym);
+                symbols = symbols.prepend((VarSymbol) entry.sym);
             }
             blockDecls.put(stats.head, symbols);
         }
