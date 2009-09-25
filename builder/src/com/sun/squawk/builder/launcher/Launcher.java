@@ -61,6 +61,12 @@ public class Launcher {
             throw new RuntimeException("Problems building class path to launch builder", e);
         }
         loader = new URLClassLoader(urls.toArray(new URL[urls.size()]));
+        String treeClassName = "com.sun.tools.javac.tree.JCTree";
+        try {
+            loader.loadClass(treeClassName);
+        } catch (ClassNotFoundException e1) {
+            throw new RuntimeException("Failed to find an appropriate compiler interface class: " + treeClassName);
+        }
         Thread.currentThread().setContextClassLoader(loader);
         try {
             Class<?> buildClass = loader.loadClass("com.sun.squawk.builder.Build");
@@ -126,7 +132,7 @@ public class Launcher {
         }
     }
     
-    public static URL getToolsJar(boolean verbose) throws MalformedURLException {
+    public static URL getToolsJar(boolean verbose) {
         // firstly check if the tools jar is already in the classpath
         boolean toolsJarAvailable = false;
         if (verbose) {
@@ -137,7 +143,8 @@ public class Launcher {
             System.out.print(System.getProperty("java.home"));
             System.out.println();
         }
-        String javacClassName = "com.sun.tools.javac.Main";
+        // Cloned from com.sun.squawk.builder.JavaCompiler.initializeTools()
+        String javacClassName = System.getProperty("builder.tools.javac.class", "com.sun.tools.javac.Main");
         try {
             if (verbose) {
                 System.out.print("Looking for ");
@@ -153,30 +160,23 @@ public class Launcher {
             }
             toolsJarAvailable = true;
         } catch (Exception e1) {
-            try {
-                javacClassName = "sun.tools.javac.Main";
-                if (verbose) {
-                    System.out.print("  Failed");
-                    System.out.println();
-                    System.out.print("Now looking for ");
-                    System.out.print(javacClassName);
-                    System.out.print(" in classpath");
-                    System.out.println();
-                }
-                Class.forName(javacClassName);
-                toolsJarAvailable = true;
-            } catch (Exception e2) {
-                // ignore
+            if (verbose) {
+                System.out.print("  Failed");
+                System.out.println();
             }
         }
         if (toolsJarAvailable) {
             if (verbose) {
-                System.out.print("Found compiler, no need to extend classpath");
+                System.out.print("Found compiler, no need to extend classpath, ");
                 System.out.print(javacClassName);
-                System.out.print(" in classpath");
+                System.out.print(" already in classpath");
                 System.out.println();
             }
             return null;
+        }
+        if (verbose) {
+            System.out.print("Failed to find compiler in classpath, need to extend classpath");
+            System.out.println();
         }
         String javaHome = System.getProperty("java.home");
         Throwable cause = null;
@@ -209,8 +209,7 @@ public class Launcher {
                 }
                 if (toolsJar.exists()) {
                     if (verbose) {
-                        System.out.print("Looking for tools.jar in ");
-                        System.out.print(toolsJar);
+                        System.out.print("  Found it, adding to classpath");
                         System.out.println();
                     }
                     return toolsJar.toURI().toURL();

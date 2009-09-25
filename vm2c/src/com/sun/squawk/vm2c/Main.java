@@ -141,7 +141,7 @@ public class Main {
         Options options = Options.instance(context);
         options.put("-nowarn", "true"); // NOI18N
         options.put("-source", "1.5");
-        options.put("-verbose", false ? "true" : null);  // dump out paths and classfile loading
+        options.put("-verbose", null);  // dump out paths and classfile loading
 //        options.put("-s", "");
         options.put("-printsource", "");
         options.put("-sourcepath", sourcePathArg);

@@ -321,12 +321,15 @@ public class Build {
 
         StringBuffer extraBuffer = new StringBuffer();
         if (extraClassPath != null && extraClassPath.length() != 0) {
-        	String string = toPlatformPath(extraClassPath, true);
-//        	extraBuffer.append(extraClassPath);
+            String string = toPlatformPath(extraClassPath, true);
             StringTokenizer tokenizer = new StringTokenizer(string, File.pathSeparator);
             while (tokenizer.hasMoreTokens()) {
                 String token = tokenizer.nextToken();
-                extraBuffer.append(new File(baseDir, token));
+                File tokenFile = new File(token);
+                if (!tokenFile.isAbsolute()) {
+                    tokenFile = new File(baseDir, token);
+                }
+                extraBuffer.append(tokenFile);
                 if (tokenizer.hasMoreTokens()) {
                     extraBuffer.append(File.pathSeparatorChar);
                 }
@@ -897,17 +900,14 @@ public class Build {
 
 
         // Add "vm2c" target
-        URL toolsJarURL;
-        try {
-            toolsJarURL = Launcher.getToolsJar(verbose);
-        } catch (MalformedURLException e) {
-            throw new BuildException("Problems finding tools.jar", e);
-        }
+        // We need to compute the classpath for tools.jar in case we were launched from a JRE
+        // vm2c needs the tools.jar to get to the javac compiler
+        URL toolsJarURL = Launcher.getToolsJar(verbose);
         String toolsJarPathEntry;
         String toolsJarPath;
         if (toolsJarURL == null) {
-        	toolsJarPath = "";
-        	toolsJarPathEntry = "";
+            	toolsJarPath = "";
+            	toolsJarPathEntry = "";
         } else {
             File f;
             try {
@@ -916,7 +916,7 @@ public class Build {
                 f = new File(toolsJarURL.getPath());
             }
             toolsJarPath = f.getPath();
-            toolsJarPathEntry = toolsJarPath + File.pathSeparator;
+            toolsJarPathEntry = toolsJarPath + ":";
         }
         addTarget(false,  "vm2c", null, toolsJarPath, null);
 

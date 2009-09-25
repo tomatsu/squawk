@@ -55,10 +55,10 @@ syntax: re
 ^javatest-device/preprocessed
 ^javatest-device/classes\.jar
 ^javatest-device/weaved
-^mqapper/classes
-^mqapper/ide-classes
-^mqapper/preprocessed
-^mqapper/classes\.jar
+^mapper/classes
+^mapper/ide-classes
+^mapper/preprocessed
+^mapper/classes\.jar
 ^romizer/classes
 ^romizer/ide-classes
 ^romizer/preprocessed
