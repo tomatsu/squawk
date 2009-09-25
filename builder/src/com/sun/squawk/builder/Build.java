@@ -745,7 +745,7 @@ public class Build {
 //			When I remove the phoneme source from our source tree
 //            	String phoneMeSourceRoot = "../phoneme/";
             	String phoneMeSourceRoot = "phoneme/";
-            	copy(phoneMeSourceRoot + "cldc/src/javaapi/cldc1.1", "cldc/phoneme", "cldc/src", "java/io", "java/lang", "java/lang/ref", "java/util", "javax/microedition/io");
+                copy(phoneMeSourceRoot + "cldc/src/javaapi/cldc1.1", "cldc/phoneme", "cldc/src", "java/io", "java/lang", "java/lang/ref", "java/util", "javax/microedition/io", "com/sun/cldc/io/");
             	copy(phoneMeSourceRoot + "midp/src/core/javautil/classes", "cldc/phoneme", "cldc/src", "java/lang");
             	copy(phoneMeSourceRoot + "midp/src/core/javautil/reference/classes", "cldc/phoneme", "cldc/src", "java/lang");
             	copy(phoneMeSourceRoot + "midp/src/core/javautil/classes", "imp/phoneme", "imp/src", "java/util");
