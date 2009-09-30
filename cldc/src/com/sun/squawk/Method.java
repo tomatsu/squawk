@@ -387,4 +387,12 @@ public final class Method extends Member {
         }
         return lno;
     }
+
+    /**
+     * DO NOT USE
+     */
+    public final void invoke(Object[] args) {
+        throw new RuntimeException("Method put in place for JavaCard support, temporary, do not use");
+    }
+
 }
