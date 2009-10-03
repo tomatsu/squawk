@@ -396,11 +396,13 @@ public class RomCommand extends Command {
         	options = "Built via -nocomp, assuming custom cross-compilation";
         }
         createBuildFlagsHeaderFile(options);
-        
-        if (env.getBooleanProperty("VM2C")) {
-            updateVM2CGeneratedFile();
-        } else {
-            Build.delete(VM2C_SRC_FILE);
+
+        if (compilationEnabled) {
+            if (env.getBooleanProperty("VM2C")) {
+                updateVM2CGeneratedFile();
+            } else {
+                Build.delete(VM2C_SRC_FILE);
+            }
         }
 
         // Preprocess any files with the ".spp" suffix
