@@ -44,12 +44,16 @@ public class GccMacOSXX86Compiler extends GccMacOSXCompiler {
         return "X86";
     }
     
-     /**
+    public String getCompilerArchOption() {
+        return "i386";
+    }
+
+    /**
      * {@inheritDoc}
      */
     public String options(boolean disableOpts) {
         String result = super.options(disableOpts);
-        result += " -mdynamic-no-pic -fvisibility=hidden ";
+        result += " -mdynamic-no-pic -fvisibility=hidden -arch " + getCompilerArchOption() +" ";
         
         if (!disableOpts) {
             // @issue 1390. All x86 Macs are at least Prescott class, if not nocona. But gcc doesn't seem to know that.

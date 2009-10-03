@@ -59,4 +59,26 @@ public class GccMacOSXCompiler extends GccCompiler {
         return "PPC";
     }
 
+    public String getCompilerArchOption() {
+        return "ppc";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String linkOptions(boolean disableOpts) {
+        String result = super.linkOptions(disableOpts);
+        result += " -arch " + getCompilerArchOption() + " ";
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String options(boolean disableOpts) {
+        String result = super.options(disableOpts);
+        result += " -arch " + getCompilerArchOption() +" ";
+        return result;
+    }
+
 }

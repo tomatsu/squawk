@@ -170,6 +170,10 @@ public abstract class Platform {
     public boolean isBigEndian() {
         return false;
     }
+    
+    public boolean isMacOsX() {
+        return false;
+    }
 
     /**
      * Returns whether the platform allows unaligned loads.  Used to set the C compilation

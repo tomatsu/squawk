@@ -1124,6 +1124,8 @@ public class Build {
      */
     private Set<Command> runSet = new HashSet<Command>();
 
+    private boolean isWantingPpcCompilerOnMac;
+
     /**
      * Clears the set of commands that have been run.
      */
@@ -1720,6 +1722,7 @@ public class Build {
         out.println("    -profiling          enable profiling in the VM");
         out.println("    -assume             enable assertions in the VM");
         out.println("    -typemap            enable type checking in the VM");
+        out.println("    -ppccompiler        Hack to make MAc OS X Intel create a ppc arch exe");
         out.println();
         out.println();
         out.println();
@@ -1964,6 +1967,13 @@ public class Build {
                 depsFlag = "-nodeps";
             } else if (arg.equals("-h")) {
                 help = true;
+            } else if (arg.equals("-ppccompiler")) {
+                if (!platform.isMacOsX()) {
+                    throw new BuildException("Can only force ppccompiler on Mac OS X");
+                }
+                isWantingPpcCompilerOnMac = true;
+                ccompiler = platform.createDefaultCCompiler();
+                ccompiler.options = cOptions;
             } else {
                 usage("Unknown option "+arg);
                 throw new BuildException("invalid option");
@@ -2638,6 +2648,10 @@ public class Build {
      */
     public boolean isJava5SyntaxSupported() {
         return isJava5SyntaxSupported;
+    }
+    
+    public boolean isWantingPpcCompilerOnMac() {
+        return isWantingPpcCompilerOnMac;
     }
     
 }

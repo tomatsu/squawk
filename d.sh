@@ -43,7 +43,7 @@ fi
 
 #echo "JAVA_HOME=$JAVA_HOME"
 #-client -XX:+PrintCompilation
-builder="${JAVA_HOME}/bin/java $EXTRA_BUILDER_VMFLAGS -Xms128M -Xmx256M -ea -jar build.jar $BUILDER_FLAGS"
+builder="${JAVA_HOME}/bin/java $EXTRA_BUILDER_VMFLAGS -XX:CompileCommand=exclude,com/sun/squawk/Method.getParameterTypes -XX:CompileCommand=exclude,com/sun/squawk/SymbolParser.getSignatureTypeAt -XX:CompileCommand=exclude,com/sun/squawk/SymbolParser.stripMethods -Xms128M -Xmx256M -ea -jar build.jar $BUILDER_FLAGS"
 #echo $builder
 
 #----------------------------------------------------------#

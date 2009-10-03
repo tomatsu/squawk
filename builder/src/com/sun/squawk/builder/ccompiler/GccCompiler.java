@@ -44,6 +44,13 @@ public class GccCompiler extends CCompiler {
     /**
      * {@inheritDoc}
      */
+    public String linkOptions(boolean disableOpts) {
+        return "";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public String options(boolean disableOpts) {
         StringBuffer buf = new StringBuffer();
         if (!disableOpts) {
@@ -195,6 +202,7 @@ public class GccCompiler extends CCompiler {
             output = out + platform.getExecutableExtension();
             exec = "--gc-sections -o " + output + " " + Build.join(objects) + " " + getLinkSuffix();
         }
+        exec += linkOptions(false);
         env.exec("gcc " + exec);
         return new File(output);
     }

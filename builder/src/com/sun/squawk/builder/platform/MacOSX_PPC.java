@@ -67,4 +67,9 @@ public class MacOSX_PPC extends Unix {
     public boolean isBigEndian() {
         return true;
     }
+
+    public boolean isMacOsX() {
+        return false;
+    }
+
 }

@@ -50,6 +50,9 @@ public class MacOSX_X86 extends Unix {
      * {@inheritDoc}
      */
     public CCompiler createDefaultCCompiler() {
+        if (env.isWantingPpcCompilerOnMac()) {
+            return new GccMacOSXCompiler(env, this);
+        }
         return new GccMacOSXX86Compiler(env, this);
     }
 
@@ -68,6 +71,10 @@ public class MacOSX_X86 extends Unix {
      */
     public boolean isBigEndian() {
         return false;
+    }
+
+    public boolean isMacOsX() {
+        return true;
     }
 
     /**
