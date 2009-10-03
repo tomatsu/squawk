@@ -397,7 +397,7 @@ public class RomCommand extends Command {
         }
         createBuildFlagsHeaderFile(options);
 
-        if (compilationEnabled) {
+        if (!compilationEnabled) {
             if (env.getBooleanProperty("VM2C")) {
                 updateVM2CGeneratedFile();
             } else {
