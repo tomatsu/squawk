@@ -106,7 +106,7 @@ public class MscCompiler extends CCompiler {
             	toolsDirectory = "";
             }
             try {
-                String command = "\"" + toolsDirectory + "vsvars32.bat\" && " + clCommandString;
+                String command = "cmd /C \"\"" + toolsDirectory + "vsvars32.bat\" && " + clCommandString + "\"";
             	env.log(env.verbose, "Trying to find compiler command with: " + command);
                 // Try the command to see if it works, if it does work then we want to use it
                 Runtime.getRuntime().exec(command);

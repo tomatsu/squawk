@@ -330,17 +330,21 @@ public class RomCommand extends Command {
         }));
 
         File srcDir = new File("cldc", "src");
+        if (!srcDir.exists()) {
+            env.log(env.info, "No " + srcDir + " so assuming no need to generate vm2c files, ie remote build and files are already generated");
+            return;
+        }
         File preDir;
         if (env.isJava5SyntaxSupported()) {
             preDir = new File("cldc", "preprocessed");
         } else {
-            Target cldcTarger = (Target) env.getCommandForced("cldc");
-            preDir = env.preprocess(new File("cldc"), cldcTarger.srcDirs, true, true);
+            Target cldcTarget = (Target) env.getCommandForced("cldc");
+            preDir = env.preprocess(new File("cldc"), cldcTarget.srcDirs, true, true);
         }
 
         // Rebuilds the generated file if any of the *.java files in cldc/src or cldc/preprocessed have
         // a later modification date than the generated file.
-        if (!VM2C_SRC_FILE.exists() || (srcDir.exists() && !new FileSet(srcDir, isOutOfDate).list().isEmpty()) || (preDir.exists() && !new FileSet(preDir, isOutOfDate).list().isEmpty())) {
+        if (!VM2C_SRC_FILE.exists() || !new FileSet(srcDir, isOutOfDate).list().isEmpty() || (preDir.exists() && !new FileSet(preDir, isOutOfDate).list().isEmpty())) {
             // Verify that the vm2c commands were installed in my env, if not then throw an exception
             // This is to handle case where vm2c did not install itself, but we still wanted to run the rom command to do just compilation
             Command command = env.getCommand("runvm2c");
@@ -397,12 +401,10 @@ public class RomCommand extends Command {
         }
         createBuildFlagsHeaderFile(options);
 
-        if (!compilationEnabled) {
-            if (env.getBooleanProperty("VM2C")) {
-                updateVM2CGeneratedFile();
-            } else {
-                Build.delete(VM2C_SRC_FILE);
-            }
+        if (env.getBooleanProperty("VM2C")) {
+            updateVM2CGeneratedFile();
+        } else {
+            Build.delete(VM2C_SRC_FILE);
         }
 
         // Preprocess any files with the ".spp" suffix
