@@ -2292,6 +2292,7 @@ public final class Isolate implements Runnable {
      * IO exceptions are caught and might be printed.
      *
      * @param url     the URL identifying the connection to be removed
+     * @throws IllegalArgumentException if <code>url</code> does not name a current out stream
      *
      * @see #listOut
      * @see #addOut
@@ -2299,6 +2300,9 @@ public final class Isolate implements Runnable {
      */
     public void removeOut(String url) {
         OutputStream oldstrm = stdout.remove(url);
+        if (oldstrm == null) {
+            throw new IllegalArgumentException("no stream named: " + url);
+        }
         try {
             oldstrm.flush();
             oldstrm.close();
@@ -2313,14 +2317,18 @@ public final class Isolate implements Runnable {
      * IO exceptions are caught and might be printed.
      *
      * @param url     the URL identifying the connection to be removed
+     * @throws IllegalArgumentException if <code>url</code> does not name a current error stream
      *
      * @see #listErr
      * @see #addErr
      * @see #clearErr
      */
     public void removeErr(String url) {
-       OutputStream oldstrm = stderr.remove(url);
-       try {
+        OutputStream oldstrm = stderr.remove(url);
+        if (oldstrm == null) {
+            throw new IllegalArgumentException("no stream named: " + url);
+        }
+        try {
             oldstrm.flush();
             oldstrm.close();
         } catch (IOException ex) {
