@@ -223,6 +223,15 @@ public final class Suite {
 	}
 
 	/**
+	 * Return all of the resource files defined for this suite.
+	 * 
+	 * @return
+	 */
+	public ResourceFile[] getResourceFiles() {
+	    return resourceFiles;
+	}
+
+	/**
 	 * Gets the names of all manifest properties embedded in this suite.
 	 * 
      * @return enumeration over the names
@@ -303,52 +312,6 @@ public final class Suite {
             }
         }
         return new ByteArrayInputStream(bytes);
-    }
-
-    /**
-     * Looks to see if we have any resources contained within a directory of name.
-     * If there are no resources, then we assume its not a directory we know anything about.
-     *
-     * @param name  name of the directory
-     * @param klass Used to get the absolute path to resource if name is not absolute, if null, then assume resource name is absolute
-     * @return      boolean
-     */
-    public final boolean isPossibleResourceDirectory(String name, Klass klass) {
-        if ((name.length() > 0 && name.charAt(0) == '/')) {
-            name = name.substring(1);
-        } else if (klass != null) {
-            String className = klass.getName();
-            int dotIndex = className.lastIndexOf('.');
-            if (dotIndex >= 0) {
-                name = className.substring(0, dotIndex + 1).replace('.', '/') + name;
-            }
-        }
-        if (name.length() > 0 && name.charAt(name.length() - 1) != '/') {
-            name = name + '/';
-        }
-        return isPossibleResourceDirectoryImpl(name);
-    }
-
-    /**
-     * Gets the contents of a resource file embedded in the suite.
-     *
-     * @param name the name of the resource file whose contents is to be retrieved
-     * @return the resource data, or null if the resource file doesn't exist
-     */
-    public boolean isPossibleResourceDirectoryImpl(String name) {
-        // Look in parents first
-        if (!isBootstrap()) {
-            boolean result = parent.isPossibleResourceDirectoryImpl(name);
-            if (result) {
-                return true;
-            }
-        }
-        for (int i=0; i < resourceFiles.length; i++) {
-            if (resourceFiles[i].name.startsWith(name)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

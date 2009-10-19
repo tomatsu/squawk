@@ -773,24 +773,6 @@ T
         return suite.getResourceAsStream(name, this);
     }
 
-    /**
-     * Looks to see if we have any resources contained within a directory of name.
-     * If there are no resources, then we assume its not a directory we know anything about.
-     *
-     * @param name  name of the directory
-     * @param klass Used to get the absolute path to resource if name is not absolute, if null, then assume resource name is absolute
-     * @return      boolean
-     */
-    public final boolean isPossibleResourceDirectory(String name) {
-        Assert.that(getState() != STATE_ERROR);
-        Isolate isolate = VM.getCurrentIsolate();
-        Suite suite = isolate.getLeafSuite();
-        if (suite == null) {
-            suite = isolate.getBootstrapSuite();
-        }
-        return suite.isPossibleResourceDirectory(name, this);
-    }
-
     /*---------------------------------------------------------------------------*\
      *                 Global constant for zero length class array.              *
     \*---------------------------------------------------------------------------*/
