@@ -22,7 +22,7 @@
  * information or have any questions.
  */
 
-package com.sun.squawk.io.j2me.multicast;
+package com.sun.squawk.io.j2me.multicastoutput;
 
 import java.io.*;
 
@@ -40,7 +40,7 @@ import javax.microedition.io.*;
  * can be established without specifying any delegate streams and have the delegate streams
  * added as a separate operation as shown below:
  * <p><blockquote><pre>
- *     MulticastOutputStream mos = (MulticastOutputStream)Connector.openOutputStream("multicast:");
+ *     MulticastOutputStream mos = (MulticastOutputStream)Connector.openOutputStream("multicastoutput:");
  *     OutputStream fos = Connector.openOutputStream("file://out.txt;append=true");
  *     OutputStream sos = Connector.openOutputStream("socket://host.domain.com:9999");
  *     DataOutputStream dos = new DataOutputStream(mos);
@@ -53,7 +53,7 @@ import javax.microedition.io.*;
  * Or the connection can be established and have one or more initial delegate streams opened as shown below:
  *
  * <p><blockquote><pre>
- *     MulticastOutputStream mos = (MulticastOutputStream)Connector.openOutputStream("multicast:file://out.txt\;append=true;socket://host.domain.com:9999");
+ *     MulticastOutputStream mos = (MulticastOutputStream)Connector.openOutputStream("multicastoutput:file://out.txt\;append=true;socket://host.domain.com:9999");
  *     DataOutputStream dos = new DataOutputStream(mos);
  *
  *     dos.writeUTF("Hello World");

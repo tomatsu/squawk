@@ -47,7 +47,7 @@ class Parent {
         Isolate child = new Isolate("tests.Child", new String[] {}, cp, null);
 
         String urls = "debug:;file://parent1.log;file://parent2.log";
-        child.setProperty("java.lang.System.out", "multicast:" + urls);
+        child.setProperty("java.lang.System.out", "multicastoutput:" + urls);
         VM.println();
         VM.println("Parent: initialized System.out of child to \"" + urls + "\"");
 
