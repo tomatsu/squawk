@@ -1123,7 +1123,7 @@ public final class CodeParser implements Context {
                 msg = "@" + lastOpcodeAddress + ":\n " + msg;
             }
         } else {
-            msg = ":\n " + msg;
+            msg = " -> " + msg;
         }
         return "while translating " + method + msg;
     }
