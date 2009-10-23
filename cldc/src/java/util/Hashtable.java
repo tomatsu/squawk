@@ -89,6 +89,16 @@ public class Hashtable<K, V> {
 //  final com.sun.squawk.util.SquawkHashtable delegate;
 /*end[JAVA5SYNTAX]*/
 
+    protected static SquawkHashtable<Hashtable<?, ?>, Throwable> instances = new SquawkHashtable<Hashtable<?,?>, Throwable>();
+    public static void printInstances() {
+        Enumeration<Hashtable<?, ?>> loop = instances.keys();
+        while (loop.hasMoreElements()) {
+            Hashtable<?, ?> key = loop.nextElement();
+            System.out.println("keys: " + key.size());
+            ((Throwable) instances.get(key)).printStackTrace();
+        }
+    }
+    
     /**
      * Constructs a new, empty hashtable with the specified initial
      * capacity.
@@ -99,6 +109,7 @@ public class Hashtable<K, V> {
      * @since      JDK1.0
      */
     public Hashtable(int initialCapacity) {
+        instances.put(this, new Throwable());
 /*if[JAVA5SYNTAX]*/
         delegate = new com.sun.squawk.util.SquawkHashtable<K, V>(initialCapacity);
 /*else[JAVA5SYNTAX]*/
