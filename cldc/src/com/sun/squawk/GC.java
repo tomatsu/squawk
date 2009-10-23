@@ -2154,7 +2154,7 @@ public class GC implements GlobalStaticFields {
             Address object = GC.blockToOop(block);
             Klass klass = GC.getKlass(object);
             int blkSize = GC.getBodySize(klass, object);
-            doBlock.value(object);
+            doBlock.value(object.toObject());
             if ((oldPartialCollectionCount != partialCollectionCount) ||
                 (oldFullCollectionCount != fullCollectionCount)) {
                 throw new IllegalStateException("GC during heap walk");
