@@ -2140,7 +2140,7 @@ public class GC implements GlobalStaticFields {
      * 
      * @param startObj the object to start walking from , or null
      */
-    public static void allObjectFromDo(Object startObj, DoBlock doBlock) {
+    public static void allObjectsFromDo(Object startObj, DoBlock doBlock) {
         Address start;
         if (startObj == null) {
             start = heapStart;
