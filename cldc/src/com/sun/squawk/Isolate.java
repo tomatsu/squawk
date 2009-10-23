@@ -1256,6 +1256,9 @@ public final class Isolate implements Runnable {
      * @see #intern
      */
     private String intern0(String value) {
+        if (value == null) {
+            return null;
+        }
         Assert.that(VM.isHosted() || (this == VM.getCurrentIsolate() && this.isAlive()));
         if (!GC.inRam(value)) {
             return value;
@@ -1263,7 +1266,7 @@ public final class Isolate implements Runnable {
         if (internedStrings == null) {
             internedStrings = new SquawkHashtable();
         }
-        String internedString = (String)internedStrings.get(value);
+        String internedString = (String) internedStrings.get(value);
         if (internedString == null) {
             internedString = GC.findInRomString(value); // depends on current isolate
             if (internedString == null) {

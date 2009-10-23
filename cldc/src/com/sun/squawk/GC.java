@@ -1969,6 +1969,9 @@ public class GC implements GlobalStaticFields {
             Assert.that(suite != null);
             parent = suite.getReadOnlyObjectMemory();
             suite = suite.getParent();
+            if (suite == null) {
+                return null;
+            }
         }
 
         int percent = 0;
