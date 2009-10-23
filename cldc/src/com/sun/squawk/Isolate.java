@@ -1256,31 +1256,24 @@ public final class Isolate implements Runnable {
      * @see #intern
      */
     private String intern0(String value) {
-        String internedString = lookupInterned(value);
-        if (internedString == null) {
-            internedStrings.put(value, value);
-            internedString = value;
-        }
-        return internedString;
-    }
-
-    /**
-     * Returns a previously interened version for the string object, or null.
-     *
-     * @param value a string to lookup
-     * @return  a previously interned string that has the same contents as this string, or null
-     *
-     * @see #lookupInterned
-     */
-    private String lookupInterned0(String value) {
         Assert.that(VM.isHosted() || (this == VM.getCurrentIsolate() && this.isAlive()));
+        if (!GC.inRam(value)) {
+            return value;
+        }
         if (internedStrings == null) {
             internedStrings = new SquawkHashtable();
-            if (!VM.isHosted()) {
-                GC.getStrings(internedStrings); // depends on current isolate
-            }
         }
-        return (String)internedStrings.get(value);
+        String internedString = (String)internedStrings.get(value);
+        if (internedString == null) {
+            internedString = GC.findInRomString(value); // depends on current isolate
+            if (internedString == null) {
+                internedString = value;
+            } else {
+                value = internedString;
+            }
+            internedStrings.put(internedString, internedString);
+        }
+        return internedString;
     }
 
     /**
@@ -1311,34 +1304,6 @@ public final class Isolate implements Runnable {
     public static String intern(String value) {
         return VM.getCurrentIsolate().intern0(value);
     }
-
-    /**
-     * Returns a previously interened version for the string object, or null.
-     * <p>
-     * A pool of strings, initially empty, is maintained privately by the
-     * class <code>Isolate</code>.
-     * <p>
-     * When the lookupInterned method is invoked, if the pool already contains a
-     * string equal to this <code>String</code> object as determined by
-     * the {@link #equals(Object)} method, then the string from the pool is
-     * returned. Otherwise, return null.
-     * <p>
-     * It follows that for any two strings <code>s</code> and <code>t</code>,
-     * <code>s.intern() == t.intern()</code> is <code>true</code>
-     * if and only if <code>s.equals(t)</code> is <code>true</code>.
-     * <p>
-     * All literal strings and string-valued constant expressions are
-     * interned. String literals are defined in &sect;3.10.5 of the
-     * <a href="http://java.sun.com/docs/books/jls/html/">Java Language
-     * Specification</a>
-     *
-     * @param value a string to lookup
-     * @return  a previously interned string that has the same contents as this string, or null
-     */
-    public static String lookupInterned(String value) {
-        return VM.getCurrentIsolate().lookupInterned0(value);
-    }
-
 
     /*---------------------------------------------------------------------------*\
      *                            Isolate Execution                              *

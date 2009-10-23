@@ -1959,7 +1959,7 @@ public class GC implements GlobalStaticFields {
      *
      * @param   strings  the table to which the strings are to be added
      */
-    static void getStrings(SquawkHashtable strings) {
+    static String findInRomString(String string) {
 
         Isolate isolate = VM.getCurrentIsolate();
 
@@ -1973,7 +1973,7 @@ public class GC implements GlobalStaticFields {
 
         int percent = 0;
         if (GC.GC_TRACING_SUPPORTED && VM.isVeryVerbose()) {
-            VM.print("Building String intern table from read-only memory");
+            VM.print("Scanning String objects from read-only memory");
         }
         
         while (parent != null) {
@@ -1981,7 +1981,9 @@ public class GC implements GlobalStaticFields {
             for (Address block = parent.getStart(); block.lo(end); ) {
                 Address object = GC.blockToOop(block);
                 if (object.toObject() instanceof String) {
-                    strings.put(object.toObject(), object.toObject());
+                    if (object.toObject().equals(string)) {
+                        return (String) object.toObject();
+                    }
                 }
               
                 if (GC.GC_TRACING_SUPPORTED && VM.isVeryVerbose()) {
@@ -2001,6 +2003,7 @@ public class GC implements GlobalStaticFields {
         if (GC.GC_TRACING_SUPPORTED && VM.isVeryVerbose()) {
             VM.println(" done");
         }
+        return null;
     }
     
     /*---------------------------------------------------------------------------*\
@@ -2134,7 +2137,7 @@ public class GC implements GlobalStaticFields {
      * 
      * @param startObj the object to start walking from , or null
      */
-    public static void allInstancesFromDo(Object startObj, DoBlock doBlock) {
+    public static void allObjectFromDo(Object startObj, DoBlock doBlock) {
         Address start;
         if (startObj == null) {
             start = heapStart;
