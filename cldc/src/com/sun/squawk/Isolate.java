@@ -1268,7 +1268,9 @@ public final class Isolate implements Runnable {
         }
         String internedString = (String) internedStrings.get(value);
         if (internedString == null) {
-            internedString = GC.findInRomString(value); // depends on current isolate
+            if (!VM.isHosted()) {
+                internedString = GC.findInRomString(value); // depends on current isolate
+            }
             if (internedString == null) {
                 internedString = value;
             } else {
