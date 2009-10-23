@@ -2130,6 +2130,40 @@ public class GC implements GlobalStaticFields {
     }
     
     /**
+     * Perform doBlock with all objects starting from startObject.
+     * 
+     * @param startObj the object to start walking from , or null
+     */
+    static void allInstancesFromDo(Object startObj, DoBlock doBlock) {
+        Address start;
+        if (startObj == null) {
+            start = heapStart;
+        } else {
+            if (!inRam(startObj)) {
+                throw new IllegalArgumentException();
+            }
+            start = GC.oopToBlock(GC.getKlass(startObj), Address.fromObject(startObj));
+        }
+
+        int oldPartialCollectionCount = partialCollectionCount;
+        int oldFullCollectionCount = fullCollectionCount;
+
+        Address end = allocTop;
+
+        for (Address block = start; block.lo(end); ) {
+            Address object = GC.blockToOop(block);
+            Klass klass = GC.getKlass(object);
+            int blkSize = GC.getBodySize(klass, object);
+            doBlock.value(object);
+            if ((oldPartialCollectionCount != partialCollectionCount) ||
+                (oldFullCollectionCount != fullCollectionCount)) {
+                throw new IllegalStateException("GC during heap walk");
+            }
+            block = object.add(blkSize);
+        }
+    }
+    
+    /**
      * Do actual heap walk, from start object, or whole heap is startObj is null.
      * Collect statistics in heapstats table.
      * 
