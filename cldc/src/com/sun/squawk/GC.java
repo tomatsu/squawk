@@ -2175,8 +2175,9 @@ public class GC implements GlobalStaticFields {
      * 
      * @param startObj the object to start walking from , or null
      */
-    static void collectHeapStats(Object startObj, boolean printInstances) {
+    static void collectHeapStats(Object startObj, Object endObject, boolean printInstances) {
         Address start;
+        Address end;
         if (startObj == null) {
             start = heapStart;
         } else {
@@ -2185,11 +2186,17 @@ public class GC implements GlobalStaticFields {
             }
             start = GC.oopToBlock(GC.getKlass(startObj), Address.fromObject(startObj));
         }
+        if (endObject == null) {
+            end = allocTop;
+        } else {
+            if (!inRam(endObject)) {
+                throw new IllegalArgumentException();
+            }
+            end = GC.oopToBlock(GC.getKlass(endObject), Address.fromObject(endObject));
+        }
 
         int oldPartialCollectionCount = partialCollectionCount;
         int oldFullCollectionCount = fullCollectionCount;
-
-        Address end = allocTop;
 
         for (Address block = start; block.lo(end); ) {
             Address object = GC.blockToOop(block);
@@ -2216,30 +2223,6 @@ public class GC implements GlobalStaticFields {
         }
     }
     
-    /**
-     * print an estimate the number of bytes used by this hastable, not including keys and values.
-     * 
-     * @param tbl
-     */
-    public static void printEstimatedHashtableSize(SquawkHashtable tbl) {
-        Klass entryKlass = null;
-        Klass classStatKlass = Klass.asKlass(ClassStat.class);
-        Object internalTbl = tbl.getEntryTable();
-        int size = tbl.size();
-        try {
-            entryKlass = Klass.forName("com.sun.squawk.util.HashtableEntry");
-        } catch (ClassNotFoundException ex) {
-            Assert.shouldNotReachHere();
-        }
-
-        VM.println("The above includes these objects used to calculate class stats:");
-        VM.println("Class:\t Count: \t Bytes:");
-        print1Stat(GC.getKlass(tbl).toString(), 1, GC.getObjectBytes(tbl));
-        print1Stat(GC.getKlass(internalTbl).toString(), 1, GC.getObjectBytes(internalTbl));
-        print1Stat(entryKlass.toString(), size, size * GC.getObjectBytes(entryKlass));
-        print1Stat(classStatKlass.toString(), size, size * GC.getObjectBytes(classStatKlass));
-    }
-    
     private static void print1Stat(String key, int count, int size) {
         System.out.print(key);
         System.out.print(": \t");
@@ -2259,6 +2242,7 @@ public class GC implements GlobalStaticFields {
      * @param printInstances if true, print information about each object before printing statistics
      */
     public static void printHeapStats(Object startObj, boolean printInstances) {
+        Object endObjectMarker = new Object();
         initHeapStats();
         
         Enumeration e = heapstats.elements();
@@ -2270,7 +2254,7 @@ public class GC implements GlobalStaticFields {
         if (printInstances) {
             VM.println("Instances in heap:");
         }
-        collectHeapStats(startObj, printInstances);
+        collectHeapStats(startObj, endObjectMarker, printInstances);
         
 
         VM.println("Class:\t Count: \t Bytes:");
@@ -2282,8 +2266,6 @@ public class GC implements GlobalStaticFields {
                 print1Stat(key.toString(), cs.count, cs.size);
             }
         }
-        
-        printEstimatedHashtableSize(heapstats);
     }
     
 }
