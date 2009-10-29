@@ -3008,7 +3008,7 @@ T
      * @param  args  the arguments to be passed to the invocation
      * @throws NotInlinedPragma as this method saves the current frame pointer
      */
-    final void main(String[] args) throws NotInlinedPragma {
+    public final void main(String[] args) throws NotInlinedPragma {
         int index = indexForMain & 0xFF;
         if (index != 0xFF) {
             Assert.that(GC.getKlass(staticMethods[index]) == Klass.BYTECODE_ARRAY);
