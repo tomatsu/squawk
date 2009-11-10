@@ -318,6 +318,9 @@ public final class System {
         if (key.equals("file.separator"))	                            { return "" + VM.getFileSeparatorChar(); }
         if (key.equals("path.separator"))                               { return "" + VM.getPathSeparatorChar(); }
 
+        if (VM.getCurrentIsolate() == null) {
+            return null;
+        }
         String value = VM.getCurrentIsolate().getProperty(key);
         return value;
     }
