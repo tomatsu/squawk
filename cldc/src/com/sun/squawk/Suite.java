@@ -215,7 +215,13 @@ public final class Suite {
                 return bytes;
             }
         }
-        int index = Arrays.binarySearch(resourceFiles, name, ResourceFile.comparer);
+        int index = -1;
+        for (int i=0; i < resourceFiles.length; i++) {
+            if (resourceFiles[i].name.equals(name)) {
+                index = i;
+                break;
+            }
+        }
         if (index < 0) {
             return null;
         }
@@ -462,7 +468,6 @@ public final class Suite {
 		checkWrite();
         System.arraycopy(resourceFiles, 0, resourceFiles = new ResourceFile[resourceFiles.length + 1], 0, resourceFiles.length - 1);
         resourceFiles[resourceFiles.length - 1] = resourceFile;
-        Arrays.sort(resourceFiles, ResourceFile.comparer);
         if (resourceFile.name.toUpperCase().equals(PROPERTIES_MANIFEST_RESOURCE_NAME)) {
             isPropertiesManifestResourceInstalled = true;
             // Add the properties defined in the manifest file

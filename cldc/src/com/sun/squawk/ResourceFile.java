@@ -24,56 +24,66 @@
 
 package com.sun.squawk;
 
-import com.sun.squawk.util.*;
-
 /**
  * Stores a resource file (name and contents) in the suite file.
  *
  */
 public final class ResourceFile {
-	/**
-	 * Creates a resource file object.
+    public final String name;
+    public byte [] data;
+    protected boolean isNew;
+    protected boolean isPersistent;
+    protected int length;
+    
+    public ResourceFile(String name, boolean isPersistent) {
+        this.name = name;
+        this.data = new byte[0];
+        this.isPersistent = isPersistent;
+        this.isNew = true;
+    }
+
+    /**
+     * Creates a resource file object.
      * 
      * @param name resource name
      * @param data resource data
      */
-	public ResourceFile(String name, byte [] data) {
-		this.name = name;
-		this.data = data;
-	}
+    public ResourceFile(String name, byte [] data) {
+        this.name = name;
+        this.data = data;
+        this.isNew = false;
+        this.length = data.length;
+    }
 
-	/**
-	 * The name of the resource file, for example "example/chess/br.bishop.gif".
-	 */
-	public final String name;
-	
-	/**
-	 * The contents of the resource file.
-	 */
-	public final byte [] data;
-	
-	/**
-	 * Comparator for ResourceFile objects (which are sorted by the resource files).
-	 */
-	public final static Comparer comparer = new Comparer() {
-		/**
-		 * Compares either two ResourceFile objects, or a ResourceFile object and a String object for their relative ordering based on their file names.
-		 *
-		 * @param o1 a ResourceFile object
-		 * @param o2 either a ResourceFile object or a String object
-         * @throws ClassCastException if the arguments' types prevent them from
-         * 	       being compared by this Comparer.
-		 */
-		public int compare(Object o1, Object o2) {
-			if (o1 == o2) {
-				return 0;
-			}
-			ResourceFile rf1 = (ResourceFile)o1;
-			if (o2 instanceof ResourceFile) {
-				return rf1.name.compareTo(((ResourceFile) o2).name);
-			} else {
-				return rf1.name.compareTo((String) o2);
-			}
-		}
-	};
+    public void close() {
+        if (!isNew) {
+            return;
+        }
+        if (data.length == length) {
+            return;
+        }
+        byte[] newData = new byte[length];
+        System.arraycopy(data, 0, newData, 0, length);
+        data = newData;
+    }
+    
+    public byte[] getData() {
+        return data;
+    }
+    
+    public void write(int index, byte byt) {
+        if (!isNew) {
+            throw new RuntimeException("Cannot write to a file resource that is not new");
+        }
+        if (index > data.length) {
+            byte[] newData = new byte[data.length + 1024];
+            System.arraycopy(data, 0, newData, 0, data.length);
+            data = newData;
+        }
+        data[index] = byt;
+        if (index >= length) {
+            length = index + 1;
+        }
+    }
+    
 }
