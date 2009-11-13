@@ -2266,6 +2266,7 @@ public class GC implements GlobalStaticFields {
                 print1Stat(key.toString(), cs.count, cs.size);
             }
         }
+        heapstats = null;
     }
     
 }
