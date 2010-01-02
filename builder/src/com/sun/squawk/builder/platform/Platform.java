@@ -42,30 +42,71 @@ public abstract class Platform {
      * @return the Platform instance or null if "os.name" and "os.arch" denote an unknown Platform
      */
     public static Platform createPlatform(Build env) {
-        String osName = System.getProperty("os.name").toLowerCase();
-        String osArch = System.getProperty("os.arch").toLowerCase();
+        String osName = getHostOsName().toLowerCase();
+        String osArch = getHostArchitecture().toLowerCase();
 
-	if (isX86Architecture()) {
-		if (osName.startsWith("windows")) {
-			return new Windows_X86(env);
-		} else if (osName.startsWith("sunos")) {
-			return new SunOS_X86(env);
-		} else if (osName.startsWith("linux")) {
-			return new Linux_X86(env);
-		} else if (osName.startsWith("mac os x")) {
-			return new MacOSX_X86(env); 
-		} else {
-			return null;
-		} 
-	} else if (osName.startsWith("mac os x") && osArch.equals("ppc")) {
-		return new MacOSX_PPC(env);
-	} else if (osName.startsWith("sunos") && osArch.equals("sparc")) {
-		return new SunOS_Sparc(env);
-	} else if (osName.startsWith("linux") && osArch.equals("ppc")) {
-		return new Linux_PPC(env);
-	} else { 
-		return null;
-	}
+		if (isX86Architecture(osArch)) {
+			if (osName.startsWith("windows")) {
+				return new Windows_X86(env);
+			} else if (osName.startsWith("sunos")) {
+				return new SunOS_X86(env);
+			} else if (osName.startsWith("linux")) {
+				return new Linux_X86(env);
+			} else if (osName.startsWith("mac os x")) {
+				return new MacOSX_X86(env); 
+			} 
+		}
+		if (osArch.equals("ppc")) {
+			if (osName.startsWith("mac os x")) {
+				return new MacOSX_PPC(env);
+			} else if (osName.startsWith("linux")) {
+				return new Linux_PPC(env);
+			}
+		}
+		if (osArch.equals("sparc")) {
+			if (osName.startsWith("sunos")) {
+				return new SunOS_Sparc(env);
+			}
+		}
+		throw new RuntimeException("Unsupported/Unknown host os name \"" + osName + "\" and architecture \"" + osArch + "\" combination.");
+    }
+
+    /**
+     * Gets the name of the operating system.
+     *
+     * @return the name of the operating system
+     */
+    public static String getHostOsName() {
+    	return System.getProperty("os.name");
+    }
+
+    /**
+     * Gets the name of the operating system architecture.
+     *
+     * @return the name of the operating system architecture
+     */
+    public static String getHostArchitecture() {
+        return System.getProperty("os.arch");
+    }
+    
+    /**
+     * Returns true on any varient of x86 architectures and OSs
+     *
+     * @return boolean
+     */
+    public static boolean isX86Architecture() {
+    	String arch = getHostArchitecture();
+        return isX86Architecture(arch);
+    }
+
+    /**
+     * Returns true on any varient of x86 architectures and OSs
+     *
+     * @return boolean
+     */
+    public static boolean isX86Architecture(String arch) {
+    	arch = arch.toLowerCase();
+        return arch.equals("x86") || arch.equals("i386") || arch.equals("amd64") || arch.equals("ia64") || arch.equals("x86_64");
     }
 
     /**
@@ -115,7 +156,7 @@ public abstract class Platform {
      * @return the name of the operating system
      */
     public final String getName() {
-    return System.getProperty("os.name");
+    	return getHostOsName();
     }
 
     /**
@@ -124,19 +165,9 @@ public abstract class Platform {
      * @return the name of the operating system architecture
      */
     public final String getArchitecture() {
-        return System.getProperty("os.arch");
+        return getHostArchitecture();
     }
     
-    /**
-     * Returns true on any varient of x86 architectures and OSs
-     *
-     * @return boolean
-     */
-    public static boolean isX86Architecture() {
-        String arch = System.getProperty("os.arch").toLowerCase();
-        return arch.equals("x86") || arch.equals("i386") || arch.equals("amd64") || arch.equals("ia64") || arch.equals("x86_64");
-    }
-
     /**
      * Gets a string that describes the concrete Platform.
      *

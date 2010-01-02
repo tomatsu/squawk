@@ -59,8 +59,8 @@ public class GccMacOSXCompiler extends GccCompiler {
         return "PPC";
     }
 
-    public String getCompilerArchOption() {
-        return "ppc";
+    public String getArchOptions() {
+        return "-arch ppc ";
     }
 
     /**
@@ -68,7 +68,7 @@ public class GccMacOSXCompiler extends GccCompiler {
      */
     public String linkOptions(boolean disableOpts) {
         String result = super.linkOptions(disableOpts);
-        result += " -arch " + getCompilerArchOption() + " ";
+        result += getArchOptions() + " ";
         return result;
     }
 
@@ -77,7 +77,7 @@ public class GccMacOSXCompiler extends GccCompiler {
      */
     public String options(boolean disableOpts) {
         String result = super.options(disableOpts);
-        result += " -arch " + getCompilerArchOption() +" ";
+        result += getArchOptions();
         return result;
     }
 
