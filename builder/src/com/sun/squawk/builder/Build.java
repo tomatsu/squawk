@@ -899,7 +899,7 @@ public class Build {
         });
 
         // Add "runvm2c" target
-        addJavaCommand("runvm2c", "vm2c/lib/openjdk-javac-6-b12.jar:vm2c/classes:cldc/classes", true, "", "com.sun.squawk.vm2c.Main", "vm2c").
+        addJavaCommand("runvm2c", "vm2c/classes:cldc/classes", false, "-Xbootclasspath/p:vm2c/lib/openjdk-javac-6-b12.jar", "com.sun.squawk.vm2c.Main", "vm2c").
         	setDescription("runs the VM Java source file to C converter");
         
         // Add the "user-compile" command
