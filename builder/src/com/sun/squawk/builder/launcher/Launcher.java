@@ -65,7 +65,7 @@ public class Launcher {
         try {
             loader.loadClass(treeClassName);
         } catch (ClassNotFoundException e1) {
-            throw new RuntimeException("Failed to find an appropriate compiler interface class: " + treeClassName);
+//            throw new RuntimeException("Failed to find an appropriate compiler interface class: " + treeClassName);
         }
         Thread.currentThread().setContextClassLoader(loader);
         try {

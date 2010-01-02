@@ -103,7 +103,7 @@ public class AnnotationParser {
                     ClassType valueType = (ClassType) entry.getValue().type;
                     if (valueType.tsym.getQualifiedName().toString().equals("java.lang.String")) {
                         value = entry.getValue().toString();
-                        if (value.isEmpty()) {
+                        if (value.length() == 0) {
                             value = null;
                         } else {
                             value = value.substring(1, value.length() - 1);

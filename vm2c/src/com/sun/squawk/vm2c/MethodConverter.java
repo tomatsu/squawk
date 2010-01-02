@@ -429,7 +429,7 @@ public class MethodConverter extends JCTree.Visitor {
         doStatement(tree.body);
         ccode.align();
         ccode.print(" while ");
-        if (tree.cond.tag == JCTree.PARENS) {
+        if (tree.cond.getTag() == JCTree.PARENS) {
             doExpr(tree.cond);
         } else {
             ccode.print("(");
@@ -441,7 +441,7 @@ public class MethodConverter extends JCTree.Visitor {
 
     public void visitWhileLoop(JCTree.JCWhileLoop tree) {
         ccode.print("while ");
-        if (tree.cond.tag == JCTree.PARENS) {
+        if (tree.cond.getTag() == JCTree.PARENS) {
             doExpr(tree.cond);
         } else {
             ccode.print("(");
@@ -459,7 +459,7 @@ public class MethodConverter extends JCTree.Visitor {
             assert inForInitOrStep == false;
             inForInitOrStep = true;
             try {
-                if (tree.init.head.tag == JCTree.VARDEF) {
+                if (tree.init.head.getTag() == JCTree.VARDEF) {
                     doExpr(tree.init.head);
                     for (List<JCTree.JCStatement> l = tree.init.tail; l.nonEmpty(); l = l.tail) {
                         JCTree.JCVariableDecl vdef = (JCTree.JCVariableDecl) l.head;
@@ -499,7 +499,7 @@ public class MethodConverter extends JCTree.Visitor {
 
     public void visitSwitch(JCTree.JCSwitch tree) {
         ccode.print("switch ");
-        if (tree.selector.tag == JCTree.PARENS) {
+        if (tree.selector.getTag() == JCTree.PARENS) {
             doExpr(tree.selector);
         } else {
             ccode.print("(");
@@ -554,7 +554,7 @@ public class MethodConverter extends JCTree.Visitor {
 
         if (doThen) {
             ccode.print("if ");
-            if (tree.cond.tag == JCTree.PARENS) {
+            if (tree.cond.getTag() == JCTree.PARENS) {
                 doExpr(tree.cond);
             } else {
                 ccode.print("(");
@@ -630,7 +630,7 @@ public class MethodConverter extends JCTree.Visitor {
             ccode.print("(");
         } else {
             String receiver;
-            if (tree.meth.tag == JCTree.IDENT) {
+            if (tree.meth.getTag() == JCTree.IDENT) {
                 receiver = "this";
             } else {
                 receiver = exprToString(tree.meth, TreeInfo.noPrec, false);
@@ -757,7 +757,7 @@ public class MethodConverter extends JCTree.Visitor {
         ccode.open(prec, TreeInfo.assignopPrec);
         TreeMaker maker = TreeMaker.instance(conv.context);
         maker.pos = tree.pos;
-        JCTree.JCBinary binary = maker.Binary(tree.tag - JCTree.ASGOffset, tree.lhs, tree.rhs);
+        JCTree.JCBinary binary = maker.Binary(tree.getTag() - JCTree.ASGOffset, tree.lhs, tree.rhs);
         JCTree.JCAssign assign = maker.Assign(tree.lhs, maker.Parens(binary));
 
         // Visit the replacement node directly without going through doExpr so that
@@ -769,13 +769,13 @@ public class MethodConverter extends JCTree.Visitor {
 
     public void visitUnary(JCTree.JCUnary tree) {
         assert tree.arg.type.tag != TypeTags.FLOAT && tree.arg.type.tag != TypeTags.DOUBLE;
-        String opname = operatorName(tree.tag).toString();
-        if (tree.tag >= JCTree.PREINC && tree.tag <= JCTree.POSTDEC && !Converter.getSymbol(tree.arg).isLocal()) {
+        String opname = operatorName(tree.getTag()).toString();
+        if (tree.getTag() >= JCTree.PREINC && tree.getTag() <= JCTree.POSTDEC && !Converter.getSymbol(tree.arg).isLocal()) {
             inconvertible(tree, "side-effecting unary operator '" + opname + "' applied to non-local variable");
         }
-        int ownprec = TreeInfo.opPrec(tree.tag);
+        int ownprec = TreeInfo.opPrec(tree.getTag());
         ccode.open(prec, ownprec);
-        if (tree.tag <= JCTree.PREDEC) {
+        if (tree.getTag() <= JCTree.PREDEC) {
             ccode.print(opname);
             doExpr(tree.arg, ownprec);
         } else {
@@ -787,15 +787,15 @@ public class MethodConverter extends JCTree.Visitor {
 
     public void visitBinary(JCTree.JCBinary tree) {
 
-        int ownprec = TreeInfo.opPrec(tree.tag);
-        String opname = operatorName(tree.tag).toString();
+        int ownprec = TreeInfo.opPrec(tree.getTag());
+        String opname = operatorName(tree.getTag()).toString();
 
         ccode.open(prec, ownprec);
 
         JCTree lhs = tree.lhs;
         JCTree rhs = tree.rhs;
 
-        if (tree.tag == JCTree.PLUS && (!lhs.type.isPrimitive() || !rhs.type.isPrimitive())) {
+        if (tree.getTag() == JCTree.PLUS && (!lhs.type.isPrimitive() || !rhs.type.isPrimitive())) {
             inconvertible(tree, "string concatenation");
         }
 
@@ -806,7 +806,7 @@ public class MethodConverter extends JCTree.Visitor {
 
         boolean isLong = (lhs.type.tag == TypeTags.LONG);
         boolean infix = true;
-        switch (tree.tag) {
+        switch (tree.getTag()) {
             case JCTree.PLUS:
             case JCTree.MINUS:
             case JCTree.MUL:

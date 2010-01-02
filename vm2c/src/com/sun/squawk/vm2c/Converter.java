@@ -871,7 +871,7 @@ public class Converter {
      * Gets the symbol corresponding to a tree.
      */
     public static Symbol getSymbol(JCTree tree) {
-        switch (tree.tag) {
+        switch (tree.getTag()) {
             case JCTree.CLASSDEF:
                 return ((JCTree.JCClassDecl) tree).sym;
             case JCTree.METHODDEF:

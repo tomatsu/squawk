@@ -898,30 +898,8 @@ public class Build {
             }
         });
 
-
-        // Add "vm2c" target
-        // We need to compute the classpath for tools.jar in case we were launched from a JRE
-        // vm2c needs the tools.jar to get to the javac compiler
-        URL toolsJarURL = Launcher.getToolsJar(verbose);
-        String toolsJarPathEntry;
-        String toolsJarPath;
-        if (toolsJarURL == null) {
-            	toolsJarPath = "";
-            	toolsJarPathEntry = "";
-        } else {
-            File f;
-            try {
-                f = new File(toolsJarURL.toURI());
-            } catch(URISyntaxException e) {
-                f = new File(toolsJarURL.getPath());
-            }
-            toolsJarPath = f.getPath();
-            toolsJarPathEntry = toolsJarPath + ":";
-        }
-        addTarget(false,  "vm2c", null, toolsJarPath, null);
-
         // Add "runvm2c" target
-        addJavaCommand("runvm2c", toolsJarPathEntry + "vm2c/classes:cldc/classes", false, "", "com.sun.squawk.vm2c.Main", "vm2c").
+        addJavaCommand("runvm2c", "vm2c/lib/openjdk-javac-6-b12.jar:vm2c/classes:cldc/classes", true, "", "com.sun.squawk.vm2c.Main", "vm2c").
         	setDescription("runs the VM Java source file to C converter");
         
         // Add the "user-compile" command
