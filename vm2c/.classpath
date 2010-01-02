@@ -2,5 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Squawk-builder"/>
+	<classpathentry kind="lib" path="lib/openjdk-javac-6-b12.jar"/>
 	<classpathentry kind="output" path="ide-classes"/>
 </classpath>
