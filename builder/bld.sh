@@ -52,6 +52,6 @@ mkdir classes
 cd classes
 $JAR xf ../../tools/retroweaver-all-squawk.jar
 cd ..
-$JAVAC -cp classes;..\vm2c\lib\openjdk-javac-6-b12.jar -target 1.5 -source 1.5 -d classes -g `find src -name '*.java'`
+$JAVAC -cp classes:../vm2c/lib/openjdk-javac-6-b12.jar -target 1.5 -source 1.5 -d classes -g `find src -name '*.java'`
 $JAR cfm ../build-commands.jar build-commands-manifest.mf -C classes .
 rm -fr classes
