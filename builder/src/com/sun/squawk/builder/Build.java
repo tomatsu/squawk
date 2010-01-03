@@ -1545,9 +1545,10 @@ public class Build {
 
         if (verbose) {
             log(info, "Builder properties:");
-            Enumeration<?> keys = properties.propertyNames();
-            while (keys.hasMoreElements()) {
-                String name = (String)keys.nextElement();
+            ArrayList<String> keys = new ArrayList<String>();
+            keys.addAll(properties.stringPropertyNames());
+            Collections.sort(keys);
+            for (String name: keys) {
                 log(info, "    " + name + '=' + properties.getProperty(name));
             }
         }
@@ -1579,6 +1580,7 @@ public class Build {
             }
         }
         Build builder = new Build(buildDotOverrideFileName);
+        System.out.println("Platform: " + builder.platform);
         try {
             builder.mainProgrammatic(args);
             System.out.println("Total time: " + ((System.currentTimeMillis() - start) / 1000) + "s");

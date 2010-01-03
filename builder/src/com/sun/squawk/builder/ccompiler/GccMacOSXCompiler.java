@@ -77,7 +77,7 @@ public class GccMacOSXCompiler extends GccCompiler {
      */
     public String options(boolean disableOpts) {
         String result = super.options(disableOpts);
-        result += getArchOptions();
+        result += getArchOptions() + " -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 -mdynamic-no-pic -fvisibility=hidden ";
         return result;
     }
 
