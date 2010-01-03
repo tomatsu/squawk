@@ -1545,11 +1545,15 @@ public class Build {
 
         if (verbose) {
             log(info, "Builder properties:");
-            ArrayList<String> keys = new ArrayList<String>();
-            keys.addAll(properties.stringPropertyNames());
-            Collections.sort(keys);
-            for (String name: keys) {
-                log(info, "    " + name + '=' + properties.getProperty(name));
+            ArrayList<?> keys = Collections.list(properties.propertyNames());
+            Collections.sort(keys, new Comparator<Object>() {
+				@Override
+				public int compare(Object o1, Object o2) {
+					return ((String) o1).compareToIgnoreCase((String) o2);
+				}
+			});
+            for (Object name: keys) {
+                log(info, "    " + name + '=' + properties.get(name));
             }
         }
     }
