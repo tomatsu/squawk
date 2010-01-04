@@ -1849,6 +1849,7 @@ public class Build {
 
         while (args.length > argc) {
             String arg = args[argc];
+System.out.println("ARGC:" + argc + ":" + arg);
             if (arg.charAt(0) != '-') {
                 // Finished parsing builder args
                 break;
