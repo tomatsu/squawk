@@ -1769,6 +1769,7 @@ public class Build {
      */
     private void updateCCompiler(String name) {
         CCompiler.Options options = ccompiler.options;
+        log(info, "Build.updateCCompiler(" + name + ")");
         if (name.equals("msc")) {
             ccompiler = new MscCompiler(this, platform);
         } else if (name.equals("gcc")) {
@@ -1782,6 +1783,7 @@ public class Build {
             ccompiler = null;
             return;
         }
+        log(info, "  new compiler=" + ccompiler.name);
         ccompiler.options = options;
     }
 
@@ -1957,6 +1959,7 @@ public class Build {
                 }
                 isWantingPpcCompilerOnMac = true;
                 ccompiler = platform.createDefaultCCompiler();
+                log(info, "  forcing ppc compile with " + ccompiler.name);
                 ccompiler.options = cOptions;
             } else {
                 usage("Unknown option "+arg);

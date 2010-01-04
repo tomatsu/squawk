@@ -32,9 +32,10 @@ import com.sun.squawk.builder.*;
  * The interface to the GCC compiler on Mac OS X.
  */
 public class GccMacOSXCompiler extends GccCompiler {
+	public static final String RTS_INCLUDE_NAME = "gcc-macosx";
 
     public GccMacOSXCompiler(Build env, Platform platform) {
-        this("gcc-macosx", env, platform);
+        this(RTS_INCLUDE_NAME, env, platform);
     }
 
     protected GccMacOSXCompiler(String name, Build env, Platform platform) {

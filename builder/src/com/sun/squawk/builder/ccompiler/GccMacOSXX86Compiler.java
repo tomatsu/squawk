@@ -51,6 +51,13 @@ public class GccMacOSXX86Compiler extends GccMacOSXCompiler {
     /**
      * {@inheritDoc}
      */
+    public String getRtsIncludeName() {
+    	return RTS_INCLUDE_NAME;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public String options(boolean disableOpts) {
         String result = super.options(disableOpts);
         if (!disableOpts) {

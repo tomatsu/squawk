@@ -148,6 +148,16 @@ public abstract class CCompiler {
         this.platform = platform;
         this.options = new Options();
     }
+    
+    /**
+     * Return the name of the directory within vmcore/rts which has the os.c and other files
+     * needed to compile the VM.
+     * 
+     * @return
+     */
+    public String getRtsIncludeName() {
+    	return name;
+    }
 
     /**
      * Gets the identifier for this compiler.

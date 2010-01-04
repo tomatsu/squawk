@@ -421,7 +421,7 @@ public class RomCommand extends Command {
                 new File(jdk.getHome(), "include"),
                 jdk.getJNI_MDIncludePath(),
                 FP_SRC_DIR,
-                new File(VM_SRC_RTS_DIR, ccompiler.getName())
+                new File(VM_SRC_RTS_DIR, ccompiler.getRtsIncludeName())
             };
 
             Build.mkdir(VM_BLD_DIR);
