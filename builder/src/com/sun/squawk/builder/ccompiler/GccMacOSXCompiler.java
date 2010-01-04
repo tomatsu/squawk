@@ -34,9 +34,13 @@ import com.sun.squawk.builder.*;
 public class GccMacOSXCompiler extends GccCompiler {
 
     public GccMacOSXCompiler(Build env, Platform platform) {
-        super("gcc-macosx", env, platform);
+        this("gcc-macosx", env, platform);
     }
 
+    protected GccMacOSXCompiler(String name, Build env, Platform platform) {
+        super(name, env, platform);
+    }
+    
     /**
      * {@inheritDoc}
      */

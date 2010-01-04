@@ -34,7 +34,7 @@ import com.sun.squawk.builder.*;
 public class GccMacOSXX86Compiler extends GccMacOSXCompiler {
 
     public GccMacOSXX86Compiler(Build env, Platform platform) {
-        super(env, platform);
+        super("gcc-macosxx86", env, platform);
     }
 
     /**
