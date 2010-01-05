@@ -337,6 +337,7 @@ public final class Long {
         return (long)value;
     }
 
+/*if[FLOATS]*/
     /**
      * Returns the value of this Long as a float.
      *
@@ -360,6 +361,7 @@ public final class Long {
     public double doubleValue() {
         return (double)value;
     }
+/*end[FLOATS]*/
 
     /**
      * Returns a String object representing this Long's value.

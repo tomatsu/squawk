@@ -526,6 +526,7 @@ public final class Integer {
         return (long)value;
     }
 
+/*if[FLOATS]*/
     /**
      * Returns the value of this Integer as a <tt>float</tt>.
      *
@@ -549,6 +550,7 @@ public final class Integer {
     public double doubleValue() {
         return (double)value;
     }
+/*end[FLOATS]*/
 
     /**
      * Returns a String object representing this Integer's value. The
