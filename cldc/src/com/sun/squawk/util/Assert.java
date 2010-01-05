@@ -107,7 +107,7 @@ public class Assert {
     }
 
 /*if[JAVA5SYNTAX]*/
-    @Vm2c (macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: \"%s\", at %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+    @Vm2c (macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
 /*end[JAVA5SYNTAX]*/
     public static void that(boolean cond, String msg, String filename, int lineno) {
         if (ASSERTS_ENABLED && !cond) {
@@ -131,7 +131,7 @@ public class Assert {
     }
 
 /*if[JAVA5SYNTAX]*/
-    @Vm2c (macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: \"%s\", at %s:%d\n\", #cond, __FILE__, __LINE__); fatalVMError(\"\"); }")
+    @Vm2c (macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", #cond, __FILE__, __LINE__); fatalVMError(\"\"); }")
 /*end[JAVA5SYNTAX]*/
     public static void that(boolean cond, String filename, int lineno) {
         if (ASSERTS_ENABLED && !cond) {
