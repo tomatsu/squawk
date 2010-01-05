@@ -431,6 +431,9 @@ public class MakeAPI extends Command {
         }
         args.add("-doclet");
         args.add(this.getClass().getName());
+
+        args.add("-docletpath");
+        args.add("build.jar");
         args.addAll(packages);
 
         client = this;
