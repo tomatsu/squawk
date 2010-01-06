@@ -2344,7 +2344,7 @@ public class Build {
         boolean resetJava5Syntax = false;
         if (vm2c && !isJava5SyntaxSupported()) {
             log(brief, "[preprocessing with forced JAVA5SYNTAX for vm2c]");
-            preprocessedDir = mkdir(baseDir, "preprocessed-vm2c");
+            preprocessedDir = mkdir(baseDir, RomCommand.PREPROCESSED_FOR_VM2C_DIR_NAME);
             updateProperty("JAVA5SYNTAX", "true", true);
             isJava5SyntaxSupported = true;
             resetJava5Syntax = true;

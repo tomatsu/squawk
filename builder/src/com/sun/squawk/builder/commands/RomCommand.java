@@ -46,6 +46,8 @@ public class RomCommand extends Command {
     public static final File VM_SRC_FILE = new File(VM_SRC_DIR, "squawk.c");
     public static final File VM2C_SRC_FILE = new File(VM_SRC_DIR, "vm2c.c.spp");
 
+    public static final String PREPROCESSED_FOR_VM2C_DIR_NAME = "preprocessed-vm2c";
+
     /**
      * The name of the bootstrap suite.
      */
@@ -541,5 +543,8 @@ public class RomCommand extends Command {
             Build.delete(preprocessedFile);
         }
         Build.delete(VM2C_SRC_FILE);
+        if (!env.isJava5SyntaxSupported()) {
+            Build.clear(new File("cldc", PREPROCESSED_FOR_VM2C_DIR_NAME), true);
+        }
     }
 }
