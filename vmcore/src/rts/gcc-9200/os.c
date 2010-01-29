@@ -74,7 +74,7 @@ void startTicker(int interval) {
 extern void setup_java_interrupts();
 extern void usb_state_change();
 
-#if AT91SAM9G20
+#if AT91SAM9G20 && DIAGNOSTICS_ENABLED
 #define diagnostic(msg) iprintf(msg)
 #define diagnosticWithValue(msg, val) iprintf("%s: %d\n", msg, val)
 #else
@@ -155,10 +155,12 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
 	// Record status bits from bootloader that may require processing by Java.
 	avrSetOutstandingStatus(outstandingAvrStatus & ((1<<BATTERY_POWER_EVENT) | (1<<STATUS_LOW_BATTERY_EVENT) | (1<<STATUS_EXTERNAL_POWER_EVENT)));
 
+/*
     iprintf("\n");
     iprintf("Squawk VM Starting (");
 	iprintf(BUILD_DATE);
 	iprintf(")...\n");
+*/
 	
 	char* startupArgs = (char*)cmdLineParamsAddr;
 	char *fakeArgv[SQUAWK_STARTUP_ARGS_MAX];
