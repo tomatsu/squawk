@@ -5,6 +5,10 @@
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
             <name>vmcore</name>
             <make-project-type>0</make-project-type>
+            <c-extensions>c,spp</c-extensions>
+            <cpp-extensions/>
+            <header-extensions>h</header-extensions>
+            <sourceEncoding>UTF-8</sourceEncoding>
             <make-dep-projects/>
         </data>
     </configuration>

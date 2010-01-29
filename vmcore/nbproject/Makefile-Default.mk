@@ -1,5 +1,5 @@
 #
-# Gererated Makefile - do not edit!
+# Generated Makefile - do not edit!
 #
 # Edit the Makefile in the project folder instead (../Makefile). Each target
 # has a -pre and a -post target defined where you can add customized code.
@@ -16,12 +16,18 @@ CC=gcc
 CCC=g++
 CXX=g++
 FC=
+AS=
+
+# Macros
+CND_PLATFORM=GNU-Generic
+CND_CONF=Default
+CND_DISTDIR=dist
 
 # Include project Makefile
 include vmcore-Makefile.mk
 
 # Object Directory
-OBJECTDIR=build/Default/GNU-Generic
+OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES=
@@ -36,11 +42,14 @@ CXXFLAGS=
 # Fortran Compiler Flags
 FFLAGS=
 
+# Assembler Flags
+ASFLAGS=
+
 # Link Libraries and Options
 LDLIBSOPTIONS=
 
 # Build Targets
-.build-conf: ${BUILD_SUBPROJECTS} 
+.build-conf: ${BUILD_SUBPROJECTS}
 	cd . && 
 
 # Subprojects

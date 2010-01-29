@@ -23,7 +23,6 @@
  */
 
 #include "system.h"
-#include "AT91RM9200.h"
 #include "systemtimer.h"
 #include <syscalls-9200-io.h>
 #include "syscalls-impl.h"
@@ -75,19 +74,33 @@ void startTicker(int interval) {
 extern void setup_java_interrupts();
 extern void usb_state_change();
 
+#if AT91SAM9G20
+#define diagnostic(msg) iprintf(msg)
+#define diagnosticWithValue(msg, val) iprintf("%s: %d\n", msg, val)
+#else
+#define diagnostic(msg)
+#define diagnosticWithValue(msg, val)
+#endif
+
 /* low-level setup task required after cold and warm restarts */
 void lowLevelSetup() {
-//	diagnostic("in low level setup");
+	diagnostic("in low level setup\n");
 	mmu_enable();
 	data_cache_enable();
 	spi_init();
 	register_usb_state_callback(usb_state_change);
 	setup_java_interrupts();
-//	diagnostic("java interrupts setup");
+	diagnostic("java interrupts setup\n");
+
+#if 0 /*AT91SAM9G20*/
+    error("NYI - AVR CLOCK DISABLED FOR AT91SAM9G20", -1);
+#else
     synchroniseWithAVRClock();
+    diagnostic("before init_system_timer\n");
     init_system_timer();
     diagnosticWithValue("Current time is ", getMilliseconds());
-//	diagnostic("system timer inited");
+	diagnostic("system timer inited\n");
+#endif
 }
 
 static int get_available_memory() {
@@ -119,22 +132,25 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
 	int i;
 
 	diagnostic("in vm");
-//	error("ram size", get_ram_size());
-//	error("mmu ram", get_mmu_ram_space_address());
-//	error("mmu flash", get_mmu_flash_space_address());
-//	error("stack top", get_stack_top_address());
-//	error("stack bottom", get_stack_bottom_address());
-//	error("usart", get_usart_rx_buffer_address());
-//	error("heap end", get_heap_end_address());
+#ifdef TRUE
+	diagnosticWithValue("ram size", get_ram_size());
+	diagnosticWithValue("mmu ram", get_mmu_ram_space_address());
+	diagnosticWithValue("mmu flash", get_mmu_flash_space_address());
+	diagnosticWithValue("stack top", get_stack_top_address());
+	diagnosticWithValue("stack bottom", get_stack_bottom_address());
+	diagnosticWithValue("usart", get_usart_rx_buffer_address());
+	diagnosticWithValue("heap end", get_heap_end_address());
+#endif
 
 	page_table_init();
 	if (!reprogram_mmu(TRUE)) {
 		error("VM not launching because the FAT appears to be invalid", 0);
 		asm(SWI_ATTENTION_CALL);
 	}
-
+	
+	diagnostic("before lowLevelSetup\n");
 	lowLevelSetup();
-//	diagnostic("low level setup complete");
+	diagnostic("low level setup complete\n");
 
 	// Record status bits from bootloader that may require processing by Java.
 	avrSetOutstandingStatus(outstandingAvrStatus & ((1<<BATTERY_POWER_EVENT) | (1<<STATUS_LOW_BATTERY_EVENT) | (1<<STATUS_EXTERNAL_POWER_EVENT)));

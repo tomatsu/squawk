@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="45">
+<configurationDescriptor version="62">
   <logicalFolder name="root" displayName="root" projectFiles="true">
     <logicalFolder name="src" displayName="src" projectFiles="true">
       <logicalFolder name="rts" displayName="rts" projectFiles="true">
@@ -94,11 +94,11 @@
       <itemPath>vmcore-Makefile.mk</itemPath>
     </logicalFolder>
   </logicalFolder>
-  <sourceEncoding>UTF-8</sourceEncoding>
   <projectmakefile>vmcore-Makefile.mk</projectmakefile>
   <confs>
     <conf name="Default" type="0">
       <toolsSet>
+        <developmentServer>localhost</developmentServer>
         <compilerSet>GNU|GNU</compilerSet>
         <platform>5</platform>
       </toolsSet>
@@ -108,208 +108,14 @@
           <buildCommand></buildCommand>
           <cleanCommand></cleanCommand>
           <executablePath>../squawk</executablePath>
-          <cCompilerTool>
+          <cTool>
             <preprocessorList>
               <Elem>SDA_DEBUGGER=1</Elem>
               <Elem>MACROIZE=1</Elem>
             </preprocessorList>
-          </cCompilerTool>
+          </cTool>
         </makeTool>
-        <requiredProjects>
-        </requiredProjects>
       </makefileType>
-      <item path="src/rts/cc/os.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/cc/os_devices.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/cc/os_devices.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/rts/gcc-9200/9200-io.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/gcc-9200/jni.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/rts/gcc-9200/jni_md.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/rts/gcc-9200/mmu_fat.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/gcc-9200/os.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/gcc-eb40a/eb40a-io.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/gcc-eb40a/jni.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/rts/gcc-eb40a/jni_md.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/rts/gcc-eb40a/os.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/gcc-eb40a/os_devices.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/gcc-eb40a/os_devices.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/rts/gcc-macosx/os.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/gcc-macosx/os_devices.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/gcc-macosx/os_devices.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/rts/gcc/os.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/gcc/os_devices.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/gcc/os_devices.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/rts/msc/os.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/msc/os_devices.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/rts/msc/os_devices.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/vm/address.c.spp">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/buildflags.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/vm/bytecodes.c.spp">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/cio.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/debug.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/debugger.c.spp">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/devices.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/e_rem_pio2.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/e_sqrt.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/fp_bytecodes.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/global.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/vm/fp/k_cos.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/k_rem_pio2.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/k_sin.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/k_tan.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/s_ceil.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/s_copysign.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/s_cos.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/s_fabs.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/s_floor.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/s_scalbn.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/s_sin.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/s_tan.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/fp/w_sqrt.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/globals.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/vm/io.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/ioport.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/ioserver.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/lisp2.c.spp">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/memory.c.spp">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/msg.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/platform.h.spp">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/rom.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/vm/squawk.c.spp">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/suite.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/switch.c.spp">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/trace.c.spp">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/util.h.spp">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/util/sha.c">
-        <itemTool>0</itemTool>
-      </item>
-      <item path="src/vm/util/sha.h">
-        <itemTool>3</itemTool>
-      </item>
-      <item path="src/vm/vm2c.c.spp">
-        <itemTool>0</itemTool>
-      </item>
     </conf>
   </confs>
 </configurationDescriptor>

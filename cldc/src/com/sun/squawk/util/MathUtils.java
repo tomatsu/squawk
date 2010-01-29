@@ -101,8 +101,35 @@ public class MathUtils {
             arc_qS3 = -6.88283971605453293030e-01, /* 0xBFE6066C, 0x1B8D0159 */
             arc_qS4 =  7.70381505559019352791e-02; /* 0x3FB3B8C5, 0xB12E9282 */
     
-  /** performs x*2^n by exponent manipulation
-   */
+    /**
+     * Return {@code d} &times;
+     * 2<sup>{@code scaleFactor}</sup> rounded as if performed
+     * by a single correctly rounded floating-point multiply to a
+     * member of the double value set.  See the Java
+     * Language Specification for a discussion of floating-point
+     * value sets.  If the exponent of the result is between {@link
+     * Double#MIN_EXPONENT} and {@link Double#MAX_EXPONENT}, the
+     * answer is calculated exactly.  If the exponent of the result
+     * would be larger than {@code Double.MAX_EXPONENT}, an
+     * infinity is returned.  Note that if the result is subnormal,
+     * precision may be lost; that is, when {@code scalb(x, n)}
+     * is subnormal, {@code scalb(scalb(x, n), -n)} may not equal
+     * <i>x</i>.  When the result is non-NaN, the result has the same
+     * sign as {@code d}.
+     *
+     * <p>Special cases:
+     * <ul>
+     * <li> If the first argument is NaN, NaN is returned.
+     * <li> If the first argument is infinite, then an infinity of the
+     * same sign is returned.
+     * <li> If the first argument is zero, then a zero of the same
+     * sign is returned.
+     * </ul>
+     *
+     * @param x number to be scaled by a power of two.
+     * @param n power of 2 used to scale {@code d}
+     * @return {@code d} &times; 2<sup>{@code scaleFactor}</sup>
+     */
   public static double scalbn(double x, int n) {
 
     long lx= Double.doubleToLongBits(x);
