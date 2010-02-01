@@ -74,7 +74,7 @@ void startTicker(int interval) {
 extern void setup_java_interrupts();
 extern void usb_state_change();
 
-#if AT91SAM9G20 && DIAGNOSTICS_ENABLED
+#if 1 || (AT91SAM9G20 && DIAGNOSTICS_ENABLED)
 #define diagnostic(msg) iprintf(msg)
 #define diagnosticWithValue(msg, val) iprintf("%s: %d\n", msg, val)
 #else
@@ -175,6 +175,7 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
 	 */
 	while (startupArgs[index] != 0) {
 		if (startsWith(&startupArgs[index], "-Xmx:")) {
+iprintf("REAL Xmx arg: %s\n", &startupArgs[index]);
 			xmx_seen = TRUE;
 			break;
 		} else if (startsWith(&startupArgs[index], "-dma:")) {
@@ -197,7 +198,7 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
 	if (!xmx_seen) {
 		siprintf(xmx_buffer, "-Xmx:%i", get_available_memory());
 		fakeArgv[fakeArgc] = xmx_buffer;
-//		iprintf("Faking Xmx arg: %s\n", fakeArgv[fakeArgc]);
+		iprintf("Faking Xmx arg: %s\n", fakeArgv[fakeArgc]);
 		fakeArgc++;
 	}
 
