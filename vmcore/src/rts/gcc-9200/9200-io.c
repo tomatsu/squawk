@@ -182,7 +182,7 @@ void setup_java_interrupts() {
 	// NB interrupt handler coded in java-irq-hndl.s
 	unsigned int id;
 #if AT91SAM9G20
-    diagnosticWithValue("initial val of irqRequests", irqRequests);
+    diagnosticWithValue("initial val of irqRequests", (int)irqRequests);
 #endif
 	for (id = 0; id <= 31; id++) {
 		if (!((1 << id) & RESERVED_PERIPHERALS)) {
@@ -208,8 +208,8 @@ int storeIrqRequest (int irq_mask) {
         newRequest->next = NULL;
         newRequest->irq_mask = irq_mask;
 #if AT91SAM9G20
-    diagnosticWithValue("storeIrqRequest  - irqRequests", irqRequests);
-    diagnosticWithValue("storeIrqRequest  - newRequest", newRequest);
+    diagnosticWithValue("storeIrqRequest  - irqRequests", (int)irqRequests);
+    diagnosticWithValue("storeIrqRequest  - newRequest", (int)newRequest);
 #endif
         if (irqRequests == NULL) {
         	irqRequests = newRequest;

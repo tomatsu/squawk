@@ -429,6 +429,8 @@ void *newBuffer(UWord size, const char *desc, boolean fatalIfFail) {
     int pageSize = getSystemPageSize();
     int actualSize = (size + (pageSize - 1)) & ~(pageSize - 1);
 
+/*    printf("allocating for %s\n    requested size: %x, actual size: %x, page size: %x\n", desc, size, actualSize, pageSize);
+*/
 #ifdef _MSC_VER
     buffer = VirtualAlloc(0, actualSize, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
 #else
@@ -1009,6 +1011,9 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
 #ifdef FLASH_MEMORY
     memorySize = roundUp(ramSize - (pageSize-1), pageSize);
     ramSize = memorySize - roundUp(serviceChunkSize, pageSize) - roundUp(argvTotalSize, pageSize) - roundUp(nvmSize, pageSize);
+    diagnosticWithValue("ram size", ramSize);
+	diagnosticWithValue("page size", pageSize);
+	diagnosticWithValue("memory size", memorySize);
     assume(!TYPEMAP);
 #else
     memorySize = getFileSize(bootstrapSuiteFile);
@@ -1366,9 +1371,9 @@ void verifyBuildFlags() {
     }
 
     if (MONITOR_CACHE_SIZE > com_sun_squawk_VMThread_MAXDEPTH) {
-	// this should never happen, but check once at startup, instead of
-	// at every lock operation.
-	fprintf(stderr, "MONITOR_CACHE_SIZE is too large for maximum lock depth\n");
+        // this should never happen, but check once at startup, instead of
+        // at every lock operation.
+        fprintf(stderr, "MONITOR_CACHE_SIZE is too large for maximum lock depth\n");
         stopVM(-1);
     }
 }
@@ -1766,38 +1771,40 @@ JNIEXPORT int JNICALL Java_com_sun_squawk_vm_Main_squawk(JNIEnv *env, jobject la
  */
 int os_main(int argc, char *argv[]) {
     int ignore = initializeGlobals(&userGlobals);
-    char *executable = argv[0];
-
-    int executableLength = strlen(executable);
-    char *executablePath, *executableName;
-    char *delimiter;
-
-    executablePath = strncpy(calloc(executableLength + 1, sizeof(char)), executable, executableLength);
-    delimiter = strrchr(executablePath, (char) fileSeparatorChar);
-
-    if (delimiter != NULL) {
-        int nameLength;
-
-        delimiter++;
-        nameLength = strlen(delimiter);
-        executableName = strncpy(calloc(nameLength + 1, sizeof(char)), delimiter, nameLength);
-        *delimiter = '\0';  // Terminate executablePath
-    } else {
-        executableName = executablePath;
-        executablePath = calloc(1, sizeof(char));
-    }
 
 /*if[!EMULATOR_LAUNCHER]*/
 /*else[EMULATOR_LAUNCHER]*/
+//    char *executable = argv[0];
+//
+//    int executableLength = strlen(executable);
+//    char *executablePath, *executableName;
+//    char *delimiter;
+//
+//    executablePath = strncpy(calloc(executableLength + 1, sizeof(char)), executable, executableLength);
+//    delimiter = strrchr(executablePath, (char) fileSeparatorChar);
+//
+//    if (delimiter != NULL) {
+//        int nameLength;
+//
+//        delimiter++;
+//        nameLength = strlen(delimiter);
+//        executableName = strncpy(calloc(nameLength + 1, sizeof(char)), delimiter, nameLength);
+//        *delimiter = '\0';  // Terminate executablePath
+//    } else {
+//        executableName = executablePath;
+//        executablePath = calloc(1, sizeof(char));
+//    }
+//
 //    if (strlen(executablePath) > 0) {
 //        // hack: changes to the directory containing the emulator so that it
 //        // can access local files
 //        chdir(executablePath);
 //    }
+//
+//    free(executablePath);
+//    free(executableName);
 /*end[EMULATOR_LAUNCHER]*/
 
-    free(executablePath);
-    free(executableName);
 
     /*
      * Lose the first argument (the path to the executable program).

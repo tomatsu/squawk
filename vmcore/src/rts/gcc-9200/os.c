@@ -44,6 +44,8 @@
 #include <sys/time.h>
 #include "jni.h"
 
+#define C_HEAP_MEMORY_RESERVE (16 * 1024)
+
 #define printf iprintf
 #define fprintf fiprintf
 #define sprintf siprintf
@@ -74,32 +76,25 @@ void startTicker(int interval) {
 extern void setup_java_interrupts();
 extern void usb_state_change();
 
-#if 1 || (AT91SAM9G20 && DIAGNOSTICS_ENABLED)
-#define diagnostic(msg) iprintf(msg)
-#define diagnosticWithValue(msg, val) iprintf("%s: %d\n", msg, val)
-#else
-#define diagnostic(msg)
-#define diagnosticWithValue(msg, val)
-#endif
 
 /* low-level setup task required after cold and warm restarts */
 void lowLevelSetup() {
-	diagnostic("in low level setup\n");
+	diagnostic("in low level setup");
 	mmu_enable();
 	data_cache_enable();
 	spi_init();
 	register_usb_state_callback(usb_state_change);
 	setup_java_interrupts();
-	diagnostic("java interrupts setup\n");
+	diagnostic("java interrupts setup");
 
 #if 0 /*AT91SAM9G20*/
     error("NYI - AVR CLOCK DISABLED FOR AT91SAM9G20", -1);
 #else
     synchroniseWithAVRClock();
-    diagnostic("before init_system_timer\n");
+    diagnostic("before init_system_timer");
     init_system_timer();
     diagnosticWithValue("Current time is ", getMilliseconds());
-	diagnostic("system timer inited\n");
+	diagnostic("system timer inited");
 #endif
 }
 
@@ -107,7 +102,7 @@ static int get_available_memory() {
 	char* current;
 	int size = get_ram_size();
 	// malloc some heap to reserve it for interrupt event blocks etc.
-	char* reserved = malloc(4000);
+	char* reserved = malloc(C_HEAP_MEMORY_RESERVE);
 	// get info
 	do {
 		size -= 1024;
@@ -132,7 +127,7 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
 	int i;
 
 	diagnostic("in vm");
-#ifdef TRUE
+#if 1
 	diagnosticWithValue("ram size", get_ram_size());
 	diagnosticWithValue("mmu ram", get_mmu_ram_space_address());
 	diagnosticWithValue("mmu flash", get_mmu_flash_space_address());
