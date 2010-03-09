@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This code is free software; you can redistribute it and/or modify
@@ -169,8 +169,12 @@ unsigned int java_irq_status = 0; // bit set = that irq has outstanding interrup
 
 void usb_state_change()	{
 	int cpsr = disableARMInterrupts();
+#if AT91SAM9G20
+	java_irq_status |= (1<<10); // USB Device ID
+#else
 	java_irq_status |= (1<<11); // USB Device ID
-	setARMInterruptBits(cpsr);
+#endif
+    setARMInterruptBits(cpsr);
 }
 
 IrqRequest *irqRequests;
