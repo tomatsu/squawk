@@ -193,7 +193,7 @@ iprintf("REAL Xmx arg: %s\n", &startupArgs[index]);
 	if (!xmx_seen) {
 		siprintf(xmx_buffer, "-Xmx:%i", get_available_memory());
 		fakeArgv[fakeArgc] = xmx_buffer;
-		iprintf("Faking Xmx arg: %s\n", fakeArgv[fakeArgc]);
+//		iprintf("Faking Xmx arg: %s\n", fakeArgv[fakeArgc]);
 		fakeArgc++;
 	}
 
