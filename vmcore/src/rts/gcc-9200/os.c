@@ -148,8 +148,11 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
 	diagnostic("low level setup complete\n");
 
 	// Record status bits from bootloader that may require processing by Java.
-	avrSetOutstandingStatus(outstandingAvrStatus & ((1<<BATTERY_POWER_EVENT) | (1<<STATUS_LOW_BATTERY_EVENT) | (1<<STATUS_EXTERNAL_POWER_EVENT)));
-
+#if AT91SAM9G20
+	avrSetOutstandingEvents(outstandingAvrStatus & ((1<<POWER_CHANGE_EVENT) | (1<<STATUS_SENSOR_EVENT) | (1<<STATUS_BUTTON_EVENT)));
+#else
+	avrSetOutstandingEvents(outstandingAvrStatus & ((1<<BATTERY_POWER_EVENT) | (1<<STATUS_LOW_BATTERY_EVENT) | (1<<STATUS_EXTERNAL_POWER_EVENT)));
+#endif
 /*
     iprintf("\n");
     iprintf("Squawk VM Starting (");
@@ -170,7 +173,7 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
 	 */
 	while (startupArgs[index] != 0) {
 		if (startsWith(&startupArgs[index], "-Xmx:")) {
-iprintf("REAL Xmx arg: %s\n", &startupArgs[index]);
+//          iprintf("REAL Xmx arg: %s\n", &startupArgs[index]);
 			xmx_seen = TRUE;
 			break;
 		} else if (startsWith(&startupArgs[index], "-dma:")) {

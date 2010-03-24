@@ -63,7 +63,7 @@
 // This must match the constant in FlashFileDescriptor.java
 #define OBSOLETE_FLAG_MASK					0x1
 
-#define NUMBER_OF_64K_PAGES_IN_1MB 16
+#define NUMBER_OF_64K_PAGES_IN_1MB          16
 
 static unsigned int get_level1_page_table_address() {
 	return get_mmu_flash_space_address();
@@ -298,7 +298,7 @@ int reprogram_mmu(int ignore_obsolete_files) {
 		return -1;
 	}
 	char* fat_ptr = (char*)(get_sector_address(FAT_SECTOR)+4); // +4 to skip identifier
-	int recordStatus = read_number(fat_ptr, 2);
+    int recordStatus = read_number(fat_ptr, 2);
 	int flags, is_obsolete, sector_count, j;
 	unsigned int virtual_address;
 	while (recordStatus != UNUSED_FAT_RECORD_STATUS) {
@@ -314,12 +314,12 @@ int reprogram_mmu(int ignore_obsolete_files) {
 						is_obsolete = flags & OBSOLETE_FLAG_MASK;
 						virtual_address = read_number(fat_ptr+7, 4);
 						sector_count = read_number(fat_ptr+11, 2);
-							for (j = 0; j < sector_count; ++j) {
-								int sector_number = read_number(fat_ptr+13+(j*2), 2);
-							if (virtual_address != 0 && !(is_obsolete && ignore_obsolete_files)) {
-								map_level_2_entry_using_addresses(virtual_address, get_sector_address(sector_number));
-								virtual_address += SECTOR_SIZE;
-							}
+						for (j = 0; j < sector_count; ++j) {
+							int sector_number = read_number(fat_ptr+13+(j*2), 2);
+                            if (virtual_address != 0 && !(is_obsolete && ignore_obsolete_files)) {
+                                map_level_2_entry_using_addresses(virtual_address, get_sector_address(sector_number));
+                                virtual_address += SECTOR_SIZE;
+                            }
 						}
 						break;
 					default:
@@ -332,8 +332,8 @@ int reprogram_mmu(int ignore_obsolete_files) {
 		fat_ptr += recordSize;
 		if (recordSize % 2 != 0) {
 			fat_ptr += 1;
-		}
-		recordStatus = recordStatus = read_number(fat_ptr, 2);
+        }
+        recordStatus = read_number(fat_ptr, 2);
 	}
 
 	// invalidate data cache

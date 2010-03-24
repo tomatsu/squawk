@@ -141,7 +141,7 @@ static void setDeepSleepEventOutstanding(long long target) {
  ******************************************************************/
 #define WAIT_FOR_DEEP_SLEEP_EVENT_NUMBER (DEVICE_LAST+1)
 #define FIRST_IRQ_EVENT_NUMBER (WAIT_FOR_DEEP_SLEEP_EVENT_NUMBER+1)
-int serialPortInUse[] = {0,0,0};
+int serialPortInUse[] = {0,0,0,0,0,0};
 
 /* Java has requested serial chars */
 int getSerialPortEvent(int device_type) {
@@ -670,7 +670,7 @@ int avr_low_result = 0;
         	break;
         	
         case ChannelConstants_AVR_GET_STATUS:
-        	res = avrGetOutstandingStatus();
+        	res = avrGetOutstandingEvents();
         	break;
         	
         case ChannelConstants_SET_DEEP_SLEEP_ENABLED:
