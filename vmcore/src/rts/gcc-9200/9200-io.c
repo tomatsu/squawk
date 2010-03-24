@@ -71,7 +71,7 @@ static void doDeepSleep(long long targetMillis, int remain_powered) {
 	} else {
     	unsigned int statusReturnedFromDeepSleep = deepSleep(millisecondsToWait);
 	    lowLevelSetup(); //need to repeat low-level setup after a restart
-    	avrSetOutstandingStatus(statusReturnedFromDeepSleep);
+    	avrSetOutstandingEvents(statusReturnedFromDeepSleep);
 	}
 }
 
