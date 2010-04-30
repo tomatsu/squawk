@@ -128,7 +128,7 @@ void cioExecute(void) {
         }
 
         case ChannelConstants_INTERNAL_PRINTFLOAT: {
-            fprintf(vmOut, "%f", i1);
+            fprintf(vmOut, "%f", ib2f(i1));
             fflush(vmOut);
             break;
         }

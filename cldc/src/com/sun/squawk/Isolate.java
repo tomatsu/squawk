@@ -46,7 +46,8 @@ import com.sun.squawk.vm.*;
  *
  * <pre>
  *  // The creating isolate
- *  Isolate i = new Isolate("org.example.App", "test", null, Isolate.currentIsolate().getParentSuiteSourceURI());
+ *  String[] args = {"test"};
+ *  Isolate i = new Isolate("org.example.App", args, null, Isolate.currentIsolate().getParentSuiteSourceURI());
  *  i.start();
  *  i.join(); // wait for child isolate to finish
  *  System.out.println("Child isolate returned with exit code: " + i.getExitCode());
@@ -63,7 +64,7 @@ import com.sun.squawk.vm.*;
  *</pre>
  *
  * Note that the last two arguments to the constructor are a classpath, and a URI, which specify where the isolate's main class can be found. The classpath is used when Squawk is
- * configured with a class {@link TranslatorInterface}, while the URI specifies the {@link Suite} which contains the translated class file org.example.App. In this example code
+ * configured to translate classes to the Squawk suite format dynamically, while the URI specifies the suite which contains the translated class file org.example.App. In this example code
  * we specified that the child isolate will use the same suite as the parent Isolate.<p>
  *
  * <h3>Hibernation</h3>
@@ -741,7 +742,7 @@ public final class Isolate implements Runnable {
 
     /**
      * Adds a named property to this isolate. These properties are included in the
-     * look up performed by {@link System#getProperty(String)}.
+     * look up performed by {@link System#getProperty}.
      *
      * @param key    the name of the property
      * @param value  the value of the property or null to remove the property
@@ -765,7 +766,7 @@ public final class Isolate implements Runnable {
      * <p>
      * Isolate properties include those passed into the isolate's constructor,
      * properties inhertited from the squawk command line, and properties set
-     * by {@link Isolate#setProperty()}.
+     * by {@link Isolate#setProperty}.
      *
      * @param key  the name of the property to get
      * @return the value of the property named by 'key' or null if there is no such property
@@ -807,7 +808,7 @@ public final class Isolate implements Runnable {
      * <p>
      * Isolate properties include those passed into the isolate's constructor,
      * properties inhertited from the squawk command line, and properties set
-     * by {@link Isolate#setProperty()}.
+     * by {@link Isolate#setProperty}.
      *
      * @return enumeration of property keys
      */

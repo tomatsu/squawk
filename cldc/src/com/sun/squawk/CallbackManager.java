@@ -162,7 +162,7 @@ public final class CallbackManager {
      * @param hook the wrapped hook to search for
      * @return a HookWrapper wrapper for hook was found; otherwise null.
      */
-    public synchronized HookWrapper findHookWrapper(Isolate iso, Object hook) {
+    synchronized HookWrapper findHookWrapper(Isolate iso, Object hook) {
         if (hook == null) {
             throw new IllegalArgumentException();
         }
