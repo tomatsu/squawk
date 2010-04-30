@@ -120,7 +120,8 @@ void cioExecute(void) {
             break;
         }
 
-/*if[FLOATS]*/
+/* use this as a proxy for /*if[FLOATS], which can't be used becuase this file isn't an .spp file */
+#ifdef F_POS_INFINITY
         case ChannelConstants_INTERNAL_PRINTDOUBLE: {
             fprintf(vmOut, format("%D"), makeLong(i1, i2));
             fflush(vmOut);
@@ -132,13 +133,13 @@ void cioExecute(void) {
             fflush(vmOut);
             break;
         }
-/*else[FLOATS]*/
-//      case ChannelConstants_INTERNAL_PRINTDOUBLE:
-//      case ChannelConstants_INTERNAL_PRINTFLOAT: {
-//          fatalVMError("floats not supported");
-//          break;
-//      }
-/*if[FLOATS]*/
+#else
+        case ChannelConstants_INTERNAL_PRINTDOUBLE:
+        case ChannelConstants_INTERNAL_PRINTFLOAT: {
+            fatalVMError("floats not supported");
+            break;
+        }
+#endif
 
         case ChannelConstants_INTERNAL_PRINTUWORD: {
             jlong val = makeLong(i1, i2);
