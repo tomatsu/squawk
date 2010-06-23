@@ -2423,7 +2423,7 @@ T
                     initModifiers = (byte) method.getModifiers();
                 } else if (method.isClinit()) {
                     indexForClinit = offset;
-                    Assert.always(!hasGlobalStatics()); // <clinit> found for class with global variables.
+                    Assert.always(!hasGlobalStatics(), "No static initializer can be used on GlobalStaticFields"); // <clinit> found for class with global variables.
                 } else if (method.isMain()) {
                     indexForMain = offset;
                 }
