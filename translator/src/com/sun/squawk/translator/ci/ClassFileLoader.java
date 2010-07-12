@@ -419,54 +419,39 @@ public final class ClassFileLoader implements Context {
         }
     }
 
-    static Klass lookup(String name) {
-        Isolate isolate = VM.getCurrentIsolate();
-        Suite suite = isolate.getLeafSuite();
-        return suite.lookup(name);
+    private static boolean isPragmaGlobalStaticFields(Klass klass) {
+        return klass.getInternalName().equals("com.sun.squawk.pragma.GlobalStaticFields");
     }
 
-    static Klass pragmaGlobalStaticFields;
-    static Klass pragmaGlobalStaticFieldsInherited;
+    private static boolean isPragmaGlobalStaticFieldsInherited(Klass klass) {
+        return klass.getInternalName().equals("com.sun.squawk.pragma.GlobalStaticFieldsInherited");
+    }
 
-    static Klass getPragmaGlobalStaticFields() {
-        if (pragmaGlobalStaticFields == null) {
-            /* this will return null if GlobalStaticFields hasn't been loaded yet, but by definition
-             * there will not have been a user of the class yet.
-             */
-            pragmaGlobalStaticFields = lookup("com.sun.squawk.pragma.GlobalStaticFields");
+    private static boolean implementsGlobalStaticFieldPragma(Klass[] interfaces, boolean inheritedOnly) {
+        for (int i = 0; i < interfaces.length; i++) {
+            Klass iface = interfaces[i];
+            if ((!inheritedOnly && isPragmaGlobalStaticFields(iface)) ||
+                isPragmaGlobalStaticFieldsInherited(iface)) {
+                return true;
+            }
         }
-        return pragmaGlobalStaticFields;
+        return false;
     }
-
-    static Klass getPragmaGlobalStaticFieldsInherited() {
-        if (pragmaGlobalStaticFieldsInherited == null) {
-            /* this will return null if GlobalStaticFields hasn't been loaded yet, but by definition
-             * there will not have been a user of the class yet.
-             */
-            pragmaGlobalStaticFieldsInherited = lookup("com.sun.squawk.pragma.GlobalStaticFieldsInherited");
-        }
-        return pragmaGlobalStaticFieldsInherited;
-    }
-
     /**
      * Looks for pragmas that indicates that the class should have global statics
      */
     private void setGlobalStaticModifier(Klass superclass, Klass[] interfaces) {
-        Klass pragma = getPragmaGlobalStaticFields();
-        Klass inheritedPragma = getPragmaGlobalStaticFieldsInherited();
-
-        if (pragma == null || inheritedPragma == null) {
+        if (implementsGlobalStaticFieldPragma(interfaces, false)) {
+            klass.updateModifiers(Modifier.GLOBAL_STATICS);
             return;
         }
-        for (int i = 0; i < interfaces.length; i++) {
-            Klass iface = interfaces[i];
-            if (iface == pragma || iface == inheritedPragma) {
+        while (superclass != null) {
+            interfaces = superclass.getInterfaces();
+            if (implementsGlobalStaticFieldPragma(interfaces, true)) {
                 klass.updateModifiers(Modifier.GLOBAL_STATICS);
                 return;
             }
-        }
-        if (superclass != null && superclass.isImplementorOf(inheritedPragma)) {
-            klass.updateModifiers(Modifier.GLOBAL_STATICS);
+            superclass = superclass.getSuperclass();
         }
     }
 
