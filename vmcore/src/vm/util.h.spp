@@ -332,7 +332,7 @@ NOINLINE int    d2f(jlong l)                 { return f2ib((float)lb2d(l));     
  *                                Math functions                             *
 \*---------------------------------------------------------------------------*/
 
-INLINE jlong math(int op, jlong rs1_l, jlong rs2_l) {
+jlong math(int op, jlong rs1_l, jlong rs2_l) {
     double rs1 = lb2d(rs1_l);
     double rs2 = lb2d(rs2_l);
     double res = 0.0;

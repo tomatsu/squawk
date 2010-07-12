@@ -1224,7 +1224,7 @@ T
      * @param    anInterface  the class to check
      * @return   true if <code>klass</code> is an interface class and this class implements it.
      */
-    private final boolean isImplementorOf(Klass anInterface) {
+    public final boolean isImplementorOf(Klass anInterface) {
         Assert.that(anInterface.isInterface());
         for (int i = 0 ; i < interfaces.length ; i++) {
             Klass iface = interfaces[i];

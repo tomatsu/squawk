@@ -210,6 +210,8 @@ public final class ClassFileLoader implements Context {
         Klass[] interfaces = loadInterfaces();
         Assert.that(interfaces != null);
 
+        setGlobalStaticModifier(superClass, interfaces);
+
         if (Translator.TRACING_ENABLED && traceClassInfo) {
             Tracer.traceln("class: "+klass.getInternalName());
             //if (klass.getSuperclass() != null) {
@@ -417,6 +419,56 @@ public final class ClassFileLoader implements Context {
         }
     }
 
+    static Klass lookup(String name) {
+        Isolate isolate = VM.getCurrentIsolate();
+        Suite suite = isolate.getLeafSuite();
+        return suite.lookup(name);
+    }
+
+    static Klass pragmaGlobalStaticFields;
+    static Klass pragmaGlobalStaticFieldsInherited;
+
+    static Klass getPragmaGlobalStaticFields() {
+        if (pragmaGlobalStaticFields == null) {
+            /* this will return null if GlobalStaticFields hasn't been loaded yet, but by definition
+             * there will not have been a user of the class yet.
+             */
+            pragmaGlobalStaticFields = lookup("com.sun.squawk.pragma.GlobalStaticFields");
+        }
+        return pragmaGlobalStaticFields;
+    }
+
+    static Klass getPragmaGlobalStaticFieldsInherited() {
+        if (pragmaGlobalStaticFieldsInherited == null) {
+            /* this will return null if GlobalStaticFields hasn't been loaded yet, but by definition
+             * there will not have been a user of the class yet.
+             */
+            pragmaGlobalStaticFieldsInherited = lookup("com.sun.squawk.pragma.GlobalStaticFieldsInherited");
+        }
+        return pragmaGlobalStaticFieldsInherited;
+    }
+
+    /**
+     * Looks for pragmas that indicates that the class should have global statics
+     */
+    private void setGlobalStaticModifier(Klass superclass, Klass[] interfaces) {
+        Klass pragma = getPragmaGlobalStaticFields();
+        Klass inheritedPragma = getPragmaGlobalStaticFieldsInherited();
+
+        if (pragma == null || inheritedPragma == null) {
+            return;
+        }
+        for (int i = 0; i < interfaces.length; i++) {
+            Klass iface = interfaces[i];
+            if (iface == pragma || iface == inheritedPragma) {
+                klass.updateModifiers(Modifier.GLOBAL_STATICS);
+                return;
+            }
+        }
+        if (superclass != null && superclass.isImplementorOf(inheritedPragma)) {
+            klass.updateModifiers(Modifier.GLOBAL_STATICS);
+        }
+    }
 
     /*---------------------------------------------------------------------------*\
      *                          Interface loading                                *
@@ -440,10 +492,6 @@ public final class ClassFileLoader implements Context {
             }
             interfaces[i] = iface;
 
-            if (iface.getInternalName().equals("com.sun.squawk.pragma.GlobalStaticFields")) {
-                klass.updateModifiers(Modifier.GLOBAL_STATICS);
-            }
-            
             if (Modifier.isSuitePrivate(iface.getModifiers()) && !Isolate.currentIsolate().getLeafSuite().contains(iface)) {
             	throw new com.sun.squawk.translator.LinkageError(prefix("implements " + iface + " which is a suite-private interface from another suite."));
             }
