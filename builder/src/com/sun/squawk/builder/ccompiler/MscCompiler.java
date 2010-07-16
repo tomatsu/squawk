@@ -146,7 +146,7 @@ public class MscCompiler extends CCompiler {
             exec = " /Fe" + output + " /LD " + Build.join(objects) + " /link wsock32.lib /IGNORE:4089";
         } else {
             output = out + platform.getExecutableExtension();
-            exec = " /Fe" + output + " " + Build.join(objects) + " /link /OPT:REF /OPT:NOWIN98 wsock32.lib /IGNORE:4089";
+            exec = " /Fe" + output + " " + Build.join(objects) + " /link /OPT:REF wsock32.lib /IGNORE:4089";
         }
         env.exec(getClCommandString() + " " + exec);
         return new File(output);
