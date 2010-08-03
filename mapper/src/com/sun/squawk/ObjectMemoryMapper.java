@@ -205,7 +205,6 @@ public class ObjectMemoryMapper {
         out.println("    -r:<file>       uses file or relocation info (default=squawk.reloc)");
         out.println("    -endian:<value> convert object memories to this endianess (default is endianess of object_memory_file)");
         out.println("    -nofielddefs    do not show field definitions");
-        out.println("    -noobjects    do not show objects, arrays, method bytecodes, etc");
         out.println("    -show:<class>   only show details for the specified class (can appear multiple times in the command line)");
         out.println("    -summary        only show class and package sizes");
 /*if[TYPEMAP]*/
