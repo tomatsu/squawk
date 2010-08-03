@@ -111,7 +111,7 @@ public class Romizer {
     }
     
     /**
-     * The name of the suite being romized.
+     * The name of the suite being romized (the full name)
      */
     private String suiteName;
 
@@ -159,7 +159,7 @@ public class Romizer {
     /**
      * Specifies if the .suite.metadata file will be created.
      */
-    private boolean createMetadata;
+    private boolean createMetadata = true;
     
     /**
      * Specifies if the timing information should be displayed.
@@ -231,7 +231,8 @@ public class Romizer {
         out.println("    -o:<name>           name of suite to generate (required)");
         out.println("    -boot:<name>        name of suite to to use for references to " + ObjectMemory.BOOTSTRAP_URI + " suite URL (default=file://squawk.suite)");
         out.println("    -parent:<name>      name of suite to use as the parent of the suite being built");
-        out.println("    -metadata           create matching metadata suite");
+        out.println("    -metadata           create matching metadata suite (default)");
+        out.println("    -nometadata         do not create matching metadata suite");
         out.println("    -jars               create <suite_name>_classes.jar which contains the class files");
         out.println("                        from which the suite was built");
         out.println("    -exclude:<file>     excludes classes that match the class names or packages");
@@ -303,11 +304,21 @@ public class Romizer {
                 line = line.substring(index+1);
                 String value = "false"; // The default value where there is not '='.
                 index = predicate.indexOf('=');
+                boolean doNotOfPredicate = false;
+                
                 if (index != -1) {
                     value = predicate.substring(index+1);
+                    if (predicate.indexOf("!=") == (index - 1)) {
+                        index--;
+                        doNotOfPredicate = true;
+                    }
                     predicate = predicate.substring(0, index);
                 }
-                if (!getBuildProperty(predicate, "false").equals(value)) {
+                boolean predicateTrue = getBuildProperty(predicate, "false").equals(value);
+                if (doNotOfPredicate) {
+                    predicateTrue = !predicateTrue;
+                }
+                if (!predicateTrue) {
                     continue;
                 }
                 while (line.charAt(0) == ' ') { // remove any extra spaces
@@ -344,16 +355,17 @@ public class Romizer {
 		        }
 		        return;
 	        } catch (NoClassDefFoundError e) {
-	        	if (romizer != null && romizer.getLastClassName() != null) {
+                if (romizer != null && romizer.getLastClassName() != null) {
 	            	classNames.add(romizer.getLastClassName());
+                    System.err.println("WARNING: Deferring Errors:");
                     System.out.println("   " + e.getClass().getSimpleName() + ": " + romizer.getLastClassName());
                     System.out.println("   message: " + e.getLocalizedMessage());
                     System.out.println("   possibly in class: " + romizer.getLastClassName());
                     // TODO Deal with fact that for TCK this must continue
-//	                continue;
-	        	}
-	        	throw e;
-	        }
+	                continue;
+                }
+                throw e;
+            }
         }
     }
     
@@ -365,7 +377,6 @@ public class Romizer {
      *         if there are none
      */
     private String[] run(String[] args) {
-
         if (args.length == 0) {
             usage(null);
             return null;
@@ -430,6 +441,7 @@ public class Romizer {
             }
 
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
 
@@ -484,6 +496,8 @@ public class Romizer {
                 createJars = true;
             } else if (arg.equals("-metadata")) {
                 createMetadata = true;
+            } else if (arg.equals("-nometadata")) {
+                createMetadata = false;
             } else if (arg.startsWith("-endian:")) {
                 String value = arg.substring("-endian:".length());
                 if (value.equals("big")) {
@@ -618,7 +632,7 @@ public class Romizer {
             if (excludeFile != null) {
                 excludeClasses(classNames, excludeFile);
             }
-            suite = new Suite(suiteName, parentSuite);
+            suite = new Suite(new File(suiteName).getName(), parentSuite);
             for (String className: noClassDefFoundErrorClasses) {
             	if (suite.shouldThrowNoClassDefFoundErrorFor(className)) {
             		noClassDefFoundErrorClasses.remove(className);
@@ -734,7 +748,8 @@ public class Romizer {
         }
 
         // Ensure no classes that were meant to be excluded have been included
-        verifyExclusions(suite);
+        // do later on stripped suite...
+        //verifyExclusions(suite);
 
     }
 
@@ -781,8 +796,11 @@ public class Romizer {
         // Strip the symbols in the suite and close it.
         Suite strippedSuite = suite.strip(suiteType, suite.getName(), suite.getParent());
         strippedSuite.close();
+        // Ensure no classes that were meant to be excluded have been included
+        verifyExclusions(strippedSuite);
 
-        String url = "file://" + strippedSuite.getName() + Suite.FILE_EXTENSION;
+        String suiteFileName =  suiteName + Suite.FILE_EXTENSION;
+        String url = "file://" + suiteFileName;
         DataOutputStream dos = Connector.openDataOutputStream(url);
 
         // Save the (canonical) address at which the suite will be saved
@@ -791,13 +809,13 @@ public class Romizer {
         // The boostrap suite has a special URI
         String uri = strippedSuite.getParent() == null ? ObjectMemory.BOOTSTRAP_URI : url;
         strippedSuite.save(dos, uri, VM.isBigEndian());
-        generatedFiles.addElement(new File(strippedSuite.getName() + Suite.FILE_EXTENSION).getAbsolutePath());
+        generatedFiles.addElement(new File(suiteFileName).getAbsolutePath());
 
         // Create the <suiteName>.metadata file of all the class files from which the suite was created
         if (createMetadata) {
-            String metadataUrl = "file://" + strippedSuite.getName() + Suite.FILE_EXTENSION + Suite.FILE_EXTENSION_METADATA;
+            String metadataUrl = "file://" + suiteFileName + Suite.FILE_EXTENSION_METADATA;
             DataOutputStream metadataDos = Connector.openDataOutputStream(metadataUrl);
-            Suite metadataSuite = suite.strip(Suite.METADATA, suiteName + Suite.FILE_EXTENSION + Suite.FILE_EXTENSION_METADATA, strippedSuite);
+            Suite metadataSuite = suite.strip(Suite.METADATA, strippedSuite.getName() + Suite.FILE_EXTENSION + Suite.FILE_EXTENSION_METADATA, strippedSuite);
             int memorySizePrior = NativeUnsafe.getMemorySize();
             ObjectMemory objectMemory;
             ObjectGraphSerializer.pushObjectMap();
@@ -809,7 +827,7 @@ public class Romizer {
             GC.unRegisterReadOnlyObjectMemory(objectMemory);
             NativeUnsafe.setMemorySize(memorySizePrior);
             GC.setAllocTop(Address.zero().add(memorySizePrior));
-            generatedFiles.addElement(new File(strippedSuite.getName() + Suite.FILE_EXTENSION + Suite.FILE_EXTENSION_METADATA).getAbsolutePath());
+            generatedFiles.addElement(new File(suiteFileName + Suite.FILE_EXTENSION_METADATA).getAbsolutePath());
         }
 
         // Create the <suiteName>_classes.jar file of all the class files from which the suite was created
@@ -892,7 +910,7 @@ public class Romizer {
             ClasspathConnection classPath = (ClasspathConnection)Connector.open("classpath://" + (doJava5? this.java5ClassPath:this.classPath));
             for (int i = 0; i < suite.getClassCount(); i++) {
                 Klass klass = suite.getKlass(i);
-                if (klass.isSynthetic()) {
+                if (klass == null || klass.isSynthetic()) {
                     continue;
                 }
 

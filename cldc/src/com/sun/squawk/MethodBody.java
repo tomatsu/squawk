@@ -403,6 +403,9 @@ public final class MethodBody {
                 enc.addUnsignedInt(handler.getEnd());
                 enc.addUnsignedInt(handler.getHandler());
                 int handlerTypeIndex = definingMethod.getDefiningClass().getObjectIndex(handler.getKlass());
+                if (handlerTypeIndex < 0 || handlerTypeIndex > 0xFFFF) {
+                    System.out.println("index off in exception table for " + definingMethod + ", " + handlerTypeIndex + ", for handler class " + handler.getKlass());
+                }
                 enc.addUnsignedShort(handlerTypeIndex);
             }
         }

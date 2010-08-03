@@ -297,8 +297,46 @@ public class TestApp extends Base {
         v = v + aX * dt;
         x = x + v * dt + 0.5 * aX * dt * dt;
     }
+
+    static void testFP(double m, double n, int o, double p) {
+        double a = 6.0;
+        int b = 7;
+        double c = 8.0;
+        double d = 9.0;
+
+        System.out.println("m: " + m + " n: " + n + " o: " + o + " p: " + p);
+        System.out.println("a: " + a + " b: " + b + " c: " + c + " d: " + d);
+        System.out.println();
+        System.out.println("BITS: m: " + Double.doubleToLongBits(m) + " n: " + Double.doubleToLongBits(n) + " o: " + o + " p: " + Double.doubleToLongBits(p));
+        System.out.println("BITS a: " + Double.doubleToLongBits(a) + " b: " + b + " c: " + Double.doubleToLongBits(c) + " d: " + Double.doubleToLongBits(d));
+        System.out.println();
+        b = 8;
+
+        System.out.println("m: " + m + " n: " + n + " o: " + o + " p: " + p);
+        System.out.println("a: " + a + " b: " + b + " c: " + c + " d: " + d);
+        System.out.println();
+        System.out.println("BITS: m: " + Double.doubleToLongBits(m) + " n: " + Double.doubleToLongBits(n) + " o: " + o + " p: " + Double.doubleToLongBits(p));
+        System.out.println("BITS a: " + Double.doubleToLongBits(a) + " b: " + b + " c: " + Double.doubleToLongBits(c) + " d: " + Double.doubleToLongBits(d));
+    }
+
+
 /*end[FLOATS]*/
-    
+
+     static void testLong(long m, long n, int o, long p) {
+        long a = 6;
+        int b = 7;
+        long c = 8;
+        long d = 9;
+
+        System.out.println("m: " + m + " n: " + n + " o: " + o + " p: " + p);
+        System.out.println("a: " + a + " b: " + b + " c: " + c + " d: " + d);
+        System.out.println();
+        b = 8;
+
+        System.out.println("m: " + m + " n: " + n + " o: " + o + " p: " + p);
+        System.out.println("a: " + a + " b: " + b + " c: " + c + " d: " + d);
+    }
+
       public static class LongBall {
 
         private long v = 0x11;
@@ -337,8 +375,10 @@ public class TestApp extends Base {
         
 /*if[FLOATS]*/
         testDoubles(3.5);
+        testFP(1.0, 2.0, 3, 4.0);
 /*end[FLOATS]*/
         testLongs(0x1122334455667788L);
+        testLong(1, 2, 3, 4);
 
         while (true) {
             System.err.println("Loop iteration: " + count);

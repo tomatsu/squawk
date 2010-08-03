@@ -583,7 +583,7 @@ public class DebuggerSupport {
                 }
                 inspector.inspectSlot(isParameter, (isTwoWordLongLocal ? slot + 1 : slot), type, value);
                 
-                if (setter != null && setter.shouldSetSlot(slot, type)) {
+                if (setter != null && setter.shouldSetSlot((isTwoWordLongLocal ? slot + 1 : slot), type)) {
                     long newVal = setter.newPrimValue();
                     if (skipSlot) {
                         if (DEBUG_STACK_INSPECTION) {
@@ -730,7 +730,7 @@ public class DebuggerSupport {
     }
 
     /**
-     * A SlotSetter is a kind of StackInspcetor that can set the value of a slot
+     * A SlotSetter is a kind of StackInspector that can set the value of a slot
      */
     public abstract static class SlotSetter extends StackInspector {
 

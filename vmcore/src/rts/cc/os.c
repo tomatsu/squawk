@@ -33,19 +33,21 @@
 
 #define jlong  long long
 
-jlong sysTimeMicros(void) {
-    struct timeval tv;
-    long long result;
-    gettimeofday(&tv, NULL);
-    /* We adjust to 1000 ticks per second */
-    result = (jlong)tv.tv_sec * 1000000 + tv.tv_usec;
-    return result;
-}
+/* The package that conmtains the native code to use for a "NATIVE" platform type*/
+ #define sysPlatformName() "solaris"
 
-jlong sysTimeMillis(void) {
-    return sysTimeMicros() / 1000;
-}
+#include "os_posix.c"
 
+/** 
+ * Return another path to find the bootstrap suite with the given name.
+ * On some platforms the suite might be stored in an odd location
+ * 
+ * @param bootstrapSuiteName the name of the boostrap suite
+ * @return full or partial path to alternate location, or null
+ */
+INLINE char* sysGetAlternateBootstrapSuiteLocation(char* bootstrapSuiteName) { return NULL; }
+
+#if PLATFORM_TYPE_DELEGATING
 jint createJVM(JavaVM **jvm, void **env, void *args) {
     void* libVM;
     jint (JNICALL *CreateJavaVM)(JavaVM **jvm, void **env, void *args) = 0;
@@ -68,6 +70,7 @@ jint createJVM(JavaVM **jvm, void **env, void *args) {
 
     return CreateJavaVM(jvm, env, args) == 0;
 }
+#endif /* PLATFORM_TYPE_DELEGATING */
 
 
 void startTicker(int interval) {

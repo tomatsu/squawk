@@ -181,6 +181,9 @@ public class JavaApplicationManager {
 
         } catch (Error e) {
             System.err.println(e);
+            if (VM.isVerbose()) {
+                e.printStackTrace();
+            }
         }
 
         /*
@@ -307,11 +310,12 @@ public class JavaApplicationManager {
 /*if[FLASH_MEMORY]*/
         } else if (arg.startsWith("-spotsuite:")) {
             parentSuiteURI = arg.substring(1);
-/*else[FLASH_MEMORY]*/
-//        } else if (arg.startsWith("-cp:")) {
-//            // Fix up the class path with respect to the system dependant separator characters
-//            classPath = ArgsUtilities.toPlatformPath(arg.substring("-cp:".length()), true);
 /*end[FLASH_MEMORY]*/
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
+        } else if (arg.startsWith("-cp:")) {
+            // Fix up the class path with respect to the system dependant separator characters
+            classPath = ArgsUtilities.toPlatformPath(arg.substring("-cp:".length()), true);
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         } else if (arg.equals("-egc")) {
             GC.setExcessiveGC(true);
         } else if (arg.equals("-nogc")) {
@@ -420,12 +424,12 @@ public class JavaApplicationManager {
                 "\n" +
                 "if there is no class specified, then try MIDlet-1 property to find a MIDlet\n" +
                 "where options include:\n" +
-/*if[!FLASH_MEMORY]*/
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
                 "    -cp:<directories and jar/zip files separated by ':' (Unix) or ';' (Windows)>\n" +
-                "                          paths where classes, suites and sources can be found\n" +
-/*end[FLASH_MEMORY]*/
+                "                          paths where classes and resources can be found\n" +
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
                 "    -suite:<name>         suite name (without \"" + Suite.FILE_EXTENSION + "\") to load\n" +
-                "    -suitepath:<path>   host path to look for suite's in\n" +
+                "    -suitepath:<path>     host path to look for suites in\n" +
 /*if[FLASH_MEMORY]*/
                 "    -spotsuite:<name>     suite name (without \"" + Suite.FILE_EXTENSION + "\") to load\n" +
 /*end[FLASH_MEMORY]*/
@@ -452,13 +456,7 @@ public class JavaApplicationManager {
                 "    -traceswapper         trace endianess swapping\n"
                 );
         }
-        TranslatorInterface t = VM.getCurrentIsolate().getTranslator();
-        if (t == null) {
-            t = Isolate.getDefaultTranslator();
-        }
-        if (t != null) {
-            t.printTraceFlags(out);
-        }
+        
         GC.getCollector().usage(out);
         out.print(
                 "    -egc                  enable excessive garbage collection\n" +

@@ -70,4 +70,15 @@ public class JavaCommand extends Command {
     public void run(String[] args) {
         env.java(classPath, bootclasspath, extraJVMArgs, mainClassName, args);
     }
+
+    @Override
+    public void usage(String errMsg) {
+        if (errMsg != null) {
+            System.err.println(errMsg);
+        }
+        
+        // delegate usage message to the java command itself
+        String[] usageArgs = {"-h"};
+        env.java(classPath, bootclasspath, extraJVMArgs, mainClassName, usageArgs);
+    }
 }

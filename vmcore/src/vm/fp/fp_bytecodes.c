@@ -158,7 +158,7 @@
  * reload stored rescaled quotient
  */
 
-#if PROCESSOR_ARCHITECTURE_X86
+#if PROCESSOR_ARCHITECTURE_X86 && !defined(__SSE2_MATH__ )
 
 double JFP_lib_muld(double lvalue, double rvalue) {
     long double pos_d = 9.745314011399999E288;

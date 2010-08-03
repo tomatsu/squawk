@@ -43,7 +43,7 @@ public class SwitchDotC extends Generator {
         List<Instruction> instructions = Instruction.getInstructions();
         List<Instruction> floatInstructions = Instruction.getFloatInstructions();
 
-        printCopyright(out);
+        printCopyright(this.getClass(), out);
 
         // Generate class header
         out.println();
@@ -55,7 +55,7 @@ public class SwitchDotC extends Generator {
         out.println("/*if[FLOATS]*/");
         printCases(out, floatInstructions);
         out.println("/*end[FLOATS]*/");
-        out.println("           default: ? fatalVMError(\"unimplemented opcode\");");
+        out.println("           default: fatalVMError(\"unimplemented opcode\");");
         out.println("        }");
     }
 

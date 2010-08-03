@@ -86,6 +86,7 @@ public abstract class MIDlet {
         }
     }
 
+    // TODO - is this called anywhere?
     void startWrapper() throws MIDletStateChangeException {
         // In theory (if pauaseApp() supported_, this could be called more than once.
         Isolate.currentIsolate().addLifecycleListener(midletDestroyer, Isolate.SHUTDOWN_EVENT_MASK);

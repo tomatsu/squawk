@@ -90,16 +90,18 @@ public class DocumentorCommand extends Command {
     /**
      * Prints a help message to standard out and does not run the command
      */
-    public void printHelp() {
-        System.out.println("Usage:  [-javadoc[:api] | clean] documentor [doc-option]");
-        System.out.println("where doc-option includes");
-        System.out.println("     -public   generate zip of public html pages");
-        System.out.println("     -h        print this help message");
-        System.out.println("");
-        System.out.println("typical usage:  -javadoc:api documentor");
-        System.out.println("to generate full documentation listing including public API");
+    public void usage(String errMsg) {
+        if (errMsg != null) {
+            System.err.println(errMsg);
+        }
+        System.err.println("Usage:  [-javadoc[:api] | clean] documentor [doc-option]");
+        System.err.println("where doc-option includes");
+        System.err.println("     -public   generate zip of public html pages");
+        System.err.println("     -h        print this help message");
+        System.err.println("");
+        System.err.println("typical usage:  -javadoc:api documentor");
+        System.err.println("to generate full documentation listing including public API");
     }
-
 
     /**
      * Generate a zip file will the given files
@@ -150,13 +152,8 @@ public class DocumentorCommand extends Command {
                 // build a zip file of the public html
                 if(args[0].startsWith("-public")) {
                     buildPublic = true;
-                } else if(args[0].startsWith("-h") || args[0].startsWith("--h")) {
-                    printHelp();
-                    return;
                 } else {
-                    System.out.println("Unknown command: " + args[0] + ".");
-                    printHelp();
-                    return;
+                    throw new CommandException(this, "Unknown command: " + args[0]);
                 }
             }
 

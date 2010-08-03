@@ -34,6 +34,7 @@ import java.util.Vector;
 import com.sun.squawk.builder.Build;
 import com.sun.squawk.builder.BuildException;
 import com.sun.squawk.builder.Command;
+import com.sun.squawk.builder.CommandException;
 
 /**
  * Command that performs the functions of a JAM as described in CLDC Technology Compatibility Kit Version 1.1 User's Guide Appendix A.
@@ -301,9 +302,7 @@ public class JamCommand extends Command {
             String arg = args[i];
             boolean parsed = parseArg(arg, args, i);
             if (!parsed) {
-                String message = "Unknown option: " + arg;
-                usage(message, System.out);
-                throw new BuildException(message);
+                throw new CommandException(this, "Unknown option: " + arg);
             }
         }
     }
@@ -323,9 +322,7 @@ public class JamCommand extends Command {
                 getNextAppUrlString = "http://localhost:8091/test/getNextApp.jad";
             }
         } else {
-            String message = "The profile specified is invalid: " + profile;
-            usage(message, System.err);
-            throw new BuildException(message);
+            throw new CommandException(this, "The profile specified is invalid: " + profile);
         }
     }
 
@@ -424,9 +421,9 @@ public class JamCommand extends Command {
     /**
      * Usage message.
      * @param errMsg   optional error message
-     * @param out      where to write the usage message
      */
-    public void usage(String errMsg, PrintStream out) {
+    public void usage(String errMsg) {
+        PrintStream out = System.err;
         if (errMsg != null) {
             out.println(errMsg);
         }
@@ -434,18 +431,18 @@ public class JamCommand extends Command {
         out.println("where options include:");
         out.println("    " + NEXT_APP_URL_ARG + "<next app url>    URL location of the next app to run (Refer to your Java Test Harness configuration)");
         out.println("    " + PROFILE_ARG + "profile    The profile to use, valid are: " + CLDC_PROFILE + ", " + IMP_PROFILE + " (default=" + CLDC_PROFILE + ")");
-        out.println("    -repeat    Stay in jam mode forever");
-        out.println("    -parallel:<n>    Run n clients in parallel");
-        out.println("    -id:<n>    JAM id to use when requesting next app from JavaTest server");
-        out.println("    -debug    Include debugger in bootstrap, and launch JavaTest suite in debug mode");
-        out.println("    -nobuild    Do not rebuild the bootstrap, translator and agent suites");
-        out.println("    -buildbootstrap    Force a rebuild of the bootstrap suite");
-        out.println("    -nocleanup    Do not delete the jar and suite files created");
-        out.println("    -Xts:<n>       start tracing after 'n' backward branches\n");
-        out.println("    -h                  show this help message and exit");
-        out.println("    -verbose    Log more info to console");
-        out.println("    -failfast      Exit if any error on translating classes into suite happens");
-        out.println("    -tckagent    Use the tck agent directly, instead of our own CldcAgent when running on device");
+        out.println("    -repeat         Stay in jam mode forever");
+        out.println("    -parallel:<n>   Run n clients in parallel");
+        out.println("    -id:<n>         JAM id to use when requesting next app from JavaTest server");
+        out.println("    -debug          Include debugger in bootstrap, and launch JavaTest suite in debug mode");
+        out.println("    -nobuild        Do not rebuild the bootstrap, translator and agent suites");
+        out.println("    -buildbootstrap Force a rebuild of the bootstrap suite");
+        out.println("    -nocleanup      Do not delete the jar and suite files created");
+        out.println("    -Xts:<n>        Start tracing after 'n' backward branches\n");
+        out.println("    -h              Show this help message and exit");
+        out.println("    -verbose        Log more info to console");
+        out.println("    -failfast       Exit if any error on translating classes into suite happens");
+        out.println("    -tckagent       Use the tck agent directly, instead of our own CldcAgent when running on device");
         out.println("");
     }
 

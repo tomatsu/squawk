@@ -454,7 +454,11 @@ public final class Translator implements TranslatorInterface {
             }
             
             for (int cno = 0; cno < suite.getClassCount(); cno++) {
-	            convertPhase2(suite.getKlass(cno));
+                Klass klass = suite.getKlass(cno);
+                Assert.always(Arg.get(Arg.DEAD_CLASS_ELIMINATION).getBool() || (klass != null));
+                if (klass != null) {
+                    convertPhase2(suite.getKlass(cno));
+                }
             }
         }
         classFiles.clear();

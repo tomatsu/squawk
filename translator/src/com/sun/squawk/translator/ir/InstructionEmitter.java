@@ -1456,6 +1456,9 @@ public class InstructionEmitter implements InstructionVisitor {
      * {@inheritDoc}
      */
     public void doCatch(Catch instruction) {
+        if (state == EMIT) {
+            classFile.referenceConstantObject(instruction.getType());
+        }
         emitOpcode(OPC.CATCH);
     }
 

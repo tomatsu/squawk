@@ -1,3 +1,25 @@
+###############################################
+#           EXCLUDES FILE
+# 
+# This file controls which java classes will be excluded when creating a suite (the bootstrap suite in this case).
+# Excluded classes can be specified by either using an fully qualified class name, or by specifying a package prefix.
+# An exclusion can either be unconditional, or conditional on a build property (defined in build.properties by default).
+#
+# FORMAT
+#    Comment lines start with '#' (see left)
+#    STATEMENT:
+#       [PREDICATE] CLASSSPEC
+#    CLASSSPEC:
+#       fully-qualified-class-name | package-prefix'*'
+#    PREDICATE:
+#       property OP value
+#    OP:
+#       =
+#       !=
+#
+###############################################
+
+
 # The following 3 lines have to be uncommented to include as much of the compiler
 # in the bootstrap image as is currently possible (until CSystem is replaced with
 # something compatible with Squawk)
@@ -8,20 +30,73 @@ com.sun.squawk.compiler.*
 
 com.sun.squawk.os.*
 TRACING_ENABLED=false                          com.sun.squawk.BytecodeTracer
-GC=com.sun.squawk.Lisp2Collector               com.sun.squawk.CheneyCollector*
-GC=com.sun.squawk.Lisp2Collector               com.sun.squawk.Lisp2Generational*
-GC=com.sun.squawk.Lisp2GenerationalCollector   com.sun.squawk.CheneyCollector*
-GC=com.sun.squawk.Lisp2GenerationalCollector   com.sun.squawk.Lisp2Collector*
-GC=com.sun.squawk.CheneyCollector              com.sun.squawk.Lisp2*
+
+GC!=com.sun.squawk.Lisp2Collector              com.sun.squawk.Lisp2Collector*
+GC!=com.sun.squawk.Lisp2GenerationalCollector  com.sun.squawk.Lisp2Generational*
+GC!=com.sun.squawk.CheneyCollector             com.sun.squawk.CheneyCollector*
 
 ###############################################
-# Classes that don't need to be on device, but on desktop (move to seperate suite):
+# Classes only used when PLATFORM_TYPE = BARE_METAL 
 ###############################################
-FLASH_MEMORY=true                              com.sun.squawk.io.j2me.channel.*
+# PLATFORM_TYPE!=BARE_METAL                    CLASSSPEC
+
+###############################################
+# Classes only used when PLATFORM_TYPE = SOCKET
+###############################################
+# PLATFORM_TYPE!=SOCKET                        CLASSSPEC
+
+###############################################
+# Classes only used when PLATFORM_TYPE = DELEGATING 
+###############################################
+PLATFORM_TYPE!=DELEGATING                      com.sun.squawk.io.j2me.channel.*
+
+###############################################
+# Classes only used when PLATFORM_TYPE = NATIVE 
+###############################################
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.j2me.file.*
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.j2me.socket.*
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.j2me.serversocket.*
+# Currently the platform classes are only used by PLATFORM_TYPE=NATIVE, but that may change...
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.GCFFile
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.GCFSockets
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.BaseFileHandler
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.posix.*
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.microedition.io.*
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.ConnectionBaseInterface
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.ConnectionBaseAdapter
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.BaseInputStream
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.BaseOutputStream
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.j2me.ParameterParser
+
+#in progress:
+PLATFORM_TYPE!=NATIVE                           com.sun.squawk.platform.windows.*
+
+
+###############################################
+# Classes that don't need to be on device, but on desktop:
+###############################################
+# FLASH_MEMORY=true                            CLASSSPEC
+
+###############################################
+# Classes that don't need to be on desktop device, but on device:
+###############################################
+FLASH_MEMORY=false                             com.sun.squawk.io.j2me.spotsuite.*
+
+
+###############################################
+# Other Property-dependant classes
+###############################################
+VERIFY_SIGNATURES=false                         com.sun.squawk.security.verifier.*
+
+###############################################
+# Obsolete properties?
+###############################################
+RESOURCE.CONNECTION=false                      com.sun.squawk.io.connections.ClasspathConnection
 
 ###############################################
 # Classes on the way out. No known users:
 ###############################################
 com.sun.cldc.io.connections.HttpConnection
 com.sun.squawk.ClassTunnel
+
 

@@ -1058,6 +1058,14 @@ public final class CodeParser implements Context {
         }
     }
 
+    /**
+     * After
+     * @return
+     */
+    public ExceptionHandler[] getExceptionHandlers() {
+        return exceptionHandlers;
+    }
+
     /*---------------------------------------------------------------------------*\
      *                            Max stack & locals                             *
     \*---------------------------------------------------------------------------*/

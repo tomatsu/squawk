@@ -87,8 +87,8 @@ public class Log {
 //              if(VM.isHosted()) {
 //                  newlevel = DEBUG;
 //              } else {
-//                  System.err.println("NOTE: Log level \"debug\" only supported in debug builds. Setting log level to \"verbose\"");
-//                  newlevel = VERBOSE;
+//                 // System.err.println("NOTE: Log level \"debug\" only supported in debug builds. Setting log level to \"verbose\"");
+//                  newlevel = DEBUG;
 //              }
 /*end[DEBUG_CODE_ENABLED]*/
             } else {

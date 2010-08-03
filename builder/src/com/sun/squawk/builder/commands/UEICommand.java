@@ -70,17 +70,18 @@ public class UEICommand extends Command {
         return "Builds the Unified Emulator Interface(UEI) module";
     }
     
-    private void usage() {
-        //PrintStream out = System.out;
-        
+    public void usage(String errMsg) {
         //Column     123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789
-        stdout.println();
-        stdout.println("usage: " + name + " [directory]");
-        stdout.println();
-        stdout.println("This will build a UEI-compliant emulator in the specified directory.  If no");
-        stdout.println("directory is supplied, it will be built in:");
-        stdout.println("    " + targetDirectory);
-        stdout.println();
+        stderr.println();
+        if (errMsg != null) {
+            stderr.println(errMsg);
+        }
+        stderr.println("usage: " + name + " [directory]");
+        stderr.println();
+        stderr.println("This will build a UEI-compliant emulator in the specified directory.  If no");
+        stderr.println("directory is supplied, it will be built in:");
+        stderr.println("    " + targetDirectory);
+        stderr.println();
     }
     
     /**
@@ -89,10 +90,10 @@ public class UEICommand extends Command {
     public void run(String args[]) throws BuildException {
         stdout = System.out;
         stderr = System.err;
-        vbsout = new PrintStream(new OutputStream() { public void write(int b) {} });
+        vbsout = new PrintStream(new OutputStream() { public void write(int b) {;} });
         
         if (args.length > 1) {
-            usage();
+            usage("no options allowed for this command");
             return;
         }
         if (args.length == 1) {

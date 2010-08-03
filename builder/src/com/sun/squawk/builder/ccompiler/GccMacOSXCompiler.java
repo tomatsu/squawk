@@ -46,9 +46,12 @@ public class GccMacOSXCompiler extends GccCompiler {
      * {@inheritDoc}
      */
     public String getLinkSuffix() {
-        return " " + get64BitOption() + " -framework CoreFoundation -framework JavaVM -dead-strip ";
+        String suffix = " " + get64BitOption() + " -framework CoreFoundation -dead-strip " + getArchOptions() + " ";
+        if (options.isPlatformType(Options.DELEGATING)) {
+            suffix = suffix + " -framework JavaVM";
+        }
+        return suffix;
     }
-
 
     /**
      * {@inheritDoc}
@@ -66,15 +69,6 @@ public class GccMacOSXCompiler extends GccCompiler {
 
     public String getArchOptions() {
         return "-arch ppc ";
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public String linkOptions(boolean disableOpts) {
-        String result = super.linkOptions(disableOpts);
-        result += getArchOptions() + " ";
-        return result;
     }
 
     /**

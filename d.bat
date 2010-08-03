@@ -50,6 +50,6 @@ shift
 goto gatherArgs
 
 :doneGatherArgs
-java -jar build.jar %ARGS%
+"%JAVA_HOME%\bin\java" -jar build.jar %ARGS%
 
 :exit

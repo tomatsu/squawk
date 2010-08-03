@@ -74,7 +74,7 @@ public class RomCommand extends Command {
         return "processes a collection of modules to produce the bootstrap suite and Squawk VM executable";
     }
 
-    private void usage(String errMsg) {
+    public void usage(String errMsg) {
         PrintStream out = System.out;
 
         out.println();
@@ -272,7 +272,7 @@ public class RomCommand extends Command {
                 ObjectOutputStream out = null;
                 try {
                     File file = new File(suiteName + ".suite.suitemetadata");
-                    System.out.println("SUITEMETADATA:" + file.getPath());
+                    env.log(env.verbose, "SUITEMETADATA:" + file.getPath());
                     fileOut = new FileOutputStream(file);
                     out = new ObjectOutputStream(fileOut);
                     out.writeObject(suiteMetadata);
@@ -370,6 +370,7 @@ public class RomCommand extends Command {
             args.add("-o:" + VM2C_SRC_FILE);
             args.add("-cp:");
             args.add("-sp:." + File.pathSeparator + preDir.getPath());
+            args.add("-root:com.sun.squawk.VM");
             args.add("-root:" + env.getProperty("GC"));
             args.addAll(new FileSet(preDir, Build.JAVA_SOURCE_SELECTOR).listStrings());
 
@@ -419,12 +420,20 @@ public class RomCommand extends Command {
         // Run the C compiler to compile the slow VM
         if (compilationEnabled) {
 
-            File[] includeDirs = new File[] {
-                new File(jdk.getHome(), "include"),
-                jdk.getJNI_MDIncludePath(),
-                FP_SRC_DIR,
-                new File(VM_SRC_RTS_DIR, ccompiler.getRtsIncludeName())
-            };
+            File[] includeDirs;
+
+            if (ccompiler.isCrossPlatform()) {
+                includeDirs = new File[] {VM_SRC_DIR, FP_SRC_DIR,
+                            new File(VM_SRC_RTS_DIR, ccompiler.getRtsIncludeName())
+                        };
+            } else {
+                includeDirs = new File[] {new File(jdk.getHome(), "include"),
+                            jdk.getJNI_MDIncludePath(),
+                            VM_SRC_DIR,
+                            FP_SRC_DIR,
+                            new File(VM_SRC_RTS_DIR, ccompiler.getRtsIncludeName())
+                        };
+            }
 
             Build.mkdir(VM_BLD_DIR);
 

@@ -89,7 +89,7 @@ import com.sun.squawk.pragma.NotInlinedPragma;
  *
  * ENABLE_DYNAMIC_CLASSLOADING:
  * If the build property ENABLE_DYNAMIC_CLASSLOADING is true, then GC has to handle Klasses in the heap,
- * andforwarded klasses. Otherwise we can assume that a Klass is in ROM (or NVM).
+ * and forwarded klasses. Otherwise we can assume that a Klass is in ROM (or NVM).
  */
 public final class Lisp2GenerationalCollector extends GarbageCollector {
 
@@ -2349,7 +2349,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
     }
 
     /**
-     * Mark an object refered to by the pointer at base + offset.
+     * Mark an object referred to by the pointer at base + offset.
      * @param base
      * @param offset
      */
@@ -2363,6 +2363,32 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
     /*-----------------------------------------------------------------------*\
      *                         Compute Address Phase                         *
     \*-----------------------------------------------------------------------*/
+
+    /**
+     * Turn an object into a "safer", pointerless object. Used to turn "slop"
+     * into innocuous objects.
+     * @param object
+     * @param size
+     */
+    private void killObject(Address object, int size) {
+        Assert.that(size >= HDR.basicHeaderSize);
+        Assert.that(size == GC.roundUpToWord(size));
+        Suite bootstrapSuite = VM.getCurrentIsolate().getBootstrapSuite();
+        if (size == HDR.basicHeaderSize) {
+            //VM.println("killing by making object");
+            GC.setHeaderClass(object, bootstrapSuite.getKlass(CID.OBJECT));
+        } else {
+            size -= HDR.arrayHeaderSize;
+            //VM.print("killing by making byte array size ");
+            //VM.print(size);
+            //VM.println();
+            GC.setHeaderClass(object, bootstrapSuite.getKlass(CID.BYTE_ARRAY));
+            GC.setHeaderLength(object, size);
+/*if[DEBUG_CODE_ENABLED]*/
+            VM.deadbeef(object, object.add(size));
+/*end[DEBUG_CODE_ENABLED]*/
+        }
+    }
 
     private Address firstDeadBlock;
     private Address lastDeadBlock;
@@ -2400,6 +2426,8 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 
                 if (slopAllowed.ge(delta)) {
                     slopAllowed = slopAllowed.sub(delta.toInt());
+                    killObject(objectDestination, delta.toPrimitive());
+					Assert.that(klass == GC.getKlass(object)); // make sure we didn't stomp on this object
                     objectDestination = object;
                 } else {
 
@@ -3353,11 +3381,11 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
                 VM.print(" class = ");
                 VM.println(klass.getInternalName());
             }
-
+            Assert.that(GC.getKlass(klass).getSystemID() == CID.KLASS, "class of referenced object is invalid");
             // Verify the pointer to the class or ObjectAssociation
             visitOop(VERIFY_VISITOR, object, HDR.klass);
 
-            if (klass.isSquawkArray(klass)) {
+            if (Klass.isSquawkArray(klass)) {
                 // An dead stack chunk in the old generation will most likely have invalid pointers
                 if (klass.getSystemID() != CID.LOCAL_ARRAY || NativeUnsafe.getObject(object, SC.owner) != null) {
                     traverseOopsInArrayObject(object, klassAddress, VERIFY_VISITOR);

@@ -29,7 +29,7 @@
  */
 
 #include "../platform.h"
-#include <global.h>
+#include "global.h"
 
 /*
  * Table of constants for 2/pi, 396 Hex digits (476 decimal) of 2/pi

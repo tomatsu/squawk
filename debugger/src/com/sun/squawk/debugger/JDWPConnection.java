@@ -192,6 +192,9 @@ public final class JDWPConnection {
                 int length = in.readInt();
                 int id = in.readInt();
                 int flags = in.readByte();
+                if (Log.verbose()) {
+                    Log.log("readPacket: length: " + length + " id: " + id + " flags: " + flags);
+                }
 
                 Packet packet;
                 int dataLength = length - 11;

@@ -56,7 +56,10 @@ typedef struct messageStruct {
  * Routines that will come from devices.c if in kernel mode
  */
 INLINE void assumeInterruptsAreDisabled() { }
-INLINE void *safeMalloc(unsigned length) { return malloc(length); }
+INLINE void *safeMalloc(unsigned length) {
+//  printf("Trying to allocate %d bytes\n", length);
+    return malloc(length);
+}
 
 #endif /* KERNEL_SQUAWK */
 

@@ -356,28 +356,7 @@ INLINE boolean setArrayLength(Address _oop, int _size);
 //#define BAD_VALUE 99786999
 
 #ifdef BAD_ADDRESS
-        /**
-         * Checks to see if a specific address was written to and print it if it was.
-         *
-         * @param ea    the address of the last write to memory
-         * @param size  the number of bytes written
-         * @param addr  the address to check for
-         */
-        void checkOneAddress(Address ea, int size, Address addr) {
-            ByteAddress start  = (ByteAddress)ea;
-            ByteAddress end    = start + size;
-            ByteAddress target = (ByteAddress)addr;
-            if (target >= start && target < end) {
-                UWord value = ((UWord *)target)[0];
-                fprintf(stderr, format("*******************  [%A] = %A [bcount=%L]\n"), target, value, getBranchCount());
-#ifdef BAD_VALUE
-                if (value == BAD_VALUE) {
-                    fprintf(stderr, format("Stopping because bad value %A written in the range [%A .. %A)\n"), value, start, end);
-                    stopVM(-1);
-                }
-#endif
-            }
-        }
+void checkOneAddress(Address ea, int size, Address addr);
 #else
 #define checkOneAddress(ea, size, addr)
 #endif /* BAD_ADDRESS */
@@ -1155,12 +1134,13 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
             }
         }
 
-/*MAC*/ void traceAllocation(boolean $passed, int $size) {
-            fprintf(stderr, "%s allocating object: size=%d, alloc free=%d, total free=%d\n",
-                    ($passed ? "succeeded" : "failed"),
+/*MAC*/ void traceAllocation(Address $oop, int $size) {
+            fprintf(stderr, "%s allocating object: size=%d, alloc free=%d, total free=%d, ptr=%d\n",
+                    (($oop != 0) ? "succeeded" : "failed"),
                     $size,
                     Address_diff(com_sun_squawk_GC_allocEnd, com_sun_squawk_GC_allocTop),
-                    Address_diff(com_sun_squawk_GC_heapEnd, com_sun_squawk_GC_allocTop));
+                    Address_diff(com_sun_squawk_GC_heapEnd, com_sun_squawk_GC_allocTop),
+                    (Offset)$oop);
         }
 
         /**
@@ -1180,7 +1160,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
 
                 if (available < 0) {
                     /* The last allocation overflowed the allocEnd boundary */
-/*traceAllocation(false, size);*/
+/*traceAllocation(null, size);*/
                     return null;
                 } else {
                     /*
@@ -1191,7 +1171,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
                      */
                     available = Address_diff(com_sun_squawk_GC_heapEnd, block);
                     if (lt(available, size)) {
-/*traceAllocation(false, size);*/
+/*traceAllocation(null, size);*/
                         return null;
                     }
                 }
@@ -1210,7 +1190,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
             com_sun_squawk_GC_allocTop = Address_add(block, size);
             zeroWords(oop, com_sun_squawk_GC_allocTop);
             newCount++;
-/*traceAllocation(true, size);*/
+/*traceAllocation(oop, size);*/
             return oop;
         }
 
@@ -1227,7 +1207,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
             if (
                 com_sun_squawk_GC_excessiveGC != false       ||
                 com_sun_squawk_GC_allocationEnabled == false ||
-                (com_sun_squawk_GC_GC_TRACING_SUPPORTED && com_sun_squawk_GC_traceFlags != 0)
+                (com_sun_squawk_GC_GC_TRACING_SUPPORTED && (com_sun_squawk_GC_traceFlags & com_sun_squawk_GC_TRACE_ALLOCATION) != 0)
                ) {
                 return null; /* Force call to Java code */
             }
@@ -1269,11 +1249,36 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
         void copyBytes(Address src, int srcPos, Address dst, int dstPos, int length, boolean nvmDst) {
 //fprintf(stderr, format("copying  %d bytes from %A at offset %d to %A at offset %d nvmDst=%d\n"), length, src, srcPos, dst, dstPos, nvmDst);
             if (nvmDst) {
-                toggleMemoryProtection(com_sun_squawk_GC_nvmStart, com_sun_squawk_GC_nvmEnd, false);
+                sysToggleMemoryProtection(com_sun_squawk_GC_nvmStart, com_sun_squawk_GC_nvmEnd, false);
             }
             memmove(Address_add(dst, dstPos), Address_add(src, srcPos), length);
             checkPostWrite(Address_add(dst, dstPos), length);
             if (nvmDst) {
-                toggleMemoryProtection(com_sun_squawk_GC_nvmStart, com_sun_squawk_GC_nvmEnd, true);
+                sysToggleMemoryProtection(com_sun_squawk_GC_nvmStart, com_sun_squawk_GC_nvmEnd, true);
             }
         }
+
+#ifdef BAD_ADDRESS
+        /**
+         * Checks to see if a specific address was written to and print it if it was.
+         *
+         * @param ea    the address of the last write to memory
+         * @param size  the number of bytes written
+         * @param addr  the address to check for
+         */
+        void checkOneAddress(Address ea, int size, Address addr) {
+            ByteAddress start  = (ByteAddress)ea;
+            ByteAddress end    = start + size;
+            ByteAddress target = (ByteAddress)addr;
+            if (target >= start && target < end) {
+                UWord value = ((UWord *)target)[0];
+                fprintf(stderr, format("*******************  [%A] = %A [bcount=%L]\n"), target, value, getBranchCount());
+#ifdef BAD_VALUE
+                if (value == BAD_VALUE) {
+                    fprintf(stderr, format("Stopping because bad value %A written in the range [%A .. %A)\n"), value, start, end);
+                    stopVM(-1);
+                }
+#endif
+            }
+        }
+#endif /* BAD_ADDRESS */

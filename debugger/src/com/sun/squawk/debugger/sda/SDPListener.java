@@ -764,6 +764,82 @@ public final class SDPListener extends JDWPListener {
     \*-----------------------------------------------------------------------*/
 
     /**
+     * Return true if the tag is a valid <a href="http://java.sun.com/j2se/1.5.0/docs/guide/jpda/jdwp/jdwp-protocol.html#JDWP_TAG">JDWP Tag</a> value.
+     * Tags are a sparse set that doesn't include zero, so it's a good value to
+     * validate.
+     *
+     * @param tag int
+     * @return klass Object, INT, or LONG
+     */
+    private static Klass getTagKlass(int tag) {
+        switch (tag) {
+            case JDWP.Tag_OBJECT:
+            case JDWP.Tag_ARRAY:
+            case JDWP.Tag_STRING:
+            case JDWP.Tag_THREAD:
+            case JDWP.Tag_THREAD_GROUP:
+            case JDWP.Tag_CLASS_LOADER:
+            case JDWP.Tag_CLASS_OBJECT:
+                return Klass.OBJECT;
+
+            case JDWP.Tag_BYTE:
+            case JDWP.Tag_CHAR:
+            case JDWP.Tag_FLOAT:
+            case JDWP.Tag_INT:
+            case JDWP.Tag_SHORT:
+            case JDWP.Tag_BOOLEAN:
+                return Klass.INT;
+
+            case JDWP.Tag_LONG:
+            case JDWP.Tag_DOUBLE:
+                return Klass.LONG;
+            default:
+                Assert.always(false, "Unknown slot type tag: " + tag);
+                return null;
+        }
+    }
+
+    /**
+     * Gets the JDWP tag denoting the type of a slot's value.
+     *
+     * @param slot   the slot index
+     * @return the type tag or -1 if the slot is not one of the requested slots
+     */
+    private static byte getTagForSelectedSlot(int slot, int[] slots, byte[] tags) {
+        for (int i = 0; i != slots.length; ++i) {
+            if (slots[i] == slot) {
+                return tags[i];
+            }
+        }
+        return -1;
+    }
+
+    static Klass[] getSpecificTypeMap(Klass[] defaults, int parameterCount, int[] slots, byte[] tags) {
+        Klass[] result = new Klass[defaults.length];
+        for (int i = 0; i < defaults.length; i++) {
+            result[i] = defaults[i];
+        }
+
+        for (int i = 0; i < defaults.length; i++) {
+            int tag = getTagForSelectedSlot(i, slots, tags);
+            if (tag != -1) {
+                result[i] = getTagKlass(tag);
+                if (result[i].isDoubleWord()) {
+                    if (i <= parameterCount) {
+                        Assert.always(result[i + 1] == defaults[i + 1], "result[i + 1] : " + result[i + 1] + " defaults[i + 1]: " + defaults[i + 1]);
+                        result[i + 1] = Klass.LONG2;
+                    } else {
+                        Assert.always(result[i - 1] == defaults[i - 1]);
+                        Assert.always(getTagForSelectedSlot(i-1, slots, tags) == -1, "prev tag = " + getTagForSelectedSlot(i-1, slots, tags));
+                        result[i - 1] = Klass.LONG2;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
      * Implements <a href="http://java.sun.com/j2se/1.5.0/docs/guide/jpda/jdwp/jdwp-protocol.html#JDWP_StackFrame">StackFrame</a>
      */
     final class StackFrame extends SDACommandSet {
@@ -806,41 +882,7 @@ public final class SDPListener extends JDWPListener {
             return true;
         }
 
-        /**
-         * Return true if the tag is a valid <a href="http://java.sun.com/j2se/1.5.0/docs/guide/jpda/jdwp/jdwp-protocol.html#JDWP_TAG">JDWP Tag</a> value.
-         * Tags are a sparse set that doesn't include zero, so it's a good value to
-         * validate.
-         *
-         * @param tag int
-         * @return boolean
-         */
-        private Klass getTagKlass(int tag) {
-            switch (tag) {
-                case JDWP.Tag_OBJECT:
-                case JDWP.Tag_ARRAY:
-                case JDWP.Tag_STRING:
-                case JDWP.Tag_THREAD:
-                case JDWP.Tag_THREAD_GROUP:
-                case JDWP.Tag_CLASS_LOADER:
-                case JDWP.Tag_CLASS_OBJECT:
-                    return Klass.OBJECT;
 
-                case JDWP.Tag_BYTE:
-                case JDWP.Tag_CHAR:
-                case JDWP.Tag_FLOAT:
-                case JDWP.Tag_INT:
-                case JDWP.Tag_SHORT:
-                case JDWP.Tag_BOOLEAN:
-                    return Klass.INT;
-
-                case JDWP.Tag_LONG:
-                case JDWP.Tag_DOUBLE:
-                    return Klass.LONG;
-                default:
-                    Assert.always(false, "Unknown slot type tag: " + tag);
-                    return null;
-            }
-        }
 
         /**
          * Implements <a href="http://java.sun.com/j2se/1.5.0/docs/guide/jpda/jdwp/jdwp-protocol.html#JDWP_StackFrame_ThisObject ">ThisObject</a>
@@ -948,26 +990,11 @@ public final class SDPListener extends JDWPListener {
                 }
 
                 /**
-                 * Gets the JDWP tag denoting the type of a slot's value.
-                 *
-                 * @param slot   the slot index
-                 * @return the type tag or -1 if the slot is not one of the requested slots
-                 */
-                private byte getTagForSelectedSlot(int slot) {
-                    for (int i = 0; i != slots.length; ++i) {
-                        if (slots[i] == slot) {
-                            return tags[i];
-                        }
-                    }
-                    return -1;
-                }
-
-                /**
                  * {@inheritDoc}
                  */
                 public void inspectSlot(boolean isParameter, int slot, Object value) {
                     byte tag;
-                    if (exception == null && (tag = getTagForSelectedSlot(slot)) != -1) {
+                    if (exception == null && (tag = getTagForSelectedSlot(slot, slots, tags)) != -1) {
 //Log.log("*** slot = " + slot);
 //Log.log("*** tag = " + (char)tag);
                         if (!JDWP.isReferenceTag(tag)) {
@@ -988,7 +1015,7 @@ public final class SDPListener extends JDWPListener {
                  */
                 public void inspectSlot(boolean isParameter, int slot, Klass type, long value) {
                     byte tag;
-                    if (exception == null && (tag = getTagForSelectedSlot(slot)) != -1) {
+                    if (exception == null && (tag = getTagForSelectedSlot(slot, slots, tags)) != -1) {
 //Log.log("*** slot = " + slot);
 //Log.log("*** tag = " + (char)tag);
 //Log.log("*** type = " + type.getInternalName());
@@ -1011,27 +1038,7 @@ public final class SDPListener extends JDWPListener {
                 public Klass[] getTypeMap(int thisFrame, Object mp, int parameterCount) {
                     Klass[] defaults = super.getTypeMap(thisFrame, mp, parameterCount);
                     if (frameNo == thisFrame) {
-                        Klass[] result = new Klass[defaults.length];
-                        for (int i = 0; i < defaults.length; i++) {
-                            result[i] = defaults[i];
-                        }
-
-                        for (int i = 0; i < defaults.length; i++) {
-                            int tag = getTagForSelectedSlot(i);
-                            if (tag != -1) {
-                                result[i] = getTagKlass(tag);
-                                if (result[i].isDoubleWord()) {
-                                    if (i <= parameterCount) {
-                                        Assert.always(result[i + 1] == defaults[i + 1], "result[i + 1] : " + result[i + 1]  + " defaults[i + 1]: " + defaults[i + 1]);
-                                        result[i + 1] = Klass.LONG2;
-                                    } else {
-                                        Assert.always(result[i - 1] == defaults[i - 1]);
-                                        result[i - 1] = Klass.LONG2;
-                                    }
-                                }
-                            }
-                        }
-                        return result;
+                        return getSpecificTypeMap(defaults, parameterCount, slots, tags);
                     } else {
                         return defaults;
                     }
@@ -1117,6 +1124,7 @@ public final class SDPListener extends JDWPListener {
                                 case JDWP.Tag_LONG:
                                 case JDWP.Tag_DOUBLE:
                                     primValues[i] = in.readLong("value");
+// System.out.println("Setting stack i " + i + " type: " + (char)tags[i]  + " slot: " + slots[i] + " val: " + primValues[i] + " as FP: " + Double.longBitsToDouble(slots[i]));
                                     break;
                                 case JDWP.Tag_OBJECT:
                                 case JDWP.Tag_STRING:
@@ -1179,6 +1187,18 @@ public final class SDPListener extends JDWPListener {
                         }
                     }
                     return false;
+                }
+                
+                /**
+                 * {@inheritDoc}
+                 */
+                public Klass[] getTypeMap(int thisFrame, Object mp, int parameterCount) {
+                    Klass[] defaults = super.getTypeMap(thisFrame, mp, parameterCount);
+                    if (frameNo == thisFrame) {
+                        return getSpecificTypeMap(defaults, parameterCount, slots, tags);
+                    } else {
+                        return defaults;
+                    }
                 }
                 
                 /**

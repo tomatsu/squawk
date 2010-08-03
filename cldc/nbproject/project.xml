@@ -19,12 +19,21 @@
                     <label>src</label>
                     <type>java</type>
                     <location>src</location>
+                    <excludes>preprocessed/**</excludes>
                     <encoding>UTF-8</encoding>
                 </source-folder>
                 <source-folder>
                     <label>phoneme</label>
                     <type>java</type>
                     <location>phoneme</location>
+                    <excludes>preprocessed/**</excludes>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>native</label>
+                    <type>java</type>
+                    <location>native</location>
+                    <excludes>preprocessed/**</excludes>
                     <encoding>UTF-8</encoding>
                 </source-folder>
             </folders>
@@ -34,10 +43,17 @@
                     <source-folder style="packages">
                         <label>src</label>
                         <location>src</location>
+                        <excludes>preprocessed/**</excludes>
                     </source-folder>
                     <source-folder style="packages">
                         <label>phoneme</label>
                         <location>phoneme</location>
+                        <excludes>preprocessed/**</excludes>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>native</label>
+                        <location>native</location>
+                        <excludes>preprocessed/**</excludes>
                     </source-folder>
                     <source-file>
                         <location>build.xml</location>
@@ -51,10 +67,17 @@
             <compilation-unit>
                 <package-root>src</package-root>
                 <package-root>phoneme</package-root>
-                <classpath mode="compile">/Users/taylorr/Desktop/squawk-java5/tools/retroweaver-all-squawk.jar</classpath>
+                <package-root>native</package-root>
+                <classpath mode="compile">cjna/generated</classpath>
                 <built-to>classes.jar</built-to>
                 <source-level>1.5</source-level>
             </compilation-unit>
         </java-data>
+        <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
+            <word>bytecode</word>
+            <word>hashcode</word>
+            <word>Klass</word>
+            <word>vtable</word>
+        </spellchecker-wordlist>
     </configuration>
 </project>

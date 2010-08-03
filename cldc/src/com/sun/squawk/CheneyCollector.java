@@ -712,9 +712,9 @@ public final class CheneyCollector extends GarbageCollector {
         /*
          * Get the method pointer and setup to go through the parameters and locals.
          */
-        int localCount     = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp);
-        int parameterCount = MethodBody.decodeParameterCount(mp);
-        int mapOffset      = MethodBody.decodeOopmapOffset(mp);
+        int localCount     = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp.toObject());
+        int parameterCount = MethodBody.decodeParameterCount(mp.toObject());
+        int mapOffset      = MethodBody.decodeOopmapOffset(mp.toObject());
         int bitOffset      = -1;
         int byteOffset     = 0;
 
@@ -790,13 +790,13 @@ public final class CheneyCollector extends GarbageCollector {
         /*
          * Get the method pointer and setup to go through the parameters and locals.
          */
-        int localCount      = isInnerMostActivation ? 0 : MethodBody.decodeLocalCount(mp);
-        int parameterCount  = MethodBody.decodeParameterCount(mp);
-        int typeTableSize   = MethodBody.decodeTypeTableSize(mp);
-        int typeTableOffset = MethodBody.decodeTypeTableOffset(mp);
+        int localCount      = isInnerMostActivation ? 0 : MethodBody.decodeLocalCount(mp.toObject());
+        int parameterCount  = MethodBody.decodeParameterCount(mp.toObject());
+        int typeTableSize   = MethodBody.decodeTypeTableSize(mp.toObject());
+        int typeTableOffset = MethodBody.decodeTypeTableOffset(mp.toObject());
 
         if (typeTableSize > 0) {
-            decoder.reset(mp, typeTableOffset);
+            decoder.reset(mp.toObject(), typeTableOffset);
             int typeTableEndOffset = typeTableOffset + typeTableSize;
             while (decoder.getOffset() < typeTableEndOffset) {
                 int cid  = decoder.readUnsignedInt();

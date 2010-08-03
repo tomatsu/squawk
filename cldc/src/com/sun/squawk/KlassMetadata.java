@@ -26,8 +26,6 @@ package com.sun.squawk;
 
 import java.io.*;
 import com.sun.squawk.util.*;
-import com.sun.squawk.pragma.*;
-import com.sun.squawk.vm.*;
 
 /**
  * The KlassMetadata class is a container for all the meta-information
@@ -42,7 +40,7 @@ import com.sun.squawk.vm.*;
  * @version 1.0
  * @see     com.sun.squawk.Klass
  */
-public final class KlassMetadata {
+public class KlassMetadata {
 
     /**
      * The Klass instance to which the meta-information in this object pertains.
@@ -54,69 +52,136 @@ public final class KlassMetadata {
      * of the fields and methods of the class. The structure encoded in this
      * array of bytes is accessed by a SymbolsParser instance.
      */
-    private final byte[] symbols;
+    protected byte[] symbols;
 
     /**
      * The table of classes that are referred to from the symbols. The class references
      * in the symbols are encoded indexes into this table.
      */
-    private final Klass[] classTable;
+    protected Klass[] classTable;
 
     /**
-     * The debug information for the virtual methods described in
-     * <code>symbols</code>.
+     * KlassMetadata.Full contains debugging information of some kind (sourcefile or MethodMetadata).
      */
-    private final MethodMetadata[] virtualMethodsMetadata;
+    static final class Full extends KlassMetadata {
 
-    /**
-     * The debug information for the static methods described in
-     * <code>symbols</code>.
-     */
-    private final MethodMetadata[] staticMethodsMetadata;
+        /**
+         * The debug information for the virtual methods described in
+         * <code>symbols</code>.
+         */
+        private final MethodMetadata[] virtualMethodsMetadata;
 
-    /**
-     * The source file from which a class was compiled. This field's value
-     * may be null if the corresponding class had no SourceFile attribute.
-     */
-    private final String sourceFile;
+        /**
+         * The debug information for the static methods described in
+         * <code>symbols</code>.
+         */
+        private final MethodMetadata[] staticMethodsMetadata;
 
-    /**
-     * Create a new <code>KlassMetadata</code> for a <code>Klass</code> instance.
-     *
-     * @param definedClass   the class to which this metadata pertains
-     * @param virtualMethods the virtual methods of the class
-     * @param staticMethods  the static methods of the class
-     * @param instanceFields the instance fields of the class
-     * @param staticFields   the static fields of the class
-     * @param sourceFile     the source file from which the class was compiled
-     */
-    KlassMetadata(Klass             definedClass,
-                  ClassFileMethod[] virtualMethods,
-                  ClassFileMethod[] staticMethods,
-                  ClassFileField[]  instanceFields,
-                  ClassFileField[]  staticFields,
-                  String            sourceFile,
-                  int               vtableSize,
-                  int               stableSize)
-    {
-        SquawkVector types = new SquawkVector();
+        /**
+         * The source file from which a class was compiled. This field's value
+         * may be null if the corresponding class had no SourceFile attribute.
+         */
+        private final String sourceFile;
+
+        /**
+         * Create a new <code>KlassMetadata.Full</code> for a <code>Klass</code> instance.
+         *
+         * @param definedClass   the class to which this metadata pertains
+         * @param virtualMethods the virtual methods of the class
+         * @param staticMethods  the static methods of the class
+         * @param instanceFields the instance fields of the class
+         * @param staticFields   the static fields of the class
+         * @param sourceFile     the source file from which the class was compiled
+         */
+        Full(Klass definedClass,
+                ClassFileMethod[] virtualMethods,
+                ClassFileMethod[] staticMethods,
+                ClassFileField[] instanceFields,
+                ClassFileField[] staticFields,
+                String sourceFile,
+                int vtableSize,
+                int stableSize) {
+            super(definedClass);
+            SquawkVector types = new SquawkVector();
+            this.symbols = SymbolParser.createSymbols(virtualMethods, staticMethods, instanceFields, staticFields, types);
+            this.sourceFile = sourceFile;
+            this.virtualMethodsMetadata = new MethodMetadata[vtableSize];
+            this.staticMethodsMetadata = new MethodMetadata[stableSize];
+
+            classTable = new Klass[types.size()];
+            types.copyInto(classTable);
+//            if (classTable.length == 1 && classTable[0] == definedClass) {
+//                System.out.println("trivial classtable for " + definedClass);
+//            }
+        }
+      
+        /**
+         * Constructor for stripping.
+         *
+         * @param definedClass
+         * @param symbols   the symbols (stripped or otherwise)
+         * @param classTable
+         * @param srcFile
+         * @param virtualMethodsMetadata
+         * @param staticMethodsMetadata
+         */
+        Full(Klass definedClass, byte[] symbols, Klass[] classTable, String srcFile, MethodMetadata[] virtualMethodsMetadata, MethodMetadata[] staticMethodsMetadata) {
+            super(definedClass, symbols, classTable);
+            Assert.that(srcFile != null || staticMethodsMetadata != null || virtualMethodsMetadata != null);
+            this.sourceFile = srcFile;
+            this.staticMethodsMetadata = staticMethodsMetadata;
+            this.virtualMethodsMetadata = virtualMethodsMetadata;
+        }
+
+        /**
+         * Get the source file from which the class was compiled.
+         *
+         * @return the file name
+         */
+        final String getSourceFileName() {
+            return sourceFile;
+        }
+
+        /**
+         * Get the static or instance method metedatas
+         *
+         * @return the file name
+         */
+        final MethodMetadata[] geMethodMetadata(boolean isStatic) {
+            return isStatic ? staticMethodsMetadata : virtualMethodsMetadata;
+        }
+
+        /**
+         * Set the debug information for a method body to the collection for the defining class.
+         *
+         * @param isStatic  true if the method is static
+         * @param index     the index for a method body
+         * @param metadata  the debug information for the method (may be null)
+         */
+        final void setMethodMetadata(boolean isStatic, int index, MethodMetadata metadata) {
+            if (metadata != null) {
+                if (isStatic) {
+                    Assert.that(staticMethodsMetadata[index] == null);
+                    staticMethodsMetadata[index] = metadata;
+                } else {
+                    Assert.that(virtualMethodsMetadata[index] == null);
+                    virtualMethodsMetadata[index] = metadata;
+                }
+            }
+        }
+    }
+    
+    private KlassMetadata(Klass definedClass) {
         this.definedClass = definedClass;
-        this.symbols      = SymbolParser.createSymbols(virtualMethods, staticMethods, instanceFields, staticFields, types);
-        this.sourceFile   = sourceFile;
-        this.virtualMethodsMetadata = new MethodMetadata[vtableSize];
-        this.staticMethodsMetadata = new MethodMetadata[stableSize];
-
-        classTable = new Klass[types.size()];
-        types.copyInto(classTable);
     }
     
     KlassMetadata(Klass definedClass, byte[] symbols, Klass[] classTable) {
     	this.definedClass = definedClass;
     	this.symbols = symbols;
     	this.classTable = classTable;
-        this.sourceFile   = null;
-        this.virtualMethodsMetadata = null;
-        this.staticMethodsMetadata = null;
+//         if (classTable.length == 1 && classTable[0] == definedClass) {
+//                System.out.println("trivial2 classtable for " + definedClass);
+//            }
 	}
 
     /**
@@ -168,15 +233,7 @@ public final class KlassMetadata {
      * @param metadata  the debug information for the method (may be null)
      */
     void setMethodMetadata(boolean isStatic, int index, MethodMetadata metadata) {
-        if (metadata != null) {
-            if (isStatic) {
-                Assert.that(staticMethodsMetadata[index] == null);
-                staticMethodsMetadata[index] = metadata;
-            } else {
-                Assert.that(virtualMethodsMetadata[index] == null);
-                virtualMethodsMetadata[index] = metadata;
-            }
-        }
+        Assert.shouldNotReachHere("Adding method metadata");
     }
 
     /**
@@ -186,8 +243,8 @@ public final class KlassMetadata {
      * @param index     the index for a method body
      * @return the debug information for the method
      */
-    MethodMetadata getMethodMetadata(boolean isStatic, int index) {
-        MethodMetadata[] methods = isStatic ? staticMethodsMetadata : virtualMethodsMetadata;
+    final MethodMetadata getMethodMetadata(boolean isStatic, int index) {
+        MethodMetadata[] methods = geMethodMetadata(isStatic);
         if (methods == null) {
             return null;
         }
@@ -212,7 +269,7 @@ public final class KlassMetadata {
      *
      * @return the class to which this metadata pertains
      */
-    Klass getDefinedClass() {
+    final Klass getDefinedClass() {
         return definedClass;
     }
 
@@ -222,9 +279,19 @@ public final class KlassMetadata {
      * @return the file name
      */
     String getSourceFileName() {
-        return sourceFile;
+        return null;
     }
 
+    
+    /**
+     * Get the static or instance method metadatas
+     *
+     * @return array of MethodMetadata or null
+     */
+    MethodMetadata[] geMethodMetadata(boolean isStatic) {
+        return null;
+    }
+    
     /**
      * Get a parser for the symbolic information for the class.
      *
@@ -259,32 +326,25 @@ public final class KlassMetadata {
     /*---------------------------------------------------------------------------*\
      *                                Stripping                                  *
     \*---------------------------------------------------------------------------*/
-
-    /**
-     * Constructor for stripping.
+       /**
+     * factory for stripping.
      *
-     * @param symbols   the symbols (stripped or otherwise)
+     * @param symbols   the symbols (stripped or otherwise) (may be null)
+     * @param classTable class table (may be null)
      * @param original  the original symbolic information before stripping
      * @param type       the stripping policy
+     * @return new full or stripped KlassMetadata
      */
-    private KlassMetadata(byte[] symbols, Klass[] classTable, KlassMetadata original, int type) {
-        this.symbols = symbols;
-        this.classTable = classTable;
-        if (type == Suite.DEBUG) {
-            this.sourceFile = original.sourceFile;
+    public static KlassMetadata create(byte[] symbols, Klass[] classTable, KlassMetadata original, int type) {
+        String srcFile = (type == Suite.DEBUG) ? original.getSourceFileName() : null;
+        MethodMetadata[] staticMethodsMetadata = MethodMetadata.strip(original.geMethodMetadata(true));
+        MethodMetadata[] virtualMethodsMetadata = MethodMetadata.strip(original.geMethodMetadata(false));
+        if (srcFile != null || staticMethodsMetadata != null || virtualMethodsMetadata != null) {
+            return new KlassMetadata.Full(original.definedClass, symbols, classTable, srcFile,
+                    virtualMethodsMetadata, staticMethodsMetadata);
         } else {
-            this.sourceFile = null;
+            return new KlassMetadata(original.definedClass, symbols, classTable);
         }
-        this.definedClass = original.definedClass;
-
-        if (Klass.TRACING_ENABLED && Tracer.isTracing("stripping")) {
-            if (symbols == null) {
-                Tracer.traceln("  discarded all symbols for " + definedClass);
-            }
-        }
-
-        this.staticMethodsMetadata = MethodMetadata.strip(original.staticMethodsMetadata);
-        this.virtualMethodsMetadata = MethodMetadata.strip(original.virtualMethodsMetadata);
     }
 
     /**
@@ -313,10 +373,10 @@ public final class KlassMetadata {
             if (metadata != null) {
                 switch (type) {
                     case Suite.DEBUG:
-                        newMetadatas[i] = new KlassMetadata(metadata.symbols, metadata.classTable, metadata, type);
+                        newMetadatas[i] = create(metadata.symbols, metadata.classTable, metadata, type);
                         break;
                     case Suite.APPLICATION:
-                        newMetadatas[i] = new KlassMetadata(null, null, metadata, type);
+                        newMetadatas[i] = create(null, null, metadata, type);
                         break;
                     case Suite.LIBRARY:
                     case Suite.EXTENDABLE_LIBRARY:
@@ -351,7 +411,7 @@ public final class KlassMetadata {
         byte[] newSymbols = getSymbolParser().strip(definedClass, type, types);
         Klass[] newClassTable = new Klass[types.size()];
         types.copyInto(newClassTable);
-        return new KlassMetadata(newSymbols, newClassTable, this, type);
+        return create(newSymbols, newClassTable, this, type);
     }
 
     /*---------------------------------------------------------------------------*\

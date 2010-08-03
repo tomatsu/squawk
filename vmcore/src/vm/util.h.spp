@@ -67,44 +67,10 @@ int sda_bp_set_or_stepping; // TRUE if we have any breakpoints set or are in a s
  *                               mprotect                                    *
 \*---------------------------------------------------------------------------*/
 
-/**
- * Gets the page size (in bytes) of the system.
- *
- * @return the page size (in bytes) of the system
+/* defined in os.c:
+ *     sysGetPageSize()
+ *     sysToggleMemoryProtection()
  */
-int getSystemPageSize(void) {
-#ifdef _MSC_VER
-    SYSTEM_INFO systemInfo;
-    GetSystemInfo(&systemInfo);
-    return systemInfo.dwPageSize;
-#else
-    return sysconf(_SC_PAGESIZE);
-#endif /* _MSC_VER */
-}
-
-/**
- * Sets a region of memory read-only or reverts it to read & write.
- *
- * @param start    the start of the memory region
- * @param end      one byte past the end of the region
- * @param readonly specifies if read-only protection is to be enabled or disabled
- */
-void toggleMemoryProtection(Address start, Address end, boolean readonly) {
-#ifndef FLASH_MEMORY
-    UWord len = Address_diff(end, start);
-#ifdef _MSC_VER
-    unsigned long old;
-//fprintf(stderr, format("toggle memory protection: start=%A len=%d end=%A readonly=%s\n"), start, len, end,  readonly ? "true" : "false");
-    if (VirtualProtect(start, len, readonly ? PAGE_READONLY : PAGE_READWRITE, &old) == 0) {
-        fprintf(stderr, format("Could not toggle memory protection: errno=%d addr=%A len=%d readonly=%s\n"), GetLastError(), start, len, readonly ? "true" : "false");
-    }
-#else
-    if (mprotect(start, len, readonly ? PROT_READ : PROT_READ | PROT_WRITE) != 0) {
-        fprintf(stderr, "Could not toggle memory protection: %s\n", strerror(errno));
-    }
-#endif /* _MSC_VER */
-#endif /* FLASH_MEMORY */
-}
 
 /*---------------------------------------------------------------------------*\
  *                                  Errors                                   *
@@ -113,9 +79,9 @@ void toggleMemoryProtection(Address start, Address end, boolean readonly) {
 /**
  * Exits the VM with an error message.
  */
-NORETURN void fatalVMError(char *msg) {
+NORETURN void fatalVMError0(char *msg, boolean cleanup) {
     static boolean inFatalVMError = false;
-    void stopVM(int);
+    NORETURN void stopVM0(int, boolean);
 
     if (msg == null) {
         msg = "fatal VM error";
@@ -132,7 +98,14 @@ NORETURN void fatalVMError(char *msg) {
         printStackTrace(msg);
 #endif
     }
-    stopVM(-1);
+    stopVM0(-1, false);
+}
+
+/**
+ * Exits the VM with an error message.
+ */
+NORETURN void fatalVMError(char *msg) {
+    fatalVMError0(msg, true);
 }
 
 #define shouldNotReachHere() { fprintf(stderr, "shouldNotReachHere -- %s:%d\n", __FILE__, __LINE__); fatalVMError(""); }
@@ -148,27 +121,20 @@ NORETURN void fatalVMError(char *msg) {
  */
 #define assumeAlways(x) if (!(x))  { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #x, __FILE__, __LINE__); fatalVMError(""); }
 
-NORETURN void fatalInterpreterError0(char *msg, int opcode, ByteAddress _ip, UWordAddress _fp, UWordAddress _sp, char* file, int line);
+NORETURN void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddress _ip, UWordAddress _fp, UWordAddress _sp, char* file, int line);
 
 /**
  * Exits the VM with an error message including various interpreter state.
  */
 /*if[MACROIZE]*/
 #define fatalInterpreterError(_msg) \
-    fatalInterpreterError0(_msg, opcode, ip, fp, sp, __FILE__, __LINE__)
+    fatalInterpreterError0(_msg, opcode, iparm, ip, fp, sp, __FILE__, __LINE__)
 /*else[MACROIZE]*/
 //#define fatalInterpreterError(_msg) \
-//  fatalInterpreterError0(_msg,      0, ip, fp, sp, __FILE__, __LINE__)
+//  fatalInterpreterError0(_msg,      0, iparm, ip, fp, sp, __FILE__, __LINE__)
 /*end[MACROIZE]*/
 
-#ifndef FLASH_MEMORY
-#include <signal.h>
-void signalHandler(int signum) {
-    char* strsignal(int signum);
-    fprintf(stderr, "caught signal %d\n", signum);
-    fatalVMError(strsignal(signum));
-}
-#endif // FLASH_MEMORY
+void printJavaStrSafely(Address value, char* valueName);
 
 /*---------------------------------------------------------------------------*\
  *                               alignment                                   *
@@ -331,6 +297,12 @@ NOINLINE int    d2f(jlong l)                 { return f2ib((float)lb2d(l));     
 /*---------------------------------------------------------------------------*\
  *                                Math functions                             *
 \*---------------------------------------------------------------------------*/
+
+#ifndef max
+#define	max(a, b) 		((a) < (b) ? (b) : (a))
+#define	min(a, b) 		((a) > (b) ? (b) : (a))
+#define	abs(x)			((x) >= 0 ? (x) : -(x))
+#endif
 
 jlong math(int op, jlong rs1_l, jlong rs2_l) {
     double rs1 = lb2d(rs1_l);

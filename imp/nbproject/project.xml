@@ -73,6 +73,7 @@
             <compilation-unit>
                 <package-root>test-desktop/src</package-root>
                 <unit-tests/>
+                <classpath mode="compile">../squawk_classes.jar:test-desktop/lib/jmock2-SNAPSHOT.jar:test-desktop/lib/jmock2-junit3-SNAPSHOT.jar:test-desktop/lib/jmock2-junit4-SNAPSHOT.jar:test-desktop/lib/hamcrest-library-SNAPSHOT.jar:test-desktop/lib/hamcrest-api-SNAPSHOT.jar</classpath>
                 <source-level>1.5</source-level>
             </compilation-unit>
         </java-data>

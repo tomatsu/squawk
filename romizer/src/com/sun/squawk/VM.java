@@ -356,6 +356,8 @@ public class VM {
      *  internal: Remove the symbols that match the pattern, but keep the matching methods
      *            even if not called within the suite. This is used when multiple suites are compiled togther.
      *            The child suites can call methods even though symbols were stripped.
+     *
+     *  keepclass: Keep the specified class, but not necessarily the enclosing methods.
      * 
      * There are 3 different types of patterns that can be specified:
      *

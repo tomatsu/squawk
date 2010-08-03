@@ -242,12 +242,30 @@ static int check_irq(int irq_mask, int clear_flag) {
  * ***************************************
  */
 
+
 /*
  * Stop the processor clock - restarts on interrupt
  */
 static stopProcessor() {
 	volatile unsigned int *regPtr = (volatile unsigned int*)0xFFFF4000;
 	*regPtr = 1;
+}
+
+
+/**
+ * Sleep Squawk for specified milliseconds
+ */
+void osMilliSleep(long long millisecondsToWait) {
+    long long target = getMilliseconds() + millisecondsToWait;
+    long long maxValue = 0x7FFFFFFFFFFFFFFFLL;
+    if (target <= 0) target = maxValue; // overflow detected
+
+    while (1) {
+        if (checkForEvents()) break;
+        if (checkForMessageEvent()) break;
+        if (getMilliseconds() > target) break;
+        stopProcessor();
+    }
 }
 
 int retValue = 0;  // holds the value to be returned on the next "get result" call
@@ -399,20 +417,10 @@ int retValue = 0;  // holds the value to be returned on the next "get result" ca
     		res = getEvent();
     		break;
     	case ChannelConstants_GLOBAL_WAITFOREVENT: {
-    			long long millisecondsToWait = i1;
-    			millisecondsToWait = (millisecondsToWait << 32) | ((unsigned long long)i2 & 0xFFFFFFFF);
-    			long long target = getMilliseconds() + millisecondsToWait;
-        			long long maxValue = 0x7FFFFFFFFFFFFFFFLL;
-        			if (target <= 0) target = maxValue; // overflow detected
-
-
-    			while (1) {
-    				if (checkForEvents()) break;
-    				if (checkForMessageEvent()) break;
-					if (getMilliseconds() > target) break;
-					stopProcessor();
-    			}
-    			res = 0;
+                    long long millisecondsToWait = i1;
+                    millisecondsToWait = (millisecondsToWait << 32) | ((unsigned long long)i2 & 0xFFFFFFFF);
+                    osMilliSleep(millisecondsToWait);
+                    res = 0;
     		}
     		break;
     	case ChannelConstants_CONTEXT_DELETE:
@@ -434,15 +442,3 @@ int retValue = 0;  // holds the value to be returned on the next "get result" ca
     com_sun_squawk_ServiceOperation_result = res;
 }
 
-/**
- * Initializes the IO subsystem.
- *
- * @param  jniEnv      the table of JNI function pointers which is only non-null if Squawk was
- *                     launched via a JNI call from a Java based launcher
- * @param  classPath   the class path with which to start the embedded JVM (ignored if 'jniEnv' != null)
- * @param  args        extra arguments to pass to the embedded JVM (ignored if 'jniEnv' != null)
- * @param  argc        the number of extra arguments in 'args' (ignored if 'jniEnv' != null)
- */
-
-void CIO_initialize(JNIEnv *jniEnv, char *classPath, char** args, int argc) {
-}

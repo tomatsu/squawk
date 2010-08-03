@@ -10,6 +10,7 @@
 
 package com.sun.squawk.translator;
 
+import com.sun.squawk.ExceptionHandler;
 import com.sun.squawk.Klass;
 import com.sun.squawk.Suite;
 import com.sun.squawk.VM;
@@ -63,6 +64,29 @@ public class DeadClassEliminator {
      *                         Track unused classes                              *
     \*---------------------------------------------------------------------------*/
 
+    private static Hashtable systemRoots = new Hashtable();
+        private static String[] systemRootsArray = {
+            "com.sun.squawk.VM",
+            "com.sun.squawk.ResourceFile",
+            "com.sun.squawk.ManifestProperty",
+            "com.sun.squawk.Suite",
+            "com.sun.squawk.KlassMetadata",
+            "com.sun.squawk.KlassMetadata$Full",
+            "com.sun.squawk.MethodMetadata",
+            "com.sun.squawk.FullMethodMetadata",
+            "com.sun.squawk.vm.FieldOffsets",
+            "com.sun.squawk.vm.MethodOffsets",
+            "com.sun.squawk.Klass",
+            "com.sun.squawk.StringOfBytes"
+        };
+
+    static {
+        for (int i = 0; i < systemRootsArray.length; i++) {
+            String name = systemRootsArray[i];
+            systemRoots.put(name, name);
+        }
+    }
+
     /**
      * Is this a class that might be called by the system through some basic mechanism,
      * such as "main", called by interpreter, etc.
@@ -89,8 +113,7 @@ public class DeadClassEliminator {
             return true;
         } */
 
-        if (klass.getInternalName().equals("Lcom.sun.squawk.VM;")) {
-            // this has interpreter invoked methods.
+        if (systemRoots.get(klass.getInternalName()) != null) {
             return true;
         }
 
@@ -176,6 +199,10 @@ public class DeadClassEliminator {
     }
 
     private void scanMethod(ClassFile classFile, Code code, Method m) {
+        boolean dontExpectCode = m.isHosted() || m.isAbstract() || m.isNative();
+        Assert.always(dontExpectCode || code != null, "code for method " + m);
+        Assert.always(m != null, "method for code " + code);
+
         if (code != null && m != null
                 && (!Arg.get(Arg.DEAD_METHOD_ELIMINATION).getBool() ||
                     translator.dme.isMarkedUsed(m))) {
@@ -190,7 +217,11 @@ public class DeadClassEliminator {
                 instruction.visit(visitor);
             }
 
-
+            ExceptionHandler[] exceptionHandlers = code.getCodeParser().getExceptionHandlers();
+            for (int i = 0; i < exceptionHandlers.length; i++) {
+                Klass handlerklass = exceptionHandlers[i].getKlass();
+                shallowMark(handlerklass);
+            }
         }
     }
 
@@ -216,6 +247,19 @@ public class DeadClassEliminator {
      * Mark the class, and scan methods for references to other classes.
      * Push new references onto the markStack.
      */
+    public void scanClassFields(Klass klass) {
+        for (int i = 0; i < klass.getFieldCount(true); i++) {
+            shallowMark(klass.getField(i, true).getType());
+        }
+        for (int i = 0; i < klass.getFieldCount(false); i++) {
+            shallowMark(klass.getField(i, false).getType());
+        }
+    }
+
+    /**
+     * Mark the class, and scan methods for references to other classes.
+     * Push new references onto the markStack.
+     */
     public void scanClassDeep(Klass klass) {
         if (markClass(klass)) {
             shallowMark(klass.getSuperclass());
@@ -227,6 +271,18 @@ public class DeadClassEliminator {
             if (!klass.isSynthetic()) {
                 scanClassMethods(klass);
             }
+            scanClassFields(klass);
+
+//            for (int i = 0; i < klass.getObjectCount(); i++) {
+//                Object obj = klass.getObject(i);
+//                if (obj instanceof Klass) {
+//                    Klass refKlass = (Klass)obj;
+//                    if (!isMarked(refKlass)) {
+//                        System.out.println("******** LATE FIND: " + obj);
+//                    }
+//                    shallowMark(refKlass);
+//                }
+//            }
         }
     }
 
@@ -235,6 +291,8 @@ public class DeadClassEliminator {
         //Enumeration e;
 
         SquawkVector foundClasses = new SquawkVector(); // used for tracing
+        SquawkVector unusedClasses = new SquawkVector(); // used to delete classes during stripping...
+
         markStack = new SquawkVector(); // stack of classes to be marked
         Suite suite = translator.getSuite();
 
@@ -279,17 +337,7 @@ public class DeadClassEliminator {
         while ((len = markStack.size()) > 0) {
             Klass klass = (Klass)markStack.lastElement();
             markStack.removeElementAt(len - 1);
-            if (markClass(klass)) {
-                shallowMark(klass.getSuperclass());
-                shallowMark(klass.getComponentType());
-                Klass[] interfaces = klass.getInterfaces();
-                for (int i = 0; i < interfaces.length; i++) {
-                    shallowMark(interfaces[i]);
-                }
-                if (!klass.isSynthetic()) {
-                    scanClassMethods(klass);
-                }
-            }
+            scanClassDeep(klass);
         }
 
         // report unused classes:
@@ -304,7 +352,7 @@ public class DeadClassEliminator {
                             System.out.println(klass  + " is internal, why are we deleting???");
                         }
                     }
-   //                 suite.removeClass(klass);
+                    unusedClasses.addElement(klass);
                 }
             }
         }
@@ -314,14 +362,15 @@ public class DeadClassEliminator {
                 printVectorSorted(foundClasses, "    ");
             }
         }
+        Klass[] unusedKlasses = new Klass[unusedClasses.size()];
+        unusedClasses.copyInto(unusedKlasses);
+        suite.setUnusedClasses(unusedKlasses);
     }
 
 }
 
 class ExampleDeadClass {
     ExampleDeadClass(int b) {}
-
-
 }
 
 class ClassReferenceRecordingVisitor extends ReferenceRecordingVisitor {
@@ -338,6 +387,7 @@ class ClassReferenceRecordingVisitor extends ReferenceRecordingVisitor {
 
     protected void recordMethod(Method method) {
         dce.shallowMark(method.getDefiningClass());
+
     }
 
     protected void recordField(Field field) {

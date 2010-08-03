@@ -320,7 +320,10 @@ final class SymbolParser extends ByteBufferDecoder {
         /*
          * It turns out that the TCK has .class files that use the getstatic bytecode to reference static constants, such as Double.MIN_VALUE.
          * In order to have the TCK pass, we need to keep these constants around.  Note that adding these constants seemed to add
-         * 4 K to size of squawk.suite.
+         * 7 K to size of squawk.suite.
+         * 
+         * WAIT - doesnt tanslator transform the getstatic into a constant anyway?
+         * NO - it has to leave the getstatic to get the exception thrown. Could transform to error func though...
          */
 //        if (fieldType != null && Modifier.hasConstant(modifiers) && fieldType.isPrimitive() && Modifier.isFinal(modifiers)) {
 //            return false;

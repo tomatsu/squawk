@@ -25,11 +25,13 @@
 package com.sun.squawk.debugger.sdp;
 
 import java.io.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
+import java.net.SocketException;
 
 import com.sun.squawk.debugger.*;
 import com.sun.squawk.debugger.DataType.*;
-import com.sun.squawk.debugger.EventManager.*;
-import com.sun.squawk.debugger.EventRequest.*;
 import com.sun.squawk.debugger.EventRequestModifier.*;
 import com.sun.squawk.util.*;
 import java.util.*;
@@ -41,6 +43,8 @@ import com.sun.squawk.*;
  *
  */
 public class SDP {
+    protected static final byte KILL_MARKER1 = (byte) 129;
+    protected static final byte KILL_MARKER2 = 126;
 
     /**
      * The object managing proxy types and reference type identifiers.
@@ -56,6 +60,14 @@ public class SDP {
      * Seconds to wait before retrying to connect to a Squawk VM.
      */
     private int retry = 5;
+
+    /**
+     * UDP port number I listen to in order to be told I should shut down.
+     * If this port is bound already, then another instance is running already,
+     * go up by one until not bound, then send a kill signal to the original port
+     * number and keep going until I can bind to this port.
+     */
+    protected int killPort;
 
     /**
      * The URL of the channel to the debugger client.
@@ -317,6 +329,13 @@ public class SDP {
                 	singleSession = true;
                 } else if (arg.equals("-sniffer")) {
                 	sniffOnly = true;
+                } else if (arg.startsWith("-killport:")) {
+                    try {
+                        killPort = Integer.parseInt(arg.substring("-killport:".length()));
+                    } catch (NumberFormatException e) {
+                        usage("Expected integer argument " + arg);
+                        return false;
+                    }
                 } else {
                     usage("Unknown option: " + arg);
                     return false;
@@ -576,6 +595,7 @@ public class SDP {
     }
 
     public static void main(String args[]) throws IOException {
+//        Log.level = Log.INFO;
         SDP sdp = new SDP();
         try {
 
@@ -584,7 +604,9 @@ public class SDP {
             if (!sdp.parseArgs(args)) {
                 System.exit(1);
             }
-
+            if (sdp.killPort != 0) {
+                killOthers(sdp.killPort, sdp);
+            }
             sdpTable.put(sdp.getProxyName(), sdp);
             do {
                 if (sdp.sniffOnly) {
@@ -596,6 +618,84 @@ public class SDP {
         } finally {
             sdpTable.remove(sdp.getProxyName());
         }
+    }
+    
+    public static void killOthers(final int killPort, final SDP me) {
+        DatagramSocket socket = null;
+        while (true) {
+            int currentKillPort = killPort;
+            while (true) {
+                try {
+                    if (Log.verbose()) {
+                        Log.log("--- trying port " + currentKillPort);
+                    }
+                    socket = new DatagramSocket(currentKillPort);
+                    if (Log.verbose()) {
+                        Log.log("--- got it");
+                    }
+                    break;
+                } catch (SocketException e) {
+                    currentKillPort++;
+                }
+            }
+            if (currentKillPort == killPort) {
+                break;
+            }
+            byte[] buffer = new byte[2];
+            buffer[0] = KILL_MARKER1;
+            buffer[1] = KILL_MARKER2;
+            DatagramPacket packet = null;
+            try {
+                packet = new DatagramPacket(buffer, 0, buffer.length, new InetSocketAddress(killPort));
+            } catch (SocketException e) {
+                continue;
+            }
+            try {
+                if (Log.verbose()) {
+                    Log.log("--- sending kill");
+                }
+                socket.send(packet);
+            } catch (IOException e) {
+            }
+            socket.close();
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+            }
+        }
+        if (Log.verbose()) {
+            Log.log("--- getting ready to listen for kill");
+        }
+        final DatagramSocket finalSocket = socket;
+        Thread thread = new Thread(new Runnable() {
+            public void run() {
+                byte[] buffer = new byte[2];
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                while (true) {
+                    try {
+                        finalSocket.receive(packet);
+                        if (packet.getLength() != 2) {
+                            continue;
+                        }
+                        if (buffer[0] != KILL_MARKER1) {
+                            continue;
+                        }
+                        if (buffer[1] != KILL_MARKER2) {
+                            continue;
+                        }
+                        if (Log.verbose()) {
+                            Log.log("--- received kill");
+                        }
+                        me.quit();
+                        finalSocket.close();
+                    } catch (IOException e) {
+                        break;
+                    }
+                }
+            }
+        });
+        thread.setName("SDP.killListenThread");
+        thread.start();
     }
     
     /**

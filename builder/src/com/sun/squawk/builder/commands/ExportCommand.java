@@ -65,8 +65,8 @@ public class ExportCommand extends Command {
      *
      * @param errMsg  an error message printed first if it is not null.
      */
-    private void usage(String errMsg) {
-        PrintStream out = System.out;
+    public void usage(String errMsg) {
+        PrintStream out = System.err;
         if (errMsg != null) {
             out.println(errMsg);
         }
@@ -81,7 +81,6 @@ public class ExportCommand extends Command {
         out.println("    -verbose          verbose execution");
         out.println("    -h                display this help message and exit");
         out.println();
-
     }
 
     /**
@@ -269,17 +268,12 @@ public class ExportCommand extends Command {
                 } else if (value.equals("unix")) {
                     System.setProperty("line.separator", "\n");
                 } else {
-                    usage("Invalid new line type: " + value);
-                    return;
+                    throw new CommandException(this, "Invalid new line type: " + value);
                 }
             } else if (arg.equals("-verbose")) {
                 verbose = true;
-            } else if (arg.equals("-h")) {
-                usage(null);
-                return;
             } else {
-                usage("Invalid option: " + arg);
-                return;
+                throw new CommandException(this, "Invalid option: " + arg);
             }
             argc++;
         }

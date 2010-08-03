@@ -46,8 +46,12 @@ public class SppFilePreprocessCommand extends Command {
         return "preprocesses one or more *.spp files";
     }
 
-    private void usage(String errMsg) {
-        PrintStream out = System.out;
+    public void usage(String errMsg) {
+        PrintStream out = System.err;
+        
+        if (errMsg != null) {
+            out.println(errMsg);
+        }
 
         out.println();
         out.println("usage: spp files...");
@@ -113,8 +117,7 @@ public class SppFilePreprocessCommand extends Command {
      */
     public void run(String[] args) {
         if (args.length == 0) {
-            usage(null);
-            return;
+            throw new CommandException(this, "no files specified");    
         }
 
         Preprocessor preprocessor = env.getPreprocessor();

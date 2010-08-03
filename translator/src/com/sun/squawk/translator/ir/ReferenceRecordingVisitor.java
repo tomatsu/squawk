@@ -107,8 +107,8 @@ abstract public class ReferenceRecordingVisitor extends AbstractInstructionVisit
      * {@inheritDoc}
      */
     public void doNew(New insn) {
+        recordKlass(insn.getRuntimeType());
         recordKlass(insn.getType());
-
     }
 
     /**

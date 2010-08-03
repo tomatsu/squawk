@@ -136,6 +136,26 @@ static void setDeepSleepEventOutstanding(long long target) {
 	outstandingDeepSleepEvent = 1;
 }
 
+/**
+ * Sleep Squawk for specified milliseconds
+ */
+void osMilliSleep(long long millisecondsToWait) {
+    long long target = ((long long) getMilliseconds()) + millisecondsToWait;
+    if (target <= 0) {
+        target = 0x7FFFFFFFFFFFFFFFLL; // overflow detected
+    }
+//  diagnosticWithValue("GLOBAL_WAITFOREVENT - deepSleepEnabled", deepSleepEnabled);
+//	diagnosticWithValue("GLOBAL_WAITFOREVENT - sleepManagerRunning", sleepManagerRunning);
+//	diagnosticWithValue("GLOBAL_WAITFOREVENT - minimumDeepSleepMillis", minimumDeepSleepMillis);
+    if ((millisecondsToWait < 0x7FFFFFFFFFFFFFFFLL) && deepSleepEnabled && !sleepManagerRunning && (millisecondsToWait >= minimumDeepSleepMillis)) {
+//	    diagnosticWithValue("GLOBAL_WAITFOREVENT - deep sleeping for", (int)millisecondsToWait);
+        setDeepSleepEventOutstanding(target);
+    } else {
+//	    diagnosticWithValue("GLOBAL_WAITFOREVENT - shallow sleeping for", (int)millisecondsToWait);
+        doShallowSleep(target);
+    }
+}
+
 /******************************************************************
  * Serial port support
  ******************************************************************/
@@ -578,18 +598,7 @@ int avr_low_result = 0;
             break;
     	case ChannelConstants_GLOBAL_WAITFOREVENT: {
                 long long millisecondsToWait = rebuildLongParam(i1, i2);
-                long long target = ((long long) getMilliseconds()) + millisecondsToWait;
-                if (target <= 0) target = 0x7FFFFFFFFFFFFFFFLL; // overflow detected
-//		diagnosticWithValue("GLOBAL_WAITFOREVENT - deepSleepEnabled", deepSleepEnabled);
-//		diagnosticWithValue("GLOBAL_WAITFOREVENT - sleepManagerRunning", sleepManagerRunning);
-//		diagnosticWithValue("GLOBAL_WAITFOREVENT - minimumDeepSleepMillis", minimumDeepSleepMillis);
-                if ((millisecondsToWait < 0x7FFFFFFFFFFFFFFFLL) && deepSleepEnabled && !sleepManagerRunning && (millisecondsToWait >= minimumDeepSleepMillis)) {
-//		diagnosticWithValue("GLOBAL_WAITFOREVENT - deep sleeping for", (int)millisecondsToWait);
-                    setDeepSleepEventOutstanding(target);
-                } else {
-//		    diagnosticWithValue("GLOBAL_WAITFOREVENT - shallow sleeping for", (int)millisecondsToWait);
-                    doShallowSleep(target);
-                }
+                osMilliSleep(millisecondsToWait);
                 res = 0;
             }
             break;
@@ -742,15 +751,3 @@ int avr_low_result = 0;
     com_sun_squawk_ServiceOperation_result = res;
 }
 
-/**
- * Initializes the IO subsystem.
- *
- * @param  jniEnv      the table of JNI function pointers which is only non-null if Squawk was
- *                     launched via a JNI call from a Java based launcher
- * @param  classPath   the class path with which to start the embedded JVM (ignored if 'jniEnv' != null)
- * @param  args        extra arguments to pass to the embedded JVM (ignored if 'jniEnv' != null)
- * @param  argc        the number of extra arguments in 'args' (ignored if 'jniEnv' != null)
- */
-
-void CIO_initialize(JNIEnv *jniEnv, char *classPath, char** args, int argc) {
-}

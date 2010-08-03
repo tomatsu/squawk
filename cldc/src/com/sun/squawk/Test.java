@@ -104,6 +104,7 @@ public class Test {
         x49();
         x50();
         x51();
+        x52();
         randomTimeTest();
 
         // Give the finalizers (if any) a chance to run
@@ -472,9 +473,10 @@ public class Test {
         result("x45", x45count == 200);
     }
 
+    static int threadcounter = 0;
     static VMThread x45Thread(int stackSize) {
         try {
-            Thread r = new Thread() {
+            Thread r = new Thread("x45Thread-" + (threadcounter++)) {
                 public void run() {
                     f();
                 }
@@ -734,4 +736,21 @@ public class Test {
         result("x51: getElements(false)", getElements(false) instanceof IDictionary);
     }
 
+    static void x52() {
+        Runnable r = new Concrete1();
+        r.run();
+    }
+
+
+}
+
+class Base1 implements Runnable {
+    public void run() { System.out.println("ERROR: In Base1.run()"); }
+}
+
+abstract class Mid1 extends Base1 implements Runnable {
+        public void run() { System.out.println("In Mid1.run()"); }
+}
+
+class Concrete1 extends Mid1 {
 }

@@ -50,11 +50,6 @@ public abstract class CCompiler {
         public boolean profiling;
 
         /**
-         * Enables remote IO code (i.e. enables '-Xprof' VM option). This may slow down the VM considerably.
-         */
-        public boolean ioport;
-
-        /**
          * Enables kernel mode (i.e. enables asynchronous handling of interrupts). This may slow down the VM slightly.
          */
         public boolean kernel;
@@ -63,7 +58,6 @@ public abstract class CCompiler {
          * Enables native Verification mode. Uses SHA1 c code instead of java code for suite verification.  This accelerates verification considerable
          */
         public boolean nativeVerification;
-
 
         /**
          * Asserts that squawk will run hosted under a 1.4.2+ JVM. This allows us to use the signal-interposition
@@ -115,6 +109,20 @@ public abstract class CCompiler {
          * Extra flags to be passed to the compiler.
          */
         public String cflags = "";
+        
+        /**
+         * Specifies the kind of platform squawk will use.
+         */
+        public String platformType = null;
+        
+        public final static String DELEGATING = "DELEGATING";
+        public final static String NATIVE     = "NATIVE";
+        public final static String BARE_METAL = "BARE_METAL";
+        public final static String SOCKET     = "SOCKET";
+        
+        public boolean isPlatformType(String type) {
+            return platformType.equals(type);
+        }
     }
 
     /**
@@ -146,7 +154,7 @@ public abstract class CCompiler {
         this.name = name;
         this.env = env;
         this.platform = platform;
-        this.options = new Options();
+        //this.options = new Options();
     }
     
     /**
@@ -223,4 +231,21 @@ public abstract class CCompiler {
      * @return        the architecture that the Squawk dymanic compiler will target
      */
     public abstract String getArchitecture();
+    
+    /**
+     * Returns true on any varient of x86 architectures and OSs
+     *
+     * @return boolean
+     */
+    public boolean isTargetX86Architecture() {
+        String arch = getArchitecture().toLowerCase();
+        return arch.equals("x86") || arch.equals("i386") || arch.equals("amd64") || arch.equals("ia64") || arch.equals("x86_64");
+    }
+  
+    /**
+     * @return true if we are cross compile to a different platform.
+     */
+    public boolean isCrossPlatform() {
+        return false;
+    }
 }

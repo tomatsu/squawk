@@ -134,29 +134,27 @@ public final class Class<T> {
         }
 
         ExecutionPoint[] trace = VM.reifyCurrentStack(2);
-        Assert.always(trace.length == 2);
+        if (trace.length == 2) { // this is false during bootstrapping
 /*if[JAVA5SYNTAX]*/
-        Klass<?> callersClass;
+            Klass<?> callersClass;
 /*else[JAVA5SYNTAX]*/
-//      Klass callersClass;
+//          Klass callersClass;
 /*end[JAVA5SYNTAX]*/
-        callersClass= trace[1].getKlass();
-
-        /*
-         * Check that the calling method can access this klass and the constructor
-         */
-        if (!klass.isAccessibleFrom(callersClass) ||
-           /*
-            * Note that access is not allowed to a protected constructor (even if
-            * callersKlass is a subclass of this class). Protected constructors
-            * can only be accessed from within the constructor of a direct
-            * subclass of a class. They cannot be accessed via reflection.
-            */
-            !Klass.isAccessibleFrom(klass, klass.getDefaultConstructorModifiers() & ~Modifier.PROTECTED, callersClass)
-        ) {
-            throw new IllegalAccessException();
+            callersClass = trace[1].getKlass();
+            /*
+             * Check that the calling method can access this klass and the constructor
+             */
+            if (!klass.isAccessibleFrom(callersClass)
+                    || /*
+                     * Note that access is not allowed to a protected constructor (even if
+                     * callersKlass is a subclass of this class). Protected constructors
+                     * can only be accessed from within the constructor of a direct
+                     * subclass of a class. They cannot be accessed via reflection.
+                     */
+                     !Klass.isAccessibleFrom(klass, klass.getDefaultConstructorModifiers() & ~Modifier.PROTECTED, callersClass)) {
+                throw new IllegalAccessException();
+            }
         }
-
         return klass.newInstance();
     }
 

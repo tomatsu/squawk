@@ -34,6 +34,8 @@
 #include <jni.h>
 #include <math.h>
 
+#include "os_math.h" /* add platform specific method definitions */
+
 /* Macros for NaN (Not-A-Number) and Infinity for floats and doubles */
 #define F_POS_INFINITY    0x7F800000L
 #define F_NEG_INFINITY    0xFF800000L
@@ -71,17 +73,6 @@ union  uu2   { jlong l; unsigned int lParts[2]; double d;        };
 INLINE float ib2f(int i)                { union  uu1 x; x.i = i; return x.f;         }
 INLINE int   f2ib(float f)              { union  uu1 x; x.f = f; return x.i;         }
 
-#ifdef _MSC_VER
-#  if _MSC_VER < 1400 /* fmodf is defined in MSC version 14.00 and greater */
-INLINE float  fmodf(float a, float b)      { return (float)fmod(a, b);                 }
-#  endif
-#else /* _MSC_VER */
-#  ifndef __APPLE__
-#    ifndef __GNUC__
-INLINE float  fmodf(float a, float b)      { return (float)fmod(a, b);                 }
-#    endif /* __GNUC__ */
-#  endif /* __APPLE__ */
-#endif /* _MSC_VER */
 
 #if ARM_FPA
 INLINE double lb2d(jlong l)                { union uu2 x; x.lParts[0] = (unsigned int)((ujlong)l >> 32); x.lParts[1] = l; return x.d;         }
@@ -114,7 +105,7 @@ extern double JFP_lib_scalbn (double x, int n);
 extern double JFP_lib_sqrt(double x);
 extern double JFP_lib_fabs(double x);
 
-#if PROCESSOR_ARCHITECTURE_X86
+#if PROCESSOR_ARCHITECTURE_X86 && !defined(__SSE2_MATH__ )
 // x86 requires a much more complicated solution. See fp_bytecodes.c.
 extern double JFP_lib_muld(double x, double y);
 extern double JFP_lib_divd(double x, double y);

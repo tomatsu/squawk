@@ -27,6 +27,6 @@
 # 2, run this script
 # 3, bld cldc a second time
 
-java -cp ../build-commands.jar:../cldc/classes com.sun.squawk.builder.gen.NativeGen 0 > tmp && chmod -w tmp && mv -vf tmp ../cldc/src/com/sun/squawk/vm/Native.java
-#java -cp ../build-commands.jar:../cldc/classes com.sun.squawk.builder.gen.NativeGen 1 > tmp && chmod -w tmp && mv -vf tmp ../vmgen/src/com/sun/squawk/vm/InterpreterNative.java
-java -cp ../build-commands.jar:../cldc/classes com.sun.squawk.builder.gen.NativeGen 2 > tmp && chmod -w tmp && mv -vf tmp ../translator/src/com/sun/squawk/translator/ir/verifier/NativeVerifierHelper.java
+java -cp ../cldc/classes:../build-commands.jar com.sun.squawk.builder.gen.NativeGen 0 > tmp && chmod -w tmp && mv -vf tmp ../cldc/src/com/sun/squawk/vm/Native.java
+#java -cp ../cldc/classes:../build-commands.jar com.sun.squawk.builder.gen.NativeGen 1 > tmp && chmod -w tmp && mv -vf tmp ../vmgen/src/com/sun/squawk/vm/InterpreterNative.java
+java -cp ../cldc/classes:../build-commands.jar com.sun.squawk.builder.gen.NativeGen 2 > tmp && chmod -w tmp && mv -vf tmp ../translator/src/com/sun/squawk/translator/ir/verifier/NativeVerifierHelper.java

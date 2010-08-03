@@ -47,7 +47,7 @@ abstract public class AbstractSwitch extends Generator {
             out.println(firstLine);
         }
 
-        printCopyright(out);
+        printCopyright(this.getClass(), out);
 
         // Generate header
         printHeader(out);

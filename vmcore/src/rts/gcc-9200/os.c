@@ -54,7 +54,6 @@ int main(int argc, char *argv[]);
 extern int disableARMInterrupts();
 extern void enableARMInterrupts();
 void initTrapHandlers();
-void stopVM(int);
 
 int dma_buffer_size;
 char* dma_buffer_address;
@@ -153,6 +152,7 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
 #else
 	avrSetOutstandingEvents(outstandingAvrStatus & ((1<<BATTERY_POWER_EVENT) | (1<<STATUS_LOW_BATTERY_EVENT) | (1<<STATUS_EXTERNAL_POWER_EVENT)));
 #endif
+
 /*
     iprintf("\n");
     iprintf("Squawk VM Starting (");
@@ -228,13 +228,54 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
  * Support for util.h
  */
 
-long sysconf(int code) {
-    if (code == _SC_PAGESIZE) {
-        return 4;
-    } else {
-        return -1; // failure
-    }
+/**
+ * Gets the page size (in bytes) of the system.
+ *
+ * @return the page size (in bytes) of the system
+ *
+ * NOTE: Really 8KB or 64KB on SPOT, not 4 bytes, right?
+ */
+#define sysGetPageSize() 4
+
+/**
+ * Sets a region of memory read-only or reverts it to read & write.
+ *
+ * @param start    the start of the memory region
+ * @param end      one byte past the end of the region
+ * @param readonly specifies if read-only protection is to be enabled or disabled
+ */
+INLINE sysToggleMemoryProtection(char* start, char* end, boolean readonly) {}
+
+/**
+ * Allocate a page-aligned chunk of memory of the given size.
+ * 
+ * @param size size in bytes to allocate
+ * @return pointer to allocated memory or null.
+ */
+INLINE void* sysValloc(size_t size) {
+    return valloc(size);
 }
+
+/**
+ * Free chunk of memory allocated by sysValloc
+ * 
+ * @param ptr to to chunk allocated by sysValloc
+ */
+INLINE void sysVallocFree(void* ptr) {
+    free(ptr);
+}
+
+/** 
+ * Return another path to find the bootstrap suite with the given name.
+ * On some platforms the suite might be stored in an odd location
+ * 
+ * @param bootstrapSuiteName the name of the boostrap suite
+ * @return full or partial path to alternate location, or null
+ */
+INLINE char* sysGetAlternateBootstrapSuiteLocation(char* bootstrapSuiteName) { return NULL; }
+
+/* The package that conmtains the native code to use for a "NATIVE" platform type*/
+ #define sysPlatformName() "Spot"
 
 INLINE void osloop() {
 	//no-op on spot platform

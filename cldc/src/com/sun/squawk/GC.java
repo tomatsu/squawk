@@ -163,6 +163,8 @@ public class GC implements GlobalStaticFields {
 
     /**
      * GC tracing flag specifying basic tracing.
+     * 
+     * This trace level should always be enabled (not dependent on GC_TRACING_SUPPORTED)
      */
     static final int TRACE_BASIC = 1;
 
@@ -712,10 +714,18 @@ public class GC implements GlobalStaticFields {
      * @param newState the new abled/disabled state of the garbage collector
      * @return the garbage collector's state before this call
      */
-    static boolean setGCEnabled(boolean newState) {
+    public static boolean setGCEnabled(boolean newState) {
         boolean oldState = gcEnabled;
         gcEnabled = newState;
         return oldState;
+    }
+
+    /**
+     * Is Garnage collection enabled?
+     * @return true if GC enabled.
+     */
+    public static boolean isGCEnabled() {
+        return gcEnabled;
     }
 
     /**
@@ -810,7 +820,7 @@ public class GC implements GlobalStaticFields {
                 VM.println("]");
             }
         } else {
-            if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_BASIC)) {
+            if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_ALLOCATION)) {
                 VM.print("[Failed allocation of ");
                 VM.print(size);
                 VM.print(" bytes, klass = ");
@@ -850,8 +860,24 @@ public class GC implements GlobalStaticFields {
                     VM.collectGarbage(true);
                     oop = allocatePrim(size, klass, arrayLength);
                 }
+            } else {
+                VM.println("ALLOCATION WHILE GC is DISABLED!");
             }
             if (oop == null) {
+                if (GC.GC_TRACING_SUPPORTED) {
+                    VM.print("allocate size: ");
+                    VM.print(size);
+                    VM.print(", klass: ");
+                    VM.print(((Klass) klass).getInternalName());
+                    VM.print(", arrayLength: ");
+                    VM.print(arrayLength);
+                    VM.println();
+                    VM.print("bytes free: ");
+                    VM.printOffset(allocEnd.diff(allocTop));
+                    VM.print(" in alloc space, ");
+                    VM.printOffset(heapEnd.diff(allocTop));
+                    VM.println(" in total");
+                }
                 throw VM.getOutOfMemoryError();
             }
         }
@@ -870,15 +896,6 @@ public class GC implements GlobalStaticFields {
 
         // Trace.
         long free = freeMemory();
-        if (isTracing(TRACE_BASIC)) {
-            VM.print("** Collecting garbage ** (collection count: ");
-            VM.print(getTotalCount());
-//            VM.print(", backward branch count:");
-//            VM.print(VM.getBranchCount());
-            VM.print(", free memory:");
-            VM.print(free);
-            VM.println(" bytes)");
-        }
 
         // Prunes 'dead' isolates from weakly linked global list of isolates.
         VM.pruneIsolateList();
@@ -910,23 +927,27 @@ public class GC implements GlobalStaticFields {
 
         if (isTracing(TRACE_BASIC)) {
             long afterFree = freeMemory();
-            VM.print("** ");
-            if (!fullCollection) {
-                VM.print("Partial ");
+            if (fullCollection) {
+                VM.print("[Full GC ");
             } else {
-                VM.print("Full ");
+                VM.print("[GC ");
             }
-            VM.print("collection finished ** (free memory:");
+
+            if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_COLLECTION)) {
+                VM.print("[count : ");
+                VM.print(getTotalCount());
+                VM.print(", backward branch count: ");
+                VM.print(VM.getBranchCount());
+                VM.print("] ");
+            }
+            VM.print(free);
+            VM.print("->");
             VM.print(afterFree);
-            VM.print(" bytes [");
-            VM.print((afterFree * 100) / totalMemory());
-            VM.print("%], reclaimed ");
-            VM.print(afterFree - free);
-            VM.print(" bytes, backward branch count:");
-            VM.print(VM.getBranchCount());
-            VM.print(", time:");
+            VM.print("(");
+            VM.print(totalMemory());
+            VM.print("), ");
             VM.print(collector.getLastGCTime());
-            VM.println("ms)");
+            VM.println(" ms]");
         }
 
         // Update the relevant collection counter
@@ -1144,6 +1165,7 @@ public class GC implements GlobalStaticFields {
         */
         int bodySize = length * dataSize;
         if (bodySize < 0) {
+            VM.println("newArray neg size");
             throw VM.getOutOfMemoryError();
         }
 
@@ -1217,7 +1239,7 @@ public class GC implements GlobalStaticFields {
      */
      static void stackCopy(Object srcChunk, Object dstChunk) {
 
-         if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_BASIC)) {
+         if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_ALLOCATION)) {
              VM.print("GC::stackCopy - srcChunk = ");
              VM.printAddress(srcChunk);
              VM.print(" dstChunk = ");
@@ -2100,6 +2122,10 @@ public class GC implements GlobalStaticFields {
                 VM.print(" @");
                 VM.printAddress(obj);
             }
+       } else if (obj instanceof Monitor) {
+            Monitor mon = (Monitor) obj;
+            VM.print("Monitor for ");
+            printObject(mon.object);
         } else {
             VM.print(klass.getInternalName());
             VM.print(" size: ");
@@ -2108,6 +2134,13 @@ public class GC implements GlobalStaticFields {
             VM.printAddress(obj);
         }
         VM.println();
+    }
+
+    static void printObject(Object obj) {
+        Klass klass = GC.getKlass(obj);
+        int blkSize = GC.getBodySize(klass, Address.fromObject(obj));
+        int objSize = blkSize + (klass.isArray() ? HDR.arrayHeaderSize : HDR.basicHeaderSize);
+        printObject(obj, klass, objSize);
     }
     
    /**
@@ -2137,7 +2170,7 @@ public class GC implements GlobalStaticFields {
     
     /**
      * Perform doBlock with all objects starting from startObject.
-     * 
+     *
      * @param startObj the object to start walking from , or null
      */
     public static void allObjectsFromDo(Object startObj, DoBlock doBlock) {
@@ -2232,19 +2265,19 @@ public class GC implements GlobalStaticFields {
         System.out.println();
     }
     
-    /**
+   /**
      * Do actual heap walk, from start object, or whole heap is startObj is null.
      * Count how many instances, and how many bytes are used, by all objects that are the same aage or youngre than
      * startObj. Print out statistics of each class that has at least one instance in the set found in the heap walk.
      * Statistics are NOT sorted.
-     * 
+     *
      * @param startObj the object to start walking from , or null
      * @param printInstances if true, print information about each object before printing statistics
      */
     public static void printHeapStats(Object startObj, boolean printInstances) {
         Object endObjectMarker = new Object();
         initHeapStats();
-        
+
         Enumeration e = heapstats.elements();
         while (e.hasMoreElements()) {
             ClassStat cs = (ClassStat) e.nextElement();
@@ -2255,7 +2288,7 @@ public class GC implements GlobalStaticFields {
             VM.println("Instances in heap:");
         }
         collectHeapStats(startObj, endObjectMarker, printInstances);
-        
+
 
         VM.println("Class:\t Count: \t Bytes:");
         e = heapstats.keys();

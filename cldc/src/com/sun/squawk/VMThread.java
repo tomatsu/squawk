@@ -29,6 +29,8 @@ import com.sun.squawk.pragma.*;
 import com.sun.squawk.util.*;
 import com.sun.squawk.vm.*;
 import java.io.PrintStream;
+import com.sun.squawk.platform.Platform;
+import com.sun.squawk.platform.SystemEvents;
 import java.util.Enumeration;
 
 /**
@@ -109,6 +111,11 @@ public final class VMThread implements GlobalStaticFields {
     private static EventHashtable events;
     
     /**
+     * Hashtable of threads waiting for an OS event.
+     */
+    private static EventHashtable osevents;
+    
+    /**
      * Count of contended monitorEnters
      */
     private static int contendedEnterCount;
@@ -131,6 +138,20 @@ public final class VMThread implements GlobalStaticFields {
      */
     static int waitTimeHi32;
     static int waitTimeLo32;
+    
+    /**
+     * Handler for OS events...
+     */
+    static SystemEvents systemEvents;
+
+    /**
+     * Maximum time that system will wait for IO, interrupts, etc.
+     * WARNING: This can break system sleeping, and should only be used in emergencies.
+     *
+     * NOTE: global statics cannot handle "long" variables, so encode Long.MAX_VALUE as -1,
+     * and other values as 1..Int.MAX_VALUE.
+     */
+    private static int max_wait; // initialized to -1 in initializeThreading().
 
 
     /*-----------------------------------------------------------------------*\
@@ -198,6 +219,25 @@ public final class VMThread implements GlobalStaticFields {
      */
     public static int getThreadSwitchCount() {
         return threadSwitchCount;
+    }
+
+    /**
+     * Set the maximum time that system will wait for IO, interrupts, etc.
+     * WARNING: This can break system sleeping, and should only be used in emergencies.
+     *
+     * @param max max wait time in ms. Must be > 0, and either Long.MAX_VALUE or < Integer.MAX_VALUE.
+     */
+    static void setMaxSystemWait(long max) {
+        if (max <= 0) {
+            throw new IllegalArgumentException();
+        }
+        if (max == Long.MAX_VALUE) {
+            max_wait = -1;
+        } else if (max > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException();
+        } else {
+            max_wait = (int)max;
+        }
     }
 
    /**
@@ -689,6 +729,12 @@ public final class VMThread implements GlobalStaticFields {
             concat(")]");
     }
 
+    /**
+     * Handler for OS events...
+     */
+    public static SystemEvents getSystemEvents() {
+        return systemEvents;
+    }
 
     /*-----------------------------------------------------------------------*\
      *                              Thread state                             *
@@ -822,6 +868,9 @@ public final class VMThread implements GlobalStaticFields {
 //  int monitorDepth;
 //  private final static int   MAXDEPTH = Integer.MAX_VALUE;
 /*end[SMARTMONITORS]*/
+
+    private int errno; /* save errno after native calls so java thread's will see correct errno value. */
+
 
     /**
      * Fail if thread invarients are true.
@@ -1114,8 +1163,10 @@ VM.println();
         runnableThreads     = new ThreadQueue();
         timerQueue          = new TimerQueue();
         events              = new EventHashtable();
+        osevents            = new EventHashtable();
         currentThread       = asVMThread(new Thread()); // Startup using a dummy thread
         serviceThread       = currentThread;
+        max_wait            = -1; // encode value of Long.MAX_VALUE
 
         /*
          * Convert the block of memory allocated for the service thread's stack into a
@@ -1132,6 +1183,18 @@ VM.println();
          */
         //NativeUnsafe.setObject(serviceStack, SC.owner, serviceThread);
         serviceThread.stack = serviceStack.toObject();
+    }
+    
+    /**
+     * Initialize the threading system.
+     */
+    static void initializeThreading2() {
+/*if[PLATFORM_TYPE_DELEGATING]*/
+        systemEvents = null;
+/*else[PLATFORM_TYPE_DELEGATING]*/
+//        systemEvents = Platform.createSystemEvents();
+//        systemEvents.startIO();
+/*end[PLATFORM_TYPE_DELEGATING]*/
     }
 
     /**
@@ -1207,6 +1270,8 @@ VM.println();
         Assert.always(state == NEW);
         stack = newStack(stackSize, this, true);
         if (stack == null) {
+VM.println("creating stack:");
+
             throw VM.getOutOfMemoryError();
         }
 
@@ -1468,7 +1533,7 @@ VM.println();
                 apiThread.run();
             } catch (OutOfMemoryError e) {
                 uncaughtException = true;
-                VM.print("Uncaught out of memory error on thread  - aborting isolate");
+                VM.print("Uncaught out of memory error on thread  - aborting isolate ");
                 VM.printThread(this);
                 VM.println();
                 isolate.abort(999);
@@ -1528,6 +1593,7 @@ VM.println();
             /*
              * Add any threads waiting for a certain time that are now due.
              */
+//VM.println("Add any threads waiting for a certain time that are now due.");
             while ((thread = timerQueue.next()) != null) {
                 Assert.that(thread.isAlive());
                 Monitor monitor = thread.monitor;
@@ -1549,7 +1615,7 @@ VM.println();
                 }
                 addToRunnableThreadsQueue(thread);
             }
-
+//VM.println("Break if there is something to do.");
             /*
              * Break if there is something to do.
              */
@@ -1560,9 +1626,10 @@ VM.println();
             /*
              * Wait for an event or until timeout.
              */
+//VM.println("Wait for an event or until timeout..");
             long delta = timerQueue.nextDelta();
             if (delta > 0) {
-                if (delta == Long.MAX_VALUE && events.size() == 0) {
+                if (delta == Long.MAX_VALUE && events.size() == 0 && osevents.size() == 0) {
                     /*
                      * This situation will usually only come about if the bootstrap
                      * isolate called System.exit() instead of VM.stopVM(). However,
@@ -1573,15 +1640,23 @@ VM.println();
                     Isolate.printAllIsolateStates(System.err);
                     Assert.shouldNotReachHere("Dead-locked system: no schedulable threads");
                 }
+//VM.println("waitForEvent timeout");
+                // Emergency switch in case waitForEvent() "breaks" (misses wakeups and hangs)
+                // This hasn't happenned, but need a fix that can be run in the field.
+                if (max_wait != -1 && delta > max_wait) {
+                    delta = max_wait;
+                }
                 long waitTime = VM.getTimeMillis();
                 long oldWaitTimeTotal = getTotalWaitTime();
-               	VM.waitForEvent(delta);
+                VM.waitForEvent(delta);
                 waitTime = VM.getTimeMillis() - waitTime;
                 oldWaitTimeTotal += waitTime;
                 waitTimeHi32 = (int)(oldWaitTimeTotal >> 32);
                 waitTimeLo32 = (int)(oldWaitTimeTotal & 0xFFFFFFFF);
             }
         }
+        
+//VM.println("scheduling thread " + thread);
 
         /*
          * Set the next thread.
@@ -1736,6 +1811,12 @@ VM.println();
     private static void reschedule() throws NotInlinedPragma {
         fixupPendingMonitors();  // Convert any pending monitors to real ones
         threadSwitchCount++;
+/*if[DEBUG_CODE_ENABLED]*/
+        if (!GC.isGCEnabled()) {
+            throw new IllegalStateException("reschedule while GC disabled!");
+        }
+/*end[DEBUG_CODE_ENABLED]*/
+
         rescheduleNext();        // Select the next thread
         VM.threadSwitch();       // and switch
         
@@ -1791,6 +1872,7 @@ VM.println();
         return otherThread.stack;
     }
 
+    /* ------------------- squawk events ---------------------*/
     /**
      * Block a thread waiting for an event.
      *
@@ -1827,24 +1909,83 @@ VM.println();
      * @param event the event number to unblock
      */
     private static void signalEvent(int event) {
-        VMThread thread = findEvent(event);
+        VMThread thread = events.findEvent(event);
         if (thread != null) {
             addToRunnableThreadsQueue(thread);
         }
     }
 
+
+    /* OS events are just like squawk events, but the event IDs come from the OS< and may confict with squawk event IDs
+     * so we need to keep them seperate. Put a class around these two!!!!
+     */
+
     /**
-     * Finds and removes a thread blocked on an event.
+     * Block a thread waiting for an OS event.
+     *
+     * Note: The bulk of the work is done in this function so that there are
+     * no dangling references to other threads or globals in the activation record
+     * that calls reschedule().
+     *
+     * @param event the event number to wait for
+     */
+    private static void waitForOSEvent0(int event) {
+/*if[FINALIZATION]*/
+        startFinalizers();
+/*end[FINALIZATION]*/
+        VMThread t = currentThread;
+        t.setInQueue(VMThread.Q_EVENT);
+        osevents.put(event, t);
+        Assert.that(t.nextThread == null);
+    }
+
+    /**
+     * Block a thread waiting for an event.
+     *
+     * @param event the event number to wait for
+     */
+    public static void waitForOSEvent(int event) {
+        waitForOSEvent0(event);
+        reschedule();
+        Assert.that(!currentThread.inQueue(VMThread.Q_EVENT) || currentThread.nextThread == null);
+    }
+
+    /**
+     * Restart a thread blocked on an event.
      *
      * @param event the event number to unblock
      */
-    static VMThread findEvent(int event) {
-        VMThread thread = (VMThread)events.remove(event);
-        if (thread != null) {
-            thread.setNotInQueue(VMThread.Q_EVENT);
-            Assert.that(thread.nextThread == null);
+    public static void signalOSEvent(int event) {
+        if (false) {
+            VM.print("signalOSEvent: ");
+            VM.print(event);
+            VM.println();
         }
-        return thread;
+
+        VMThread thread = osevents.findEvent(event);
+        if (thread != null) {
+            addToRunnableThreadsQueue(thread);
+        } else {
+            VM.print("!!! no thread found waiting on event");
+        }
+    }
+
+    /**
+     * Return the system errno value from the last time a native function was called.
+     *
+     * @return zero if no error
+     */
+    public int getErrno() {
+        return errno;
+    }
+
+    /**
+     * Store the errno after calling a blocking native function.
+     * NOTE: non-blocking native functions set this in the interpreter loop as part of the NativeUnsafe.call()
+     * @param newErrno
+     */
+    void setErrno(int newErrno) {
+        errno = newErrno;
     }
 
     /**
@@ -2018,6 +2159,9 @@ VM.println();
              * Thread already owns the monitor, increment depth.
              */
             if (monitor.depth == MAXDEPTH) {
+/*if[DEBUG_CODE_ENABLED]*/
+                VM.println("monitorEnter:");
+/*end[DEBUG_CODE_ENABLED]*/
                 throw VM.getOutOfMemoryError();
             }
             monitor.depth++;
@@ -2992,7 +3136,7 @@ final class TimerQueue {
 /**
  * Extension of IntHashtable that enables the pruning the threads of hibernated isolates.
  */
-class EventHashtable extends IntHashtable implements IntHashtableVisitor {
+final class EventHashtable extends IntHashtable implements IntHashtableVisitor {
 
     /**
      * The isolate being pruned.
@@ -3019,14 +3163,28 @@ class EventHashtable extends IntHashtable implements IntHashtableVisitor {
     public void visitIntHashtable(int key, Object value) {
         VMThread t = (VMThread)value;
         if (t.getIsolate() == isolate) {
-            VMThread t2 = VMThread.findEvent(key); // removes event from table
+            VMThread t2 = findEvent(key); // removes event from table
             Assert.that(t == t2);
             Assert.that(t.nextThread == null);
             t.setInQueue(VMThread.Q_HIBERNATEDRUN);
             isolate.addToHibernatedRunThread(t);
         }
     }
-}
+    
+    /**
+     * Finds and removes a thread blocked on an event.
+     *
+     * @param event the event number to unblock
+     */
+    VMThread findEvent(int event) {
+        VMThread thread = (VMThread)remove(event);
+        if (thread != null) {
+            thread.setNotInQueue(VMThread.Q_EVENT);
+            Assert.that(thread.nextThread == null);
+        }
+        return thread;
+    }
+} /* EventHashtable */
 
 /**
  * <code>CrossIsolateThread</code> is a package-private thread class that is allowed to be created in one isolate, but execute in the context of another isolate.

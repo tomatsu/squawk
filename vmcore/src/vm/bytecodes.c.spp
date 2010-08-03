@@ -62,6 +62,14 @@
          *                      Class state cache managemant                     *
         \*-----------------------------------------------------------------------*/
 
+#ifdef INTERPRETER_STATS
+#define updateCachedClassAccesses() cachedClassAccesses++
+#define updateCachedClassHits() cachedClassHits++
+#else
+#define updateCachedClassAccesses()
+#define updateCachedClassHits()
+#endif /* INTERPRETER_STATS */
+
         /**
          * Add a cached class state association.
          *
@@ -88,10 +96,10 @@
          */
         Address getClassState(Address klass) {
             int i;
-            cachedClassAccesses++;
+            updateCachedClassAccesses();
             for (i = 0 ; i < CLASS_CACHE_SIZE ; i++) {
                 if (cachedClass[i] == klass) {
-                    cachedClassHits++;
+                    updateCachedClassHits();
                     return cachedClassState[i];
                 }
             }
@@ -778,6 +786,10 @@ static int             MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int
 /*else[VM2C]*/
 //static int NativeUnsafe_getByte_LI(Address base, int offset) {
 //    return getByte(base, offset);
+//}
+//
+//static int NativeUnsafe_getUByte_LI(Address base, int offset) {
+//    return getUByte(base, offset);
 //}
 //
 //static int MethodBody_minfoValue1_L(Address oop) {
@@ -3207,6 +3219,15 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                      */
                     return -1;
                 }
+
+                /* Abstract classes do not contain interfaceVTableMaps, so skip those.
+                 * Note that the initial class we check is a concrete class, as is the last class
+                 * (java.lang.Object)
+                 */
+                while ((com_sun_squawk_Klass_modifiers(klass) & com_sun_squawk_Modifier_ABSTRACT) != 0) {
+                    klass = com_sun_squawk_Klass_superType(klass);
+                }
+
             }
 foundSlot:
            return slot;
@@ -3310,7 +3331,7 @@ foundSlot:
             } else {
                 int overflow = (sl + FP_FIXED_FRAME_SIZE) - (fp - nlocals - nstack);
                 assume(getUWord(ss, SC_guard) == 0);
-                if (com_sun_squawk_GC_traceFlags != 0) {
+                if (com_sun_squawk_GC_traceFlags > 1) {
                     fprintf(stderr, format(
                                             "*** Extending stack *** (stack size=%d, remaining stack=%d, bcount=%L)\n"),
                                             getArrayLength(ss),
@@ -3995,6 +4016,244 @@ foundSlot:
                     break;
                 }
 
+                case Native_com_sun_squawk_NativeUnsafe_call0: {
+                    Address address = popAddress();
+                    funcPtr0 fptr = (funcPtr0)address;
+                    int result;
+                    nativeFuncPtr = fptr;
+                    result = (*fptr)();
+                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
+                    nativeFuncPtr = NULL;
+                    pushInt(result);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_call1: {
+                    int i1 = popInt();
+                    Address address = popAddress();
+                    funcPtr1 fptr = (funcPtr1)address;
+                    int result;
+                    nativeFuncPtr = fptr;
+                    result = (*fptr)(i1);
+                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
+                    nativeFuncPtr = NULL;
+                    pushInt(result);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_call2: {
+                    int i2 = popInt();
+                    int i1 = popInt();
+                    Address address = popAddress();
+                    funcPtr2 fptr = (funcPtr2)address;
+                    int result;
+                    nativeFuncPtr = fptr;
+                    result = (*fptr)(i1, i2);
+                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
+                    nativeFuncPtr = NULL;
+                    pushInt(result);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_call3: {
+                    int i3 = popInt();
+                    int i2 = popInt();
+                    int i1 = popInt();
+                    Address address = popAddress();
+                    funcPtr3 fptr = (funcPtr3)address;
+                    int result;
+                    nativeFuncPtr = fptr;
+                    result = (*fptr)(i1, i2, i3);
+                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
+                    nativeFuncPtr = NULL;
+                    pushInt(result);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_call4: {
+                    int i4 = popInt();
+                    int i3 = popInt();
+                    int i2 = popInt();
+                    int i1 = popInt();
+                    Address address = popAddress();
+                    funcPtr4 fptr = (funcPtr4)address;
+                    int result;
+                    nativeFuncPtr = fptr;
+                    result = (*fptr)(i1, i2, i3, i4);
+                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
+                    nativeFuncPtr = NULL;
+                    pushInt(result);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_call5: {
+                    int i5 = popInt();
+                    int i4 = popInt();
+                    int i3 = popInt();
+                    int i2 = popInt();
+                    int i1 = popInt();
+                    Address address = popAddress();
+                    funcPtr5 fptr = (funcPtr5)address;
+                    int result;
+                    nativeFuncPtr = fptr;
+                    result = (*fptr)(i1, i2, i3, i4, i5);
+                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
+                    nativeFuncPtr = NULL;
+                    pushInt(result);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_call6: {
+                    int i6 = popInt();
+                    int i5 = popInt();
+                    int i4 = popInt();
+                    int i3 = popInt();
+                    int i2 = popInt();
+                    int i1 = popInt();
+                    Address address = popAddress();
+                    funcPtr6 fptr = (funcPtr6)address;
+                    int result;
+                    nativeFuncPtr = fptr;
+                    result = (*fptr)(i1, i2, i3, i4, i5, i6);
+                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
+                    nativeFuncPtr = NULL;
+                    pushInt(result);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_call7: {
+                    int i7 = popInt();
+                    int i6 = popInt();
+                    int i5 = popInt();
+                    int i4 = popInt();
+                    int i3 = popInt();
+                    int i2 = popInt();
+                    int i1 = popInt();
+                    Address address = popAddress();
+                    funcPtr7 fptr = (funcPtr7)address;
+                    int result;
+                    nativeFuncPtr = fptr;
+                    result = (*fptr)(i1, i2, i3, i4, i5, i6, i7);
+                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
+                    nativeFuncPtr = NULL;
+                    pushInt(result);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_call8: {
+                    int i8 = popInt();
+                    int i7 = popInt();
+                    int i6 = popInt();
+                    int i5 = popInt();
+                    int i4 = popInt();
+                    int i3 = popInt();
+                    int i2 = popInt();
+                    int i1 = popInt();
+                    Address address = popAddress();
+                    funcPtr8 fptr = (funcPtr8)address;
+                    int result;
+                    nativeFuncPtr = fptr;
+                    result = (*fptr)(i1, i2, i3, i4, i5, i6, i7, i8);
+                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
+                    nativeFuncPtr = NULL;
+                    pushInt(result);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_call9: {
+                    int i9 = popInt();
+                    int i8 = popInt();
+                    int i7 = popInt();
+                    int i6 = popInt();
+                    int i5 = popInt();
+                    int i4 = popInt();
+                    int i3 = popInt();
+                    int i2 = popInt();
+                    int i1 = popInt();
+                    Address address = popAddress();
+                    funcPtr9 fptr = (funcPtr9)address;
+                    int result;
+                    nativeFuncPtr = fptr;
+                    result = (*fptr)(i1, i2, i3, i4, i5, i6, i7, i8, i9);
+                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
+                    nativeFuncPtr = NULL;
+                    pushInt(result);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_call10: {
+                    int i10 = popInt();
+                    int i9 = popInt();
+                    int i8 = popInt();
+                    int i7 = popInt();
+                    int i6 = popInt();
+                    int i5 = popInt();
+                    int i4 = popInt();
+                    int i3 = popInt();
+                    int i2 = popInt();
+                    int i1 = popInt();
+                    Address address = popAddress();
+                    funcPtr10 fptr = (funcPtr10)address;
+                    int result;
+                    nativeFuncPtr = fptr;
+                    result = (*fptr)(i1, i2, i3, i4, i5, i6, i7, i8, i9, i10);
+                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
+                    nativeFuncPtr = NULL;
+                    pushInt(result);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_createTaskExecutor: {
+                    int stacksize = popInt();
+                    int priority = popInt();
+                    Address nameAddr = popAddress();
+                    char* name = (char*)nameAddr;
+                    int result;
+                    result = (int)createTaskExecutor(name, priority, stacksize);
+                    pushInt(result);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_cancelTaskExecutor: {
+                    TaskExecutor* te = (TaskExecutor*)popAddress();
+                    cancelTaskExecutor(te);
+                    pushInt(0);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_deleteTaskExecutor: {
+                    TaskExecutor* te = (TaskExecutor*)popAddress();
+                    pushInt(deleteTaskExecutor(te));
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_deleteNativeTask: {
+                    NativeTask* ntask = (NativeTask*)popAddress();
+                    deleteNativeTask(ntask);
+                    pushInt(0);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_runBlockingFunctionOn: {
+                    int i10 = popInt();
+                    int i9 = popInt();
+                    int i8 = popInt();
+                    int i7 = popInt();
+                    int i6 = popInt();
+                    int i5 = popInt();
+                    int i4 = popInt();
+                    int i3 = popInt();
+                    int i2 = popInt();
+                    int i1 = popInt();
+                    Address address = popAddress();
+                    funcPtr10 fptr = (funcPtr10)address;
+                    Address te = popAddress();
+                    int result;
+                    result = (int)runBlockingFunctionOn(te, fptr, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10);
+                    pushInt(result);
+                    break;
+                }
+
                 case Native_com_sun_squawk_Address_add: {
                     int offset = popInt();
                     Address addr = popAddress();
@@ -4206,6 +4465,17 @@ foundSlot:
                     assume(dstPos >= 0);
                     assume(length >= 0);
                     copyBytes(src, srcPos, dst, dstPos, length, nvmDst);
+                    break;
+                }
+
+				/* static void setBytes(Address src, byte value, int length); */
+                case Native_com_sun_squawk_VM_setBytes: {
+                    int     length   = popInt();
+                    int     value    = popInt();
+                    Address dst      = popAddress();
+                    assume(dst != NULL);
+                    assume(length >= 0);
+                    memset(dst, value, length);
                     break;
                 }
 
@@ -4660,7 +4930,7 @@ foundSlot:
 /*end[KERNEL_SQUAWK]*/
 
                 default: {
-                    fprintf(stderr, "*** Undefined native method: *** %d\n", iparm);
+/*                   fprintf(stderr, "*** Undefined native method: *** %d\n", iparm); */
                     pushInt(iparm);
                     call(com_sun_squawk_VM_undefinedNativeMethod);
                     break;
@@ -5540,8 +5810,16 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
          * <p>
          */
 /*MAC*/ void do_throw() {
-            if(usingServiceStack()) {
-                fatalInterpreterError("do_throw on service stack");
+            if (usingServiceStack()) {
+                Address exception = popAddress();
+                fprintf(stderr, "do_throw on service stack:\n");
+                if (exception != NULL && getClass(exception) != NULL) {
+                    printJavaStrSafely(com_sun_squawk_Klass_name(getClass(exception)), "class");
+                    printJavaStrSafely(java_lang_Throwable_detailMessage(exception), "detail message");
+                } else {
+                    fprintf(stderr, "garbled exception object!\n");
+                }
+                fatalInterpreterError("interpreter state");
             } else {
                 UWord oldip = (UWord)ip;
                 Address exception = popAddress();
@@ -5591,6 +5869,14 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
             }
         }
 
+#ifdef INTERPRETER_STATS
+#define updatePendingMonitorAccesses() pendingMonitorAccesses++
+#define updatePendingMonitorHits() pendingMonitorHits++
+#else
+#define updatePendingMonitorAccesses()
+#define updatePendingMonitorHits()
+#endif /* INTERPRETER_STATS */
+
         /**
          * Execute a monitor exit.
          *
@@ -5604,7 +5890,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
 
             nullCheck(obj);
             assn = getClassOrAssociation(obj);
-            pendingMonitorAccesses++;
+            updatePendingMonitorAccesses();
             if (unlikely(MONITOR_CACHE_SIZE == 0 || associationToKlass(assn) != assn || pendingMonitorStackPointer == 0 ||
 						 !(hi(obj, com_sun_squawk_GC_ramStart) && loeq(obj, com_sun_squawk_GC_ramEnd)))) {
                 pushAddress(obj);
@@ -5613,7 +5899,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
                 Address obj2 = pendingMonitors[--pendingMonitorStackPointer];
                 assume(obj == obj2);
                 pendingMonitors[pendingMonitorStackPointer] = null;
-                pendingMonitorHits++;
+                updatePendingMonitorHits();
             }
         }
 
@@ -5811,9 +6097,28 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
          * Java Stack: KEY, ARRAY -> VALUE
          * <p>
          */
+/*if[VM2C]*/
+/*MAC*/ void do_lookup_b() {
+            Address barray = popAddress();
+            int  key = popInt();
+            pushInt(lookup_b(key, barray));
+        }
+/*MAC*/ void do_lookup_s() {
+            Address sarray = popAddress();
+            int  key = popInt();
+            pushInt(lookup_s(key, sarray));
+        }
+/*MAC*/ void do_lookup_i() {
+            Address iarray = popAddress();
+            int  key = popInt();
+            pushInt(lookup_i(key, iarray));
+        }
+/*end[VM2C]*/
+/*if[!VM2C]*/
 /*MAC*/ void do_lookup_b() { call(com_sun_squawk_VM_lookup_b); }
 /*MAC*/ void do_lookup_s() { call(com_sun_squawk_VM_lookup_s); }
 /*MAC*/ void do_lookup_i() { call(com_sun_squawk_VM_lookup_i); }
+/*end[VM2C]*/
 
         /**
          * Reserved.

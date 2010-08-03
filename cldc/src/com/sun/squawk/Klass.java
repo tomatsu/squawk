@@ -140,7 +140,7 @@ public class Klass<T> {
      * The mapping from each interface method to the virtual method that
      * implements it. The mapping for the methods of the interface at index
      * <i>idx</i> in the <code>interfaces</code> array is at index
-     * <i>idx</i> in the <code>interfaceSlotTables</code> array. The
+     * <i>idx</i> in the <code>interfaceVTableMaps</code> array. The
      * mapping is encoded as an array where a value
      * <i>m</i> at index <i>i</i> indicates that the method at
      * index <i>m</i> in the vtable of this class implements the interface
@@ -313,9 +313,6 @@ public class Klass<T> {
      * @throws java.lang.ClassNotFoundException 
      */
     public static synchronized Klass forName(String className) throws ClassNotFoundException {
-        final boolean allowSystemClasses = false; // these were parameters...
-        final boolean runClassInitializer = true;
-        
        // Verbose trace.
         if (VM.isVeryVerbose()) {
             VM.print("[Klass.forName(");
@@ -327,42 +324,24 @@ public class Klass<T> {
         ClassNotFoundException cnfe = null;
         Isolate isolate = VM.getCurrentIsolate();
         if (klass == null) {
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
             if (isolate.getLeafSuite().isClosed()) {
                 cnfe = new ClassNotFoundException(className + " [The current isolate has no class path]");
-            } else if (!allowSystemClasses && (className.startsWith("java.") ||
-                                               className.startsWith("javax.") ||
-                                               className.startsWith("com.sun.squawk.") ||
-                                               className.startsWith("com.sun.cldc."))) {
+            } else if ((className.startsWith("java.") ||
+                        className.startsWith("javax.") ||
+                        className.startsWith("com.sun.squawk.") ||
+                        className.startsWith("com.sun.cldc."))) {
                 String packageName = className.substring(0, className.lastIndexOf('.'));
                 cnfe = new ClassNotFoundException("Prohibited package name: " + packageName);
             } else {
                 TranslatorInterface translator = isolate.getTranslator();
                 if (translator != null) {
                     translator.open(isolate.getLeafSuite(), isolate.getClassPath());
-//                    long freeMem = 0;
-//                    if (GC.isTracing(GC.TRACE_BASIC)) {
-//                        VM.collectGarbage(true);
-//                        freeMem = GC.freeMemory();
-//                    }
-
                     if (translator.isValidClassName(className)) {
                         klass = Klass.getClass(className, false);
                         translator.load(klass);
                         // Must load complete closure
                         translator.close(Suite.DEBUG);
-
-//                        if (GC.isTracing(GC.TRACE_BASIC)) {
-//                            VM.collectGarbage(true);
-//                            VM.print("** Class.forName(\"");
-//                            VM.print(className);
-//                            VM.print("\"):  free memory before = ");
-//                            VM.print(freeMem);
-//                            VM.print(", free memory after = ");
-//                            VM.print(GC.freeMemory());
-//                            VM.print(", difference = ");
-//                            VM.print(freeMem - GC.freeMemory());
-//                            VM.println();
-//                        }
                     }
                 } else {
                     if (VM.isVerbose()) {
@@ -370,17 +349,16 @@ public class Klass<T> {
                     }
                 }
             }
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         }
 
 
         if (klass != null && klass.getState() != Klass.STATE_DEFINED) {
-            if (runClassInitializer) {
-                klass.initialiseClass();
-            }
+            klass.initialiseClass();
             return klass;
         }
         if (VM.getCurrentIsolate().getLeafSuite().shouldThrowNoClassDefFoundErrorFor(className)) {
-            if (cnfe != null) {
+            if (cnfe != null && cnfe.getMessage() != null) {
                 throw new NoClassDefFoundError(cnfe.getMessage());
             }
             throw new NoClassDefFoundError(className);
@@ -427,7 +405,7 @@ T
 /*else[JAVA5SYNTAX]*/
 //Object
 /*end[JAVA5SYNTAX]*/
-	newInstance() throws InstantiationException, IllegalAccessException {
+	newInstance() /* throws InstantiationException, IllegalAccessException */ {
         Assert.always(!(isSquawkArray() || isInterface() || isAbstract()) && hasDefaultConstructor());
 /*if[JAVA5SYNTAX]*/
         T res = (T) GC.newInstance(this);
@@ -509,7 +487,7 @@ T
      * @return true if it does
      */
     public final boolean hasMain() {
-        return indexForMain != -1;
+        return indexForMain >= 0;
     }
 
    /**
@@ -534,7 +512,7 @@ T
      * @return true if it does
      */
     public final boolean hasDefaultConstructor() {
-        return indexForInit != -1;
+        return indexForInit >= 0;
     }
 
     /**
@@ -574,7 +552,7 @@ T
      * Determines if the specified <code>Object</code> is assignment-compatible
      * with the object represented by this <code>Klass</code>.
      * @param obj object to test
-     * @return true if obj is intance of this klass
+     * @return true if obj is instance of this klass
      */
     public final boolean isInstance(Object obj) {
         return obj != null && isAssignableFrom(GC.getKlass(obj));
@@ -893,7 +871,7 @@ T
      * are the same as the names returned by {@link #getName() getName} except
      * for classes representing arrays and classes representing primitive types.
      * For the former, the delimiting <code>L</code> and <code>;</code> are
-     * ommitted and the internal implementation classes are returned for the
+     * omitted and the internal implementation classes are returned for the
      * latter. Thus:
      *
      * <blockquote><pre>
@@ -976,7 +954,7 @@ T
 
     /**
      * Formats the names of a given array of classes into a single string
-     * with each class name seperated by a space. The {@link #getName()}
+     * with each class name separated by a space. The {@link #getName()}
      * method is used to convert each class to a name.
      *
      * @param   klasses  the classes to format
@@ -1158,7 +1136,7 @@ T
     }
 
     /**
-     * Determines if this class is ony used by the VM internally and does not
+     * Determines if this class is only used by the VM internally and does not
      * correspond to any Java source language type.
      *
      * @return true if this is a VM internal type
@@ -1353,10 +1331,12 @@ T
      * @return the virtual slot of this class, or -1 if not found
      */
     final int findSlot(Klass iklass, int islot) {
-        int icount = interfaces.length;
-        for (int i = 0; i < icount; i++) {
-            if (interfaces[i] == iklass) {
-                return interfaceVTableMaps[i][islot];
+        if (!isAbstract()) {
+            int icount = interfaces.length;
+            for (int i = 0; i < icount; i++) {
+                if (interfaces[i] == iklass) {
+                    return interfaceVTableMaps[i][islot];
+                }
             }
         }
         if (superType == null) {
@@ -1684,7 +1664,7 @@ T
     }
 
     /**
-     * Constant denoting the intial state of a Klass.
+     * Constant denoting the initial state of a Klass.
      */
     public final static byte STATE_DEFINED = 0;
 
@@ -1787,7 +1767,7 @@ T
          * Create and install the metadata for this class.
          */
         Suite suite = VM.getCurrentIsolate().getLeafSuite();
-        KlassMetadata metadata = new KlassMetadata(this,
+        KlassMetadata metadata = new KlassMetadata.Full(this,
                                                    virtualMethods,
                                                    staticMethods,
                                                    instanceFields,
@@ -1812,7 +1792,7 @@ T
      * given set of class file field definitions. The {@link #staticFieldsSize}
      * and {@link #refStaticFieldsSize} values are initialized and the offset
      * of each field is computed. The offsets for all the non-primitive fields
-     * are gauranteed to be lower than the offset of any primitive field.
+     * are guaranteed to be lower than the offset of any primitive field.
      *
      * @param fields  class file field definitions for the static fields
      * @return a copy of the given array sorted by offsets
@@ -2367,7 +2347,7 @@ T
                                                             false);
                 if (superMethod != null && !superMethod.getDefiningClass().isInterface()) {
                     if (superMethod.isFinal()) {
-                        throw new NoClassDefFoundError("cannot override final method");
+                        throw new NoClassDefFoundError("cannot override final method: " + superMethod);
                     }
 
                     // This is a restriction imposed by the way Squawk treats native methods
@@ -2490,7 +2470,7 @@ T
     /**
      * Adds the elements of <code>interfaces</code> to <code>closure</code>
      * that are not already in it. For each interface added, this method
-     * recurses on the interfaces implmented by the added interface.
+     * recurses on the interfaces implemented by the added interface.
      *
      * @param closure     a collection of interfaces
      * @param interfaces  the array of interfaces to add to <code>closure</code>
@@ -2531,7 +2511,7 @@ T
         /*
          * Add all the interfaces implemented by the abstract class(es) in
          * the super class hierarchy up until the first non-abstract class
-         * in the hierarchy. This is required so that the 'interfaceSlots'
+         * in the hierarchy. This is required so that the 'interfaceVTableMaps'
          * table for this class also includes the methods implemented by
          * abstract super classes (which have no such table).
          */
@@ -2627,8 +2607,8 @@ T
                   currentClass == null ||
                   currentClass == this ||
                   method.isPublic()    ||
-                  method.isProtected() ||
-                (!method.isPrivate() && this.isInSamePackageAs(currentClass))
+                 (method.isProtected() && (currentClass.isSubclassOf(this) || this.isInSamePackageAs(currentClass))) ||
+                 (!method.isPrivate() && this.isInSamePackageAs(currentClass))
                ) {
                 return method;
             }
@@ -2688,7 +2668,7 @@ T
         SymbolParser parser = metadata.getSymbolParser();
         int category = SymbolParser.VIRTUAL_METHODS;
         int mid = parser.lookupMethod(category, offset);
-        if (mid != -1) {
+        if (mid >= 0) {
             return new Method(metadata, mid);
         }
         return null;
@@ -2900,14 +2880,14 @@ T
             methodID = parser.lookupMethod(SymbolParser.VIRTUAL_METHODS, index);
         }
         
-        if (methodID == -1) {
+        if (methodID < 0) {
             index = getMethodIndex(body, true);
             if (index >= 0) {
                 methodID = parser.lookupMethod(SymbolParser.STATIC_METHODS, index);
             }
         }
 
-        if (methodID != -1) {
+        if (methodID >= 0) {
             return new Method(metadata, methodID);
         }
         return null;
@@ -3009,8 +2989,8 @@ T
      * @throws NotInlinedPragma as this method saves the current frame pointer
      */
     public final void main(String[] args) throws NotInlinedPragma {
-        int index = indexForMain & 0xFF;
-        if (index != 0xFF) {
+        int index = indexForMain;
+        if (index >= 0) {
             Assert.that(GC.getKlass(staticMethods[index]) == Klass.BYTECODE_ARRAY);
             VMThread thread = VMThread.currentThread();
             thread.setAppThreadTop(thread.framePointerAsOffset(VM.getFP()));
@@ -3054,7 +3034,7 @@ T
      * Gets the initialization state. This will be one of the
      * <code>INITSTATE_*</code> values.
      *
-     * @return  the initialzation state of this class
+     * @return  the initialization state of this class
      */
     private int getInitializationState() {
         if (getClassState() != null) {
@@ -3265,7 +3245,7 @@ T
              * Step 5
              */
             if (getInitializationState() == INITSTATE_FAILED) {
-                throw new NoClassDefFoundError();
+                throw new NoClassDefFoundError(name);
             }
             /*
              * Step 6
@@ -3386,7 +3366,7 @@ T
      */
     final void clinit() {
         int index = indexForClinit;
-        if (index != -1) {
+        if (index >= 0) {
             // Verbose trace.
             if (VM.isVeryVerbose()) {
                   VM.print("[initializing ");
@@ -3774,17 +3754,23 @@ T
      * Ensure that all the reserved system classes are loaded if running in a hosted environment.
      */
     private static void loadReservedSystemClasses() throws HostedPragma {
-        Isolate isolate = VM.getCurrentIsolate();
-        Suite bootstrapSuite = isolate.getBootstrapSuite();
-        TranslatorInterface translator = isolate.getTranslator();
-        for (int systemID = 0 ; systemID <= CID.LAST_SYSTEM_ID ; systemID++) {
-            Klass klass = bootstrapSuite.getKlass(systemID);
-            if (!klass.isArray() && !klass.isSynthetic()) {
-                translator.load(klass);
+        try {
+            Isolate isolate = VM.getCurrentIsolate();
+            Suite bootstrapSuite = isolate.getBootstrapSuite();
+            TranslatorInterface translator = isolate.getTranslator();
+            for (int systemID = 0; systemID <= CID.LAST_SYSTEM_ID; systemID++) {
+                Klass klass = bootstrapSuite.getKlass(systemID);
+                if (!klass.isArray() && !klass.isSynthetic()) {
+                    translator.load(klass);
+                }
+                if (klass.isArray() && klass.virtualMethods == null) {
+                    klass.virtualMethods = klass.superType.virtualMethods;
+                }
             }
-            if (klass.isArray() && klass.virtualMethods == null) {
-                klass.virtualMethods = klass.superType.virtualMethods;
-            }
+        } catch (NoClassDefFoundError noClassDefFoundError) {
+            // these are fatal - don't try to defer in romizer:
+            noClassDefFoundError.printStackTrace();
+            throw new RuntimeException("Klass initialization failed: " + noClassDefFoundError);
         }
     }
 
@@ -3866,7 +3852,7 @@ T
      * @param   name       the name of the class to lookup.
      * @return the Klass instance for <code>name</code>, or null if it doesn't exists
      */
-    private static Klass lookupKlass(String name) {
+    public static Klass lookupKlass(String name) {
         Isolate isolate = VM.getCurrentIsolate();
         Suite suite = isolate.getLeafSuite();
         if (suite == null) {

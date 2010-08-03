@@ -302,8 +302,8 @@ public final class Isolate implements Runnable {
     /**
      * Table of all MailboxAddresses that this Isolate uses to refer to other Isolates.
      * This is a table of all outward links.
-     * (Note that an isolate mighte use mailboxes internally, so some mailboxes
-     * refered to by a MailboxAddress may in fact be local to the isolate.)
+     * (Note that an isolate might use mailboxes internally, so some mailboxes
+     * referred to by a MailboxAddress may in fact be local to the isolate.)
      */
     private SquawkHashtable mailboxAddresses;
 
@@ -318,11 +318,6 @@ public final class Isolate implements Runnable {
      * Registered to run at VM.exit() time.
      */
     private Runnable shutdownHook;
-
-    /**
-     * is this an isoalte created to run a midlet?
-     */
-    private boolean isMidlet;
 
     /**
      * name for isolate
@@ -406,13 +401,9 @@ public final class Isolate implements Runnable {
         currentIsolate.addIsolate(this);
         bootstrapSuite = parentIsolate.bootstrapSuite;
 
-        // Initialize the leafSuite to be the bootstrap suite for now in case it
-        // is required sometime between now and 'updateLeafSuite'.
-        //leafSuite = bootstrapSuite;
-
         /*
          * Copy in command line properties and passed in properties now.
-         * Do this eagerly instead of at getProeprty() time to preserve
+         * Do this eagerly instead of at getProperty() time to preserve
          * isolate hygene - we need to create copies of "external" strings that are
          * in RAM. We can safely share Strings in ROM though.
          */
@@ -420,7 +411,6 @@ public final class Isolate implements Runnable {
         addProperties(VM.getCommandLineProperties());
         // now add in specified properties (may override the command line properties)
         addProperties(properties);
-
 
         try {
            updateLeafSuite(true); // TO DO: Also updated in run, but that is too late to find the main class
@@ -687,22 +677,16 @@ public final class Isolate implements Runnable {
      */
     public static TranslatorInterface getDefaultTranslator() throws AllowInlinedPragma {
 /*if[ENABLE_DYNAMIC_CLASSLOADING]*/
-        try {
-            String translatorSuiteUrl = System.getProperty("com.sun.squawk.Isolate.getDefaultTranslator");
-            if (translatorSuiteUrl == null) {
-                translatorSuiteUrl = "file://translator.suite";
+        String translatorSuiteUrl = System.getProperty("com.sun.squawk.Isolate.getDefaultTranslator");
+        if (translatorSuiteUrl == null) {
+            translatorSuiteUrl = "file://translator.suite";
+        }
+        Suite tsuite = Suite.getSuite(translatorSuiteUrl, false);
+        if (tsuite != null) {
+            Klass klass = tsuite.lookup("com.sun.squawk.translator.Translator");
+            if (klass != null) {
+                return (TranslatorInterface)klass.newInstance();
             }
-            Suite tsuite = Suite.getSuite(translatorSuiteUrl, false);
-            if (tsuite != null) {
-                Klass klass = tsuite.lookup("com.sun.squawk.translator.Translator");
-                if (klass != null) {
-                    return (TranslatorInterface)klass.newInstance();
-                }
-            }
-        } catch (IllegalAccessException ex) {
-            ex.printStackTrace();
-        } catch (InstantiationException ex) {
-            ex.printStackTrace();
         }
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         return null;
@@ -724,20 +708,14 @@ public final class Isolate implements Runnable {
          * Create the translator instance reflectively. This (compile and runtime) dynamic
          * binding to the translator means that it can be an optional component.
          */
-        try {
-            Klass klass = translatorClass != null ? translatorClass : leafSuite.lookup("com.sun.squawk.translator.Translator");
-            if (klass == null) {
-                return getDefaultTranslator();
-            }
-            return (TranslatorInterface)klass.newInstance();
-        } catch (IllegalAccessException ex) {
-            ex.printStackTrace();
-        } catch (InstantiationException ex) {
-            ex.printStackTrace();
+        Klass klass = translatorClass != null ? translatorClass : leafSuite.lookup("com.sun.squawk.translator.Translator");
+        if (klass == null) {
+            return getDefaultTranslator();
         }
-
+        return (TranslatorInterface)klass.newInstance();
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//      return null;
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
-        return null;
     }
 
     /**
@@ -1400,15 +1378,14 @@ public final class Isolate implements Runnable {
             Suite parent = (parentSuiteSourceURI == null ? bootstrapSuite : Suite.getSuite(parentSuiteSourceURI));
             Assert.that(parent != null);
 
-            String leafSuiteName = getProperty("leaf.suite.name");
-            if (leafSuiteName == null) {
-                leafSuiteName = "-leaf" + VM.getNextHashcode() + "-";
-            }
-
             // Don't create a suite for loading new classes if the class path is null
             if (classPath == null) {
                 leafSuite = parent;
             } else {
+                String leafSuiteName = getProperty("leaf.suite.name");
+                if (leafSuiteName == null) {
+                    leafSuiteName = "-leaf" + VM.getNextHashcode() + "-";
+                }
                 leafSuite = new Suite(leafSuiteName, parent);
             }
 
@@ -1479,18 +1456,11 @@ public final class Isolate implements Runnable {
 
         // Verbose trace.
         if (VM.isVeryVerbose()) {
-            System.out.print("[Starting isolate for '" + mainClassName);
+            System.out.print("[Starting " + isolateInfoStr() + " with args");
             if (args != null) {
                 for (int i = 0; i != args.length; ++i) {
                     System.out.print(" " + args[i]);
                 }
-            }
-            System.out.print("' with class path set to '" + classPath +"'");
-            if (parentSuiteSourceURI != null) {
-                System.out.print(" and parent suite URI set to '" + parentSuiteSourceURI + "'");
-            }
-            if (leafSuite != null) {
-                System.out.print(" and leaf suite '" + leafSuite + "'");
             }
 
             if (initializerClassName != null) {
@@ -1854,14 +1824,7 @@ public final class Isolate implements Runnable {
      */
     private void hibernate(boolean hibernateIO, int newState, boolean doHooks) throws java.io.IOException {
         if (hibernateIO && VM.isVeryVerbose()) {
-            System.out.print("[Hibernating isolate for '" +mainClassName + "' with class path set to '" + classPath +"'");
-            if (parentSuiteSourceURI != null) {
-                System.out.print(" and parent suite URI set to '" + parentSuiteSourceURI + "'");
-            }
-            if (leafSuite != null) {
-                System.out.print(" and leaf suite '" + leafSuite + "'");
-            }
-            System.out.println("]");
+            System.out.println("[Hibernating " + isolateInfoStr() + "]");
         }
 
         if ((state != newState) && (newState > transitioningState)) {
@@ -2118,6 +2081,21 @@ public final class Isolate implements Runnable {
             res = res.concat(" (NEW)");
         }
         return res;
+    }
+
+    private String isolateInfoStr() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("isolate for '").append(mainClassName).append("'");
+        if (classPath != null) {
+            sb.append(" with class path set to '").append(classPath).append("'");
+        }
+        if (parentSuiteSourceURI != null) {
+            sb.append(" with parent suite URI set to '").append(parentSuiteSourceURI).append("'");
+        }
+        if (!leafSuite.isClosed()) {
+            sb.append(" and leaf suite '").append(leafSuite).append("'");
+        }
+        return sb.toString();
     }
 
     /*---------------------------------------------------------------------------*\
@@ -2516,157 +2494,6 @@ public final class Isolate implements Runnable {
         // will threads wake up still waiting for messages? And what about re-registering the
         // Mailbox?
     }
-
-/*if[TRUE]*/
-/*else[TRUE]*/
-//
-//    // Notes from Doug: This is still a work in progress and depending on resources/requirements, may
-//    // take quite some time for extra thought/design/implementation. My main concern with what exists
-//    // so far is that we are introducing more inter-isolate pointers which have not-yet-thought-out
-//    // implications for isolate hibernation & migration.
-//    //
-//    // In the long run, I think an implementation closer to that of MVM will be required to make
-//    // reasoning and robustness of true isolation better. That implementation does not have
-//    // inter-isolate pointers (within Java code & data structures at least) and instead employs
-//    // the concept of 'task IDs' and 'link IDs' to refer to objects not owned by the current
-//    // isolate.
-//
-//    /*---------------------------------------------------------------------------*\
-//     *                            Inter-isolate messages                         *
-//    \*---------------------------------------------------------------------------*/
-//
-//    /**
-//     * A FIFO queue for the inbox of an isolate. This implementation is derived
-//     * the standard J2SE java.util.LinkedList class.
-//     */
-//    static final class ParcelQueue {
-//
-//        Entry header = new Entry(null, null, null);
-//        int size = 0;
-//
-//        public ParcelQueue() {
-//            header.next = header.previous = header;
-//        }
-//
-//        public Parcel removeLast() {
-//            return remove(header.previous);
-//        }
-//
-//        public void addFirst(Parcel parcel) {
-//            addBefore(parcel, header.next);
-//        }
-//
-//        /**
-//         * Removes all of the elements from this list.
-//        public void clear() {
-//            Entry e = header.next;
-//            while (e != header) {
-//                Entry next = e.next;
-//                e.next = e.previous = null;
-//                e.element = null;
-//                e = next;
-//            }
-//            header.next = header.previous = header;
-//            size = 0;
-//        }
-//        */
-//
-//        static class Entry {
-//            Parcel parcel;
-//            Entry next;
-//            Entry previous;
-//
-//            Entry(Parcel parcel, Entry next, Entry previous) {
-//                this.parcel = parcel;
-//                this.next = next;
-//                this.previous = previous;
-//            }
-//        }
-//
-//        private Entry addBefore(Parcel parcel, Entry e) {
-//            Entry newEntry = new Entry(parcel, e, e.previous);
-//            newEntry.previous.next = newEntry;
-//            newEntry.next.previous = newEntry;
-//            size++;
-//            return newEntry;
-//        }
-//
-//        private Parcel remove(Entry e) {
-//            Assert.that(e != header, "can remove element from empty queue");
-//            Parcel result = e.parcel;
-//            e.previous.next = e.next;
-//            e.next.previous = e.previous;
-//            e.next = e.previous = null;
-//            e.parcel = null;
-//            size--;
-//            return result;
-//        }
-//    }
-//
-//    private final ParcelQueue messageInbox = new ParcelQueue();
-//
-//    public static class Message {
-//        Message copy() {
-//            return null;
-//        }
-//    }
-//
-//    /**
-//     * A <code>Parcel</code> encapsulates a {@link Message} posted to an isolate
-//     * and contains a reference to the sending isolate.
-//     */
-//    public final static class Parcel {
-//        public final Message message;
-//        public final Isolate sender;
-//        Parcel(Message message, Isolate sender) {
-//            this.message = message;
-//            this.sender = sender;
-//        }
-//    }
-//
-//    public static void sendMessage(Isolate to, Message message) {
-//        if (to == null || message == null) {
-//            throw new NullPointerException();
-//        }
-//        synchronized (message) {
-//            synchronized (to.messageInbox) {
-//                to.messageInbox.addFirst(new Parcel(message.copy(), VM.getCurrentIsolate()));
-//
-//                // notify any thread (in the receiving isolate) that another
-//                // message has been deposited in its inbox
-//
-//                to.messageInbox.notifyAll();
-//            }
-//        }
-//    }
-//
-//    /**
-//     * Retrieves the next available message sent to this isolate, blocking until
-//     * a message is available. Once a message has been retrieved, it is removed from
-//     * the receiving isolate's <i>inbox</i>.
-//     *
-//     * @param from  if not <code>null</code>, only a message sent by <code>from</code>
-//     *              will be returned
-//     * @return the retrieved message
-//     */
-//    public static Parcel receiveMessage(Isolate from) {
-//        Isolate current = VM.getCurrentIsolate();
-//        ParcelQueue inbox = current.messageInbox;
-//        synchronized (inbox) {
-//            while (inbox.size == 0) {
-//                if (!current.isAlive()) {
-//                    // throw something???
-//                }
-//                try {
-//                    inbox.wait();
-//                } catch (InterruptedException e) {
-//                }
-//            }
-//
-//        }
-//        return null;
-//    }
-/*end[TRUE]*/
 
     /*---------------------------------------------------------------------------*\
      *                            Debugger Support                               *

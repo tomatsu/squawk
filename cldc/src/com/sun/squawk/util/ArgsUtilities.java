@@ -38,6 +38,23 @@ import com.sun.squawk.*;
 public class ArgsUtilities {
     
     /**
+     * Skip svn entries, etc...
+     */
+    public final static String[] skipList = {".svn", ".DS_Store"};
+
+    private static boolean nameInSkipList(String name) {
+        for (int i = 0; i < skipList.length; i++) {
+            String skipTarget = skipList[i] + VM.getFileSeparatorChar();
+            if (name.startsWith(skipTarget)) {
+                return true;
+            } else if (name.indexOf(VM.getFileSeparatorChar() + skipTarget) >= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
      * Purely static class should not be instantiated.
      */
     private ArgsUtilities() {}
@@ -188,7 +205,7 @@ public class ArgsUtilities {
      * Processes a single command line argument that specifies a jar or zip
      * file of class files.
      *
-     * @param   arg      the command line argument to process
+     * @param   cp      the command line argument to process
      * @param   classes  the list of class names to augment
      * @param   resources the list of resource to augment
      */
@@ -202,6 +219,9 @@ public class ArgsUtilities {
                         name = name.substring(0, name.length() - ".class".length());
                         name = name.replace('/', '.');
                         classes.addElement(name);
+                    } else if (nameInSkipList(name)) {
+                        System.out.println("Skipping resource file: " + name);
+                        continue;
                     } else {
                         try {
                             byte[] bytes = cp.getBytes(name);
@@ -267,6 +287,9 @@ public class ArgsUtilities {
                             name = name.substring(0, name.length() - ".class".length());
                             name = name.replace('/', '.');
                             classes.addElement(name);
+                        } else if (nameInSkipList(name)) {
+                            System.out.println("Skipping resource file: " + name);
+                            continue;
                         } else {
                             InputStream input= null;
                             ByteArrayOutputStream output;

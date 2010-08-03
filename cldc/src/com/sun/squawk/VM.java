@@ -24,16 +24,19 @@
 
 package com.sun.squawk;
 
+import com.sun.cldc.jna.TaskExecutor;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Stack;
 
 /*if[OLD_IIC_MESSAGES]*/
 //import com.sun.squawk.io.ServerConnectionHandler;
 /*end[OLD_IIC_MESSAGES]*/
 import com.sun.squawk.io.mailboxes.Mailbox;
 import com.sun.squawk.peripheral.PeripheralRegistry;
+import com.sun.squawk.platform.SystemEvents;
 import com.sun.squawk.pragma.GlobalStaticFields;
 import com.sun.squawk.pragma.InterpreterInvokedPragma;
 import com.sun.squawk.pragma.NotInlinedPragma;
@@ -224,7 +227,14 @@ public class VM implements GlobalStaticFields {
      * If VM.outPrint() ever fails to print to System.err, then set to true, and print to VM.print.
      */
     private static boolean safePrintToVM;
+
+    /**
+     * System-global cache of TaskExecutors
+     */
+    private static Stack taskCache;
+
     
+//    private static boolean isBlocked;
     
     /*=======================================================================*\
      *                          VM callback routines                         *
@@ -273,6 +283,8 @@ public class VM implements GlobalStaticFields {
          */
         GC.copyCStringArray(argv, args);
 
+        taskCache = new Stack();
+
         /*
          * Start the isolate guarded with an exception handler. Once the isolate
          * has been started enter the service operation loop.
@@ -281,6 +293,7 @@ public class VM implements GlobalStaticFields {
             exceptionsEnabled = true;
             shutdownHooks = new CallbackManager(true);
             currentIsolate.primitiveThreadStart();
+            VMThread.initializeThreading2();
             ServiceOperation.execute();
         } catch (Throwable ex) {
             fatalVMError();
@@ -534,6 +547,9 @@ public class VM implements GlobalStaticFields {
         return obj;
     }
 
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="lookup_b")
+/*end[JAVA5SYNTAX]*/
     /**
      * Lookup the position of a value in a sorted array of numbers.
      *
@@ -541,7 +557,13 @@ public class VM implements GlobalStaticFields {
      * @param array the array
      * @return the index or -1 if the lookup fails
      */
-    static int lookup_b(int key, byte[] array) throws InterpreterInvokedPragma {
+    static int lookup_b(int key, byte[] array)
+/*if[VM2C]*/
+                    throws NotInlinedPragma
+/*else[VM2C]*/
+//                  throws InterpreterInvokedPragma
+/*end[VM2C]*/
+                    {
         int low = 0;
         int high = array.length - 1;
         while (low <= high) {
@@ -558,6 +580,9 @@ public class VM implements GlobalStaticFields {
         return -1;
     }
 
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="lookup_s")
+/*end[JAVA5SYNTAX]*/
     /**
      * Lookup the position of a value in a sorted array of numbers.
      *
@@ -565,7 +590,13 @@ public class VM implements GlobalStaticFields {
      * @param array the array
      * @return the index or -1 if the lookup fails
      */
-    static int lookup_s(int key, short[] array) throws InterpreterInvokedPragma {
+    static int lookup_s(int key, short[] array)
+/*if[VM2C]*/
+                    throws NotInlinedPragma
+/*else[VM2C]*/
+//                  throws InterpreterInvokedPragma
+/*end[VM2C]*/
+                    {
         int low = 0;
         int high = array.length - 1;
         while (low <= high) {
@@ -582,6 +613,9 @@ public class VM implements GlobalStaticFields {
         return -1;
     }
 
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="lookup_i")
+/*end[JAVA5SYNTAX]*/
     /**
      * Lookup the position of a value in a sorted array of numbers.
      *
@@ -589,7 +623,13 @@ public class VM implements GlobalStaticFields {
      * @param array the array
      * @return the index or -1 if the lookup fails
      */
-    static int lookup_i(int key, int[] array) throws InterpreterInvokedPragma {
+    static int lookup_i(int key, int[] array)
+/*if[VM2C]*/
+                    throws NotInlinedPragma
+/*else[VM2C]*/
+//                  throws InterpreterInvokedPragma
+/*end[VM2C]*/
+                    {
         int low = 0;
         int high = array.length - 1;
         while (low <= high) {
@@ -2347,7 +2387,25 @@ hbp.dumpState();
     }
     
     static boolean executingHooks;
-        
+
+    private static void cleanupTaskExecutors() {
+        for (int i = 0; i < taskCache.size(); i++) {
+            TaskExecutor te = (TaskExecutor) taskCache.elementAt(i);
+            te.cancelTaskExecutor();
+        }
+
+        while (!taskCache.isEmpty()) {
+            for (int i = 0; i < taskCache.size(); /*nothing*/) {
+                TaskExecutor te = (TaskExecutor) taskCache.elementAt(i);
+                if (te.deleteTaskExecutor() == 0) {
+                    taskCache.removeElementAt(i);
+                } else {
+                    i++;
+                }
+            }
+        }
+    }
+
     /**
      * Halt the VM in the normal way. Any registered shutdown hooks will be run.
      *
@@ -2366,6 +2424,9 @@ hbp.dumpState();
             System.out.println("Running top-level shutdown hooks:");
         }
         shutdownHooks.runHooks();
+        // system-wide shutdown
+        cleanupTaskExecutors();
+
         if (VM.isVerbose()) {
             System.out.println("Done running top-level shutdown hooks.");
         }
@@ -2500,7 +2561,7 @@ hbp.dumpState();
         return shutdownHooks.remove(iso, hook);
     }
     
-        /**
+    /**
      * Registers a new virtual-machine shutdown hook.
      *
      * <p> The Java virtual machine <i>shuts down</i> in response to two kinds
@@ -2613,6 +2674,14 @@ hbp.dumpState();
     }
 
     /**
+     * Return a system global Stack of cached TaskExecutors. Only for use by the JNA implementation.
+     * @return
+     */
+    public static Stack getTaskCache() {
+        return taskCache;
+    }
+
+    /**
      * Copy memory from one area to another.
      *
      * @param      src          the source address.
@@ -2622,10 +2691,22 @@ hbp.dumpState();
      * @param      length       the number of bytes to be copied.
      * @param      nvmDst       the destination buffer is in NVM
      */
+
 /*if[JAVA5SYNTAX]*/
     @Vm2c(proxy="")
 /*end[JAVA5SYNTAX]*/
-    native static void copyBytes(Address src, int srcPos, Address dst, int dstPos, int length, boolean nvmDst);
+    public native static void copyBytes(Address src, int srcPos, Address dst, int dstPos, int length, boolean nvmDst);
+
+    /**
+     * Set memory region to value.
+     *
+     * @param      dst          the destination address.
+     * @param      length       the number of bytes to be copied.
+     * @param      value        the value to set
+     *
+     * @vm2c proxy
+     */
+    public native static void setBytes(Address dst, byte value, int length);
     
     /**
      * VM-private version of System.arraycopy for arrays that does little error checking.
@@ -3316,6 +3397,14 @@ hbp.dumpState();
      *                      Non-blocking I/O                                 *
     \*-----------------------------------------------------------------------*/
 
+    private static void checkOpcode(int opcode) {
+/*if[DEBUG_CODE_ENABLED]*/
+        if (opcode < 0 || opcode > ChannelConstants.LAST_OPCODE) {
+            throw new Error("Unknown Channel opcode: " + opcode);
+        }
+/*end[DEBUG_CODE_ENABLED]*/
+    }
+
     /**
      * Executes a non-blocking I/O operation whose result is guaranteed to be available immediately.
      * This mechanism requires 2 calls to the IO sub-system. The first sets up the globals used to pass the parameters and
@@ -3333,6 +3422,7 @@ hbp.dumpState();
      * @return          the integer result value
      */
     public static int execSyncIO(int op, int i1, int i2, int i3, int i4, int i5, int i6, Object send, Object receive) {
+        checkOpcode(op);
         executeCIO(-1, op, -1, i1, i2, i3, i4, i5, i6, send, receive);
         return serviceResult();
     }
@@ -3356,6 +3446,7 @@ hbp.dumpState();
      * @return          the integer result value
      */
     public static int execSyncIO(int context, int op, int i1, int i2, int i3, int i4, int i5, int i6, Object send, Object receive) {
+        checkOpcode(op);
         executeCIO(context, op, -1, i1, i2, i3, i4, i5, i6, send, receive);
         return serviceResult();
     }
@@ -3368,6 +3459,7 @@ hbp.dumpState();
      * @return          the integer result value
      */
     public static int execSyncIO(int op, int i1) {
+        checkOpcode(op);
         executeCIO(-1, op, -1, i1, 0, 0, 0, 0, 0, null, null);
         return serviceResult();
     }
@@ -3381,6 +3473,7 @@ hbp.dumpState();
      * @return          the integer result value
      */
     static int execSyncIO(int op, int i1, int i2) {
+        checkOpcode(op);
         executeCIO(-1, op, -1, i1, i2, 0, 0, 0, 0, null, null);
         return serviceResult();
     }
@@ -3396,6 +3489,7 @@ hbp.dumpState();
      * @return           the result status
      */
     static int execSyncIO(int context, int op, int i1, int i2) {
+        checkOpcode(op);
         executeCIO(context, op, -1, i1, i2, 0, 0, 0, 0, null, null);
         return serviceResult();
     }
@@ -3457,6 +3551,7 @@ hbp.dumpState();
         if (context == 0) {
             throw new IOException("No native I/O peer for isolate");
         }
+        checkOpcode(op);
         for (;;) {
             executeCIO(context, op, channel, i1, i2, i3, i4, i5, i6, send, receive);
             int result = serviceResult();
@@ -3696,6 +3791,31 @@ hbp.dumpState();
         executeCIO(context, ChannelConstants.CONTEXT_FREECHANNEL, channel, 0, 0, 0, 0, 0, 0, null, null);
     }
 
+    /**
+     * Set the maximum time that the system will wait in select.
+     * Used in PLATFORM_TYPE=NATIVE builds.
+     *
+     * @param max max wait time in ms. Must be > 0.
+     */
+    public void setMaxSelectWait(long max) {
+        SystemEvents sysEvents = VMThread.getSystemEvents();
+        if (sysEvents != null) {
+            sysEvents.setMaxWait(max);
+        } else {
+            throw new IllegalStateException();
+        }
+    }
+
+    /**
+     * Set the maximum time that system will wait for IO, interrupts, etc.
+     * WARNING: This can break system sleeping, and should only be used in emergencies.
+     *
+     * @param max max wait time in ms. Must be > 0.
+     */
+    public void setMaxSystemWait(long max) {
+        VMThread.setMaxSystemWait(max);
+    }
+
 /*if[!OLD_IIC_MESSAGES]*/
 /*else[OLD_IIC_MESSAGES]*/
 //    /**
@@ -3762,133 +3882,6 @@ hbp.dumpState();
             return VMThread.getTotalWaitTime();
         }
         
-//        /**
-//         *  Get the total time taken by all garbage collections.
-//         *
-//         * @return the total GC time in milliseconds
-//         */
-//        public static long getTotalGCTime() {
-//            return GC.getCollector().getTotalGCTime();
-//        }
-//        
-//        /**
-//         *  Get the total time taken by all full garbage collections.
-//         *
-//         * @return the full GC time in milliseconds
-//         */
-//        public static long getTotalFullGCTime() {
-//            return GC.getCollector().getTotalFullGCTime();
-//        }
-//        
-//        /**
-//         *  Get the total time taken by all partial garbage collections.
-//         *
-//         * @return the partial GC time in milliseconds
-//         */
-//        public static long getTotalPartialGCTime() {
-//            return GC.getCollector().getTotalPartialGCTime();
-//        }
-//        
-//        /**
-//         * Get the time taken by the last garbage collection.
-//         *
-//         * @return the last GC time in milliseconds
-//         */
-//        public static long getLastGCTime() {
-//            return GC.getCollector().getLastCollectionTime();
-//        }
-//        
-//        /**
-//         * Get the time taken by the slowest garbage collection.
-//         *
-//         * @return the longest GC time in milliseconds
-//         */
-//        public static long getMaxGCTime() {
-//            return Math.max(getMaxFullGCTime(), getMaxPartialGCTime());
-//        }
-//        
-//        /**
-//         * Get the time taken by the slowest full garbage collection.
-//         *
-//         * @return the longest full GC time in milliseconds
-//         */
-//        public static long getMaxFullGCTime() {
-//            return GC.getCollector().getMaxFullCollectionTime();
-//        }
-//        
-//        /**
-//         * Get the time taken by the slowest partial garbage collection.
-//         *
-//         * @return the longest partial GC time in milliseconds
-//         */
-//        public static long getMaxPartialGCTime() {
-//            return GC.getCollector().getMaxPartialCollectionTime();
-//        }
-//        
-//        /**
-//         * Get the total number of full garbage collections since reboot.
-//         *
-//         * @return full gc count
-//         */
-//        public static int getFullCount() {
-//            return GC.getFullCollectionCount();
-//        }
-//        
-//        /**
-//         * Get the total number of partial garbage collections since reboot.
-//         *
-//         * @return partial gc count
-//         */
-//        public static int getPartialCount() {
-//            return GC.getPartialCollectionCount();
-//        }
-//        
-//        /**
-//         * Get the number of bytes freed in the last collection.
-//         *
-//         * @return bytes freed
-//         */
-//        public static long getBytesLastFreed() {
-//            return GC.getCollector().getBytesLastFreed();
-//        }
-//
-//        /**
-//         * Get the number of bytes scanned in the last collection.
-//         * 
-//         * This is a measure of how much "work" the collector did in the last GC. It measures the size of the heap that was last collected.
-//         * With generational colelctors this may be much less than the size of the used heap.
-//         * 
-//         * It can also be used to compute "bytes surviving collection" = getBytesLastScanned() - getBytesLastFreed().
-//         * 
-//         * @return the number of bytes scanned in the last collection.
-//         */
-//        public static long getBytesLastScanned() {
-//            return GC.getCollector().getBytesLastScanned();
-//        }
-//        
-//        
-//        /**
-//         * Get the number of bytes freed since reboot.<p>
-//         *
-//         * Watch out for overflow.
-//         *
-//         * @return total bytes freed
-//         */
-//        public static long getBytesFreedTotal() {
-//            return GC.getCollector().getBytesFreedTotal();
-//        }
-//        
-//        /**
-//         *Get the number of bytes allocated since reboot.<p>
-//         *
-//         * Watch out for overflow.
-//         *
-//         * @return total bytes allocated
-//         */
-//        public static long getBytesAllocatedTotal() {
-//            return GC.getCollector().getBytesAllocatedTotal();
-//        }
-//        
         /**
          * Get the number of objects allocated since reboot.
          *
@@ -4543,4 +4536,11 @@ hbp.dumpState();
 		return value;
 	}
 
+//    public static void setBlocked(boolean b) {
+//        isBlocked = b;
+//    }
+//
+//    public static boolean isBlocked() {
+//        return isBlocked;
+//    }
 }

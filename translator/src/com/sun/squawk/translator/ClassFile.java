@@ -89,6 +89,14 @@ public final class ClassFile {
     private boolean safeToDoDeadStringElim;
     
     private final static String DEAD_STRING_ELIMINATION_MSG = "DEAD STRING ELIMINATION";
+
+    /**
+     * If true, try to do dead class elimination
+     */
+    private boolean safeToDoDeadClassElim;
+
+    private final static String DEAD_CLASS_ELIMINATION_MSG = "DEAD CLASS ELIMINATION";
+
     
     private static Hashtable vm2cClasses;
     
@@ -121,6 +129,7 @@ public final class ClassFile {
         if (vm2cClasses.get(klass.getInternalName()) == null) {
             safeToDoDeadStringElim = Arg.get(Arg.DEAD_STRING_ELIMINATION).getBool();
         }
+        safeToDoDeadClassElim = Arg.get(Arg.DEAD_CLASS_ELIMINATION).getBool();
     }
 
 
@@ -325,6 +334,21 @@ public final class ClassFile {
         return counter.getIndex();
     }
 
+    /**
+     * Force a reference to an object in the object table
+     *
+     * @param object the object to reference
+     * @throws java.util.NoSuchElementException if the object table does not contain <code>object</code>
+     */
+    public void referenceConstantObject(Object object) {
+        ObjectCounter counter = (ObjectCounter)objectTable.get(object);
+        if (counter == null) {
+            throw new java.util.NoSuchElementException();
+        }
+
+        counter.incEmittedCounter();
+    }
+
     public void reportActualUsage() {
         boolean firstTime = true;
         Enumeration e = objectTable.elements();
@@ -374,16 +398,30 @@ public final class ClassFile {
         for (int i = 0 ; i < list.length ; i++) {
 //System.err.println("    "+list[i]);
             ObjectCounter oc = ((ObjectCounter) list[i]);
-            if (!safeToDoDeadStringElim || !(oc.getObject() instanceof String) || (oc.getEmittedCounter() > 0)) {
+            if (oc.getEmittedCounter() > 0) {
                 list[i] = oc.getObject();
             } else {
-                list[i] = DEAD_STRING_ELIMINATION_MSG;
-                if (Translator.TRACING_ENABLED && Tracer.isTracing("DSE", definedClass.getName())) {
-                    if (firstTime) {
-                        Tracer.traceln("Stripping objects from " + definedClass);
-                        firstTime = false;
+                if (oc.getObject() instanceof String && safeToDoDeadStringElim) {
+                    list[i] = DEAD_STRING_ELIMINATION_MSG;
+                    if (Translator.TRACING_ENABLED && Tracer.isTracing("DSE", definedClass.getName())) {
+                        if (firstTime) {
+                            Tracer.traceln("Stripping objects from " + definedClass);
+                            firstTime = false;
+                        }
+                        Tracer.traceln("    " + oc.getObject());
                     }
-                    Tracer.traceln("    " + oc.getObject());
+                } else if (oc.getObject() instanceof Klass && safeToDoDeadClassElim && safeToDoDeadStringElim) {
+                    list[i] = DEAD_CLASS_ELIMINATION_MSG;
+                    if (Translator.TRACING_ENABLED && Tracer.isTracing("DSE", definedClass.getName())) {
+                        if (firstTime) {
+                            Tracer.traceln("Stripping class from " + definedClass);
+                            firstTime = false;
+                        }
+                        Tracer.traceln("    " + oc.getObject());
+                    }
+                } else {
+                    //Tracer.traceln("Unused object " + oc.getObject() + " of type " + oc.getObject().getClass() + " in object table of " + definedClass);
+                    list[i] = oc.getObject();
                 }
             }
         }

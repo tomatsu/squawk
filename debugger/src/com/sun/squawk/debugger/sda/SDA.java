@@ -1111,7 +1111,7 @@ public final class SDA extends Debugger {
     }
 
     private static final String DEFAULT_APPCLASSPATH = "file://.";
-    private static final String DEFAULT_URL = "serversocket://:2800;acceptTimeout=2000";
+    private static final String DEFAULT_URL = "serversocket://:2800"; //;acceptTimeout=2000";
 
     /**
      * Prepends "file://" to an arg if it does not contain a ':' character.
@@ -1148,8 +1148,10 @@ public final class SDA extends Debugger {
             try {
                 if (arg.charAt(0) != '-') {
                     break;
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
                 } else if (arg.startsWith("-cp:")) {
                     appClassPath = arg.substring("-cp:".length());
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
                 } else if (arg.startsWith("-suite:")) {
                     appSuite = arg.substring("-suite:".length());
                     // If the -suite arg does not look like a URI, convert it
@@ -1269,8 +1271,10 @@ public final class SDA extends Debugger {
         out.println("Usage: SDA [-options] class [args...]");
         out.println("where options include:");
         out.println();
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
         out.println("    -cp:<path>       specifies the class path for the application");
         out.println("                     (default is " + DEFAULT_APPCLASSPATH + ")");
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         out.println("    -suite:<suite>   specifies the suite containing the application");
         out.println("    -url:<url>       specifies the URL of the channel that the debug agent will");
         out.println("                     listen on for a connection from a debugger proxy.");

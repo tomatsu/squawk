@@ -24,8 +24,6 @@
 
 package com.sun.squawk;
 
-//import java.util.*;
-
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -494,7 +492,179 @@ public final class NativeUnsafe {
         return str.charAt(index);
     }
 
+    /*-----------------------------------------------------------------------*\
+     *                        Function Ptr Support                            *
+    \*-----------------------------------------------------------------------*/
     
+    /**
+     * Call a function pointer with no arguments
+     * 
+     * @vm2c code( funcPtr0 f0 = (funcPtr0)address; return (*f0)(); )
+     */
+    public static int call0(Address fptr) throws NativePragma {
+         throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+    
+    /**
+     * Call a function pointer with one arguments
+     * 
+     * @vm2c code( funcPtr1 f1 = (funcPtr1)address; return (*f1)(i1)); )
+     */
+    public static int call1(Address fptr, int i1) throws NativePragma {
+         throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+    
+    /**
+     * Call a function pointer with two arguments
+     * 
+     * @vm2c code( funcPtr2 f2 = (funcPtr2)address; return (*f2)(i1, i2)); )
+     */
+    public static int call2(Address fptr, int i1, int i2) throws NativePragma {
+         throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+    
+    /**
+     * Call a function pointer with three arguments
+     * 
+     * @vm2c code( funcPtr3 f3 = (funcPtr3)address; return (*f3)(i1, i2, i3)); )
+     */
+    public static int call3(Address fptr, int i1, int i2, int i3) throws NativePragma {
+         throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+    
+    /**
+     * Call a function pointer with four arguments
+     * 
+     * @vm2c  code( funcPtr4 f4 = (funcPtr4)address; return (*f4)(i1, i2, i3, i4)); )
+     */
+    public static int call4(Address fptr, int i1, int i2, int i3, int i4) throws NativePragma {
+         throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+    
+    /**
+     * Call a function pointer with five arguments
+     * 
+     * @vm2c code( funcPtr5 f5 = (funcPtr5)address; return (*f5)(i1, i2, i3, i4, i5)); )
+     */
+    public static int call5(Address fptr, int i1, int i2, int i3, int i4, int i5) throws NativePragma {
+         throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    /**
+     * Call a function pointer with six arguments
+     *
+     * @vm2c code( funcPtr6 f6 = (funcPtr6)address; return (*f6)(i1, i2, i3, i4, i5, i6)); )
+     */
+    public static int call6(Address fptr, int i1, int i2, int i3, int i4, int i5, int i6)
+            throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    /**
+     * Call a function pointer with seven arguments
+     *
+     * @vm2c code( funcPtr7 f7 = (funcPtr7)address; return (*f7)(i1, i2, i3, i4, i5, i6, i7)); )
+     */
+    public static int call7(Address fptr, int i1, int i2, int i3, int i4, int i5, int i6, int i7)
+            throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    /**
+     * Call a function pointer with eight arguments
+     *
+     * @vm2c code( funcPtr8 f8 = (funcPtr8)address; return (*f8)(i1, i2, i3, i4, i5, i6, i7, i8)); )
+     */
+    public static int call8(Address fptr, int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8)
+            throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    /**
+     * Call a function pointer with nine arguments
+     *
+     * @vm2c code( funcPtr9 f9 = (funcPtr9)address; return (*f9)(i1, i2, i3, i4, i5, i6, i7, i8, i9)); )
+     */
+    public static int call9(Address fptr, int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, int i9)
+            throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    /**
+     * Call a function pointer with 10 arguments
+     *
+     * @vm2c code( funcPtr10 f10 = (funcPtr10)address; return (*f10)(i1, i2, i3, i4, i5, i6, i7, i8, i9, i10)); )
+     */
+    public static int call10(Address fptr, int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, int i9, int i19)
+            throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    /*-----------------------------------------------------------------------*\
+     *                      Blocking C function support                     *
+    \*-----------------------------------------------------------------------*/
+
+    public final static int NATIVE_TASK_EVENTID_OFFSET =
+/*if[SQUAWK_64]*/
+            (1 * 2);
+/*else[SQUAWK_64]*/
+//          (1 * 1);
+/*end[SQUAWK_64]*/
+
+    public final static int NATIVE_TASK_RESULT_OFFSET = NATIVE_TASK_EVENTID_OFFSET + 3;
+    public final static int NATIVE_TASK_LOW_RESULT_OFFSET = NATIVE_TASK_RESULT_OFFSET + 1;
+    public final static int NATIVE_TASK_NT_ERRNO_RESULT_OFFSET = NATIVE_TASK_LOW_RESULT_OFFSET + 1;
+    public final static int NATIVE_TASK_ARGS_OFFSET = NATIVE_TASK_NT_ERRNO_RESULT_OFFSET + 1;
+
+    public static int getNativeTaskEventID(Address ntask) {
+        return getAsInt(ntask, NATIVE_TASK_EVENTID_OFFSET);
+    }
+
+    public static int getNativeTaskResult(Address ntask) {
+        return getAsInt(ntask, NATIVE_TASK_RESULT_OFFSET);
+    }
+
+    public static int getNativeTaskErrno(Address ntask) {
+        return getAsInt(ntask, NATIVE_TASK_NT_ERRNO_RESULT_OFFSET);
+    }
+
+    public static Address createTaskExecutor(Address name, int priority, int stacksize) throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    public static int cancelTaskExecutor(Address taskExecutor) throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    public static int deleteTaskExecutor(Address taskExecutor) throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    public static Address runBlockingFunctionOn(Address taskExecutor, Address fptr,
+            int arg1, int arg2, int arg3, int arg4, int arg5,
+            int arg6, int arg7, int arg8, int arg9, int arg10) throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    public static int deleteNativeTask(Address ntask) throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
+    public static int waitForBlockingFunction(Address ntask) {
+//VM.println("waitForBlockingFunction()...");
+        int evntid = getNativeTaskEventID(ntask);
+        VMThread.waitForEvent(evntid);
+//VM.println("done waitForBlockingFunction()");
+        int result = getNativeTaskResult(ntask);
+        VMThread.currentThread().setErrno(getNativeTaskErrno(ntask));
+        // TODO: do something with error code. throw exception or store for later use.
+        int rc = deleteNativeTask(ntask);
+        if (rc != 0) {
+System.err.println("deleteNativeTask failed");
+        }
+        return result;
+    }
+
     /*-----------------------------------------------------------------------*\
      *               Raw (byte-orietened) memory support                     *
     \*-----------------------------------------------------------------------*/

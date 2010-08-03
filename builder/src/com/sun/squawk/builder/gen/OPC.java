@@ -42,7 +42,7 @@ public class OPC extends Generator {
         List<Instruction> floatInstructions = Instruction.getFloatInstructions();
         List<Instruction> allInstructions = Instruction.getAllInstructions();
 
-        printCopyright(out);
+        printCopyright(this.getClass(), out);
 
         // Generate class header
         out.println("package com.sun.squawk.vm;");

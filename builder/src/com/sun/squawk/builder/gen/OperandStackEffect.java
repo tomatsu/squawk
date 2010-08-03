@@ -39,7 +39,7 @@ public class OperandStackEffect extends Generator {
     void generate(PrintWriter out) {
 
         // Generate class header
-        printCopyright(out);
+        printCopyright(this.getClass(), out);
         out.println("package com.sun.squawk.vm;");
         out.println();
         out.println("import com.sun.squawk.util.Assert;");

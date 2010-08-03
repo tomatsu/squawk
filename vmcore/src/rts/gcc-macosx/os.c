@@ -23,9 +23,14 @@
  */
 
 #include <stdlib.h>
-#include <sys/signal.h>
 #include <sys/time.h>
-#include "jni.h"
+#include <dlfcn.h>
+#include <jni.h>
+
+/* The package that conmtains the native code to use for a "NATIVE" platform type*/
+#define sysPlatformName() "macosx"
+
+#include "os_posix.c"
 
 /* This "standard" C function is not provided on Mac OS X */
 char* strsignal(int signum) {
@@ -40,22 +45,14 @@ char* strsignal(int signum) {
     }
 }
 
-jlong sysTimeMicros() {
-    struct timeval tv;
-    long long result;
-    gettimeofday(&tv, NULL);
-    /* We adjust to 1000 ticks per second */
-    result = (jlong)tv.tv_sec * 1000000 + tv.tv_usec;
-    return result;
-}
+/* defined in os_main.c */
+static char* sysGetAlternateBootstrapSuiteLocation(char* bootstrapSuiteName);
 
-jlong sysTimeMillis(void) {
-    return sysTimeMicros() / 1000;
-}
-
+#if PLATFORM_TYPE_DELEGATING
 jint createJVM(JavaVM **jvm, void **env, void *args) {
     return JNI_CreateJavaVM(jvm, env, args) == 0;
 }
+#endif
 
 
 void startTicker(int interval) {

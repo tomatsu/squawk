@@ -309,7 +309,7 @@ public abstract class BytecodeTracer {
                 int index = getByte();
                 String var = getVarDetails(index, false);
                 if (var == null) {
-                    var = "";
+                    var = String.valueOf(index);
                 }
                 print(opcode, var);
                 break;
@@ -354,7 +354,7 @@ public abstract class BytecodeTracer {
                 int index = getByte();
                 String var = getVarDetails(index, true);
                 if (var == null) {
-                    var = "";
+                    var = String.valueOf(index);
                 }
                 print(opcode, var);
                 break;

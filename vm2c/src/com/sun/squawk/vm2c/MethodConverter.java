@@ -248,7 +248,7 @@ public class MethodConverter extends JCTree.Visitor {
         List<ProcessedMethod> impls = conv.getImplementersOf(method);
 
         List<JCTree.JCExpression> thrown = tree.thrown;
-        boolean shouldInline = false;
+        int shouldInline = MAY_INLINE;
 
         if (thrown != null) {
             Iterator<JCTree.JCExpression> iter = thrown.iterator();
@@ -258,8 +258,11 @@ public class MethodConverter extends JCTree.Visitor {
                 if (name.equals("ForceInlinedPragma") ||
                         name.equals("AllowInlinedPragma") ||
                         name.equals("NativePragma")) {
-                    shouldInline = true;
+                    shouldInline = MUST_INLINE;
                     // System.out.println("Auto inlining " + method);
+                    break;
+                } else if (name.equals("NotInlinedPragma")) {
+                    shouldInline = NEVER_INLINE;
                     break;
                 }
             }
@@ -289,7 +292,9 @@ public class MethodConverter extends JCTree.Visitor {
             ccode.print("#define ");
             ccode.print(" " + conv.asString(method));
         } else {
-            if (proxy != null || shouldInline) {
+            if (shouldInline == NEVER_INLINE) {
+                ccode.print("NOINLINE ");
+            } else if (proxy != null || (shouldInline == MUST_INLINE)) {
                 ccode.print("INLINE ");
             } else {
                 ccode.print("static ");

@@ -303,6 +303,8 @@ public final class Instruction {
             f.define("lookup_b",            IParm.N, "IO:I",      Flow.CALL, false);
             f.define("lookup_s",            IParm.N, "IO:I",      Flow.CALL, false);
             f.define("pause",               IParm.N, ":",         Flow.NEXT, false);
+            
+//            f.define("threadpoll",          IParm.N, ":",         Flow.CALL, false);
 
             instructions = f.getDefinitions();
         }

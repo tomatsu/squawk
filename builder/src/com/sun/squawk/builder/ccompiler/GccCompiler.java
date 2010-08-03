@@ -44,13 +44,6 @@ public class GccCompiler extends CCompiler {
     /**
      * {@inheritDoc}
      */
-    public String linkOptions(boolean disableOpts) {
-        return "";
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public String options(boolean disableOpts) {
         StringBuffer buf = new StringBuffer();
         if (!disableOpts) {
@@ -60,18 +53,17 @@ public class GccCompiler extends CCompiler {
             // think about -frtl-abstract-sequences, not in gcc 4.0.1 though.
             if (options.o3)                 { buf.append("-DMAXINLINE -O3 ");   }
 //          if (options.o3)                 { buf.append("-DMAXINLINE -O3 -Winline ");   }
+            buf.append("  -ffunction-sections -fdata-sections ");
         }
         if (options.tracing)            { buf.append("-DTRACE ");           }
         if (options.profiling)          { buf.append("-DPROFILING ");       }
         if (options.macroize)           { buf.append("-DMACROIZE ");        }
         if (options.assume)             { buf.append("-DASSUME ");          }
         if (options.typemap)            { buf.append("-DTYPEMAP ");         }
-        if (options.ioport)             { buf.append("-DIOPORT ");          }
         if (options.kernel)             { buf.append("-DKERNEL_SQUAWK=true ");     }
         
         if (options.nativeVerification) { buf.append("-DNATIVE_VERIFICATION=true ");          }
  
-        buf.append("  -ffunction-sections -fdata-sections ");
         // Required for definition of RTLD_DEFAULT handle sent to dlsym
         buf.append("-D_GNU_SOURCE ");
 
@@ -84,8 +76,17 @@ public class GccCompiler extends CCompiler {
             append(' ').
             append(get64BitOption()).append(' ');
 
-        if (Platform.isX86Architecture()) {
-            buf.append("-ffloat-store ");
+        if (isTargetX86Architecture()) {
+            // getting correct (for Java semantics) FP behavior is tricky on x86.
+            // This used to be sufficent on gcc < 4.0:
+            // -ffloat-store
+            // but not so much on gc 4.0+. -mpc64 sounds like a good idea, but not in gcc 4.0
+            // Note that C code can conditionally compile on __SSE2_MATH__ 
+            if (useSSE2Math()) {
+                buf.append("-msse2 -mfpmath=sse "); // force 64bit doubles... Really, I mean it.
+            } else {
+                buf.append("-ffloat-store ");
+            }
         }
 
         buf.append("-DPLATFORM_BIG_ENDIAN=" + platform.isBigEndian()).append(' ');
@@ -94,14 +95,14 @@ public class GccCompiler extends CCompiler {
         return buf.append(options.cflags).append(' ').toString();
     }
 
-    private int defaultSizeofPointer = -1;
+    protected int defaultSizeofPointer = -1;
 
     /**
      * Compiles a small C program to determine the default pointer size of this version of gcc.
      *
      * @return  the size (in bytes) of a pointer compiled by this version of gcc
      */
-    private int getDefaultSizeofPointer() {
+    protected int getDefaultSizeofPointer() {
         if (defaultSizeofPointer == -1) {
             try {
                 File cFile = File.createTempFile("sizeofpointer", ".c");
@@ -152,8 +153,17 @@ public class GccCompiler extends CCompiler {
      * @return the linkage options that must come after the input object files
      */
     public String getLinkSuffix() {
-        String jvmLib = env.getPlatform().getJVMLibraryPath();
-        String suffix = " " + get64BitOption() + " -L" + jvmLib.replaceAll(File.pathSeparator, " -L") + " -ljvm";
+        String suffix = " " + get64BitOption();
+        if (options.isPlatformType(Options.DELEGATING)) {
+            String jvmLib = env.getPlatform().getJVMLibraryPath();
+            suffix = suffix + " -L" + jvmLib.replaceAll(File.pathSeparator, " -L") + " -ljvm";
+        } else if (options.isPlatformType(Options.SOCKET) || options.isPlatformType(Options.NATIVE)) {
+            if (platform.getName().toLowerCase().startsWith("linux")) {
+                suffix = suffix +  " -lnsl -lpthread";
+            } else {
+                suffix = suffix + " -lsocket" + " -lnsl";
+            }
+        }
 
         if (options.kernel && options.hosted) {
             /* Hosted by HotSpot and so need to interpose on signal handling. */
@@ -197,12 +207,12 @@ public class GccCompiler extends CCompiler {
 
         if (dll) {
             output = System.mapLibraryName(out);
-            exec = "-o " + output + " " + getSharedLibrarySwitch() + " " + Build.join(objects) + " " + getLinkSuffix();
+            exec = "-o " + output + " " + getSharedLibrarySwitch();
         } else {
             output = out + platform.getExecutableExtension();
-            exec = "--gc-sections -o " + output + " " + Build.join(objects) + " " + getLinkSuffix();
+            exec = "--gc-sections -o " + output;
         }
-        exec += linkOptions(false);
+        exec += " " + Build.join(objects) + " " + getLinkSuffix();
         env.exec("gcc " + exec);
         return new File(output);
     }
@@ -213,4 +223,14 @@ public class GccCompiler extends CCompiler {
     public String getArchitecture() {
         return "X86";
     }
+
+    /**
+     * Use more Java-friendly SSE2 FP instructions instead of x87.
+     * SSE2 defined for P4 and newer CPUs, including Atom.
+     * @return boolean
+     */
+    public boolean useSSE2Math() {
+        return true;
+    }
+
 }

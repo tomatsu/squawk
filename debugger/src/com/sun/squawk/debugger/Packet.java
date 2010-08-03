@@ -230,6 +230,9 @@ public abstract class Packet {
         dos.writeInt(length);
         dos.writeInt(id);
         dos.write(flags);
+                if (Log.verbose()) {
+                    Log.log("Packet.write: length: " + length + " id: " + id + " flags: " + flags);
+                }
 
         // write command bytes or error code:
         writeFields(dos);

@@ -147,7 +147,7 @@ public class ChannelIO implements java.io.Serializable {
                 }
                 case ChannelConstants.GLOBAL_POSTEVENT: {
 		    //EventQueue.unblock(EventQueue.getNextEventNumber());   //  Need generic event to unblock waiters
-		    EventQueue.sendNotify();
+                    EventQueue.sendNotify();
                     return ChannelConstants.RESULT_OK;
                 }
                 case ChannelConstants.GLOBAL_WAITFOREVENT: {
@@ -589,8 +589,8 @@ public class ChannelIO implements java.io.Serializable {
                             System.err.println("Exception cause in I/O server "+ex);
                             buf = new byte[0];
                         }
-                        int low  = execute(cio, ChannelConstants.CONTEXT_GETRESULT,   -1, 0, 0, 0, 0, 0, 0, null, null);
-                        int high = execute(cio, ChannelConstants.CONTEXT_GETRESULT_2, -1, 0, 0, 0, 0, 0, 0, null, null);
+                        int low  = (cio == -1) ? -1 : execute(cio, ChannelConstants.CONTEXT_GETRESULT,   -1, 0, 0, 0, 0, 0, 0, null, null);
+                        int high = (cio == -1) ? -1 : execute(cio, ChannelConstants.CONTEXT_GETRESULT_2, -1, 0, 0, 0, 0, 0, 0, null, null);
 
                         if (timing != 0) {
                             end = System.currentTimeMillis();

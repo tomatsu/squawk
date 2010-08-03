@@ -93,7 +93,7 @@ public class Preprocessor {
      * <p>
      * The default value is <code>false</code>.
      */
-    public boolean showLineNumbers;
+    public boolean showLineNumbers = true;
 
     /**
      * Processes a set of files placing the resulting output in a given directory.

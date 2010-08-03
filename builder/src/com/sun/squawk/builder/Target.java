@@ -44,7 +44,21 @@ public final class Target extends Command {
     /**
      * Creates a new compilation command.
      *
-     * @param classPath      the class path to compile against
+     * @param extraClassPath the class path to compile against
+     * @param j2me           specifies if the classes being compiled are to be deployed on a J2ME platform
+     * @param baseDir        the base directory under which the various intermediate and output directories are created
+     * @param srcDirs        the directories that are searched recursively for the source files to be compiled
+     * @param preprocess     specifies if the files should be {@link Preprocessor preprocessed} before compilation
+     * @param env Build      the builder environment in which this command will run
+     */
+    public Target(String extraClassPath, boolean j2me, String baseDir, File[] srcDirs, boolean preprocess, Build env) {
+    	this(extraClassPath, j2me, baseDir, srcDirs, preprocess, env, new File(baseDir).getName());
+    }
+    
+    /**
+     * Creates a new compilation command.
+     *
+     * @param extraClassPath the class path to compile against
      * @param j2me           specifies if the classes being compiled are to be deployed on a J2ME platform
      * @param baseDir        the base directory under which the various intermediate and output directories are created
      * @param srcDirs        the directories that are searched recursively for the source files to be compiled
@@ -77,7 +91,7 @@ public final class Target extends Command {
             classPathBuffer.append(File.pathSeparatorChar);
         }
         if (extraClassPath != null && extraClassPath.length() != 0) {
-            classPathBuffer.append(File.pathSeparatorChar).append(Build.toPlatformPath(extraClassPath, true));
+            classPathBuffer.append(Build.toPlatformPath(extraClassPath, true));
         }
         if (classPathBuffer.length() == 0) {
             return null;
@@ -91,16 +105,22 @@ public final class Target extends Command {
         return result;
     }
 
-    public void addDependencyDirectories(String subPath, List<File> files, List<String> targetExceptions) {
-        File file = baseDir;
+    private void addFile(File base, String subPath, List<File> files) {
+        File file = base;
         if (subPath != null) {
-            file = new File(baseDir, subPath);
+            file = new File(base, subPath);
         }
         try {
             file = file.getCanonicalFile();
-            files.add(file);
+            if (!files.contains(file)) {
+                files.add(file);
+            }
         } catch (IOException e1) {
         }
+    }
+
+    public void addDependencyDirectories(String subPath, List<File> files, List<String> targetExceptions) {
+        addFile(baseDir, subPath, files);
         List<String> dependencies = getDependencyNames();
         for (String dependency: dependencies) {
             Command command = env.getCommand(dependency);
@@ -110,15 +130,7 @@ public final class Target extends Command {
                 }
                 Target dependentTarget = (Target) command;
                 dependentTarget.addDependencyDirectories(subPath, files, targetExceptions);
-                try {
-                    file = dependentTarget.baseDir;
-                    if (subPath != null) {
-                        file = new File(file, subPath);
-                    }
-                    file = file.getCanonicalFile();
-                    files.add(file);
-                } catch (IOException e) {
-                }
+                addFile(dependentTarget.baseDir, subPath, files);
             }
         }
     }
@@ -188,6 +200,7 @@ public final class Target extends Command {
         }
         Build.clear(new File(baseDir, "javadoc"), true);
         Build.clear(new File(baseDir, "doccheck"), true);
+        Build.clear(new File(baseDir, "native"), true);
     }
     
     public void addCopyJ2meDirs(String dirsString) {

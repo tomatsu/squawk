@@ -409,8 +409,9 @@ public class MethodBodyTracer extends BytecodeTracer {
         ScopedLocalVariable slv = findLocalVariable(lvt, currentPosition, (param ? index : (index + body.getParametersCount())));
         if (slv != null) {
            return slv.name;
+        } else {
+            return super.getVarDetails(index, param);
         }
-        return null;
     }
 
     /**

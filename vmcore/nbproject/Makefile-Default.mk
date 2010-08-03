@@ -10,16 +10,18 @@
 # Environment
 MKDIR=mkdir
 CP=cp
+GREP=grep
+NM=nm
 CCADMIN=CCadmin
 RANLIB=ranlib
 CC=gcc
 CCC=g++
 CXX=g++
 FC=
-AS=
+AS=as
 
 # Macros
-CND_PLATFORM=GNU-Generic
+CND_PLATFORM=GNU-MacOSX
 CND_CONF=Default
 CND_DISTDIR=dist
 
@@ -31,6 +33,7 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES=
+
 
 # C Compiler Flags
 CFLAGS=
@@ -56,7 +59,7 @@ LDLIBSOPTIONS=
 .build-subprojects:
 
 # Clean Targets
-.clean-conf:
+.clean-conf: ${CLEAN_SUBPROJECTS}
 	cd . && 
 
 # Subprojects

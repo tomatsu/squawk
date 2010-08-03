@@ -43,7 +43,6 @@ import com.sun.squawk.*;
  * a mergesort, but it does have to be <i>stable</i>.)
  *
  * @version 1.45, 02/12/02
- * @see     Comparable
  * @see     Comparer
  * @since   1.2
  */
@@ -1677,7 +1676,7 @@ public class Arrays {
      *         <i>mutually comparable</i> using the specified Comparer,
      *         or the search key in not mutually comparable with the
      *         elements of the array using this Comparer.
-     * @see Comparable
+     * @see Comparer
      * @see #sort(Object[], Comparer)
      */
     public static int binarySearch(Object[] a, Object key, Comparer c) {

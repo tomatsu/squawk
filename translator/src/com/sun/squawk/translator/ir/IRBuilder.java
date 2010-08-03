@@ -905,6 +905,10 @@ public final class IRBuilder {
           * If the method is protected and in a different package then
           * 'this' must be assignable to the class of the method
           * being verified.
+          *
+          * IGNORE FOR NOW: The final clause handles the case where the call is coming from a subclass, even though it isna't a call to the subclass's "this".
+          * This case is illegal at the source code level, but appears a leagl reading of the JVM Spec, and the TCK tests this?
+          *          if (callee.isProtected() && !method.getDefiningClass().isInSamePackageAs(callee.getDefiningClass()) && !callee.getDefiningClass().isAssignableFrom(method.getDefiningClass())) {
           */
          if (callee.isProtected() && !method.getDefiningClass().isInSamePackageAs(callee.getDefiningClass())) {
              expectedThisType = method.getDefiningClass();
@@ -1978,6 +1982,8 @@ public final class IRBuilder {
         if (!callee.isHosted()) {
             if (callee.isConstructor()) {
                 opc_invokeinit(callee);
+            } else if (callee.isFinal() || callee.isPrivate()) {
+                opc_invokevirtual(callee);
             } else {
                 /*
                  * The callee must be somewhere in superclass hierarchy

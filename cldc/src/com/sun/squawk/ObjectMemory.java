@@ -485,7 +485,8 @@ public final class ObjectMemory {
                     NativeUnsafe.swap(pointerAddress, HDR.BYTES_PER_WORD);
                 }
             }
-            VM.fatalVMError();
+            throw new RuntimeException();
+           // VM.fatalVMError();
         }
     }
 }

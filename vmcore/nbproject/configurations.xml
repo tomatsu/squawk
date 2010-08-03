@@ -7,11 +7,13 @@
           <itemPath>src/rts/cc/os.c</itemPath>
           <itemPath>src/rts/cc/os_devices.c</itemPath>
           <itemPath>src/rts/cc/os_devices.h</itemPath>
+          <itemPath>src/rts/cc/os_math.h</itemPath>
         </logicalFolder>
         <logicalFolder name="gcc" displayName="gcc" projectFiles="true">
           <itemPath>src/rts/gcc/os.c</itemPath>
           <itemPath>src/rts/gcc/os_devices.c</itemPath>
           <itemPath>src/rts/gcc/os_devices.h</itemPath>
+          <itemPath>src/rts/gcc/os_math.h</itemPath>
         </logicalFolder>
         <logicalFolder name="gcc-9200" displayName="gcc-9200" projectFiles="true">
           <itemPath>src/rts/gcc-9200/9200-io.c</itemPath>
@@ -19,6 +21,7 @@
           <itemPath>src/rts/gcc-9200/jni_md.h</itemPath>
           <itemPath>src/rts/gcc-9200/mmu_fat.c</itemPath>
           <itemPath>src/rts/gcc-9200/os.c</itemPath>
+          <itemPath>src/rts/gcc-9200/os_math.h</itemPath>
         </logicalFolder>
         <logicalFolder name="gcc-eb40a" displayName="gcc-eb40a" projectFiles="true">
           <itemPath>src/rts/gcc-eb40a/eb40a-io.c</itemPath>
@@ -27,16 +30,32 @@
           <itemPath>src/rts/gcc-eb40a/os.c</itemPath>
           <itemPath>src/rts/gcc-eb40a/os_devices.c</itemPath>
           <itemPath>src/rts/gcc-eb40a/os_devices.h</itemPath>
+          <itemPath>src/rts/gcc-eb40a/os_math.h</itemPath>
         </logicalFolder>
         <logicalFolder name="gcc-macosx" displayName="gcc-macosx" projectFiles="true">
           <itemPath>src/rts/gcc-macosx/os.c</itemPath>
           <itemPath>src/rts/gcc-macosx/os_devices.c</itemPath>
           <itemPath>src/rts/gcc-macosx/os_devices.h</itemPath>
+          <itemPath>src/rts/gcc-macosx/os_main.c</itemPath>
+          <itemPath>src/rts/gcc-macosx/os_math.h</itemPath>
         </logicalFolder>
         <logicalFolder name="msc" displayName="msc" projectFiles="true">
           <itemPath>src/rts/msc/os.c</itemPath>
           <itemPath>src/rts/msc/os_devices.c</itemPath>
           <itemPath>src/rts/msc/os_devices.h</itemPath>
+          <itemPath>src/rts/msc/os_math.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="vxworks" displayName="vxworks" projectFiles="true">
+          <itemPath>src/rts/vxworks/dlfcn.h</itemPath>
+          <itemPath>src/rts/vxworks/jni.h</itemPath>
+          <itemPath>src/rts/vxworks/jni_md.h</itemPath>
+          <itemPath>src/rts/vxworks/malloc.h</itemPath>
+          <itemPath>src/rts/vxworks/os.c</itemPath>
+          <itemPath>src/rts/vxworks/os_devices.c</itemPath>
+          <itemPath>src/rts/vxworks/os_devices.h</itemPath>
+          <itemPath>src/rts/vxworks/os_main.c</itemPath>
+          <itemPath>src/rts/vxworks/os_math.h</itemPath>
+          <itemPath>src/rts/vxworks/socket_release.c</itemPath>
         </logicalFolder>
       </logicalFolder>
       <logicalFolder name="vm" displayName="vm" projectFiles="true">
@@ -71,12 +90,15 @@
         <itemPath>src/vm/debugger.c.spp</itemPath>
         <itemPath>src/vm/devices.c</itemPath>
         <itemPath>src/vm/globals.h</itemPath>
-        <itemPath>src/vm/io.c</itemPath>
-        <itemPath>src/vm/ioport.c</itemPath>
+        <itemPath>src/vm/io_delegating.c</itemPath>
+        <itemPath>src/vm/io_native.c</itemPath>
+        <itemPath>src/vm/io_native.h</itemPath>
+        <itemPath>src/vm/io_socket.c</itemPath>
         <itemPath>src/vm/ioserver.c</itemPath>
         <itemPath>src/vm/lisp2.c.spp</itemPath>
         <itemPath>src/vm/memory.c.spp</itemPath>
         <itemPath>src/vm/msg.c</itemPath>
+        <itemPath>src/vm/os_posix.c</itemPath>
         <itemPath>src/vm/platform.h.spp</itemPath>
         <itemPath>src/vm/rom.h</itemPath>
         <itemPath>src/vm/squawk.c.spp</itemPath>
@@ -100,7 +122,7 @@
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <compilerSet>GNU|GNU</compilerSet>
-        <platform>5</platform>
+        <platform>4</platform>
       </toolsSet>
       <makefileType>
         <makeTool>
@@ -109,9 +131,14 @@
           <cleanCommand></cleanCommand>
           <executablePath>../squawk</executablePath>
           <cTool>
+            <incDir>
+              <pElem>C:/WindRiver/vxworks-6.3/target/h</pElem>
+            </incDir>
             <preprocessorList>
               <Elem>SDA_DEBUGGER=1</Elem>
               <Elem>MACROIZE=1</Elem>
+              <Elem>PLATFORM_TYPE_NATIVE=1</Elem>
+              <Elem>offsetof=1</Elem>
             </preprocessorList>
           </cTool>
         </makeTool>

@@ -192,7 +192,7 @@ public final class ChannelConstants {
         INTERNAL_PRINTCONFIGURATION             = 1016,
         INTERNAL_PRINTGLOBALOOPNAME             = 1017,
         INTERNAL_PRINTGLOBALS                   = 1018,
-        INTERNAL_MATH                           = 1019,
+        /*INTERNAL_MATH                           = 1019,*/
         INTERNAL_GETPATHSEPARATORCHAR           = 1020,
         INTERNAL_GETFILESEPARATORCHAR           = 1021,
 
@@ -207,9 +207,19 @@ public final class ChannelConstants {
         INTERNAL_RECEIVE_MESSAGE_FROM_CLIENT    = 1027,
         INTERNAL_SEARCH_SERVER_HANDLERS         = 1028,
 /*end[OLD_IIC_MESSAGES]*/
-            
-        DUMMY = 999;
 
+        INTERNAL_NATIVE_PLATFORM_NAME           = 1029,
+        
+        /* Native Platform Support */
+        DLOPEN                                  = 1996,
+        DLCLOSE                                 = 1997,
+        DLERROR                                 = 1998,
+        DLSYM                                   = 1999,
+        
+        /* Book keeping */
+        LAST_OPCODE                             = 1999;
+
+            
 /*if[DEBUG_CODE_ENABLED]*/
     private static final String[] Mnemonics = {
         "[invalid opcode]",
@@ -312,6 +322,8 @@ public final class ChannelConstants {
     public static final int SPI_GET_MAX_TRANSFER_SIZE = 210;
     public static final int SPI_PULSE_WITH_DEVICE_SELECT = 211;
 
+    public static final int GET_HARDWARE_REVISION = 290;
+    
     public static final int I2C_OPEN            = 250;
     public static final int I2C_CLOSE           = 251;
     public static final int I2C_SET_CLOCK_SPEED = 252;
@@ -319,8 +331,6 @@ public final class ChannelConstants {
     public static final int I2C_WRITE           = 254;
     public static final int I2C_BUSY            = 255;
     public static final int I2C_PROBE           = 256;
-
-    public static final int GET_HARDWARE_REVISION = 290;
 
     public static final int GET_LAST_DEVICE_INTERRUPT_TIME_ADDR = 302;
     public static final int GET_CURRENT_TIME_ADDR = 303;

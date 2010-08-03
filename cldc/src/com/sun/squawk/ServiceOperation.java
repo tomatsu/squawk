@@ -125,6 +125,9 @@ public final class ServiceOperation implements GlobalStaticFields {
                     if (VMThread.extendStack(i1)) {
                         break;
                     }
+/*if[DEBUG_CODE_ENABLED]*/
+                    VM.println("VMThread.extendStack() failed!");
+/*end[DEBUG_CODE_ENABLED]*/
                     pendingException = VM.getOutOfMemoryError(); // and drop through to THROW
                 }
                 case THROW: {

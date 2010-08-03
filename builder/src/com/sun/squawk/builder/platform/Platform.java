@@ -39,6 +39,7 @@ public abstract class Platform {
      * Factory method to create an Platform instance based on the value of the "os.name" and
      * "os.arch" {@link System#getProperties system properties}.
      *
+     * @param env the build env
      * @return the Platform instance or null if "os.name" and "os.arch" denote an unknown Platform
      */
     public static Platform createPlatform(Build env) {
@@ -61,6 +62,8 @@ public abstract class Platform {
 				return new MacOSX_PPC(env);
 			} else if (osName.startsWith("linux")) {
 				return new Linux_PPC(env);
+            } else if (osName.startsWith("vxworks")) {
+                return new VxWorks_PPC(env);
 			}
 		}
 		if (osArch.equals("sparc")) {

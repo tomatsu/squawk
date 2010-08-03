@@ -205,6 +205,8 @@ public class Jam extends Thread {
                     }
                     printPrefix();
                     out.println("   URL: " + urlString);
+                    printPrefix();
+                    out.println("   err: " + e);
                     reportedError = true;
 				}
                 try {
@@ -425,7 +427,9 @@ public class Jam extends Thread {
             buffer.append(" ");
             buffer.append(squawkArgs.get(i));
         }
-        buffer.append(" -J-Djava.awt.headless=true");
+        if (env.getBooleanProperty("PLATFORM_TYPE_DELEGATING")) {
+            buffer.append(" -J-Djava.awt.headless=true");
+        }
         buffer.append(" -suite:");
         buffer.append(suiteName);
         if (includeDebugger) {
