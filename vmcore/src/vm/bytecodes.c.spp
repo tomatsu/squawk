@@ -5812,7 +5812,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
 /*MAC*/ void do_throw() {
             if (usingServiceStack()) {
                 Address exception = popAddress();
-                fprintf(stderr, "do_throw on service stack:\n");
+                fprintf(stderr, "do_throw on service stack. current code=%d:\n", com_sun_squawk_ServiceOperation_code);
                 if (exception != NULL && getClass(exception) != NULL) {
                     printJavaStrSafely(com_sun_squawk_Klass_name(getClass(exception)), "class");
                     printJavaStrSafely(java_lang_Throwable_detailMessage(exception), "detail message");

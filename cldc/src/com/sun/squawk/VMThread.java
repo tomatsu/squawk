@@ -1189,12 +1189,12 @@ VM.println();
      * Initialize the threading system.
      */
     static void initializeThreading2() {
-/*if[PLATFORM_TYPE_DELEGATING]*/
-        systemEvents = null;
-/*else[PLATFORM_TYPE_DELEGATING]*/
-//        systemEvents = Platform.createSystemEvents();
-//        systemEvents.startIO();
-/*end[PLATFORM_TYPE_DELEGATING]*/
+/*if[PLATFORM_TYPE_NATIVE]*/
+        systemEvents = Platform.createSystemEvents();
+        systemEvents.startIO();
+/*else[PLATFORM_TYPE_NATIVE]*/
+//       systemEvents = null;
+/*end[PLATFORM_TYPE_NATIVE]*/
     }
 
     /**
