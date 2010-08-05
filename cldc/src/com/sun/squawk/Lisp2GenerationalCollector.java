@@ -2426,7 +2426,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 
                 if (slopAllowed.ge(delta)) {
                     slopAllowed = slopAllowed.sub(delta.toInt());
-                    killObject(objectDestination, delta.toPrimitive());
+                    //killObject(objectDestination, delta.toPrimitive());
 					Assert.that(klass == GC.getKlass(object)); // make sure we didn't stomp on this object
                     objectDestination = object;
                 } else {
