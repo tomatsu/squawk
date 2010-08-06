@@ -1,5 +1,6 @@
 /*
  * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2010 Oracle. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This code is free software; you can redistribute it and/or modify
@@ -17,9 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
- * information or have any questions.
+ * Please contact Oracle, 16 Network Circle, Menlo Park, CA 94025 or
+ * visit www.oracle.com if you need additional information or have
+ * any questions.
  */
 
 package com.sun.squawk.vm;
@@ -156,11 +157,13 @@ public class ChannelIO implements java.io.Serializable {
                     return ChannelConstants.RESULT_OK;
                 }
                 case ChannelConstants.GLOBAL_CREATECONTEXT: {
-                    ChannelIO cio = createCIO((byte[])o1);
-                    int index = nextContext++;
-                    contexts.put(index, cio);
-                    cio.context = index;
-                    return index;
+                    if (contexts.get(1) == null) {   // let all Isolates share the same context
+                        ChannelIO cio = createCIO((byte[])o1);
+                        int index = 1; // nextContext++;
+                        contexts.put(index, cio);
+                        cio.context = index;
+                    }
+                    return 1;
                 }
                 default: {
                     throw Assert.shouldNotReachHere("Unknown global IO operation opcode: " + op);
@@ -331,7 +334,7 @@ public class ChannelIO implements java.io.Serializable {
             }
 
             case ChannelConstants.CONTEXT_HIBERNATE: {
-                hibernationData = hibernate();
+                hibernationData = new byte[0]; // hibernate();
                 if (hibernationData != null) {
                     return hibernationData.length;
                 } else {
@@ -339,10 +342,10 @@ public class ChannelIO implements java.io.Serializable {
                 }
             }
 
-            case ChannelConstants.CONTEXT_DELETE: {
-                close();
+            case ChannelConstants.CONTEXT_DELETE: { // since all isolates use same context never delete it
+//                close();
                 // Remove this context object from the table of contexts
-                contexts.remove(this.context);
+//                contexts.remove(this.context);
                 return ChannelConstants.RESULT_OK;
             }
         }
