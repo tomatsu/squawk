@@ -3185,30 +3185,3 @@ final class EventHashtable extends IntHashtable implements IntHashtableVisitor {
         return thread;
     }
 } /* EventHashtable */
-
-/**
- * <code>CrossIsolateThread</code> is a package-private thread class that is allowed to be created in one isolate, but execute in the context of another isolate.
- *
- * In general it is a security hole - for example, one isolate could read the password static field in another isolate.
- * The system uses this class to start the initial thread in an isolate, and to
- * defer execution of callback handling threads. The class is simply used as a marker that it's OK to do this.
- */
-class CrossIsolateThread extends Thread {
-    
-    /**
-     * Allocates a new <code>CrossIsolateThread</code> object
-     * to be run in the given isolate's context, with the given name.<p>
-     *
-     * Note that you must override CrossIsolateThread.run() if you want to do anything other than
-     * run the Isolate's run() method.
-     *
-     * @param   target   the isolate whose <code>run</code> method is called.
-     * @param   name     the name of the new thread.
-     */
-    CrossIsolateThread(Isolate target, String name) {
-        super(target, name);
-    }
-    
-    // just a normal thread, move along...
-}
-
