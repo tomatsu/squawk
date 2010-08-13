@@ -45,7 +45,7 @@ public class CrossIsolateThread extends Thread {
      * @param   target   the isolate whose <code>run</code> method is called.
      * @param   name     the name of the new thread.
      */
-    CrossIsolateThread(Isolate target, String name) {
+    public CrossIsolateThread(Isolate target, String name) {
         super(target, name);
     }
 
