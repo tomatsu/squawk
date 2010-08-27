@@ -1,5 +1,6 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2010 Oracle. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This code is free software; you can redistribute it and/or modify
@@ -17,9 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
- * information or have any questions.
+ * Please contact Oracle, 16 Network Circle, Menlo Park, CA 94025 or
+ * visit www.oracle.com if you need additional information or have
+ * any questions.
  */
 
 package com.sun.squawk.debugger;
@@ -118,20 +119,29 @@ public final class JDWPConnection {
             if (Log.info()) {
                 Log.log("Failed to establish connection with " + url + ": " + e);
             }
+            close();
             throw e;
         }
         if (delayer != null) {
             delayer.run(); 
         }
         byte[] buf = new byte[handshake.length];
-        if (initiate) {
-            out.write(handshake);
-            out.flush();
-            in.readFully(buf);
-        } else {
-            in.readFully(buf);
-            out.write(handshake);
-            out.flush();
+        try {
+            if (initiate) {
+                out.write(handshake);
+                out.flush();
+                in.readFully(buf);
+            } else {
+                in.readFully(buf);
+                out.write(handshake);
+                out.flush();
+            }
+        } catch (IOException e) {
+            if (Log.info()) {
+                Log.log("Failed to deliver/receive handshake: " + e);
+            }
+            close();
+            throw e;
         }
         if (!Arrays.equals(handshake, buf)) {
             throw new IOException("handshake failed: " + new String(buf));
