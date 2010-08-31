@@ -42,23 +42,23 @@ public class Posix extends Platform {
     }
 
     public boolean isFreeBSD() {
-        return platformName().equalsIgnoreCase("freebsd");
+        return platformName().equals("freebsd");
     }
 
     public boolean isLinux() {
-        return platformName().equalsIgnoreCase("linux");
+        return platformName().equals("linux");
     }
 
     public boolean isMac() {
-        return platformName().equalsIgnoreCase("macosx");
+        return platformName().equals("macosx");
     }
 
     public boolean isOpenBSD() {
-        return platformName().equalsIgnoreCase("openbsd");
+        return platformName().equals("openbsd");
     }
 
     public boolean isSolaris() {
-        return platformName().equalsIgnoreCase("solaris");
+        return platformName().equals("solaris");
     }
 
     public boolean isWindows() {
@@ -84,7 +84,7 @@ public class Posix extends Platform {
      * Get the name of the package that contains the native implementation for this platform:
      */
     public String getPlatformNativePackageName() {
-        return  "com.sun.squawk.platform.posix." + platformName().toLowerCase() + ".natives";
+        return  "com.sun.squawk.platform.posix." + platformName() + ".natives";
     }
 
     public Posix() {

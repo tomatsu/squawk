@@ -3887,7 +3887,7 @@ foundSlot:
                 }
 
                 case Native_com_sun_squawk_NativeUnsafe_malloc: {
-                    int     size = popInt();
+                    int     size = popWord();
                     pushAddress(malloc(size));
                     break;
                 }
@@ -4208,9 +4208,9 @@ foundSlot:
                     int priority = popInt();
                     Address nameAddr = popAddress();
                     char* name = (char*)nameAddr;
-                    int result;
-                    result = (int)createTaskExecutor(name, priority, stacksize);
-                    pushInt(result);
+                    Address result;
+                    result = createTaskExecutor(name, priority, stacksize);
+                    pushAddress(result);
                     break;
                 }
 
@@ -4248,9 +4248,9 @@ foundSlot:
                     Address address = popAddress();
                     funcPtr10 fptr = (funcPtr10)address;
                     Address te = popAddress();
-                    int result;
-                    result = (int)runBlockingFunctionOn(te, fptr, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10);
-                    pushInt(result);
+                    Address result;
+                    result = runBlockingFunctionOn(te, fptr, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10);
+                    pushAddress(result);
                     break;
                 }
 

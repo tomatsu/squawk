@@ -99,7 +99,8 @@ public abstract class Platform {
     }
 
     /**
-     * Get the name of the package that contains the native implementation for this platform:
+     * Get the name of the package that contains the native implementation for this platform.
+     * Name is all lower case.
      */
     public String platformName() {
         return platformName;
@@ -107,7 +108,7 @@ public abstract class Platform {
 
     public Platform() {
         commonMappings = new Hashtable();
-        platformName = getNativePlatformName();
+        platformName = getNativePlatformName().toLowerCase();
     }
 
     public String toString() {
