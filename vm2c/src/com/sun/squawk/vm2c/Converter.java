@@ -388,10 +388,10 @@ public class Converter {
         // Int and long division
         out.println();
         out.println("INLINE int div_i(int lhs, int rhs) {");
-        out.println("    if (rhs == 0) {");
+        out.println("    if (unlikely(rhs == 0)) {");
         out.println("        fatalVMError(\"divide by zero\");");
         out.println("    }");
-        out.println("    if (lhs == 0x80000000 && rhs == -1) {");
+        out.println("    if (unlikely(lhs == 0x80000000 && rhs == -1)) {");
         out.println("        return lhs;");
         out.println("    }");
         out.println("    return lhs / rhs;");
@@ -399,11 +399,11 @@ public class Converter {
 
         out.println();
         out.println("INLINE long div_l(jlong lhs, jlong rhs) {");
-        out.println("    if (rhs == 0) {");
+        out.println("    if (unlikely(rhs == 0)) {");
         out.println("        fatalVMError(\"divide by zero\");");
         out.println("    }");
         out.println("/*if[SQUAWK_64]*/");
-        out.println("    if (rhs == -1L && lhs == 0x8000000000000000L) {");
+        out.println("    if (unlikely(rhs == -1L && lhs == 0x8000000000000000L)) {");
         out.println("        return lhs;");
         out.println("    }");
         out.println("/*end[SQUAWK_64]*/");
@@ -412,10 +412,10 @@ public class Converter {
 
         out.println();
         out.println("INLINE int rem_i(int lhs, int rhs) {");
-        out.println("    if (rhs == 0) {");
+        out.println("    if (unlikely(rhs == 0)) {");
         out.println("        fatalVMError(\"divide by zero\");");
         out.println("    }");
-        out.println("    if (lhs == 0x80000000 && rhs == -1) {");
+        out.println("    if (unlikely(lhs == 0x80000000 && rhs == -1)) {");
         out.println("        return 0;");
         out.println("    }");
         out.println("    return lhs % rhs;");
@@ -423,11 +423,11 @@ public class Converter {
 
         out.println();
         out.println("INLINE long rem_l(jlong lhs, jlong rhs) {");
-        out.println("    if (rhs == 0) {");
+        out.println("    if (unlikely(rhs == 0)) {");
         out.println("        fatalVMError(\"divide by zero\");");
         out.println("    }");
         out.println("/*if[SQUAWK_64]*/");
-        out.println("    if (rhs == -1L && lhs == 0x8000000000000000L) {");
+        out.println("    if (unlikely(rhs == -1L && lhs == 0x8000000000000000L)) {");
         out.println("        return 0;");
         out.println("    }");
         out.println("/*end[SQUAWK_64]*/");
@@ -447,7 +447,7 @@ public class Converter {
         } else {
             out.println();
             out.println("INLINE Address nullPointerCheck(Address oop) {");
-            out.println("    if (oop == null) {");
+            out.println("    if (unlikely(oop == null)) {");
             out.println("        fatalVMError(\"null pointer exception\");");
             out.println("    }");
             out.println("    return oop;");
@@ -459,7 +459,7 @@ public class Converter {
             out.println("    UWord length;");
             out.println("    nullPointerCheck(oop);");
             out.println("    length = Array_length(oop);");
-            out.println("    if (((UWord)index) >= length) {");
+            out.println("    if (unlikely(((UWord)index) >= length)) {");
             out.println("        fatalVMError(\"array index out of bounds exception\");");
             out.println("    }");
             out.println("}");
