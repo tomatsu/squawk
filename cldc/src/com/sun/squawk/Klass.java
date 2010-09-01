@@ -172,7 +172,7 @@ public class Klass<T> {
     /**
      * The data map describes the multi-byte data contained within an instance
      * of this class.  The data map is used to facilitate conversion of data contained
-     * within a serialised object form (such as a suite or isolate) such that it is
+     * within a serialized object form (such as a suite or isolate) such that it is
      * compatible with the host system.  If this value is null then the types are described
      * by the {@link #dataMapWord}.
      */
@@ -187,7 +187,7 @@ public class Klass<T> {
     /**
      *  The number of dataMap entries.
      */
-    private int dataMapLength;
+    private short dataMapLength;
 
     /**
      * A mask of the constants defined in {@link Modifier}.
@@ -369,7 +369,7 @@ public class Klass<T> {
         throw new ClassNotFoundException(className);
     }
 
-    void initForObjectGraphLoader(MethodBody[] virtualMethods, MethodBody[] staticMethods, Klass superType, Klass[] interfaces, Object[] objects, UWord[] oopMap, UWord oopMapWord, UWord[] dataMap, UWord dataMapWord, int dataMapLength, int modifiers, byte state, short instanceSizeBytes, short staticFieldsSize, short refStaticFieldsSize, short indexForInit, short indexForClinit, short indexForMain, byte initModifiers, boolean mustClinit) {
+    void initForObjectGraphLoader(MethodBody[] virtualMethods, MethodBody[] staticMethods, Klass superType, Klass[] interfaces, Object[] objects, UWord[] oopMap, UWord oopMapWord, UWord[] dataMap, UWord dataMapWord, short dataMapLength, int modifiers, byte state, short instanceSizeBytes, short staticFieldsSize, short refStaticFieldsSize, short indexForInit, short indexForClinit, short indexForMain, byte initModifiers, boolean mustClinit) {
     	this.virtualMethods = virtualMethods;
     	this.staticMethods = staticMethods;
         this.superType = superType;
@@ -2195,6 +2195,7 @@ T
 
         int paddingEntries = GC.roundUpToWord(superType.instanceSizeBytes) - superType.instanceSizeBytes;
         int totalEntries = fields.length + superType.getDataMapLength() + paddingEntries;
+        Assert.always(totalEntries <= Short.MAX_VALUE, "Class has too many fields");
 
         // Copy dataMap from parent.
         if (totalEntries > DATAMAP_ENTRIES_PER_WORD) {
@@ -2219,7 +2220,7 @@ T
         }
 
         // The entries for the padding are all 0
-        dataMapLength = superType.dataMapLength + paddingEntries;
+        dataMapLength = (short)(superType.dataMapLength + paddingEntries);
 
         // Set the bits in the map after the parent's entries (and any padding)
         for (int i = 0; i != fields.length; ++i) {

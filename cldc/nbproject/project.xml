@@ -76,6 +76,7 @@
         <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
             <word>bytecode</word>
             <word>hashcode</word>
+            <word>Hashtable</word>
             <word>Klass</word>
             <word>vtable</word>
         </spellchecker-wordlist>

@@ -202,10 +202,10 @@ public final class VMThread implements GlobalStaticFields {
      * Return the number of monitors allocated.
      *
      * Often, uncontended locking is handled by the interpreter in the pendingMonitors cache. But if the 
-     * cache is full, or there is contention, or Object.wait() is used, or a threadd is switched out while 
+     * cache is full, or there is contention, or Object.wait() is used, or a thread is switched out while 
      * holding a virtual monitor, then a real monitor has to be allocated for an object. It is possible for 
      * the monitor for an object to come and go, so there is the possibility of "monitor object thrashing".
-     * @return  numbor of monitors allocated
+     * @return  number of monitors allocated
      */
     public static int getMonitorsAllocatedCount() {
         return monitorsAllocatedCount;
@@ -214,7 +214,7 @@ public final class VMThread implements GlobalStaticFields {
     /**
      * Return count of thread context switching.
      *
-     * This does not inlucde system-level switches that occur for GC, exception throwing, etc.
+     * This does not include system-level switches that occur for GC, exception throwing, etc.
      * @return user-level thread switches
      */
     public static int getThreadSwitchCount() {
@@ -313,7 +313,7 @@ public final class VMThread implements GlobalStaticFields {
 
     /**
      * Gets the daemon state of the thread.
-     * @return tue if thread is a daemon thread
+     * @return true if thread is a daemon thread
      */
     public boolean isDaemon() {
         return isDaemon;
@@ -1732,26 +1732,55 @@ VM.println("creating stack:");
         VM.outPrint(out, stateStr);
         VM.outPrint(out, " queue: ");
         VM.outPrint(out, waitingStr);
+        
+        switch (inqueue) {
+            case Q_MONITOR:
+                VM.outPrint(out, " waiting to lock object in ");
+                Monitor m = lookupROMMonitor();
+                if (m != null) {
+                    VM.outPrint(out, "ROM " + m.object);
+                } else {
+                    VM.outPrint(out, "in heap");
+                }
+                break;
+            case Q_CONDVAR:
+                VM.outPrint(out, " waiting on condvar for object ");
+                if (monitor != null) {
+                    // in an Object.wait()...
+                    VM.outPrint(out, monitor.object.toString());
+                } else {
+                    VM.outPrint(out, "???");
+                }
+                break;
+            case Q_EVENT:
+                VM.outPrint(out, " waiting for ");
+                if (waitingforEvent()) {
+                    VM.outPrint(out, "low-level event");
+                } else if (waitingforOSEvent()) {
+                    VM.outPrint(out, "OS event");
+                } else {
+                    VM.outPrint(out, "????");
+                }
+                break;
+            case Q_JOIN:
+                VM.outPrint(out, " waiting to join " + waitingToJoin);
+                break;
+            case Q_TIMER:
+                VM.outPrint(out, " waiting for ms (remaining): ");
+                long delta = time - VM.getTimeMillis();
+                VM.outPrint(out, delta);
+                break;
+        }
+
+        if (pendingInterrupt) {
+            VM.outPrint(out, " pendingInterrupt! ");
+        }
 /*else[TRUE]*/
 //        VM.outPrint(out, " state: ");
 //        VM.outPrint(out, state);
 //        VM.outPrint(out, " queue: ");
 //        VM.outPrint(out, inqueue);
 /*end[TRUE]*/
-        
-        if (monitor != null) {
-            // in an Obejct.wait()...
-            VM.outPrint(out, " waiting on condvar for object " + monitor.object);
-        } else if (inqueue == Q_MONITOR) {
-            Monitor m = lookupROMMonitor();
-            if (m != null) {
-                VM.outPrint(out, " waiting to lock object " + m.object);
-            }
-        }
-        
-        if (pendingInterrupt) {
-            VM.outPrint(out, " pendingInterrupt! ");
-        }
         
         VM.outPrintln(out);
     }
@@ -1904,6 +1933,15 @@ VM.println("creating stack:");
     }
 
     /**
+     * Return true if this thread is waiting for an event.
+     * DIAGNOSTIC CODE: slow
+     * @return
+     */
+    private boolean waitingforEvent() {
+        return events.contains(this);
+    }
+
+    /**
      * Restart a thread blocked on an event.
      *
      * @param event the event number to unblock
@@ -1916,7 +1954,7 @@ VM.println("creating stack:");
     }
 
 
-    /* OS events are just like squawk events, but the event IDs come from the OS< and may confict with squawk event IDs
+    /* OS events are just like squawk events, but the event IDs come from the OS and may confict with squawk event IDs
      * so we need to keep them seperate. Put a class around these two!!!!
      */
 
@@ -1948,6 +1986,15 @@ VM.println("creating stack:");
         waitForOSEvent0(event);
         reschedule();
         Assert.that(!currentThread.inQueue(VMThread.Q_EVENT) || currentThread.nextThread == null);
+    }
+
+    /**
+     * Return true if this thread is waiting for an OS event.
+     * DIAGNOSTIC CODE: slow
+     * @return
+     */
+    private boolean waitingforOSEvent() {
+        return osevents.contains(this);
     }
 
     /**

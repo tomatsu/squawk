@@ -972,12 +972,99 @@ public class Romizer {
      * suite that can be dynamically bound to.
      */
     private void createSuiteAPI() throws IOException {
-        Suite suite = this.suite.strip(suiteType, this.suite.getName(), this.suite.getParent());
+        Suite apiSuite = this.suite.strip(suiteType, this.suite.getName(), this.suite.getParent());
         File api = new File(suiteName + Suite.FILE_EXTENSION + Suite.FILE_EXTENSION_API);
         PrintStream out = new PrintStream(new FileOutputStream(api));
-        suite.printAPI(out);
+        printAPI(out, apiSuite);
         generatedFiles.addElement(api.getAbsolutePath());
         out.close();
+    }
+
+    /*---------------------------------------------------------------------------*\
+     *                            API Printing                                   *
+    \*---------------------------------------------------------------------------*/
+
+    /**
+     * Prints a textual description of the components in this suite that can be linked
+     * against. That is, the components whose symbolic information has not been stripped.
+     *
+     * @param out where to print the description
+     */
+    public static void printAPI(PrintStream out, Suite suite) {
+
+        out.println(".suite " + suite.getName());
+        for (int i = 0; i != suite.getClassCount(); ++i) {
+            Klass klass = suite.getKlass(i);
+            KlassMetadata metadata;
+            if (klass == null ||
+                klass.isSynthetic() ||
+                klass.isSourceSynthetic() ||
+                klass == Klass.STRING_OF_BYTES ||
+                isAnonymousOrPrivate(klass.getName()) ||
+                (metadata = suite.getMetadata(klass)) == null)
+            {
+                continue;
+            }
+
+            out.println(".class " + klass.getName());
+            printFieldsAPI(out, metadata, SymbolParser.STATIC_FIELDS);
+            printFieldsAPI(out, metadata, SymbolParser.INSTANCE_FIELDS);
+            printMethodsAPI(out, metadata, SymbolParser.STATIC_METHODS);
+            printMethodsAPI(out, metadata, SymbolParser.VIRTUAL_METHODS);
+        }
+    }
+
+    private static boolean isAnonymousOrPrivate(String className) {
+        int index = className.lastIndexOf('$');
+        if (index == -1) {
+            return false;
+        }
+        if (className.length() > index + 1) {
+            char c = className.charAt(index + 1);
+            return c >= '0' && c <= '9';
+        }
+        return false;
+    }
+
+    private static void printFieldsAPI(PrintStream out, KlassMetadata klass, int category) {
+        SymbolParser symbols = klass.getSymbolParser();
+        int count = symbols.getMemberCount(category);
+        for (int i = 0; i != count; ++i) {
+            int id = symbols.getMemberID(category, i);
+            Field field = new Field(klass, id);
+            if (!field.isSourceSynthetic()) {
+                out.println("    .field " + field.getName() + ' ' + field.getType().getSignature());
+            }
+        }
+    }
+
+    private static void printMethodsAPI(PrintStream out, KlassMetadata klass, int category) {
+        SymbolParser symbols = klass.getSymbolParser();
+        int count = symbols.getMemberCount(category);
+        for (int i = 0; i != count; ++i) {
+            int id = symbols.getMemberID(category, i);
+            Method method = new Method(klass, id);
+
+            if (method.isNative() && !VM.isLinkableNativeMethod(method.getFullyQualifiedName())) {
+                continue;
+            }
+
+            if (method.isInterpreterInvoked()) {
+                continue;
+            }
+
+            if (method.isSourceSynthetic() || method.isClassInitializer()) {
+                continue;
+            }
+
+            out.print("    .method " + method.getName() + " (");
+            Klass[] types = method.getParameterTypes();
+            for (int j = 0; j != types.length; ++j) {
+                Klass type = types[j];
+                out.print(type.getSignature());
+            }
+            out.println(")" + (method.isConstructor() ? "V" : method.getReturnType().getSignature()));
+        }
     }
 
 }

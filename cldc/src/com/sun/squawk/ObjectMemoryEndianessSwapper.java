@@ -142,6 +142,34 @@ public final class ObjectMemoryEndianessSwapper {
     }
 
     /**
+     * Gets a short value from memory, swapping the value at the effective address if necessary before loading it.
+     * If swapping is performed before the load, it is undone before returning the value.
+     *
+     * @param base   the base address
+     * @param offset the offset (in 16 bit units) from <code>base</code> of the value
+     * @return the value
+     */
+    private int getShort(Address base, int offset) {
+        Address ea = base.add(offset * 2);
+        int result;
+
+        if (om.containsAddress(ea)) {
+            if (requiresSwapping(ea)) {
+                NativeUnsafe.swap2(ea);
+                result = NativeUnsafe.getShort(base, offset);
+                NativeUnsafe.swap2(ea);
+            } else {
+                result = NativeUnsafe.getShort(base, offset);
+            }
+
+        } else {
+            result = NativeUnsafe.getShort(base, offset);
+        }
+
+        return result;
+    }
+
+    /**
      * Gets a word value from memory, swapping the value at the effective address if necessary before loading it.
      * If swapping is performed before the load, it is undone before returning the value.
      *
@@ -294,7 +322,7 @@ public final class ObjectMemoryEndianessSwapper {
 
             } else {
 
-                int dataMapLength = getInt(klass, (int)FieldOffsets.com_sun_squawk_Klass$dataMapLength);
+                int dataMapLength = getShort(klass, (int)FieldOffsets.com_sun_squawk_Klass$dataMapLength);
                 int byteOffset = 0;
 
                 if (dataMapLength > Klass.DATAMAP_ENTRIES_PER_WORD) {

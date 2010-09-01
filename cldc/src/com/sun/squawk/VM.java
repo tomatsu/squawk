@@ -3797,7 +3797,7 @@ hbp.dumpState();
      *
      * @param max max wait time in ms. Must be > 0.
      */
-    public void setMaxSelectWait(long max) {
+    public static void setMaxSelectWait(long max) {
         SystemEvents sysEvents = VMThread.getSystemEvents();
         if (sysEvents != null) {
             sysEvents.setMaxWait(max);
@@ -3812,7 +3812,7 @@ hbp.dumpState();
      *
      * @param max max wait time in ms. Must be > 0.
      */
-    public void setMaxSystemWait(long max) {
+    public static void setMaxSystemWait(long max) {
         VMThread.setMaxSystemWait(max);
     }
 
@@ -4295,7 +4295,12 @@ hbp.dumpState();
      * @param name   the fully qualified name of the native method
      * @return the identifier for the method or -1 if the method does not exist or cannot be dynamically bound to
      */
-    public static int lookupNative(String name) {
+    public static int lookupNative(String name) 
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
+        throws HostedPragma
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
+    {
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
         String table = Native.LINKABLE_NATIVE_METHODS;
         String last = null;
         int id = 0;
@@ -4320,6 +4325,7 @@ hbp.dumpState();
             last = entryName;
             id++;
         }
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         return -1;
     }
 

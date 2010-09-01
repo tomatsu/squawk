@@ -104,7 +104,7 @@ public class ObjectGraphLoader {
         UWord oopMapWord = NativeUnsafe.getUWord(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$oopMapWord));
         UWord[] dataMap = getUWordsAt(NativeUnsafe.getAddress(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$dataMap)));
         UWord dataMapWord = NativeUnsafe.getUWord(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$dataMapWord));
-        int dataMapLength = NativeUnsafe.getInt(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$dataMapLength));
+        short dataMapLength = (short)NativeUnsafe.getShort(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$dataMapLength));
         int modifiers = NativeUnsafe.getInt(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$modifiers));
         byte state = (byte) NativeUnsafe.getByte(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$state));
         short instanceSizeBytes = (short) NativeUnsafe.getShort(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$instanceSizeBytes));

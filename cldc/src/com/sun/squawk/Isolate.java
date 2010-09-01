@@ -2522,7 +2522,8 @@ public final class Isolate implements Runnable {
      * @param out stream to print on
      */
     public static void printAllIsolateStates(PrintStream out) {
-         Isolate[] isos = Isolate.getIsolates();
+        Isolate[] isos = Isolate.getIsolates();
+        VM.outPrintln(out, "------ VM State at time: " + VM.getTimeMillis() + " ------");
         for (int i = 0; i < isos.length; i++) {
             Isolate iso = isos[i];
             VM.outPrintln(out, "--- " + iso + " status ---");
