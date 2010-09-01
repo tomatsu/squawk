@@ -407,6 +407,9 @@ public abstract class GarbageCollector implements GlobalStaticFields {
 /*end[FLASH_MEMORY]*/
     }
 
+    void verbose() {
+    }
+
     /*---------------------------------------------------------------------------*\
      *                             Stack chunk tracking                          *
     \*---------------------------------------------------------------------------*/

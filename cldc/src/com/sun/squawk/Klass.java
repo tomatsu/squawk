@@ -1022,7 +1022,7 @@ T
      * Static version of {@link #getComponentType()} so that garbage collector can
      * invoke this method on a possibly forwarded Klass object.
      */
-    static Klass getComponentType(Klass klass) {
+    static Klass getComponentType(Klass klass) throws AllowInlinedPragma {
         return klass.componentType;
     }
 
@@ -1257,7 +1257,7 @@ T
      * @return  true if it is
      */
     public final boolean isReferenceType() {
-        return !isPrimitive() && this != Klass.LONG2 && this != Klass.DOUBLE2 && !isSquawkPrimitive();
+        return !isPrimitive() && !isSquawkPrimitive();
     }
 
     /**
@@ -3749,6 +3749,9 @@ T
         if (VM.isHosted()) {
             loadReservedSystemClasses();
         }
+
+        Assert.that(Klass.LONG2.isPrimitive());
+        Assert.that(Klass.DOUBLE2.isPrimitive());
     }
 
     /**

@@ -947,7 +947,9 @@ public class GC implements GlobalStaticFields {
             VM.print(totalMemory());
             VM.print("), ");
             VM.print(collector.getLastGCTime());
-            VM.println(" ms]");
+            VM.print("ms)");
+            collector.verbose();
+            VM.println();
         }
 
         // Update the relevant collection counter
@@ -2086,7 +2088,7 @@ public class GC implements GlobalStaticFields {
     }
     
     /**
-     * Print represenation of obj to VM.print stream using as little memory as possible.
+     * Print representation of obj to VM.print stream using as little memory as possible.
      * Currently only handles strings, string buffers, and some arrays.
      * 
      * @param obj
@@ -2112,12 +2114,18 @@ public class GC implements GlobalStaticFields {
             VM.print(", length: ");
             VM.print(GC.getArrayLength(obj));
 
-            if (obj instanceof char[]) {
+            if (Klass.getSystemID(klass) == CID.CHAR_ARRAY) {
                 char[] cha = (char[]) obj;
                 VM.print(", ");
                 for (int i = 0; i < cha.length; i++) {
                     VM.print(cha[i]);
                 }
+            } else if (Klass.getSystemID(klass) == CID.GLOBAL_ARRAY) {
+                VM.print("Static variables for ");
+                Klass owner = VM.asKlass(NativeUnsafe.getObject(obj, CS.klass));
+                VM.print(owner.getInternalName());
+            } else if (Klass.getSystemID(klass) == CID.LOCAL_ARRAY) {
+                VM.print("Local variables ");
             } else {
                 VM.print(" @");
                 VM.printAddress(obj);
@@ -2167,11 +2175,106 @@ public class GC implements GlobalStaticFields {
         int size = klass.getInstanceSize() << HDR.LOG2_BYTES_PER_WORD;
         return size += HDR.basicHeaderSize;
     }
+
+//    static class DoIsSuiteUsedRefsBlock extends DoBlock {
+//        Address start;
+//        Address end;
+//        ObjectMemory suiteOM;
+//        boolean used;
+//        boolean verbose;
+//        Object referer;
+//
+//        DoIsSuiteUsedRefsBlock(Suite suite, boolean verbose) {
+//            this.suiteOM = suite.getReadOnlyObjectMemory();
+//            this.used = false;
+//            this.verbose = verbose;
+//            this.referer = null;
+//        }
+//
+//        public Object value(Object object) {
+//            if (suiteOM.containsAddress(Address.fromObject(object))) {
+//                used = true;
+//                if (verbose) {
+//                    VM.print("Suite is referenced by ");
+//                    printObject(object, GC.getKlass(object), 0);
+//                    if (referer != null) {
+//                        VM.print(" from ");
+//                        printObject(referer, GC.getKlass(referer), 0);
+//                    }
+//                }
+//            }
+//            return object;
+//        }
+//
+//    }
+//
+//    static class DoIsSuiteUsedObjectsBlock extends DoBlock {
+//        DoIsSuiteUsedRefsBlock refBlock;
+//
+//        DoIsSuiteUsedObjectsBlock(DoIsSuiteUsedRefsBlock refBlock) {
+//            this.refBlock = refBlock;
+//        }
+//
+//        public Object value(Object object) {
+//            // readOnlyObjectMemories points to all suites, so skip over it...
+//            if (object != readOnlyObjectMemories) {
+//                refBlock.referer = object;
+//                allReferencesDo(object, refBlock);
+//                refBlock.referer = null;
+//            }
+//            return object;
+//        }
+//
+//    }
+//
+//    static boolean isSuiteParent(Suite suite) {
+//        boolean result = false;
+//        Suite[] suites = getSuites();
+//        for (int i = 0; i < suites.length; i++) {
+//            if (suites[i].getParent() == suite) {
+//                result = true;
+//                break;
+//            }
+//        }
+//        suites = null;
+//        return result;
+//    }
+//
+//    /**
+//     * Check to see if a Suite is in use by scanning roots and objects in heap looking for a reference to an object in the given suite.
+//     *
+//     * @param suite
+//     * @return true if the suite is in use
+//     */
+//    public static boolean isSuiteUsed(Suite suite, boolean verbose) {
+//        if (isSuiteParent(suite)) {
+//            if (verbose) {
+//                VM.println("Suite is a parent of another suite");
+//            }
+//            return true;
+//        }
+//
+//        DoIsSuiteUsedRefsBlock refsBlock = new DoIsSuiteUsedRefsBlock(suite, verbose);
+//        DoIsSuiteUsedObjectsBlock objsBlock = new DoIsSuiteUsedObjectsBlock(refsBlock);
+//
+//        GC.collectGarbage(true);
+//
+//        refsBlock.referer = "Global statics";
+//        allReferencesInRootsDo(refsBlock);
+//        refsBlock.referer = null;
+//        if (refsBlock.used) {
+//            return true;
+//        }
+//
+//        allObjectsFromDo(null, objsBlock);
+//        return refsBlock.used;
+//    }
     
     /**
      * Perform doBlock with all objects starting from startObject.
      *
      * @param startObj the object to start walking from , or null
+     * @param doBlock callback to perform on each object
      */
     public static void allObjectsFromDo(Object startObj, DoBlock doBlock) {
         Address start;
@@ -2201,6 +2304,225 @@ public class GC implements GlobalStaticFields {
             block = object.add(blkSize);
         }
     }
+    
+//    /**
+//     * Traverses the references in the roots (single-level)
+//     *
+//     * @param doBlock  the callback to apply to each oop in the traversed objects
+//     */
+//    private static void allReferencesInRootsDo(DoBlock doBlock) {
+//        for (int i = 0 ; i < VM.getGlobalOopCount() ; i++) {
+//            Object object = VM.getGlobalOop(i);
+//            if (object != null) {
+//                doBlock.value(object);
+//            }
+//        }
+//    }
+//
+//    /**
+//     * Perform doBlock on all references in object.
+//     *
+//     * @param object the object to inspect
+//     */
+//    public static void allReferencesDo(Object object, DoBlock doBlock) {
+//        Klass klass = getKlass(object);
+//        doBlock.value(klass);
+//
+//        // Visit the rest of the pointers
+//        if (Klass.isSquawkArray(klass)) {
+//            allReferencesInArrayObjectDo(object, klass, doBlock);
+//        } else {
+//            allReferencesInNonArrayObjectDo(object, klass, doBlock);
+//        }
+//    }
+//
+//    private static void allReferencesInArrayObjectDo(Object object, Klass klass, DoBlock doBlock) {
+//        switch (Klass.getSystemID(klass)) {
+//            case CID.BOOLEAN_ARRAY:
+//            case CID.BYTE_ARRAY:
+//            case CID.CHAR_ARRAY:
+//            case CID.DOUBLE_ARRAY:
+//            case CID.FLOAT_ARRAY:
+//            case CID.INT_ARRAY:
+//            case CID.LONG_ARRAY:
+//            case CID.SHORT_ARRAY:
+//            case CID.UWORD_ARRAY:
+//            case CID.ADDRESS_ARRAY:
+//            case CID.STRING:
+//            case CID.STRING_OF_BYTES: {
+//                break;
+//            }
+//            case CID.BYTECODE_ARRAY: {
+//                doBlock.value(NativeUnsafe.getObject(object, HDR.methodDefiningClass));// this won't happen if not ENABLE_DYNAMIC_CLASSLOADING
+//                break;
+//            }
+//            case CID.GLOBAL_ARRAY: {
+//                Klass gaklass = VM.asKlass(NativeUnsafe.getObject(object, CS.klass));
+//                Assert.that(gaklass != null);
+//                // All the pointer static fields precede the non-pointer fields
+//                int end = CS.firstVariable + Klass.getRefStaticFieldsSize(gaklass);
+//                for (int i = 0; i < end; i++) {
+//                    Object slot = NativeUnsafe.getObject(object, i);
+//                    if (slot != null) {
+//                        doBlock.value(slot);
+//                    }
+//                }
+//                break;
+//            }
+//            case CID.LOCAL_ARRAY: {
+//                allReferencesInStackChunkDo(object, doBlock);
+//                break;
+//            }
+//            default: { // Pointer array
+//                int length = GC.getArrayLengthNoCheck(object);
+//                for (int i = 0; i < length; i++) {
+//                    Object slot = NativeUnsafe.getObject(object, i);
+//                    if (slot != null) {
+//                        doBlock.value(slot);
+//                    }
+//                }
+//                break;
+//            }
+//        }
+//    }
+//
+//    /**
+//     * Traverses the oops in a stack chunk.
+//     *
+//     * @param chunk    the stack chunk to traverse
+//     * @param doBlock  the callback to apply to each oop in the traversed objects
+//     * @param header   specifies if the header part of the stack chunk should be traversed
+//     */
+//    private static void allReferencesInStackChunkDo(Object chunk, DoBlock doBlock) {
+//        GC.checkSC(chunk);
+//        Address fp = NativeUnsafe.getAddress(chunk, SC.lastFP);
+//
+//        /*
+//         * Traverse the pointers in the header part of the stack chunk
+//         */
+//        doBlock.value(NativeUnsafe.getObject(chunk, SC.owner));
+//
+//        /*
+//         * Update the pointers in each activation frame
+//         */
+//        boolean isInnerMostActivation = true;
+//        while (!fp.isZero()) {
+//            allReferencesInActivationDo(fp, isInnerMostActivation, doBlock);
+//            fp = VM.getPreviousFP(fp);
+//            isInnerMostActivation = false;
+//        }
+//    }
+//
+//    /**
+//     * Traverses the oops in an activation record.
+//     *
+//     * @param fp                     the frame pointer
+//     * @param isInnerMostActivation  specifies if this is the inner most activation frame on the chunk
+//     *                               in which case only the first local variable (i.e. the method pointer) is scanned
+//     * @param doBlock                the callback to apply to each traversed oop
+//     */
+//    private static void allReferencesInActivationDo(Address fp, boolean isInnerMostActivation, DoBlock doBlock) {
+//        Address mp  = NativeUnsafe.getAddress(fp, FP.method);
+//
+//        /*
+//         * Get the method pointer and setup to go through the parameters and locals.
+//         */
+//        int localCount     = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp.toObject());
+//        int parameterCount = MethodBody.decodeParameterCount(mp.toObject());
+//        int mapOffset      = MethodBody.decodeOopmapOffset(mp.toObject());
+//        int bitOffset      = -1;
+//        int byteOffset     = 0;
+//
+//        /*
+//         * Parameters.
+//         */
+//        int varOffset = FP.parm0;
+//        while (parameterCount-- > 0) {
+//            bitOffset++;
+//            if (bitOffset == 8) {
+//                bitOffset = 0;
+//                byteOffset++;
+//            }
+//            int bite = NativeUnsafe.getByte(mp, mapOffset+byteOffset);
+//            boolean isOop = ((bite >>> bitOffset)&1) != 0;
+//            if (isOop) {
+//                Object slot = NativeUnsafe.getObject(fp, varOffset);
+//                if (slot != null) {
+//                    doBlock.value(slot);
+//                }
+//            }
+//            varOffset++; // Parameters go upwards
+//        }
+//
+//        /*
+//         * Locals.
+//         */
+//        varOffset = FP.local0;
+//        while (localCount-- > 0) {
+//            bitOffset++;
+//            if (bitOffset == 8) {
+//                bitOffset = 0;
+//                byteOffset++;
+//            }
+//            int bite = NativeUnsafe.getByte(mp, mapOffset + byteOffset);
+//            boolean isOop = ((bite >>> bitOffset) & 1) != 0;
+//            if (isOop) {
+//                Object slot = NativeUnsafe.getObject(fp, varOffset);
+//                if (slot != null) {
+//                    doBlock.value(slot);
+//                }
+//            }
+//            varOffset--; // Locals go downwards
+//        }
+//    }
+//
+//    /**
+//     * Traverses all the oops within a non-array object.
+//     *
+//     * @param object   the object being traversed
+//     * @param klass    the class of <code>object</code>. If the class has been forwarded, then this is its pre-forwarding address.
+//     * @param doBlock  the callback to apply to each pointer in <code>object</code>
+//     */
+//    private static void allReferencesInNonArrayObjectDo(Object object, Klass klass, DoBlock doBlock) {
+//        Address oopMap;
+//        UWord oopMapWord;
+//
+//        int instanceSize = Klass.getInstanceSize(klass);
+//        oopMapWord = NativeUnsafe.getUWord(klass, (int)FieldOffsets.com_sun_squawk_Klass$oopMapWord);
+//        if (instanceSize > HDR.BITS_PER_WORD) {
+//            oopMap = NativeUnsafe.getAddress(klass, (int)FieldOffsets.com_sun_squawk_Klass$oopMap);
+//
+//            int oopMapLength = ((instanceSize + HDR.BITS_PER_WORD) - 1) / HDR.BITS_PER_WORD;
+//            for (int i = 0; i != oopMapLength; ++i) {
+//                int/*S64*/ word = NativeUnsafe.getUWord(oopMap, i).toPrimitive();
+//                allReferencesInNonArrayObjectForBitmapWordDo(object, doBlock, word, i * HDR.BITS_PER_WORD);
+//            }
+//        } else {
+//            int/*S64*/ word = oopMapWord.toPrimitive();
+//            allReferencesInNonArrayObjectForBitmapWordDo(object, doBlock, word, 0);
+//        }
+//    }
+//
+//    /**
+//     * Traverses the oops within an object whose bits are set in a given oop map word.
+//     *
+//     * @param object   the object being traversed
+//     * @param doBlock  the callback to apply to each pointer in <code>object</code>
+//     * @param word     a word from an oop map describing where the pointers are in <code>object</code>
+//     * @param offset   the offset of the first field in <code>object</code> mapped by <code>word</code>
+//     */
+//    private static void allReferencesInNonArrayObjectForBitmapWordDo(Object object, DoBlock doBlock, int/*S64*/ word, int offset) {
+//        while (word != 0) {
+//            if ((word & 1) != 0) {
+//                Object slot = NativeUnsafe.getObject(object, offset);
+//                if (slot != null) {
+//                    doBlock.value(slot);
+//                }
+//            }
+//            offset++;
+//            word = word >>> 1;
+//        }
+//    }
     
     /**
      * Do actual heap walk, from start object, or whole heap is startObj is null.

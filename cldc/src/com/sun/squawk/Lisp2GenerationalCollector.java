@@ -416,8 +416,8 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
     Lisp2GenerationalCollector(Address ramStart, Address ramEnd) {
         int ramSize = ramEnd.diff(ramStart).toInt();
         Assert.always(ramSize > 0);
-        int heapSize = calculateMaxHeapSize(ramSize);
-        int bitmapSize = ramSize - heapSize;
+        int maxHeapSize = calculateMaxHeapSize(ramSize);
+        int bitmapSize = ramSize - maxHeapSize;
         Address bitmap = ramEnd.sub(bitmapSize);
 
         // Only after this call can the VM execute any bytecode that involves updating the write barrier
@@ -793,6 +793,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 
         // Reset the marking recursion level.
         markingRecursionLevel = MAX_MARKING_RECURSION;
+        remarkPasses = 0;
 
         // Output trace information.
         if (GC.GC_TRACING_SUPPORTED && tracing()) {
@@ -884,6 +885,11 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         timer.updateMaxMin(timer.finish(Timer.FINALIZE) - start);
 
         return isFullCollection();
+    }
+
+    void verbose() {
+        VM.print(", Re-Mark passes: ");
+        VM.print(remarkPasses);
     }
 
     /**
@@ -1913,12 +1919,15 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         timer.finish(Timer.MARK);
     }
 
+    private int remarkPasses;
+
     /**
      * Mark all the objects reachable from the already marked objects in the collection space.
      * This process repeats itself if there was an overflow on the marking stack.
      */
     private void markCollectionSpace() throws NotInlinedPragma {
         while (markingStack.hasOverflowed()) {
+            remarkPasses = remarkPasses + 1;
             if (GC.GC_TRACING_SUPPORTED && tracing()) {
                 VM.println("Lisp2GenerationalCollector::mark - remarking from marked objects after marking stack overflow");
             }
@@ -3038,14 +3047,14 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         Assert.that(!classOrAssociation.isZero());
         Assert.that(!classOrAssociation.eq(Address.fromPrimitive(0xDEADBEEF)));
         
-        Address klass;
-        if (!isClassPointer(object, classOrAssociation)) {
-            klass = NativeUnsafe.getAddress(classOrAssociation, (int)FieldOffsets.com_sun_squawk_Klass$self);
-            // Must be an ObjectAssociation
-            Assert.that(klass.ne(classOrAssociation));
-        } else {
-            klass = classOrAssociation;
-        }
+        Address klass = NativeUnsafe.getAddress(classOrAssociation, (int)FieldOffsets.com_sun_squawk_Klass$self);
+//        if (!isClassPointer(object, classOrAssociation)) {
+//            klass = NativeUnsafe.getAddress(classOrAssociation, (int)FieldOffsets.com_sun_squawk_Klass$self);
+//            // Must be an ObjectAssociation
+//            Assert.that(klass.ne(classOrAssociation));
+//        } else {
+//            klass = classOrAssociation;
+//        }
 
         Assert.that(!klass.isZero());
         Assert.that(!klass.eq(Address.fromPrimitive(0xDEADBEEF)));

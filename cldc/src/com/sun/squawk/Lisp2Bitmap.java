@@ -245,8 +245,8 @@ public final class Lisp2Bitmap implements GlobalStaticFields {
          * @param end           the address one past the word at which to stop iterating
          * @param isObjectRange
          */
-        static void start(Address start, Address end, boolean isObjectRange) {
-            Assert.always(!Iterator_inUse);
+        static void start(Address start, Address end, boolean isObjectRange) throws AllowInlinedPragma {
+            Assert.that(!Iterator_inUse);
             Iterator_inUse = true;
             if (isObjectRange) {
                 // Bump up the start and end limits by one word to account for the fact that
@@ -274,7 +274,7 @@ public final class Lisp2Bitmap implements GlobalStaticFields {
         /**
          * Terminates the current iteration.
          */
-        static void terminate() {
+        static void terminate() throws AllowInlinedPragma {
             Assert.that(Iterator_inUse);
             Iterator_inUse = false;
             Iterator_next = Address.zero();
