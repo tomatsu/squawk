@@ -836,7 +836,7 @@ public final class CheneyCollector extends GarbageCollector {
      *
      * @param chunk the stack chunk.
      */
-    private void updateStackChunk(Object chunk) {
+    private void updateStackChunk(Address chunk) {
         Address fp = NativeUnsafe.getAddress(chunk, SC.lastFP);
 
         /*
@@ -853,7 +853,7 @@ public final class CheneyCollector extends GarbageCollector {
          * Update the pointers in the header part of the stack chunk
          */
         Assert.always(NativeUnsafe.getAddress(chunk, SC.next).isZero());
-        updateReference(Address.fromObject(chunk), SC.owner);
+        updateReference(chunk, SC.owner);
 
         /*
          * Update the pointers in each activation frame
@@ -888,7 +888,7 @@ public final class CheneyCollector extends GarbageCollector {
             }
             Address newObject = copyObject(oldObject);
             if (newObject.ne(oldObject)) {
-                VM.setGlobalOop(newObject, i);
+                VM.setGlobalOop(newObject.toObject(), i);
             }
         }
         if (GC.GC_TRACING_SUPPORTED && tracing()) {
