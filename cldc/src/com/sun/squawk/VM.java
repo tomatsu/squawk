@@ -41,6 +41,7 @@ import com.sun.squawk.pragma.GlobalStaticFields;
 import com.sun.squawk.pragma.InterpreterInvokedPragma;
 import com.sun.squawk.pragma.NotInlinedPragma;
 import com.sun.squawk.pragma.AllowInlinedPragma;
+import com.sun.squawk.pragma.HostedPragma;
 import com.sun.squawk.util.Assert;
 import com.sun.squawk.util.IntHashtable;
 import com.sun.squawk.util.SquawkHashtable;
