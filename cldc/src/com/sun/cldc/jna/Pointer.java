@@ -33,7 +33,11 @@ import com.sun.squawk.UWord;
 import com.sun.squawk.Unsafe;
 import com.sun.squawk.VM;
 import com.sun.squawk.realtime.OffsetOutOfBoundsException;
+/*if[FLOATS]*/
 import com.sun.squawk.realtime.RawMemoryFloatAccess;
+/*else[FLOATS]*/
+//import com.sun.squawk.realtime.RawMemoryAccess;
+/*end[FLOATS]*/
 import com.sun.squawk.realtime.SizeOutOfBoundsException;
 import com.sun.squawk.util.Assert;
 import com.sun.squawk.vm.CID;
@@ -60,7 +64,12 @@ import com.sun.squawk.vm.CID;
  *   <li> no support for native wide strings
  * </ul> 
  */
-public class Pointer extends RawMemoryFloatAccess {
+public class Pointer
+/*if[FLOATS]*/
+        	     extends RawMemoryFloatAccess {
+/*else[FLOATS]*/
+//                   extends RawMemoryAccess {
+/*end[FLOATS]*/
     private static Pointer NULL;
     
     public static synchronized Pointer NULL() {

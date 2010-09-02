@@ -298,12 +298,6 @@ NOINLINE int    d2f(jlong l)                 { return f2ib((float)lb2d(l));     
  *                                Math functions                             *
 \*---------------------------------------------------------------------------*/
 
-#ifndef max
-#define	max(a, b) 		((a) < (b) ? (b) : (a))
-#define	min(a, b) 		((a) > (b) ? (b) : (a))
-#define	abs(x)			((x) >= 0 ? (x) : -(x))
-#endif
-
 jlong math(int op, jlong rs1_l, jlong rs2_l) {
     double rs1 = lb2d(rs1_l);
     double rs2 = lb2d(rs2_l);
