@@ -4650,10 +4650,12 @@ foundSlot:
                     break;
                 }
 
+/*if[KERNEL_SQUAWK]*/
                 case Native_com_sun_squawk_VM_isInKernel: {
                     pushInt(inKernelMode());
                     break;
                 }
+/*end[KERNEL_SQUAWK]*/
 
                 case Native_com_sun_squawk_VM_threadSwitch: {
                     if (com_sun_squawk_VMThread_currentThread !=
@@ -4789,15 +4791,6 @@ foundSlot:
                 }
 /*end[FLOATS]*/
 
-/*if[CHUNKY_STACKS]*/
-/*else[CHUNKY_STACKS]*/
-//              case Native_com_sun_squawk_VM_allocateVirtualStack: {
-//                  int size = popInt();
-//                  pushAddress(calloc(size, 1));  /* TEMP */
-//                  break;
-//              }
-/*end[CHUNKY_STACKS]*/
-
 /*if[VM2C]*/
                 case Native_com_sun_squawk_GarbageCollector_hasNativeImplementation: {
                     pushInt(true);
@@ -4894,7 +4887,6 @@ foundSlot:
 /*end[LISP2_BITMAP]*/
 
 /*if[KERNEL_SQUAWK]*/
-/*if[KERNEL_SQUAWK_HOSTED]*/
                 case Native_com_sun_squawk_VM_sendInterrupt: {
                     int interrupt = popInt();
                     void os_sendInterrupt(int);
@@ -4925,8 +4917,6 @@ foundSlot:
                     pushLong(os_getInterruptStatus(interrupt, id));
                     break;
                 }
-
-/*end[KERNEL_SQUAWK_HOSTED]*/
 /*end[KERNEL_SQUAWK]*/
 
                 default: {

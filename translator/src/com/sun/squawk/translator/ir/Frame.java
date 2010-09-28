@@ -436,9 +436,9 @@ public final class Frame {
         }
 
         //System.out.println("allocated: "+local+" index "+index);
-/*if[SCOPEDLOCALVARIABLES]*/
+///*if[SCOPEDLOCALVARIABLES]*/
         codeParser.localVariableAllocated(codeParser.getCurrentIP(), local);
-/*end[SCOPEDLOCALVARIABLES]*/
+///*end[SCOPEDLOCALVARIABLES]*/
         return local;
 
     }

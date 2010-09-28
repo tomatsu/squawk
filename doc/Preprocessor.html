@@ -16,7 +16,7 @@ IDEs without confusing any auto-parsing feature in the IDE.
 
 <h2>Preprocessing Directives</h2>
 
-<p>The patterns recognised by the preprocessor and their semantics are described here.</p>
+<p>The patterns recognized by the preprocessor and their semantics are described here.</p>
 
 <h3>1. Conditional compilation.</h3>
 
@@ -31,9 +31,8 @@ IDEs without confusing any auto-parsing feature in the IDE.
 <p>The preprocessing directives (i.e. <code>/*if[...]*/</code> and <code>/*end[PROPERTY.NAME]*/</code>)
 must be at the start of the line. There is no constraint on what comes after the directive.
 The property's value is taken from the set of properties given to the builder which are
-typically in the file 'build.properties'. If the property is not explicity defined, it
-takes a default value of "true". If a property used for conditional compilation is explicitly defined,
-its value must be <code>true</code> or <code>false</code>.</p>
+typically in the file 'build.properties'. If the property is not explicity defined then an exception is thrown.
+If a property is used for conditional compilation its value must be <code>true</code> or <code>false</code>.</p>
 
 <p>As an example of conditional compilation, the following appears in j2me/src/java/lang/String.java to
 conditionally support floating point code,:</p>
@@ -77,8 +76,8 @@ conditionally support floating point code,:</p>
 </code></pre></td></tr></table>
 
 <p>The preprocessor will include the <code>else</code> clause in this example if the <code>SQUAWK_64</code> property is
-<code>false</code>. Every line of code in the unpreprocessed else clause must start with <code>//</code>. This preserves the validity
-of the unpreprocessed source file as a well formed Java file.</p>
+<code>false</code>. Every line of code in the un-preprocessed else clause must start with <code>//</code>. This preserves the validity
+of the un-preprocessed source file as a well formed Java file.</p>
 
 <p>Lastly, a whole file can be conditionally excluded from compilation by placing <code>//if[NAME]</code>
 as the first line of a file. For example, here are the first few lines of j2me/src/java/lang/Float.java:</p>
@@ -102,7 +101,7 @@ by abstracting machine word dependent types into special Java classes (i.e. <cod
 and compiler and converted to be values of the correct primitive type (i.e. <code>long</code> or <code>int</code>).
 However, it is sometimes necessary to represent these values as raw primitive values. While it would be
 possible to use the conditional compilation mechanism to achieve this, the readability of the code suffers. As such, there
-is a special preprocessing mechanism for expressing the primtive types and values. The example below comes from
+is a special preprocessing mechanism for expressing the primitive types and values. The example below comes from
 j2me/src/java/lang/Address.java:</p>
 
 <table border="1" cellspacing="0" cellpadding="5" width="100%" bgcolor="#CCCCCC"><tr><td><pre><code>
@@ -233,7 +232,7 @@ employed to select which collector to use:</p>
 
 The Squawk preprocessor is implemented with simple pattern matching as opposed to using a grammar driven parser.
 The explains why some of the required syntax may seem a little more restrictive than necessary. It also means that
-it may not recognise directives or patterns that one may expect it should. The solution to solving any problems
+it may not recognize directives or patterns that one may expect it should. The solution to solving any problems
 caused by these limitations is to look at the output from the preprocessor.
 
 </body>

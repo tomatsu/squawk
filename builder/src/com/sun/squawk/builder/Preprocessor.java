@@ -153,9 +153,9 @@ public class Preprocessor {
                 boolean value;
                 if (name.charAt(0) == '!') {
                     name = name.substring(1);
-                    value = !getBooleanProperty(name, in);
+                    value = !getBooleanProperty(name);
                 } else {
-                    value = getBooleanProperty(name, in);
+                    value = getBooleanProperty(name);
                 }
                 if (!value) {
                     if (verbose) {
@@ -291,13 +291,10 @@ public class Preprocessor {
      * @param name       the name of the property
      * @return the value of the property named <code>name</code>
      */
-    private boolean getBooleanProperty(String name, LineReader in) {
+    private boolean getBooleanProperty(String name) {
         String value = properties.getProperty(name);
         if (value == null) {
-            if (verbose) {
-                log.println(in.getSource() + ":" + in.getLastLineNumber() + ": no value for property '" + name + "' - setting true by default");
-            }
-            return true;
+            throw new PreprocessorException("no value for property '" + name + "'");
         }
         if (value.equals("false")) {
             return false;
@@ -316,10 +313,10 @@ public class Preprocessor {
      * @param mustExist  if true and there is no property corresponding to <code>name</code>, then this method throws a BuildException
      * @return the value of the property named <code>name</code>
      */
-    private String getProperty(String name, boolean mustExist) {
+    private String getProperty(String name) {
         String value = properties.getProperty(name);
-        if (mustExist && value == null) {
-            throw new BuildException("value for required property '" + name + "' not specified");
+        if (value == null) {
+            throw new PreprocessorException("value for required property '" + name + "' not specified");
         }
         return value;
     }
@@ -367,9 +364,9 @@ public class Preprocessor {
                 boolean value;
                 if (name.charAt(0) == '!') {
                     name = name.substring(1);
-                    value = !getBooleanProperty(name, in);
+                    value = !getBooleanProperty(name);
                 } else {
-                    value = getBooleanProperty(name, in);
+                    value = getBooleanProperty(name);
                 }
                 ConditionalScope inner = new ConditionalScope(name, value, conditional);
                 out.println();  // Replace the directive with an empty line
@@ -449,7 +446,7 @@ public class Preprocessor {
             }
 
             String name = matcher.group(2);
-            String value = getProperty(name, false);
+            String value = getProperty(name);
             if (value != null) {
                 return line.substring(0, index) + value + matcher.group(3);
             }

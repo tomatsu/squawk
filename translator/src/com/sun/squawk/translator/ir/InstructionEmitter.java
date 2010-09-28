@@ -1264,9 +1264,12 @@ public class InstructionEmitter implements InstructionVisitor {
      * @param type the return type
      */
     private void invokeNative(int identifier, Klass type) {
+/*if[KERNEL_SQUAWK]*/
         if (identifier == Native.com_sun_squawk_VM$pause) {
             emitOpcode(OPC.PAUSE); // Special case for VM.pause()
-        } else {
+        } else
+/*end[KERNEL_SQUAWK]*/
+        {
             int opcode;
             switch (type.getSystemID()) {
                 case CID.VOID:    opcode = OPC.INVOKENATIVE_V; break;

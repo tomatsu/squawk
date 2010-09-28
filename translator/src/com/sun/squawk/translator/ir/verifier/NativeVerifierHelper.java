@@ -963,13 +963,6 @@ class NativeVerifierHelper {
             return;
         }
 
-        case Native.com_sun_squawk_VM$allocateVirtualStack: {
-            frame.pop(INT); // int
-            Assert.that(frame.isStackEmpty());
-            frame.push(REF); // com.sun.squawk.Address
-            return;
-        }
-
         case Native.com_sun_squawk_VM$asKlass: {
             frame.pop(OOP); // java.lang.Object
             Assert.that(frame.isStackEmpty());
@@ -1121,14 +1114,6 @@ class NativeVerifierHelper {
             return;
         }
 
-        case Native.com_sun_squawk_VM$getInterruptStatus: {
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            Assert.that(frame.isStackEmpty());
-            frame.push(LONG); // long
-            return;
-        }
-
         case Native.com_sun_squawk_VM$getMP: {
             frame.pop(REF); // com.sun.squawk.Address
             Assert.that(frame.isStackEmpty());
@@ -1183,12 +1168,6 @@ class NativeVerifierHelper {
             return;
         }
 
-        case Native.com_sun_squawk_VM$isInKernel: {
-            Assert.that(frame.isStackEmpty());
-            frame.push(BOOLEAN); // boolean
-            return;
-        }
-
         case Native.com_sun_squawk_VM$longBitsToDouble: {
             frame.pop(LONG); // long
             Assert.that(frame.isStackEmpty());
@@ -1205,20 +1184,9 @@ class NativeVerifierHelper {
             return;
         }
 
-        case Native.com_sun_squawk_VM$pause: {
-            Assert.that(frame.isStackEmpty());
-            return;
-        }
-
         case Native.com_sun_squawk_VM$removeVirtualMonitorObject: {
             Assert.that(frame.isStackEmpty());
             frame.push(OOP); // java.lang.Object
-            return;
-        }
-
-        case Native.com_sun_squawk_VM$sendInterrupt: {
-            frame.pop(INT); // int
-            Assert.that(frame.isStackEmpty());
             return;
         }
 
@@ -1267,20 +1235,6 @@ class NativeVerifierHelper {
         case Native.com_sun_squawk_VM$setPreviousIP: {
             frame.pop(REF); // com.sun.squawk.Address
             frame.pop(REF); // com.sun.squawk.Address
-            Assert.that(frame.isStackEmpty());
-            return;
-        }
-
-        case Native.com_sun_squawk_VM$setupAlarmInterval: {
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            Assert.that(frame.isStackEmpty());
-            return;
-        }
-
-        case Native.com_sun_squawk_VM$setupInterrupt: {
-            frame.pop(OOP); // java.lang.String
-            frame.pop(INT); // int
             Assert.that(frame.isStackEmpty());
             return;
         }

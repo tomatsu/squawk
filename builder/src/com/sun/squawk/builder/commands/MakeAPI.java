@@ -395,7 +395,13 @@ public class MakeAPI extends Command {
         File srcDir = makeSource(classes.values(), packages);
         File javadocDir = nodoc ? null : makeJavadoc(packages, srcDir);
         File classesDir = new File(baseDir, "classes");
-        env.javac(classpath, classpath, baseDir, new File[] {srcDir}, true, null, false);
+        ArrayList extraArgs = new ArrayList<String>();
+//        extraArgs.add("-source");
+//        extraArgs.add("1.4");
+//        extraArgs.add("-target");
+//        extraArgs.add("1.4");
+
+        env.javac(classpath, classpath, baseDir, new File[] {srcDir}, true, extraArgs, false, true);
 
         File classesJar = new File(baseDir, "classes.jar");
         File apiJar = new File(baseDir, suite.name + "_rt.jar");
@@ -1013,10 +1019,10 @@ public class MakeAPI extends Command {
     }
 
     public void run(String[] args) throws BuildException {
-        if (env.isJava5SyntaxSupported()) {
-            // TODO Fix MAKEAPI for Java5
-            return;
-        }
+//        if (env.isJava5SyntaxSupported()) {
+//            // TODO Fix MAKEAPI for Java5
+//            return;
+//        }
         parseArgs(args);
         run();
     }

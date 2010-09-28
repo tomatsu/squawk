@@ -10,5 +10,10 @@
             </source-roots>
             <test-roots/>
         </data>
+        <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
+            <word>javac</word>
+            <word>javadoc</word>
+            <word>preverified</word>
+        </spellchecker-wordlist>
     </configuration>
 </project>

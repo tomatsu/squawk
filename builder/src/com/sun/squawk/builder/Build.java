@@ -2463,14 +2463,15 @@ public class Build {
      * @param value   the property's new value
      * @param isBooleanProperty specifies if this is a boolean property
      */
-    private void updateProperty(String name, String value, boolean isBooleanProperty, boolean derivedProperty) {
-        String old = isBooleanProperty ? properties.getProperty(name, "true") : properties.getProperty(name);
+    private void updateProperty(String name, String value, boolean derivedProperty) {
+        String old = properties.getProperty(name);
         if (!value.equals(old)) {
             properties.setProperty(name, value);
             if (!derivedProperty) {
                 propertiesLastModified = System.currentTimeMillis();
             }
-            log(verbose, "[build properties updated]");
+            log(verbose, "[build properties updated - " + name + "=" + value + "]");
+
         }
     }
 
@@ -2482,19 +2483,24 @@ public class Build {
      * @param value   the property's new value
      * @param isBooleanProperty specifies if this is a boolean property
      */
-    private void updateProperty(String name, String value, boolean isBooleanProperty) {
-        updateProperty(name, value, isBooleanProperty, false);
+    private void updateProperty(String name, String value) {
+        updateProperty(name, value, false);
     }
 
     /**
-     * Determines if a boolean property has the value "true". The value is implicitly
-     * true if it does not have an explicit value.
+     * Determines if a boolean property has the value "true". The value must be "true" or "false" or
+     * a BuildException is thrown.
      *
      * @param name  the property's name
      * @return true if the property is true
      */
     public boolean getBooleanProperty(String name) {
-        return properties.getProperty(name, "true").equals("true");
+        String value = properties.getProperty(name);
+        if (value == null ||
+                (!value.equals("true") && !value.equals("false"))) {
+            throw new BuildException("Property '" + name + "' must be set to true or false");
+        }
+        return value.equals("true");
     }
 
     /**
@@ -2520,10 +2526,10 @@ public class Build {
             }
             cOptions.platformType = platformOption;
             cOptions.cflags += " -D"+derivedPropName+"=1";
-            updateProperty(derivedPropName, "true", true, true);
+            updateProperty(derivedPropName, "true", true);
             System.out.println("PLATFORM_TYPE=" + platformOption);
         } else {
-            updateProperty(derivedPropName, "false", true, true);
+            updateProperty(derivedPropName, "false", true);
         }
     }
     
@@ -2564,7 +2570,7 @@ public class Build {
                 try {
                     String name = arg.substring("-D".length(), arg.indexOf('='));
                     String value = arg.substring(arg.indexOf('=') + 1);
-                    updateProperty(name, value, false);
+                    updateProperty(name, value);
                 } catch (IndexOutOfBoundsException e) {
                     usage("malformed -D option: " + arg);
                     throw new BuildException("malformed option");
@@ -2679,27 +2685,27 @@ public class Build {
         // Synchronize MACROIZE property with '-mac'
         if (cOptions.macroize != getBooleanProperty("MACROIZE")) {
             cOptions.macroize |= getBooleanProperty("MACROIZE");
-            updateProperty("MACROIZE", cOptions.macroize ? "true" : "false", true);
+            updateProperty("MACROIZE", cOptions.macroize ? "true" : "false");
         }
 
         // Synchronize SQUAWK_64 property with '-64'
         if (cOptions.is64 != getBooleanProperty("SQUAWK_64")) {
             cOptions.is64 |= getBooleanProperty("SQUAWK_64");
-            updateProperty("SQUAWK_64", cOptions.is64 ? "true" : "false", true);
+            updateProperty("SQUAWK_64", cOptions.is64 ? "true" : "false");
         }
         preprocessor.processS64 = getBooleanProperty("SQUAWK_64");
 
         // Synchronize KERNEL_SQUAWK property with '-kernel'
         if (cOptions.kernel != getBooleanProperty("KERNEL_SQUAWK")) {
             cOptions.kernel |= getBooleanProperty("KERNEL_SQUAWK");
-            updateProperty("KERNEL_SQUAWK", cOptions.kernel ? "true" : "false", true);
+            updateProperty("KERNEL_SQUAWK", cOptions.kernel ? "true" : "false");
         }
         
         
           // Synchronize NATIVE_VERIFICATION property with '-nativeVerification'
         if (cOptions.nativeVerification != getBooleanProperty("NATIVE_VERIFICATION")) {
             cOptions.nativeVerification |= getBooleanProperty("NATIVE_VERIFICATION");
-            updateProperty("NATIVE_VERIFICATION", cOptions.nativeVerification ? "true" : "false", true);
+            updateProperty("NATIVE_VERIFICATION", cOptions.nativeVerification ? "true" : "false");
         }
 
         // Synchronize ASSERTIONS_ENABLED
@@ -2982,8 +2988,6 @@ public class Build {
         }
     }
 
-
-
     /**
      * Compiles a set of Java sources into class files with a Java source compiler. The sources
      * are initially {@link Preprocessor preprocessed} if <code>preprocess == true</code> and
@@ -3000,6 +3004,27 @@ public class Build {
      * @param   preprocess runs the {@link Preprocessor} over the sources if true
      */
     public void javac(String compileClassPath, String preverifyClassPath, File baseDir, File[] srcDirs, boolean j2me, List<String> extraArgs, boolean preprocess) {
+        this.javac(compileClassPath, preverifyClassPath, baseDir, srcDirs, j2me, extraArgs, preprocess, false);
+    }
+
+    /**
+     * Compiles a set of Java sources into class files with a Java source compiler. The sources
+     * are initially {@link Preprocessor preprocessed} if <code>preprocess == true</code> and
+     * the output is written into the "preprocessed" directory. The sources are then compiled
+     * with the Java compiler into the "classes" directory. If <code>j2me == true</code> then
+     * the class files in "classes" are preverified and written to "j2meclasses".
+     *
+     * @param   classPath  the class path
+     * @param   baseDir    the base directory for generated directories (i.e. "preprocessed", "classes" and "j2meclasses")
+     * @param   srcDirs    the set of directories that are searched recursively for the Java source files to be compiled
+     * @param   j2me       specifies if the classes being compiled are to be deployed on a J2ME platform
+     * @param   version    set the java language version (default is 1.5 if version is null)
+     * @param   extraArgs  extra javac arguments
+     * @param   preprocess runs the {@link Preprocessor} over the sources if true
+     * @param   noJava5    do not allow Java 5 syntax
+     */
+    public void javac(String compileClassPath, String preverifyClassPath, File baseDir, File[] srcDirs, boolean j2me, List<String> extraArgs, boolean preprocess, boolean noJava5) {
+        boolean doJava5 = isJava5SyntaxSupported() && !noJava5;
 
         // Preprocess the sources if required
         if (preprocess) {
@@ -3011,7 +3036,7 @@ public class Build {
 
         // Prepare and run the Java compiler
         javaCompiler.reset();
-        if (!isJava5SyntaxSupported() && j2me) {
+        if (!doJava5 && j2me) {
             // This is required to make the preverifier happy
             javaCompiler.arg("-target", "1.2");
             javaCompiler.arg("-source", "1.3");
@@ -3025,7 +3050,7 @@ public class Build {
         javaCompiler.arg("-g").args(javacOptions);
         javaCompiler.compile(compileClassPath, classesDir, srcDirs, j2me);
         
-        if (isJava5SyntaxSupported() && j2me) {
+        if (doJava5 && j2me) {
             classesDir = retroweave(baseDir, classesDir);
         }
 
@@ -3083,7 +3108,7 @@ public class Build {
         if (vm2c && !isJava5SyntaxSupported()) {
             log(brief, "[preprocessing with forced JAVA5SYNTAX for vm2c]");
             preprocessedDir = mkdir(baseDir, RomCommand.PREPROCESSED_FOR_VM2C_DIR_NAME);
-            updateProperty("JAVA5SYNTAX", "true", true);
+            updateProperty("JAVA5SYNTAX", "true");
             isJava5SyntaxSupported = true;
             resetJava5Syntax = true;
         } else {
@@ -3128,7 +3153,7 @@ public class Build {
         }
 
         if (resetJava5Syntax) {
-            updateProperty("JAVA5SYNTAX", "false", true);
+            updateProperty("JAVA5SYNTAX", "false");
             isJava5SyntaxSupported = false;
         }
 
