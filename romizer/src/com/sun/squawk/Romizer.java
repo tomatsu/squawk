@@ -482,6 +482,15 @@ public class Romizer {
 
             if (arg == null || arg.charAt(0) != '-') {
                 break;
+            } else if (arg.startsWith("-D")) {
+                try {
+                    String name = arg.substring("-D".length(), arg.indexOf('='));
+                    String value = arg.substring(arg.indexOf('=') + 1);
+                    putBuildProperty(name, value);
+                } catch (IndexOutOfBoundsException e) {
+                    usage("malformed -D option: " + arg);
+                    throw new RuntimeException();
+                }
             } else if (arg.startsWith("-cp:")) {
                 classPath = ArgsUtilities.toPlatformPath(arg.substring("-cp:".length()), true);
             } else if (arg.startsWith("-java5cp:")) {

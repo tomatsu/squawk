@@ -216,6 +216,11 @@ public class Build {
     private Properties properties;
 
     /**
+     * The properties that came from command line or dynamically (not from file)
+     */
+    public Properties dynamicProperties;
+
+    /**
      * The most recent date that the file(s) from which the properties are loaded was modified.
      */
     private long propertiesLastModified;
@@ -2176,7 +2181,7 @@ public class Build {
         } else {
             throw new BuildException("could not find build.properties");
         }
-
+        dynamicProperties = new Properties();
         platform = Platform.createPlatform(this);
         // target ccompiler set later...
         jdk = new JDK(platform.getExecutableExtension());
@@ -2471,8 +2476,8 @@ public class Build {
                 propertiesLastModified = System.currentTimeMillis();
             }
             log(verbose, "[build properties updated - " + name + "=" + value + "]");
-
         }
+        dynamicProperties.setProperty(name, value); // record these for later use...
     }
 
     /**
