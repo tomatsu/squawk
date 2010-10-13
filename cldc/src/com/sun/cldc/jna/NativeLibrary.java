@@ -164,7 +164,7 @@ public class NativeLibrary {
      * 
      * @param varName 
      * @param size the size of the variable in bytes
-     * @return an objecta that can be used to call the named function
+     * @return a Pointer that can be used to get/set the variable
      * @throws RuntimeException if there is no function by that name.
      */
     public VarPointer getGlobalVariableAddress(String varName, int size) {

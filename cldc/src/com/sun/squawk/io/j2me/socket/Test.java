@@ -31,7 +31,8 @@ import javax.microedition.io.*;
 
 /**
  *
- * Simple test case
+ * Simple test case reads HTTP page
+ * Usage: Test <host> [<port>]
  */
 public class Test {
 

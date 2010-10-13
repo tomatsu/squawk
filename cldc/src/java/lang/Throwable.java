@@ -139,6 +139,15 @@ public class Throwable {
     }
 
     /**
+     * Is this frame related to constructing and throwing the exception...
+     * @param frame
+     * @return true
+     */
+    private boolean internalFrame(ExecutionPoint frame) {
+        return frame.getKlass().isInstance(this) || MethodBody.isInterpreterInvoked(frame.mp);
+    }
+
+    /**
      * Prints this <code>Throwable</code> and its backtrace to the
      * standard error stream. This method prints a stack trace for this
      * <code>Throwable</code> object on the error output stream that is
@@ -160,15 +169,20 @@ public class Throwable {
                 stream.print(message);
             }
             stream.println();
+
+            boolean internalFrame = !VM.isVeryVerbose();
             if (this != VM.getOutOfMemoryError() && trace != null) {
                 for (int i = 0; i != trace.length; ++i) {
-                    stream.print("    ");
-                    if (trace[i] != null) {
-                        trace[i].print(stream);
-                    } else {
-                        stream.print("undecipherable");
+                    internalFrame = internalFrame && internalFrame(trace[i]);
+                    if (!internalFrame) {
+                        stream.print("    ");
+                        if (trace[i] != null) {
+                            trace[i].print(stream);
+                        } else {
+                            stream.print("undecipherable");
+                        }
+                        stream.println();
                     }
-                    stream.println();
                 }
             }
         }
