@@ -3027,7 +3027,7 @@ hbp.dumpState();
      *           object. This can't create a ptr from old->young gen, which is what write barrier is looking for.
      *           Don't copy this code for other purposes! 
      *
-     * @param original the iobject to copy
+     * @param original the object to copy
      * @return a copy of the original object.
      */
     public static Object shallowCopy(Object original) {
@@ -3620,58 +3620,45 @@ hbp.dumpState();
         return (high << 32) | (low & 0x00000000FFFFFFFFL);
     }
 
-/*if[!FLASH_MEMORY]*/
-    /**
-     * Executes an I/O operation on the graphics channel and return the result.
-     *
-     * @param op        the opcode
-     * @param i1        an integer parameter
-     * @param i2        an integer parameter
-     * @param i3        an integer parameter
-     * @param i4        an integer parameter
-     * @param i5        an integer parameter
-     * @param i6        an integer parameter
-     * @param send      a outgoing reference parameter
-     * @param receive   an incoming reference parameter (i.e. an array of some type)
-     * @return the event code to wait on or zero
-     */
-    public static int execGraphicsIO(int op, int i1, int i2, int i3, int i4, int i5, int i6, Object send, Object receive) {
-        try {
-            int chan = currentIsolate.getGuiOutputChannel();
-            return execIO(op, chan, i1, i2, i3, i4, i5, i6, send, receive);
-        } catch(IOException ex) {
-            throw new RuntimeException("Error executing graphics channel: " + ex);
-        }
-    }
-
-    /**
-     * Gets the next available event on the GUI input channel, blocking until there is one.
-     *
-     * @return the GUI event value
-     */
-    public static long getGUIEvent() {
-        try {
-            int channel = currentIsolate.getGuiInputChannel();
-            return VM.execIOLong(ChannelConstants.READLONG, channel, 0, 0, 0, 0, 0, 0, null, null);
-        } catch(IOException ex) {
-            throw new RuntimeException("Error executing event channel: " + ex);
-        }
-    }
-/*else[FLASH_MEMORY]*/ 
+/*if[!ENABLE_CHANNEL_GUI]*/
+/*else[ENABLE_CHANNEL_GUI]*/
 //    /**
-//     * Not used on embedded devices.
+//     * Executes an I/O operation on the graphics channel and return the result.
+//     *
+//     * @param op        the opcode
+//     * @param i1        an integer parameter
+//     * @param i2        an integer parameter
+//     * @param i3        an integer parameter
+//     * @param i4        an integer parameter
+//     * @param i5        an integer parameter
+//     * @param i6        an integer parameter
+//     * @param send      a outgoing reference parameter
+//     * @param receive   an incoming reference parameter (i.e. an array of some type)
+//     * @return the event code to wait on or zero
 //     */
 //    public static int execGraphicsIO(int op, int i1, int i2, int i3, int i4, int i5, int i6, Object send, Object receive) {
-//        throw Assert.shouldNotReachHere();
+//        try {
+//            int chan = currentIsolate.getGuiOutputChannel();
+//            return execIO(op, chan, i1, i2, i3, i4, i5, i6, send, receive);
+//        } catch(IOException ex) {
+//            throw new RuntimeException("Error executing graphics channel: " + ex);
+//        }
 //    }
 //
 //    /**
-//     * Not used on embedded devices.
+//     * Gets the next available event on the GUI input channel, blocking until there is one.
+//     *
+//     * @return the GUI event value
 //     */
 //    public static long getGUIEvent() {
-//        throw Assert.shouldNotReachHere();
+//        try {
+//            int channel = currentIsolate.getGuiInputChannel();
+//            return VM.execIOLong(ChannelConstants.READLONG, channel, 0, 0, 0, 0, 0, 0, null, null);
+//        } catch(IOException ex) {
+//            throw new RuntimeException("Error executing event channel: " + ex);
+//        }
 //    }
-/*end[FLASH_MEMORY]*/
+/*end[ENABLE_CHANNEL_GUI]*/ 
     
 /*if[FLASH_MEMORY]*/
     /**
@@ -4257,15 +4244,16 @@ hbp.dumpState();
         currentIsolate = isolate;
     }
 
-/*if[FINALIZATION]*/
-    /**
-     * Eliminates a finalizer.
-     *
-     * @param obj the object of the finalizer
-     */
-    public static void eliminateFinalizer(Object obj) {
-        GC.eliminateFinalizer(obj);
-    }
+/*if[!FINALIZATION]*/
+/*else[FINALIZATION]*/
+//    /**
+//     * Eliminates a finalizer.
+//     *
+//     * @param obj the object of the finalizer
+//     */
+//    public static void eliminateFinalizer(Object obj) {
+//        GC.eliminateFinalizer(obj);
+//    }
 /*end[FINALIZATION]*/
 
     /*=======================================================================*\

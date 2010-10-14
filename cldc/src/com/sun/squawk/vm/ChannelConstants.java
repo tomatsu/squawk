@@ -36,21 +36,28 @@ public final class ChannelConstants {
      */
     public final static int CHANNEL_GENERIC     = 1;
 
-    /**
-     * The channel identifier for the GUI input channel.
-     */
-    public final static int CHANNEL_GUIIN       = 2;
-
-    /**
-     * The channel identifier for the GUI output channel.
-     */
-    public final static int CHANNEL_GUIOUT      = 3;
-
-/*if[!OLD_IIC_MESSAGES]*/
+/*if[!ENABLE_CHANNEL_GUI]*/
     /**
      * The last fixed channel number.
      */
-    public final static int CHANNEL_LAST_FIXED  = CHANNEL_GUIOUT;
+    public final static int CHANNEL_LAST_FIXED  = CHANNEL_GENERIC;
+/*else[ENABLE_CHANNEL_GUI]*/
+//    /**
+//     * The channel identifier for the GUI input channel.
+//     */
+//    public final static int CHANNEL_GUIIN       = 2;
+//
+//    /**
+//     * The channel identifier for the GUI output channel.
+//     */
+//    public final static int CHANNEL_GUIOUT      = 3;
+//    /**
+//     * The last fixed channel number.
+//     */
+//    public final static int CHANNEL_LAST_FIXED  = CHANNEL_GUIOUT;
+/*end[ENABLE_CHANNEL_GUI]*/
+
+/*if[!OLD_IIC_MESSAGES]*/
 /*else[OLD_IIC_MESSAGES]*/
 //    /**
 //     * The channel for message I/O.
@@ -63,30 +70,33 @@ public final class ChannelConstants {
 //    public final static int CHANNEL_LAST_FIXED  = CHANNEL_MESSAGEIO;
 /*end[OLD_IIC_MESSAGES]*/
 
-    /**
-     * The GUI input repaint message.
-     */
-    public final static int GUIIN_REPAINT       = 0;
-
-    /**
-     * The GUI key input message.
-     */
-    public final static int GUIIN_KEY           = 1;
-
-    /**
-     * The GUI mouse message.
-     */
-    public final static int GUIIN_MOUSE         = 2;
-
-    /**
-     * The GUI exit message.
-     */
-    public final static int GUIIN_EXIT          = 3;
-
-    /**
-     * The GUI input repaint message.
-     */
-    public final static int GUIIN_HIBERNATE     = 4;
+/*if[!ENABLE_CHANNEL_GUI]*/
+/*else[ENABLE_CHANNEL_GUI]*/
+//    /**
+//     * The GUI input repaint message.
+//     */
+//    public final static int GUIIN_REPAINT       = 0;
+//
+//    /**
+//     * The GUI key input message.
+//     */
+//    public final static int GUIIN_KEY           = 1;
+//
+//    /**
+//     * The GUI mouse message.
+//     */
+//    public final static int GUIIN_MOUSE         = 2;
+//
+//    /**
+//     * The GUI exit message.
+//     */
+//    public final static int GUIIN_EXIT          = 3;
+//
+//    /**
+//     * The GUI input repaint message.
+//     */
+//    public final static int GUIIN_HIBERNATE     = 4;
+/*end[ENABLE_CHANNEL_GUI]*/
 
 
     public final static int
@@ -138,37 +148,42 @@ public final class ChannelConstants {
         WRITEINT                                = 34,
         WRITELONG                               = 35,
         WRITEBUF                                = 36,
-        SETWINDOWNAME                           = 37,       /* Opcodes for KAWT graphics API */
-        SCREENWIDTH                             = 38,
-        SCREENHEIGHT                            = 39,
-        BEEP                                    = 40,
-        SETOFFSCREENMODE                        = 41,
-        FLUSHSCREEN                             = 42,
-        CREATEIMAGE                             = 43,
-        CREATEMEMORYIMAGE                       = 44,
-        GETIMAGE                                = 45,
-        IMAGEWIDTH                              = 46,
-        IMAGEHEIGHT                             = 47,
-        DRAWIMAGE                               = 48,
-        FLUSHIMAGE                              = 49,
-        CREATEFONTMETRICS                       = 50,
-        FONTSTRINGWIDTH                         = 51,
-        FONTGETHEIGHT                           = 52,
-        FONTGETASCENT                           = 53,
-        FONTGETDESCENT                          = 54,
-        SETFONT                                 = 55,
-        SETCOLOR                                = 56,
-        SETCLIP                                 = 57,
-        DRAWSTRING                              = 58,
-        DRAWLINE                                = 59,
-        DRAWOVAL                                = 60,
-        DRAWRECT                                = 61,
-        FILLRECT                                = 62,
-        DRAWROUNDRECT                           = 63,
-        FILLROUNDRECT                           = 64,
-        FILLARC                                 = 65,
-        FILLPOLYGON                             = 66,
-        REPAINT                                 = 67,
+
+/*if[!ENABLE_CHANNEL_GUI]*/
+/*else[ENABLE_CHANNEL_GUI]*/
+//        SETWINDOWNAME                           = 37,       /* Opcodes for KAWT graphics API */
+//        SCREENWIDTH                             = 38,
+//        SCREENHEIGHT                            = 39,
+//        BEEP                                    = 40,
+//        SETOFFSCREENMODE                        = 41,
+//        FLUSHSCREEN                             = 42,
+//        CREATEIMAGE                             = 43,
+//        CREATEMEMORYIMAGE                       = 44,
+//        GETIMAGE                                = 45,
+//        IMAGEWIDTH                              = 46,
+//        IMAGEHEIGHT                             = 47,
+//        DRAWIMAGE                               = 48,
+//        FLUSHIMAGE                              = 49,
+//        CREATEFONTMETRICS                       = 50,
+//        FONTSTRINGWIDTH                         = 51,
+//        FONTGETHEIGHT                           = 52,
+//        FONTGETASCENT                           = 53,
+//        FONTGETDESCENT                          = 54,
+//        SETFONT                                 = 55,
+//        SETCOLOR                                = 56,
+//        SETCLIP                                 = 57,
+//        DRAWSTRING                              = 58,
+//        DRAWLINE                                = 59,
+//        DRAWOVAL                                = 60,
+//        DRAWRECT                                = 61,
+//        FILLRECT                                = 62,
+//        DRAWROUNDRECT                           = 63,
+//        FILLROUNDRECT                           = 64,
+//        FILLARC                                 = 65,
+//        FILLPOLYGON                             = 66,
+//        REPAINT                                 = 67,
+/*end[ENABLE_CHANNEL_GUI]*/
+
         /*
          * Internal codes used to execute C code on the service stack.
          */
@@ -224,72 +239,76 @@ public final class ChannelConstants {
     private static final String[] Mnemonics = {
         "[invalid opcode]",
         "GLOBAL_CREATECONTEXT",     // 1
-        "GLOBAL_DELETECONTEXT",     // 2
-        "GLOBAL_HIBERNATECONTEXT",  // 3
-        "GLOBAL_GETEVENT",          // 4
-        "GLOBAL_POSTEVENT",         // 5
-        "GLOBAL_WAITFOREVENT",      // 6
-        "CONTEXT_GETCHANNEL",       // 7
-        "CONTEXT_FREECHANNEL",      // 8
-        "CONTEXT_GETRESULT",        // 9
-        "CONTEXT_GETRESULT_2",      // 10
-        "CONTEXT_GETERROR",         // 11
-        "OPENCONNECTION ",          // 12
-        "CLOSECONNECTION ",         // 13
-        "ACCEPTCONNECTION ",        // 14
-        "OPENINPUT",                // 15
-        "CLOSEINPUT",               // 16
-        "WRITEREAD",                // 17
-        "READBYTE",                 // 18
-        "READSHORT",                // 19
-        "READINT",                  // 20
-        "READLONG",                 // 21
-        "READBUF",                  // 22
-        "SKIP",                     // 23
-        "AVAILABLE",                // 24
-        "MARK",                     // 25
-        "RESET",                    // 26
-        "MARKSUPPORTED",            // 27
-        "OPENOUTPUT",               // 28
-        "FLUSH",                    // 29
-        "CLOSEOUTPUT",              // 30
-        "WRITEBYTE",                // 31
-        "WRITESHORT",               // 32
-        "WRITEINT",                 // 33
-        "WRITELONG",                // 34
-        "WRITEBUF",                 // 35
-        "SETWINDOWNAME",            // 36
-        "SCREENWIDTH",              // 37
-        "SCREENHEIGHT",             // 38
-        "BEEP",                     // 39
-        "SETOFFSCREENMODE",         // 40
-        "FLUSHSCREEN",              // 41
-        "CREATEIMAGE",              // 42
-        "CREATEMEMORYIMAGE",        // 43
-        "GETIMAGE",                 // 44
-        "IMAGEWIDTH",               // 45
-        "IMAGEHEIGHT",              // 46
-        "DRAWIMAGE",                // 47
-        "FLUSHIMAGE",               // 48
-        "CREATEFONTMETRICS",        // 49
-        "FONTSTRINGWIDTH",          // 50
-        "FONTGETHEIGHT",            // 51
-        "FONTGETASCENT",            // 52
-        "FONTGETDESCENT",           // 53
-        "SETFONT",                  // 54
-        "SETCOLOR",                 // 55
-        "SETCLIP",                  // 56
-        "DRAWSTRING",               // 57
-        "DRAWLINE",                 // 58
-        "DRAWOVAL",                 // 59
-        "DRAWRECT",                 // 60
-        "FILLRECT",                 // 61
-        "DRAWROUNDRECT",            // 62
-        "FILLROUNDRECT",            // 63
-        "FILLARC",                  // 64
-        "FILLPOLYGON",              // 70
-        "REPAINT",                  // 71
-        "GLOBAL_GETHIBERNATIONDATA" //72
+        "GLOBAL_GETEVENT",          // 2
+        "GLOBAL_POSTEVENT",         // 3
+        "GLOBAL_WAITFOREVENT",      // 4
+        "CONTEXT_DELETE",           // 5
+        "CONTEXT_HIBERNATE",        // 6
+        "CONTEXT_GETHIBERNATIONDATA", // 7
+        "CONTEXT_GETCHANNEL",       // 8
+        "CONTEXT_FREECHANNEL",      // 9
+        "CONTEXT_GETRESULT",        // 10
+        "CONTEXT_GETRESULT_2",      // 11
+        "CONTEXT_GETERROR",         // 12
+        "OPENCONNECTION ",          // 13
+        "CLOSECONNECTION ",         // 14
+        "ACCEPTCONNECTION ",        // 15
+        "OPENINPUT",                // 16
+        "CLOSEINPUT",               // 17
+        "WRITEREAD",                // 18
+        "READBYTE",                 // 19
+        "READSHORT",                // 20
+        "READINT",                  // 21
+        "READLONG",                 // 22
+        "READBUF",                  // 23
+        "SKIP",                     // 24
+        "AVAILABLE",                // 25
+        "MARK",                     // 26
+        "RESET",                    // 27
+        "MARKSUPPORTED",            // 28
+        "OPENOUTPUT",               // 29
+        "FLUSH",                    // 30
+        "CLOSEOUTPUT",              // 31
+        "WRITEBYTE",                // 32
+        "WRITESHORT",               // 33
+        "WRITEINT",                 // 34
+        "WRITELONG",                // 35
+        "WRITEBUF"                  // 36
+/*if[!ENABLE_CHANNEL_GUI]*/
+/*else[ENABLE_CHANNEL_GUI]*/
+//        ,
+//        "SETWINDOWNAME",            // 37
+//        "SCREENWIDTH",              // 38
+//        "SCREENHEIGHT",             // 39
+//        "BEEP",                     // 40
+//        "SETOFFSCREENMODE",         // 41
+//        "FLUSHSCREEN",              // 42
+//        "CREATEIMAGE",              // 43
+//        "CREATEMEMORYIMAGE",        // 44
+//        "GETIMAGE",                 // 45
+//        "IMAGEWIDTH",               // 46
+//        "IMAGEHEIGHT",              // 47
+//        "DRAWIMAGE",                // 48
+//        "FLUSHIMAGE",               // 49
+//        "CREATEFONTMETRICS",        // 50
+//        "FONTSTRINGWIDTH",          // 51
+//        "FONTGETHEIGHT",            // 52
+//        "FONTGETASCENT",            // 53
+//        "FONTGETDESCENT",           // 54
+//        "SETFONT",                  // 55
+//        "SETCOLOR",                 // 56
+//        "SETCLIP",                  // 57
+//        "DRAWSTRING",               // 58
+//        "DRAWLINE",                 // 59
+//        "DRAWOVAL",                 // 60
+//        "DRAWRECT",                 // 61
+//        "FILLRECT",                 // 62
+//        "DRAWROUNDRECT",            // 63
+//        "FILLROUNDRECT",            // 64
+//        "FILLARC",                  // 65
+//        "FILLPOLYGON",              // 66
+//        "REPAINT"                   // 67
+/*end[ENABLE_CHANNEL_GUI]*/
     };
 
     public static String getMnemonic(int op) {

@@ -68,6 +68,7 @@ public class ChannelIO implements java.io.Serializable {
      */
     private int nextAvailableChannelID = ChannelConstants.CHANNEL_LAST_FIXED + 1;
 
+/*if[ENABLE_CHANNEL_GUI]*/
     /**
      * The special events channel.
      */
@@ -77,6 +78,7 @@ public class ChannelIO implements java.io.Serializable {
      * The special graphics channel.
      */
     private GUIOutputChannel guiOutputChannel;
+/*end[ENABLE_CHANNEL_GUI]*/
 
     /**
      * The class of the exception (if any) that occurred in the last call to
@@ -209,7 +211,9 @@ public class ChannelIO implements java.io.Serializable {
             try {
                 ChannelIO cio = deserialize(serializedData);
                 cio.rundown = false;
+/*if[ENABLE_CHANNEL_GUI]*/
                 cio.guiInputChannel.addToGUIInputQueue(ChannelConstants.GUIIN_REPAINT, 0, 0, 0); // Add a repaint command
+/*end[ENABLE_CHANNEL_GUI]*/
                 return cio;
             } catch (Exception ex) {
                 System.err.println("Error deserializing channel "+ex);
@@ -221,14 +225,14 @@ public class ChannelIO implements java.io.Serializable {
 
     /**
      * Constructor.
-     *
-     * @param mainClassName     the name of the isolate's main class
      */
     private ChannelIO() {
+/*if[ENABLE_CHANNEL_GUI]*/
         guiInputChannel  = new GUIInputChannel(this, ChannelConstants.CHANNEL_GUIIN);
         guiOutputChannel = new GUIOutputChannel(this, ChannelConstants.CHANNEL_GUIOUT, guiInputChannel);
         channels.put(ChannelConstants.CHANNEL_GUIIN, guiInputChannel);
         channels.put(ChannelConstants.CHANNEL_GUIOUT, guiOutputChannel);
+/*end[ENABLE_CHANNEL_GUI]*/
     }
 
     /**
@@ -303,10 +307,12 @@ public class ChannelIO implements java.io.Serializable {
             }
             case ChannelConstants.CONTEXT_GETCHANNEL: {
                 switch (i1) { // Channel type
+/*if[ENABLE_CHANNEL_GUI]*/
                     case ChannelConstants.CHANNEL_GUIIN:
                     case ChannelConstants.CHANNEL_GUIOUT: {
                         return i1; // Both channels are already open and the channel number is the channel type
                     }
+/*end[ENABLE_CHANNEL_GUI]*/
                     case ChannelConstants.CHANNEL_GENERIC: {
                         return createGenericConnectionChannel().getChannelID();
                     }

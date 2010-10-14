@@ -135,6 +135,13 @@ public final class Isolate implements Runnable {
     private final static String MIDLET_WRAPPER_CLASS = "com.sun.squawk.imp.MIDletMainWrapper";
 
     /**
+     * List of stack chunks in an isolate {@link #save saved} to a stream. This is
+     * only used by a generational collector that needs to track the thread stacks
+     * in the system.
+     */
+    private Object savedStackChunks;
+
+    /**
      * The debugger agent under which this isolate is being debugged by (if any).
      */
     private Debugger debugger;
@@ -201,10 +208,13 @@ public final class Isolate implements Runnable {
      */
     private final String parentSuiteSourceURI;
 
-    /**
-     * The path where class files and suite files can be found.
-     */
-    private final String classPath;
+/*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//    /**
+//     * The path where class files and suite files can be found.
+//     */
+//    private final String classPath;
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
 
     /**
      * The channel I/O handle.
@@ -216,15 +226,18 @@ public final class Isolate implements Runnable {
      */
     private byte[] hibernatedChannelContext;
 
-    /**
-     * The GUI input channel.
-     */
-    private int guiIn;
-
-    /**
-     * The GUI output channel.
-     */
-    private int guiOut;
+/*if[!ENABLE_CHANNEL_GUI]*/
+/*else[ENABLE_CHANNEL_GUI]*/
+//    /**
+//     * The GUI input channel.
+//     */
+//    private int guiIn;
+//
+//    /**
+//     * The GUI output channel.
+//     */
+//    private int guiOut;
+/*end[ENABLE_CHANNEL_GUI]*/
 
     /**
      * SquawkHashtable that holds the monitors for objects in ROM.
@@ -236,12 +249,6 @@ public final class Isolate implements Runnable {
      * that are not currently installed in the system.
      */
     private TranslatorInterface translator;
-
-    /**
-     * The class of the translator that is to be used to locate, load and convert classes
-     * that are not currently installed in the system.
-     */
-    private Klass translatorClass;
 
     /**
      * Pointer to first class state record. These are the structures that store the static field values
@@ -265,13 +272,6 @@ public final class Isolate implements Runnable {
     private VMThread hibernatedTimerThreads;
 
     /**
-     * List of stack chunks in an isolate {@link #save saved} to a stream. This is
-     * only used by a generational collector that needs to track the thread stacks
-     * in the system.
-     */
-    private Object savedStackChunks;
-
-    /**
      * List of threads waiting for the isolate to exit or hibernate.
      */
     private VMThread joiners;
@@ -281,11 +281,12 @@ public final class Isolate implements Runnable {
      */
     private SquawkHashtable properties;
 
-/*if[FINALIZATION]*/
-    /**
-     * List of finalizers that need to be run.
-     */
-    private Finalizer finalizers;
+/*if[!FINALIZATION]*/
+/*else[FINALIZATION]*/
+//    /**
+//     * List of finalizers that need to be run.
+//     */
+//    private Finalizer finalizers;
 /*end[FINALIZATION]*/
 
     /**
@@ -335,7 +336,10 @@ public final class Isolate implements Runnable {
         this.mainClassName        = mainClassName;
         this.args                 = args;
         this.leafSuite            = suite;
-        this.classPath            = null;
+/*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//      this.classPath            = null;
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         this.parentSuiteSourceURI = null;
         this.state                = NEW;
         this.id                   = VM.allocateIsolateID();
@@ -352,7 +356,7 @@ public final class Isolate implements Runnable {
 
     /**
      * Add the properties in the hashtable to this isolate, copying strings
-     * when nededed to ensure isolate hygene.
+     * when needed to ensure isolate hygiene.
      *
      * @param properties
      */
@@ -390,7 +394,10 @@ public final class Isolate implements Runnable {
         }
         this.mainClassName        = copyIfCurrentThreadIsExternal(mainClassName);
         this.args                 = copyIfCurrentThreadIsExternal(args);
-        this.classPath            = copyIfCurrentThreadIsExternal(classPath);
+/*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//      this.classPath            = copyIfCurrentThreadIsExternal(classPath);
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         this.parentSuiteSourceURI = copyIfCurrentThreadIsExternal(parentSuiteSourceURI);
         this.state                = NEW;
         this.id                   = VM.allocateIsolateID();
@@ -486,13 +493,7 @@ public final class Isolate implements Runnable {
      */
     private String copyIfCurrentThreadIsExternal(String s) {
         if (s != null && GC.inRam(s) && isCurrentThreadExternal()) {
-              // Interning is way too heavy weight to bother with for now...
-//            String s2 = Isolate.lookupInterned(s); // try to find version in ROM
-//            if (s2 == null || GC.inRam(s2)) {
-                return new String(s);
-//            } else {
-//                return s2;
-//            }
+            return new String(s);
         } else {
             return s;
         }
@@ -543,7 +544,11 @@ public final class Isolate implements Runnable {
      * @return the class path
      */
     public String getClassPath() {
-        return copyIfCurrentThreadIsExternal(classPath);
+/*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
+        return null;
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//      return copyIfCurrentThreadIsExternal(classPath);
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
     }
 
     /**
@@ -655,20 +660,6 @@ public final class Isolate implements Runnable {
     }
 
     /**
-     * Sets the translator class.
-     *
-     * @param translatorClass the class of the translator.
-     */
-    void setTranslatorClass(Klass translatorClass) {
-        Assert.always(!VM.isHosted());
-        if (GC.inRam(translatorClass)) {
-            throw new IllegalArgumentException("translator class must be in read-only memory");
-        }
-        this.translatorClass = translatorClass;
-    }
-
-
-    /**
      * Gets a translator that is to be used to locate, load and convert
      * classes that are not currently installed in this isolate's runtime
      * environment.
@@ -676,20 +667,22 @@ public final class Isolate implements Runnable {
      * @return  a translator for installing new classes or null if the system does not support dynamic class loading
      */
     public static TranslatorInterface getDefaultTranslator() throws AllowInlinedPragma {
-/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
-        String translatorSuiteUrl = System.getProperty("com.sun.squawk.Isolate.getDefaultTranslator");
-        if (translatorSuiteUrl == null) {
-            translatorSuiteUrl = "file://translator.suite";
-        }
-        Suite tsuite = Suite.getSuite(translatorSuiteUrl, false);
-        if (tsuite != null) {
-            Klass klass = tsuite.lookup("com.sun.squawk.translator.Translator");
-            if (klass != null) {
-                return (TranslatorInterface)klass.newInstance();
-            }
-        }
-/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
+/*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
         return null;
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//        String translatorSuiteUrl = System.getProperty("com.sun.squawk.Isolate.getDefaultTranslator");
+//        if (translatorSuiteUrl == null) {
+//            translatorSuiteUrl = "file://translator.suite";
+//        }
+//        Suite tsuite = Suite.getSuite(translatorSuiteUrl, false);
+//        if (tsuite != null) {
+//            Klass klass = tsuite.lookup("com.sun.squawk.translator.Translator");
+//            if (klass != null) {
+//                return (TranslatorInterface)klass.newInstance();
+//            }
+//        }
+//      return null;
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
     }
 
     /**
@@ -703,18 +696,18 @@ public final class Isolate implements Runnable {
         if (VM.isHosted()) {
             return translator;
         }
-/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
-        /*
-         * Create the translator instance reflectively. This (compile and runtime) dynamic
-         * binding to the translator means that it can be an optional component.
-         */
-        Klass klass = translatorClass != null ? translatorClass : leafSuite.lookup("com.sun.squawk.translator.Translator");
-        if (klass == null) {
-            return getDefaultTranslator();
-        }
-        return (TranslatorInterface)klass.newInstance();
+/*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
+        return null;
 /*else[ENABLE_DYNAMIC_CLASSLOADING]*/
-//      return null;
+//    /*
+//     * Create the translator instance reflectively. This (compile and runtime) dynamic
+//     * binding to the translator means that it can be an optional component.
+//     */
+//    Klass klass = leafSuite.lookup("com.sun.squawk.translator.Translator");
+//    if (klass == null) {
+//        return getDefaultTranslator();
+//    }
+//    return (TranslatorInterface)klass.newInstance();
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
     }
 
@@ -886,9 +879,9 @@ public final class Isolate implements Runnable {
          * Create a wrapper for a listener that is intended to run in connection with events in THIS isolates.
          *
          * @param listener the listener to be run based on events in this isolate
-         * @param eventKind the event that this listener is regsietered for.
+         * @param eventKind the event that this listener is registered for.
          */
-        public LocalListenerWrapper(LifecycleListener listener, int eventKind) {
+        LocalListenerWrapper(LifecycleListener listener, int eventKind) {
             this.listener = listener;
             this.eventKind = eventKind;
         }
@@ -942,7 +935,7 @@ public final class Isolate implements Runnable {
          *
          * @param remote the isolate that is being monitored
          * @param listener the listener to be run based on events in remoteIsolate
-         * @param eventKind the event that this listener is regsietered for.
+         * @param eventKind the event that this listener is registered for.
          */
         RemoteListenerWrapper(Isolate remote, LifecycleListener listener, int eventKind) {
             super(listener, eventKind);
@@ -1028,11 +1021,9 @@ public final class Isolate implements Runnable {
 
         if (this == currentIsolate) { // local
             // add (wrapper) hook to local isolate
-//System.out.println("Adding LocalListenerWrapper for " + listener + " kind: " + eventKind + " on isolate " + this);
             cbm.add(currentIsolate, new LocalListenerWrapper(listener, eventKind));
         } else {
             RemoteListenerWrapper rlw = new RemoteListenerWrapper(this, listener, eventKind);
-//System.out.println("Adding RemoteListenerWrapper for " + listener + " kind: " + eventKind + " on isolate " + this);
             // add cleanup hook in current isolate
             currentIsolate.getCallbackManager(SHUTDOWN_EVENT_MASK).add(currentIsolate, rlw.getCleanupHook());
 
@@ -1340,30 +1331,33 @@ public final class Isolate implements Runnable {
         return channelContext;
     }
 
-    /**
-     * Get the GUI input channel.
-     *
-     * @return the I/O handle
-     */
-    int getGuiInputChannel() throws IOException {
-        if (guiIn == 0) {
-            guiIn = VM.getChannel(ChannelConstants.CHANNEL_GUIIN);
-        }
-        return guiIn;
-    }
-
-    /**
-     * Get the GUI output channel.
-     *
-     * @return the I/O handle
-     */
-    int getGuiOutputChannel() throws IOException {
-        if (guiOut == 0) {
-            guiOut = VM.getChannel(ChannelConstants.CHANNEL_GUIOUT);
-            VM.execGraphicsIO(ChannelConstants.SETWINDOWNAME, 0, 0, 0, 0, 0, 0, mainClassName, null);
-        }
-        return guiOut;
-    }
+/*if[!ENABLE_CHANNEL_GUI]*/
+/*else[ENABLE_CHANNEL_GUI]*/
+//    /**
+//     * Get the GUI input channel.
+//     *
+//     * @return the I/O handle
+//     */
+//    int getGuiInputChannel() throws IOException {
+//        if (guiIn == 0) {
+//            guiIn = VM.getChannel(ChannelConstants.CHANNEL_GUIIN);
+//        }
+//        return guiIn;
+//    }
+//
+//    /**
+//     * Get the GUI output channel.
+//     *
+//     * @return the I/O handle
+//     */
+//    int getGuiOutputChannel() throws IOException {
+//        if (guiOut == 0) {
+//            guiOut = VM.getChannel(ChannelConstants.CHANNEL_GUIOUT);
+//            VM.execGraphicsIO(ChannelConstants.SETWINDOWNAME, 0, 0, 0, 0, 0, 0, mainClassName, null);
+//        }
+//        return guiOut;
+//    }
+/*end[ENABLE_CHANNEL_GUI]*/
 
     /**
      * Updates the leaf suite if this isolate was initialized with a non-null
@@ -1373,30 +1367,34 @@ public final class Isolate implements Runnable {
         if (!prepass) {
             Assert.that(VM.getCurrentIsolate() == this);
         }
-        if (parentSuiteSourceURI != null || classPath != null) {
-
-            Suite parent = (parentSuiteSourceURI == null ? bootstrapSuite : Suite.getSuite(parentSuiteSourceURI));
+/*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
+        if (parentSuiteSourceURI != null) {
+            Suite parent = Suite.getSuite(parentSuiteSourceURI);
             Assert.that(parent != null);
-
-            // Don't create a suite for loading new classes if the class path is null
-            if (classPath == null) {
-                leafSuite = parent;
-            } else {
-                String leafSuiteName = getProperty("leaf.suite.name");
-                if (leafSuiteName == null) {
-                    leafSuiteName = "-leaf" + VM.getNextHashcode() + "-";
-                }
-                leafSuite = new Suite(leafSuiteName, parent);
-            }
-
-//            System.out.println("In updateLeafSuite(" + prepass + "):");
-//            System.out.println("    isolate: " + this);
-//            System.out.println("    parent: " + parent);
-//            System.out.println("    leafSuite: " + leafSuite);
-//            System.out.println("    classPath: " + classPath);
+            leafSuite = parent;
         } else {
             leafSuite = bootstrapSuite;
         }
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//        if (parentSuiteSourceURI != null || classPath != null) {
+//
+//            Suite parent = (parentSuiteSourceURI == null ? bootstrapSuite : Suite.getSuite(parentSuiteSourceURI));
+//            Assert.that(parent != null);
+//
+//            // Don't create a suite for loading new classes if the class path is null
+//            if (classPath == null) {
+//                leafSuite = parent;
+//            } else {
+//                String leafSuiteName = getProperty("leaf.suite.name");
+//                if (leafSuiteName == null) {
+//                    leafSuiteName = "-leaf" + VM.getNextHashcode() + "-";
+//                }
+//                leafSuite = new Suite(leafSuiteName, parent);
+//            }
+//        } else {
+//            leafSuite = bootstrapSuite;
+//        }
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
     }
 
     /**
@@ -1414,7 +1412,7 @@ public final class Isolate implements Runnable {
     }
 
     /**
-     * When Isolate termitaes or hibernates, call this to remove the VM shutdown hook.
+     * When Isolate terminates or hibernates, call this to remove the VM shutdown hook.
      */
     private void removeVMShutdownHook() {
         if (shutdownHook != null) {
@@ -1813,8 +1811,9 @@ public final class Isolate implements Runnable {
     }
 
     /**
-     * Hibernate the isolate. If the current thread is in this isolate then
-     * this function will only return when the isolate is unhibernated.
+     * Hibernate or exit the isolate. If the current thread is in this isolate then
+     * this function will only return when the isolate is unhibernated. If hibernating,
+     * also hibernate the underlying IO system.
      *
      * @param  hibernateIO if true, the underlying IO system is also serialized. Only an
      *                     isolate with a hibernated IO system can be {@link #unhibernate() resumed}
@@ -2015,30 +2014,31 @@ public final class Isolate implements Runnable {
         return exitCode;
     }
 
-/*if[FINALIZATION]*/
-    /**
-     * Add a finalizer to the queue of pending finalizers.
-     *
-     * @param finalizer the finalizer to add
-     */
-    void addFinalizer(Finalizer finalizer) {
-        finalizer.setNext(finalizers);
-        finalizers = finalizer;
-    }
-
-    /**
-     * Remove a finalizer.
-     *
-     * @return the finalizer or null if there are none.
-     */
-    Finalizer removeFinalizer() {
-        Finalizer finalizer = finalizers;
-        if (finalizer != null) {
-            finalizers = finalizer.getNext();
-            finalizer.setNext(null);
-        }
-        return finalizer;
-    }
+/*if[!FINALIZATION]*/
+/*else[FINALIZATION]*/
+//    /**
+//     * Add a finalizer to the queue of pending finalizers.
+//     *
+//     * @param finalizer the finalizer to add
+//     */
+//    void addFinalizer(Finalizer finalizer) {
+//        finalizer.setNext(finalizers);
+//        finalizers = finalizer;
+//    }
+//
+//    /**
+//     * Remove a finalizer.
+//     *
+//     * @return the finalizer or null if there are none.
+//     */
+//    Finalizer removeFinalizer() {
+//        Finalizer finalizer = finalizers;
+//        if (finalizer != null) {
+//            finalizers = finalizer.getNext();
+//            finalizer.setNext(null);
+//        }
+//        return finalizer;
+//    }
 /*end[FINALIZATION]*/
 
     /**
@@ -2086,9 +2086,12 @@ public final class Isolate implements Runnable {
     private String isolateInfoStr() {
         StringBuffer sb = new StringBuffer();
         sb.append("isolate for '").append(mainClassName).append("'");
-        if (classPath != null) {
-            sb.append(" with class path set to '").append(classPath).append("'");
-        }
+/*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//        if (classPath != null) {
+//            sb.append(" with class path set to '").append(classPath).append("'");
+//        }
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         if (parentSuiteSourceURI != null) {
             sb.append(" with parent suite URI set to '").append(parentSuiteSourceURI).append("'");
         }
@@ -2141,7 +2144,7 @@ public final class Isolate implements Runnable {
          *
          * @param url  specifies where to open the connection
          */
-        public DelayedURLOutputStream(String url) {
+        DelayedURLOutputStream(String url) {
             this.url = url;
         }
 
@@ -2375,7 +2378,7 @@ public final class Isolate implements Runnable {
             }
         } catch (NoSuchElementException ex) {
             // Another thread removed a stream - resize the array
-            Object old = names;
+            String[] old = names;
             names = new String[i];
             System.arraycopy(old, 0, names, 0, i);
         }
@@ -2638,6 +2641,7 @@ public final class Isolate implements Runnable {
         this.breakpoints = breakpoints;
     }
 
+    // TODO: See if this can be conditional on ENABLE_DEBUGGER
     /**
      * The breakpoints that have been set in this isolate.
      */
