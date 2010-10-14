@@ -393,17 +393,17 @@ public abstract class BytecodeTracer {
                 String obj = getObjectDetails(index);
                 if (obj == null) {
                     obj = "";
-
-                } print(opcode, obj);
+                }
+                print(opcode, obj);
                 break;
             }
             case OPC.OBJECT: {
-                int index = getByte();
+                int index = getByte() & 0xFF;
                 String obj = getObjectDetails(index);
                 if (obj == null) {
-                    obj = "";
-
-                } print(opcode, obj);
+                    obj = "#" + index;
+                }
+                print(opcode, obj);
                 break;
             }
             default: return false;
