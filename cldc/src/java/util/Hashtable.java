@@ -27,7 +27,6 @@ package java.util;
 /*if[JAVA5SYNTAX]*/
 import com.sun.squawk.Java5Marker;
 /*end[JAVA5SYNTAX]*/
-import com.sun.squawk.util.*;
 
 /**
  * This class implements a hashtable, which maps keys to values. Any

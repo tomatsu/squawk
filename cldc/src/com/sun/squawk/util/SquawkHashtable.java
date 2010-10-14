@@ -88,7 +88,7 @@ public class SquawkHashtable<K, V> {
     }
 
     /**
-     * The hash table data. This field is zeroed when object deserialization
+     * The hash table data. This field is zeroed when object de-serialization
      * occurs and is reformed from backupTable.
      */
 /*if[JAVA5SYNTAX]*/
@@ -150,19 +150,14 @@ public class SquawkHashtable<K, V> {
         threshold = ((initialCapacity * loadFactorPercent) / 100);
     }
 
-/*if[JAVA5SYNTAX]*/
-    public final SquawkHashtable<K, V> setRehasher(Rehasher rehasher) {
-/*else[JAVA5SYNTAX]*/
-//    public final SquawkHashtable setRehasher(Rehasher rehasher) {
-/*end[JAVA5SYNTAX]*/
+    public final void setRehasher(Rehasher rehasher) {
         this.rehasher = rehasher;
-        return this;
     }
 
     /**
-     * Get the hash table entires
+     * Set the hash table entries
      *
-     * @param table the new array of hash table entires
+     * @param table the new array of hash table entries
      */
 /*if[JAVA5SYNTAX]*/
     private void setTable(HashtableEntry<K, V>[] table) {
@@ -174,9 +169,9 @@ public class SquawkHashtable<K, V> {
     }
 
     /**
-     * Get the hash table entires
+     * Get the hash table entries
      *
-     * @return the array of hash table entires
+     * @return the array of hash table entries
      */
 /*if[JAVA5SYNTAX]*/
     private HashtableEntry<K, V>[] getTable() {
