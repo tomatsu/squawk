@@ -33,7 +33,7 @@ public class OpCodeCounter {
     public static void main(String[] args) throws Exception {
         BufferedReader reader = new BufferedReader(new FileReader("trace"), 1000000);
         String line = reader.readLine();
-        Hashtable table = new Hashtable();
+        Hashtable<String, Integer> table = new Hashtable<String, Integer>();
         int opcodes = 0;
         int keys = 0;
         while (line != null) {

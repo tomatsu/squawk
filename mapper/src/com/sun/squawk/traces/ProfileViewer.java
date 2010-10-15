@@ -72,7 +72,7 @@ public class ProfileViewer extends JFrame implements WindowListener, ComponentLi
     /**
      * A cache of JTextAreas for previously viewed source files.
      */
-    private HashMap sourceFileCache;
+    private HashMap<String, JTextArea> sourceFileCache;
 
     /**
      * The status bar.
@@ -103,7 +103,7 @@ public class ProfileViewer extends JFrame implements WindowListener, ComponentLi
      */
     private ProfileViewer() {
         profileRoot = new MethodNode(null);
-        sourceFileCache = new HashMap();
+        sourceFileCache = new HashMap<String, JTextArea>();
     }
 
     /**
@@ -158,7 +158,7 @@ public class ProfileViewer extends JFrame implements WindowListener, ComponentLi
      */
     public static Pattern STACK_TRACE_END = Pattern.compile("\\*STACKTRACEEND\\*");
 
-    public ProfileNode getProfileRoot() {
+    ProfileNode getProfileRoot() {
         return profileRoot;
     }
 
@@ -184,7 +184,7 @@ public class ProfileViewer extends JFrame implements WindowListener, ComponentLi
 
     /**
      * Reads lines from an input file until a line matching the profile stack trace start pattern
-     * is recognised.
+     * is recognized.
      *
      * @param in  the input file
      * @return the mnemonic of the instruction executed just before the stack trace was taken or null if no stack trace start line was found
@@ -211,7 +211,7 @@ public class ProfileViewer extends JFrame implements WindowListener, ComponentLi
      */
     private int readSamples(InputFile in, int depth) {
         int count = 0;
-        ReverseTraversableVector sample = new ReverseTraversableVector();
+        ReverseTraversableVector<ExecutionPoint> sample = new ReverseTraversableVector<ExecutionPoint>();
         String mnemonic;
         while ((mnemonic = readStackTraceStart(in)) != null) {
 
@@ -293,7 +293,7 @@ public class ProfileViewer extends JFrame implements WindowListener, ComponentLi
      *
      * @param filter  hides all nodes in the tree that are matched by <code>filter</code>
      */
-    public void hideNodes(ProfileNode.Filter filter) {
+    void hideNodes(ProfileNode.Filter filter) {
 
         // Unhide all nodes first
         profileRoot.hideNodes(null);
@@ -339,11 +339,11 @@ public class ProfileViewer extends JFrame implements WindowListener, ComponentLi
      */
     private void run(String[] args) {
 
-        Vector symbolsToLoad = new Vector();
+        Vector<String> symbolsToLoad = new Vector<String>();
         symbolsToLoad.addElement("squawk.sym");
         symbolsToLoad.addElement("squawk_dynamic.sym");
 
-        String sourcePath = ".";
+        String sourcePathStr = ".";
         int depth = 0;
         float threshold = DEFAULT_THRESHOLD;
 
@@ -353,7 +353,7 @@ public class ProfileViewer extends JFrame implements WindowListener, ComponentLi
             if (arg.charAt(0) != '-') {
                 break;
             } else if (arg.startsWith("-sp:")) {
-                sourcePath = arg.substring("-sp:".length());
+                sourcePathStr = arg.substring("-sp:".length());
             } else if (arg.startsWith("-map:")) {
                 symbolsToLoad.addElement(arg.substring("-map:".length()));
             } else if (arg.startsWith("-depth:")) {
@@ -390,7 +390,7 @@ public class ProfileViewer extends JFrame implements WindowListener, ComponentLi
 
         // Initialize the source path
         try {
-            sourcePath = sourcePath.replace(':', File.pathSeparatorChar);
+            sourcePathStr = sourcePathStr.replace(':', File.pathSeparatorChar);
             this.sourcePath = (ClasspathConnection)Connector.open("classpath://" + sourcePath);
         } catch (IOException ioe) {
             ioe.printStackTrace();
@@ -596,7 +596,7 @@ public class ProfileViewer extends JFrame implements WindowListener, ComponentLi
          *
          * @param view JScrollPane
          */
-        public ProfileTreeSelectionListener(JScrollPane view) {
+        ProfileTreeSelectionListener(JScrollPane view) {
             this.view = view;
         }
 
@@ -687,13 +687,13 @@ public class ProfileViewer extends JFrame implements WindowListener, ComponentLi
 /**
  * A subclass of vector that can have its elements sorted by a {@link Comparator}.
  */
-final class SortableVector extends Vector {
+final class SortableVector<E> extends Vector<E> {
 
-    public SortableVector() {
+    SortableVector() {
 
     }
 
-    public SortableVector(int initialCapacity) {
+    SortableVector(int initialCapacity) {
         super(initialCapacity);
     }
 
@@ -702,6 +702,7 @@ final class SortableVector extends Vector {
      *
      * @param comparator  the sorter
      */
+    @SuppressWarnings("unchecked")
     public void sort(Comparator comparator) {
         Arrays.sort(elementData, 0, elementCount, comparator);
     }
@@ -710,7 +711,7 @@ final class SortableVector extends Vector {
 /**
  * A subclass of vector whose enumerator traverses its elements from last to first.
  */
-final class ReverseTraversableVector extends Vector {
+final class ReverseTraversableVector<E> extends Vector<E> {
 
     /**
      * Returns an enumeration of the components of this vector. The
@@ -749,7 +750,7 @@ abstract class ProfileNode extends DefaultMutableTreeNode {
     /**
      * Used to implement hiding of nodes.
      */
-    private Set hiddenChildren;
+    private Set<ProfileNode> hiddenChildren;
 
     /**
      * The number of times that the execution point represented by this node appears in a profile sample.
@@ -916,7 +917,7 @@ abstract class ProfileNode extends DefaultMutableTreeNode {
 
                     if ((child.getChildCount() == 0 && child instanceof MethodNode) || filter.matches(child)) {
                         if (hiddenChildren == null) {
-                            hiddenChildren = new HashSet();
+                            hiddenChildren = new HashSet<ProfileNode>();
                         }
                         this.remove(child);
                         hiddenChildren.add(child);
@@ -940,7 +941,7 @@ final class MethodNode extends ProfileNode {
      *
      * @param method   a method present in at least one sampled execution path
      */
-    public MethodNode(Symbols.Method method) {
+    MethodNode(Symbols.Method method) {
         setUserObject(method);
     }
 
@@ -1037,7 +1038,7 @@ final class InstructionNode extends ProfileNode {
      *
      * @param ep   an execution point
      */
-    public InstructionNode(ExecutionPoint ep) {
+    InstructionNode(ExecutionPoint ep) {
         setUserObject(ep);
     }
 
@@ -1160,7 +1161,7 @@ class ProfileTreeCellRenderer extends DefaultTreeCellRenderer {
      *
      * @param samples  the total number of samples comprising the profile being rendered
      */
-    public ProfileTreeCellRenderer (int samples) {
+    ProfileTreeCellRenderer (int samples) {
         this.samples = samples;
 
         plain  = new Font(null, Font.PLAIN, 12);

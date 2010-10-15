@@ -32,7 +32,6 @@ import java.util.Iterator;
 import com.sun.squawk.debugger.*;
 import com.sun.squawk.debugger.DataType.*;
 import com.sun.squawk.util.*;
-import com.sun.squawk.vm.CID;
 import com.sun.squawk.*;
 
 /**
@@ -143,7 +142,7 @@ public class ProxyType {
 
     /**
      * Gets the fully qualified name of this type. The returned name
-     * is formatted as it might appear in a Java programming langauge
+     * is formatted as it might appear in a Java programming language
      * declaration for objects of this type.
      * <p>
      * For primitive classes
@@ -215,14 +214,14 @@ public class ProxyType {
         return fields;
     }
 
+    @SuppressWarnings("unchecked")
     private void addFields(List list, boolean isStatic) {
         int count = klass.getFieldCount(isStatic);
         for (int i = 0; i != count; ++i) {
             Field field = klass.getField(i, isStatic);
-            FieldID id = new FieldID(JDWP.getTag(field.getType()), field.getOffset(), isStatic, getID());
-            ProxyField proxyField = new ProxyField(id, field);
+            FieldID fid = new FieldID(JDWP.getTag(field.getType()), field.getOffset(), isStatic, getID());
+            ProxyField proxyField = new ProxyField(fid, field);
             list.add(proxyField);
-
         }
     }
 
@@ -283,13 +282,14 @@ public class ProxyType {
         return methods;
     }
 
+    @SuppressWarnings("unchecked")
     private void addMethods(List list, boolean isStatic) {
         int count = klass.getMethodCount(isStatic);
         for (int i = 0; i != count; ++i) {
             Method method = klass.getMethod(i, isStatic);
             if (!method.isHosted()) {
-                MethodID id = new MethodID(method.getOffset(), isStatic);
-                ProxyMethod proxyMethod = new ProxyMethod(id, method);
+                MethodID mid = new MethodID(method.getOffset(), isStatic);
+                ProxyMethod proxyMethod = new ProxyMethod(mid, method);
                 list.add(proxyMethod);
             }
         }
@@ -316,6 +316,7 @@ public class ProxyType {
      *
      * @return a List of the interfaces directly implemented by this type
      */
+    @SuppressWarnings("unchecked")
     public List getInterfaces() throws IOException, SDWPException {
         Klass[] interfaces = klass.getInterfaces();
         List list = new ArrayList(interfaces.length);

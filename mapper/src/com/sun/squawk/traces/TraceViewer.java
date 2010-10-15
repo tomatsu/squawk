@@ -85,7 +85,7 @@ public class TraceViewer extends JFrame implements WindowListener, ComponentList
     /**
      * A cache of JTextAreas for previously viewed source files.
      */
-    private HashMap sourceFileCache;
+    private HashMap<String, JTextArea> sourceFileCache;
 
     /**
      * Specifies if the trace is from the execution of a 64 bit VM.
@@ -120,7 +120,7 @@ public class TraceViewer extends JFrame implements WindowListener, ComponentList
                 return -2;
             }
         };
-        sourceFileCache = new HashMap();
+        sourceFileCache = new HashMap<String, JTextArea>();
     }
 
     /**
@@ -523,11 +523,11 @@ System.err.println("other node: " + line);
      * @param args   command line arguments
      */
     private void run(String[] args) {
-        Vector symbolsToLoad = new Vector();
+        Vector<String> symbolsToLoad = new Vector<String>();
         symbolsToLoad.addElement("squawk.sym");
         symbolsToLoad.addElement("squawk_dynamic.sym");
 
-        String sourcePath = ".";
+        String sourcePathStr = ".";
         boolean showServiceThread = true;
 
         int argc = 0;
@@ -536,7 +536,7 @@ System.err.println("other node: " + line);
             if (arg.charAt(0) != '-') {
                 break;
             } else if (arg.startsWith("-sp:")) {
-                sourcePath = arg.substring("-sp:".length());
+                sourcePathStr = arg.substring("-sp:".length());
             } else if (arg.startsWith("-map:")) {
                 symbolsToLoad.addElement(arg.substring("-map:".length()));
             } else if (arg.equals("-noservice")) {
@@ -569,8 +569,8 @@ System.err.println("other node: " + line);
 
         // Initialize the source path
         try {
-            sourcePath = sourcePath.replace(':', File.pathSeparatorChar);
-            this.sourcePath = (ClasspathConnection)Connector.open("classpath://" + sourcePath);
+            sourcePathStr = sourcePathStr.replace(':', File.pathSeparatorChar);
+            this.sourcePath = (ClasspathConnection)Connector.open("classpath://" + sourcePathStr);
         } catch (IOException ioe) {
             ioe.printStackTrace();
             return;
@@ -631,7 +631,7 @@ System.err.println("other node: " + line);
         private JTextArea currentTextArea;
         private int lineNo = -1;
 
-        public SourcePaneUpdater(JScrollPane sourcePane) {
+        SourcePaneUpdater(JScrollPane sourcePane) {
             this.sourcePane = sourcePane;
         }
 
@@ -919,7 +919,7 @@ System.err.println("other node: " + line);
              *
              * @param data   the word values used to populate the table
              */
-            public ValuesTableModel(TraceLine.Words data) {
+            ValuesTableModel(TraceLine.Words data) {
                 this.data = data;
             }
 
@@ -1021,11 +1021,11 @@ System.err.println("other node: " + line);
 
 
         /**
-         * Creates the serach panel.
+         * Creates the search panel.
          *
          * @param tree  the JTree that will be searched
          */
-        public ValuesPanel(String name) {
+        ValuesPanel(String name) {
 
             setLayout(new BorderLayout());
 
@@ -1134,8 +1134,8 @@ System.err.println("other node: " + line);
          * @param searchFromTop boolean
          * @param backwards boolean
          */
-        public Search(boolean searchFromTop, boolean backwards) {
-        this.searchFromTop = searchFromTop;
+        Search(boolean searchFromTop, boolean backwards) {
+            this.searchFromTop = searchFromTop;
             this.backwards = backwards;
         }
 
@@ -1184,9 +1184,9 @@ System.err.println("other node: " + line);
     final class SearchPanel extends JPanel {
 
         /**
-         * Creates the serach panel.
+         * Creates the search panel.
          */
-        public SearchPanel() {
+        SearchPanel() {
 
             FlowLayout layout = new FlowLayout(FlowLayout.LEADING);
             setLayout(layout);
@@ -1257,7 +1257,7 @@ System.err.println("other node: " + line);
          *
          * @param tracePosition  the position (e.g. line number) in the input trace represented by this node
          */
-        public TraceNode(int tracePosition) {
+        TraceNode(int tracePosition) {
             this.tracePosition = tracePosition;
         }
 
@@ -1325,8 +1325,8 @@ System.err.println("other node: " + line);
          * @return  the number of levels above this node to the entry method
          */
         public int getCallDepth() {
-            TraceNode parent = (TraceNode)getParent();
-            return 1 + parent.getCallDepth();
+            TraceNode tp = (TraceNode)getParent();
+            return 1 + tp.getCallDepth();
         }
 
         /**
@@ -1350,16 +1350,16 @@ System.err.println("other node: " + line);
                             // If the previous node jumps back more than one frame (i.e. an
                             // exception throw), then expand it.
                             if ((previous.getCallDepth() - 1) > node.getCallDepth()) {
-                                TraceNode parent = (TraceNode)previous.getParent();
-                                tree.expandPath(new TreePath(parent.getPath()));
+                                TraceNode tp = (TraceNode)previous.getParent();
+                                tree.expandPath(new TreePath(tp.getPath()));
                             }
                         }
                         previous = node;
                     }
 
                     // Expand the last node
-                    TraceNode parent = (TraceNode)previous.getParent();
-                    tree.expandPath(new TreePath(parent.getPath()));
+                    TraceNode tp = (TraceNode)previous.getParent();
+                    tree.expandPath(new TreePath(tp.getPath()));
                 }
                 return previous;
             } else {
@@ -1406,7 +1406,7 @@ System.err.println("other node: " + line);
          * @param symbols    the database of method symbols
          * @param tracePosition  the position (e.g. line number) in the input trace represented by this node
          */
-        public ThreadSliceNode(String threadID, int slice, String stackTrace, Symbols symbols, int tracePosition) {
+        ThreadSliceNode(String threadID, int slice, String stackTrace, Symbols symbols, int tracePosition) {
             super(tracePosition);
             setUserObject(threadID);
             this.slice = slice;
@@ -1449,7 +1449,7 @@ System.err.println("other node: " + line);
          */
         private void initializeCallStack(String stackTrace, Symbols symbols, int tracePosition) {
             StringTokenizer st = new StringTokenizer(stackTrace, ":");
-            Stack stack = new Stack();
+            Stack<String> stack = new Stack<String>();
             stack.ensureCapacity(st.countTokens());
             while (st.hasMoreTokens()) {
                 stack.push(st.nextToken());
@@ -1571,7 +1571,7 @@ System.err.println("other node: " + line);
          * @param depth    the call depth of this method's frame within its thread's call stack
          * @param tracePosition  the position (e.g. line number) in the input trace represented by this node
          */
-        public MethodNode(Symbols.Method method, int depth, int tracePosition) {
+        MethodNode(Symbols.Method method, int depth, int tracePosition) {
             super(tracePosition);
             setUserObject(method);
             this.depth = depth;
@@ -1671,7 +1671,7 @@ System.err.println("other node: " + line);
          * @param trace   the trace line
          * @param tracePosition  the position (e.g. line number) in the input trace represented by this node
          */
-        public InstructionNode(TraceLine trace, int tracePosition) {
+        InstructionNode(TraceLine trace, int tracePosition) {
             super(tracePosition);
             setUserObject(trace);
         }
@@ -1726,10 +1726,10 @@ System.err.println("other node: " + line);
         /**
          * Creates a node representing the start of a stack trace.
          *
-         * @param line   the text denoting the type of the excpetion and any other info
+         * @param line   the text denoting the type of the exception and any other info
          * @param tracePosition  the position (e.g. line number) in the input trace represented by this node
          */
-        public StackTraceStartNode(String line, int tracePosition) {
+        StackTraceStartNode(String line, int tracePosition) {
             super(tracePosition);
             setUserObject(line);
         }
@@ -1768,7 +1768,7 @@ System.err.println("other node: " + line);
          * @param ep  the execution point corresponding to the stack trace element
          * @param tracePosition  the position (e.g. line number) in the input trace represented by this node
          */
-        public StackTraceNode(ExecutionPoint ep, int tracePosition) {
+        StackTraceNode(ExecutionPoint ep, int tracePosition) {
             super(tracePosition);
             setUserObject(ep);
         }
@@ -1817,7 +1817,7 @@ System.err.println("other node: " + line);
          * @param line  the line
          * @param tracePosition  the position (e.g. line number) in the input trace represented by this node
          */
-        public OtherTraceNode(String line, int tracePosition) {
+        OtherTraceNode(String line, int tracePosition) {
             super(tracePosition);
             setUserObject(line);
         }
@@ -1862,7 +1862,7 @@ System.err.println("other node: " + line);
         /**
          * Constructs a TraceTreeCellRenderer.
          */
-        public TraceTreeCellRenderer() {
+        TraceTreeCellRenderer() {
             plain  = new Font(null, Font.PLAIN, 12);
             italic = plain.deriveFont(Font.ITALIC);
             bold   = plain.deriveFont(Font.BOLD);
@@ -1901,7 +1901,7 @@ System.err.println("other node: " + line);
  * The exception thrown when a component in a trace is not formed as expected.
  */
 class TraceParseException extends RuntimeException {
-    public TraceParseException(String input, String pattern) {
+    TraceParseException(String input, String pattern) {
         super("\"" + input + "\" failed to match \"" + pattern + "\"");
     }
 }
@@ -1954,7 +1954,7 @@ final class TraceLine {
          *
          * @param trace  the substring which must match the {@link #INSTRUCTION} pattern
          */
-        public Instruction(String trace, Symbols symbols) {
+        Instruction(String trace, Symbols symbols) {
             Matcher m = INSTRUCTION.matcher(trace);
             if (!m.matches()) {
                 throw new TraceParseException(trace, m.pattern().pattern());
@@ -2064,7 +2064,7 @@ final class TraceLine {
         private final byte[] types;
 
         /**
-         * Sentinent immutable object denoting zero size set of word values.
+         * Immutable object denoting zero size set of word values.
          */
         public static Words ZERO_WORDS = new Words("", false);
 
@@ -2078,8 +2078,8 @@ final class TraceLine {
             StringTokenizer st = new StringTokenizer(trace, ",");
             if (st.hasMoreTokens()) {
                 int count = st.countTokens();
-                long[] values = new long[count];
-                byte[] types = (hasTypes) ? new byte[count] : null;
+                values = new long[count];
+                types = (hasTypes) ? new byte[count] : null;
 
                 for (int i = 0; i != count; ++i) {
                     String token = st.nextToken();
@@ -2100,9 +2100,6 @@ final class TraceLine {
                         }
                     }
                 }
-
-                this.values = values;
-                this.types = types;
             } else {
                 values = NO_VALUES;
                 types = null;
@@ -2185,7 +2182,7 @@ final class TraceLine {
          *
          * @param trace     the substring from a trace line containing zero or more word values
          */
-        public MaxStack(String trace) {
+        MaxStack(String trace) {
             super(trace, false);
             Assert.that(getSize() == 2);
         }
@@ -2215,7 +2212,7 @@ final class TraceLine {
          *
          * @param trace     the substring from a trace line containing zero or more word values
          */
-        public MaxLocals(String trace) {
+        MaxLocals(String trace) {
             super(trace, false);
             Assert.that(getSize() == 1);
         }
@@ -2308,7 +2305,7 @@ final class TraceLine {
      *
      * @param line a trace line with the "*TRACE*:" prefix removed.
      */
-    public TraceLine(String line, Symbols symbols) {
+    TraceLine(String line, Symbols symbols) {
 
         Matcher m = TRACELINE.matcher(line);
         if (!m.matches()) {

@@ -174,7 +174,7 @@ public class Romizer {
 /*end[J2ME.STATS]*/
 
     /**
-     * This is a prototype translator used to process and print translator options. It is not the translator used for translattion.
+     * This is a prototype translator used to process and print translator options. It is not the translator used for translation.
      */
     private TranslatorInterface protoTranslator;
     
@@ -289,6 +289,7 @@ public class Romizer {
      */
     private static Vector<String> readExcludesFile(String file) {
         Vector<String> lines = new Vector<String>();
+        System.out.println("Loaded class excludes list from " + file);
         ArgsUtilities.readLines(file, lines);
 
         Vector<String> excludes = new Vector<String>(lines.size());
@@ -331,7 +332,7 @@ public class Romizer {
     }
 
     /**
-     * Commmand line interface.
+     * Command line interface.
      *
      * @param args
      * @throws IOException 
@@ -454,10 +455,15 @@ public class Romizer {
         }
 /*end[J2ME.STATS]*/
 
-        System.out.println("Romizer processed " + suite.getClassCount() + " classes and generated these files:");
-        for (String name : generatedFiles) {
-            System.out.println("  " + name);
-		}
+        System.out.print("Romizer processed " + suite.getClassCount() + " classes and generated " + generatedFiles.size() + " files");
+        if (VM.isVerbose()) {
+            System.out.println(":");
+            for (String name : generatedFiles) {
+                System.out.println("  " + name);
+            }
+        } else {
+            System.out.println(".");
+        }
 
         return args;
     }
@@ -666,7 +672,7 @@ public class Romizer {
     /**
      * Strips classes from a list of class names based on an excludes file.
      *
-     * @param classNames   the list of class names to modifiy
+     * @param classNames   the list of class names to modify
      * @param excludeFile  the name of the excludes file to use
      */
     private void excludeClasses(Vector<String> classNames, String excludeFile) {
@@ -680,7 +686,7 @@ public class Romizer {
         for (String className : classNames) {
             boolean include = true;
             for (String spec : excludes) {
-                if (firstLoop) {
+                if (firstLoop && VM.isVerbose()) {
                     System.out.println("excluding: " + spec);
                 }
                 boolean isPrefix = spec.endsWith("*");
@@ -731,9 +737,6 @@ public class Romizer {
 	        classNames.copyInto(sortedClassNames);
 	        Arrays.sort(sortedClassNames, new Comparator<String>() {
 	            public int compare(String object1, String object2) {
-	                if (object1 == object2) {
-	                    return 0;
-	                }
 	                return object1.compareTo(object2);
 	            }
 	        });
@@ -916,7 +919,7 @@ public class Romizer {
         try {
             FileOutputStream fos = new FileOutputStream(file);
             ZipOutputStream zos = new JarOutputStream(fos);
-            ClasspathConnection classPath = (ClasspathConnection)Connector.open("classpath://" + (doJava5? this.java5ClassPath:this.classPath));
+            ClasspathConnection cp = (ClasspathConnection)Connector.open("classpath://" + (doJava5? this.java5ClassPath:this.classPath));
             for (int i = 0; i < suite.getClassCount(); i++) {
                 Klass klass = suite.getKlass(i);
                 if (klass == null || klass.isSynthetic()) {
@@ -924,7 +927,7 @@ public class Romizer {
                 }
 
                 String classFilePath = klass.getName().replace('.', '/') + ".class";
-                addFileToJar(zos, classPath, classFilePath);
+                addFileToJar(zos, cp, classFilePath);
             }
             zos.close();
         } catch (IOException e) {

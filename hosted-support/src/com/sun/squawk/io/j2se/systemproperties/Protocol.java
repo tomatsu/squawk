@@ -28,7 +28,6 @@ import java.io.*;
 import java.util.*;
 import javax.microedition.io.*;
 import com.sun.squawk.io.*;
-import java.net.InetAddress;
 import java.net.*;
 
 /**
@@ -58,8 +57,8 @@ public class Protocol extends ConnectionBase implements InputConnection {
      * @exception  IOException  if an I/O error occurs when creating the
      *                          input stream.
      */
+    @SuppressWarnings(value = "unchecked")
     public InputStream openInputStream() throws IOException {
-
         Map properties = new TreeMap(System.getProperties());
 
         // Try to add the localhost address and name
@@ -93,7 +92,7 @@ public class Protocol extends ConnectionBase implements InputConnection {
      */
     public static void main(String[] args) throws IOException {
         DataInputStream propertiesStream = Connector.openDataInputStream("systemproperties:");
-        Map properties = new TreeMap();
+        Map<String, String> properties = new TreeMap<String, String>();
         while (propertiesStream.available() != 0) {
             properties.put(propertiesStream.readUTF(), propertiesStream.readUTF());
         }

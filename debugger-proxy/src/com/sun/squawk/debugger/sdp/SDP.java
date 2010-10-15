@@ -122,7 +122,7 @@ public class SDP {
     /**
      * @see getSDP()
      */
-     private static Hashtable sdpTable = new Hashtable();
+     private static Hashtable<String, SDP> sdpTable = new Hashtable<String, SDP>();
      
     /**
      * Return the active SDP instance named proxyName. 
@@ -924,7 +924,7 @@ public class SDP {
      * successful. It also means that the debugger can later clear the event.
      */
     class Unsupported extends SDPEventRequest {
-        public Unsupported(int id, PacketInputStream in, int kind) throws SDWPException, IOException {
+        Unsupported(int id, PacketInputStream in, int kind) throws SDWPException, IOException {
             super(id, in, kind);
         }
         public void write(PacketOutputStream out, Debugger.Event event) throws IOException {

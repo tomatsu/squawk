@@ -153,12 +153,10 @@ public class RomCommand extends Command {
              romizerArgs.add("-override:" + env.getspecfifiedBuildDotOverrideFileName()); 
         }
 
-        System.out.println(">>>>>>>>> Checking dynamicProperties:");
         // pass in properties builder was passed on command line:
         for (Object key: env.dynamicProperties.keySet()) {
             Object value = env.dynamicProperties.get(key);
             romizerArgs.add("-D:" + key.toString() + "=" + value.toString());
-            System.out.println(">>>>    -D:" + key.toString() + "=" + value.toString());
         }
 
         // The remaining args are the modules making up one or more suites

@@ -24,7 +24,7 @@
 
 package com.sun.squawk.vm;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * Sentinal object used when waiting for events.
@@ -34,7 +34,7 @@ public class EventQueue {
     /**
      * Pending events list.
      */
-    private static Vector events = new Vector();
+    private static final ArrayList<Integer> events = new ArrayList<Integer>();
 
     /**
      * Next event number.
@@ -54,10 +54,10 @@ public class EventQueue {
     static void waitFor(long time) {
         if (ChannelIO.TRACING_ENABLED) ChannelIO.trace("++waitFor "+time);
         synchronized(events) {
-            if (events.size() == 0 && noWaiting != true) {
+            if (events.isEmpty() && noWaiting != true) {
                 try { events.wait(time); } catch(InterruptedException ex) {}
             }
-	    noWaiting = false;
+            noWaiting = false;
         }
         if (ChannelIO.TRACING_ENABLED) ChannelIO.trace("--waitFor");
     }
@@ -68,7 +68,7 @@ public class EventQueue {
     static void sendNotify() {
         if (ChannelIO.TRACING_ENABLED) ChannelIO.trace("++sendNotify");
         synchronized(events) {
-	    noWaiting = true;
+            noWaiting = true;
             events.notifyAll();
         }
         if (ChannelIO.TRACING_ENABLED) ChannelIO.trace("--sendNotify");
@@ -97,7 +97,7 @@ public class EventQueue {
      */
     static void unblock(int event) {
         synchronized(events) {
-            events.addElement(new Integer(event));
+            events.add(new Integer(event));
             events.notifyAll();
         }
         if (ChannelIO.TRACING_ENABLED) ChannelIO.trace("++unblock ");
@@ -110,13 +110,15 @@ public class EventQueue {
         int res = 0;
         synchronized(events) {
             if (events.size() > 0) {
-                Integer event = (Integer)events.firstElement();
-                events.removeElementAt(0);
+                Integer event = (Integer)events.remove(0);
                 res = event.intValue();
             }
         }
         if (ChannelIO.TRACING_ENABLED) ChannelIO.trace("++getEvent = "+res);
         return res;
+    }
+
+    private EventQueue() {
     }
 
 }

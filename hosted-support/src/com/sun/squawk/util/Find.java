@@ -39,6 +39,7 @@ public class Find {
      * (given in Unix format i.e. '/' as separator) and each dir is separated by ':' or ';'.
      * @param addTo The unique list of classes found are returned in this variable.
      */
+    @SuppressWarnings(value = "unchecked")
     public static void findAllClassesInPath(String path, Vector addTo) {
         StringTokenizer st = new StringTokenizer(path,":;");
         HashSet uniqClasses = new HashSet();
@@ -115,6 +116,7 @@ public class Find {
      * @param   results  the Vector into which the found files should be put
      * @throws  IOException
      */
+    @SuppressWarnings(value = "unchecked")
     public static void find(File dir, String suffix, Vector results, boolean dirs) throws IOException {
         File[] files = dir.listFiles();
         if (dirs && (suffix == null || dir.getName().endsWith(suffix))) {
@@ -133,5 +135,8 @@ public class Find {
                 }
             }
         }
+    }
+
+    private Find() {
     }
 }

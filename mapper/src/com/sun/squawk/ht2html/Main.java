@@ -34,7 +34,7 @@ import com.sun.squawk.util.LongHashtable;
 /**
  * A tool for processing the trace lines from a squawk execution that start with "*HEAP*:"
  * and generating a HTML file that shows the configuration of the heap at various
- * times in the exection.
+ * times in the execution.
  *
  */
 public class Main {
@@ -187,7 +187,7 @@ public class Main {
         createFile(openTemplate("index.html"), "index.html", null);
 
         // The set of heap traces parsed.
-        Vector heaps = new Vector();
+        ArrayList<String> heaps = new ArrayList<String>();
 
         // The heap trace currently being parsed.
         Heap heap = null;
@@ -197,7 +197,7 @@ public class Main {
         Template segmentsTemplate = openTemplate("segments.html");
         Template heapTemplate = openTemplate("heap.html");
         Template consoleTemplate = showConsoleOutput ? openTemplate("console.html") : null;
-        Vector consoleLines = showConsoleOutput ? new Vector() : null;
+        Vector<String> consoleLines = showConsoleOutput ? new Vector<String>() : null;
 
         while ((line = in.readLine()) != null) {
             if (line.startsWith("*HEAP*:")) {
@@ -246,7 +246,7 @@ public class Main {
                         if (heap.getBranchCount() != -1) {
                             indexEntry += "{<i>bcount:" + heap.getBranchCount() + "</i>}";
                         }
-                        heaps.addElement(indexEntry);
+                        heaps.add(indexEntry);
 
                         id++;
 
@@ -561,10 +561,10 @@ class ConsoleInstantiator implements Template.Instantiator {
  */
 class HeapsIndexInstantiator implements Template.Instantiator {
 
-    private final Vector heaps;
+    private final ArrayList<String> heaps;
     private final boolean showConsoleOutput;
 
-    HeapsIndexInstantiator(Vector heaps, boolean showConsoleOutput) {
+    HeapsIndexInstantiator(ArrayList<String> heaps, boolean showConsoleOutput) {
         this.heaps = heaps;
         this.showConsoleOutput = showConsoleOutput;
     }
@@ -579,8 +579,8 @@ class HeapsIndexInstantiator implements Template.Instantiator {
     public boolean instantiate(PrintStream out, String key) {
         if (key.equals("heaps.index")) {
             int id = 1;
-            for (Enumeration e = heaps.elements(); e.hasMoreElements();) {
-                out.println("<span id=\"h" + id + "\">" + id + ". " +e.nextElement() + "</span><br />");
+            for (String idstr: heaps) {
+                out.println("<span id=\"h" + id + "\">" + id + ". " + idstr + "</span><br />");
                 out.println("<a name=\"heap" + id + "\"></a>");
                 anchor(out, "summary", id);
                 anchor(out, "segments", id);
@@ -633,18 +633,18 @@ class HeapSummaryInstantiator implements Template.Instantiator {
         /**
          * Imposes an ascending order with respect to total size on a ClassSummary array.
          */
-        static Comparator SIZE_COMPARATOR = new Comparator() {
-            public int compare(Object o1, Object o2) {
-                return ((ClassSummary)o1).size - ((ClassSummary)o2).size;
+        static Comparator<ClassSummary> SIZE_COMPARATOR = new Comparator<ClassSummary>() {
+            public int compare(ClassSummary o1, ClassSummary o2) {
+                return o1.size - o2.size;
             }
         };
 
         /**
          * Imposes an ascending order with respect to frequency on a ClassSummary array.
          */
-        static Comparator FREQUENCY_COMPARATOR = new Comparator() {
-            public int compare(Object o1, Object o2) {
-                return ((ClassSummary)o1).frequency - ((ClassSummary)o2).frequency;
+        static Comparator<ClassSummary> FREQUENCY_COMPARATOR = new Comparator<ClassSummary>() {
+            public int compare(ClassSummary o1, ClassSummary o2) {
+                return o1.frequency - o2.frequency;
             }
         };
 
@@ -664,15 +664,15 @@ class HeapSummaryInstantiator implements Template.Instantiator {
         /**
          * Imposes an ascending order with respect to class name on a ClassSummary array.
          */
-        static Comparator CLASS_COMPARATOR = new Comparator() {
-            public int compare(Object o1, Object o2) {
-                return moveBracketsToEnd(((ClassSummary)o1).klass).
-                    compareTo(moveBracketsToEnd(((ClassSummary)o2).klass));
+        static Comparator<ClassSummary> CLASS_COMPARATOR = new Comparator<ClassSummary>() {
+            public int compare(ClassSummary o1, ClassSummary o2) {
+                return moveBracketsToEnd(o1.klass).
+                    compareTo(moveBracketsToEnd(o2.klass));
             }
         };
     }
 
-    final HashMap summary;
+    final HashMap<String, ClassSummary> summary;
     final long memorySize;
     final String description;
     final long totalMemory;
@@ -706,8 +706,8 @@ class HeapSummaryInstantiator implements Template.Instantiator {
      * @param heap   the heap trace to summarize
      * @return a summary of the frequency and total size of each class represented in the trace
      */
-    private static HashMap summarize(Heap heap) {
-        HashMap summary = new HashMap();
+    private static HashMap<String, ClassSummary> summarize(Heap heap) {
+        HashMap<String, ClassSummary> summary = new HashMap<String, ClassSummary>();
         Enumeration objects = heap.getObjects();
         while (objects.hasMoreElements()) {
             HeapObject object = (HeapObject)objects.nextElement();
@@ -730,7 +730,7 @@ class HeapSummaryInstantiator implements Template.Instantiator {
      * @param comparator   the sorting criteria
      * @return the sorted heap summary
      */
-    private ClassSummary[] sortSummary(Comparator comparator) {
+    private ClassSummary[] sortSummary(Comparator<ClassSummary>  comparator) {
         ClassSummary[] cs = new ClassSummary[summary.size()];
         summary.values().toArray(cs);
         Arrays.sort(cs, comparator);
@@ -743,10 +743,10 @@ class HeapSummaryInstantiator implements Template.Instantiator {
      * @param out  writes the replacement to this stream
      */
     private void doInstanceSizeTable(PrintStream out, boolean sortBySize) {
-        Comparator c = sortBySize ? ClassSummary.SIZE_COMPARATOR : ClassSummary.CLASS_COMPARATOR;
-        ClassSummary[] summary = sortSummary(c);
-        for (int i = 0; i != summary.length; ++i) {
-            ClassSummary cs = summary[i];
+        Comparator<ClassSummary> c = sortBySize ? ClassSummary.SIZE_COMPARATOR : ClassSummary.CLASS_COMPARATOR;
+        ClassSummary[] summaryies= sortSummary(c);
+        for (int i = 0; i != summaryies.length; ++i) {
+            ClassSummary cs = summaryies[i];
             int percent = (int)((cs.size * 100) / totalMemory);
             out.println("<tr><td nowrap align=\"right\">" + cs.size + " {" + percent + "%}&nbsp;</td><td nowrap align=\"left\">&nbsp;" + cs.klass + "</td></tr>");
         }
@@ -758,10 +758,10 @@ class HeapSummaryInstantiator implements Template.Instantiator {
      * @param out  writes the replacement to this stream
      */
     private void doInstanceCountTable(PrintStream out, boolean sortByFrequency) {
-        Comparator c = sortByFrequency ? ClassSummary.FREQUENCY_COMPARATOR : ClassSummary.CLASS_COMPARATOR;
-        ClassSummary[] summary = sortSummary(c);
-        for (int i = 0; i != summary.length; ++i) {
-            ClassSummary cs = summary[i];
+        Comparator<ClassSummary> c = sortByFrequency ? ClassSummary.FREQUENCY_COMPARATOR : ClassSummary.CLASS_COMPARATOR;
+        ClassSummary[] summaryies = sortSummary(c);
+        for (int i = 0; i != summaryies.length; ++i) {
+            ClassSummary cs = summaryies[i];
             out.println("<tr><td nowrap align=\"right\">" + cs.frequency + "&nbsp;</td><td nowrap align=\"left\">&nbsp;" + cs.klass + "</td></tr>");
         }
     }
@@ -955,7 +955,7 @@ class Template {
     /**
      * A map from positions in the template to the variables that must be replaced by dynamic content.
      */
-    private final SortedMap variables;
+    private final SortedMap<Integer, String> variables;
 
     /**
      * Generates a RuntimeException for an error that occurs when instantiating this template.
@@ -992,7 +992,7 @@ class Template {
         fis.read(data);
 
         this.content = new String(data);
-        this.variables = new TreeMap();
+        this.variables = new TreeMap<Integer, String>();
 
         Pattern pattern = Pattern.compile("\\$\\{([^}]*)\\}");
         Matcher matcher = pattern.matcher(content);
@@ -1068,12 +1068,12 @@ class Heap {
     /**
      * The segments the heap is partitioned into.
      */
-    private final Vector segments;
+    private final Vector<Segment> segments;
 
     /**
      * The objects in the heap.
      */
-    private final Vector objects;
+    private final Vector<HeapObject> objects;
 
     /**
      * Maps oops to objects;
@@ -1103,8 +1103,8 @@ class Heap {
      */
     Heap(String description, long branchCount, long freeMemory, long totalMemory) {
         this.description = description;
-        this.segments = new Vector();
-        this.objects = new Vector();
+        this.segments = new Vector<Segment>();
+        this.objects = new Vector<HeapObject>();
         this.branchCount = branchCount;
         this.freeMemory = freeMemory;
         this.totalMemory = totalMemory;
@@ -1181,7 +1181,7 @@ class Heap {
     }
 
     /**
-     * Gets an enumearion over all the objects in the heap. The returned enumeration
+     * Gets an enumeration over all the objects in the heap. The returned enumeration
      * is sorted by starting addresses in ascending order.
      *
      * @return an enumeration over all the objects in the heap
@@ -1211,7 +1211,7 @@ class Heap {
         segments.copyInto(segs);
         Arrays.sort(segs);
 
-        Vector contiguousSegments = new Vector(segs.length * 2);
+        Vector<Segment> contiguousSegments = new Vector<Segment>(segs.length * 2);
         long previousEnd = start;
         for (int i = 0; i < segs.length; ++i) {
             Segment s = segs[i];
@@ -1236,7 +1236,7 @@ class Heap {
      * @param previousEnd  the end of the (conceptually) last segment in the vector
      * @param nextStart    the start of the next segment that will (conceptually) be added to the vector
      */
-    private static void addUnusedSegment(Vector segments, long previousEnd, long nextStart) {
+    private static void addUnusedSegment(Vector<Segment> segments, long previousEnd, long nextStart) {
         if (nextStart > previousEnd) {
             segments.addElement(new Segment("unused", previousEnd, nextStart));
         }
@@ -1417,7 +1417,7 @@ class Segment implements Comparable {
     /**
      * Used to allocate colors to segments.
      */
-    private static Hashtable colorMap = new Hashtable();
+    private static Hashtable<String, String> colorMap = new Hashtable<String, String>();
 
     /**
      * Gets the color for a segment, allocating it first if necessary.

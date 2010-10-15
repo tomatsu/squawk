@@ -28,5 +28,11 @@
                 <id>jar</id>
             </reference>
         </references>
+        <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
+            <word>romize</word>
+            <word>romized</word>
+            <word>romizer</word>
+            <word>romizing</word>
+        </spellchecker-wordlist>
     </configuration>
 </project>
