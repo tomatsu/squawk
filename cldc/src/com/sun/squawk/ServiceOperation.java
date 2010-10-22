@@ -138,10 +138,13 @@ public final class ServiceOperation implements GlobalStaticFields {
                     GC.collectGarbage(i1 != 0);
                     break;
                 }
-                case COPY_OBJECT_GRAPH: {
-                    GC.copyObjectGraph(o1, (ObjectMemorySerializer.ControlBlock)o2.toObject());
-                    break;
-                }
+/*if[!ENABLE_ISOLATE_MIGRATION]*/
+/*else[ENABLE_ISOLATE_MIGRATION]*/
+//                case COPY_OBJECT_GRAPH: {
+//                    GC.copyObjectGraph(o1, (ObjectMemorySerializer.ControlBlock)o2.toObject());
+//                    break;
+//                }
+/*end[ENABLE_ISOLATE_MIGRATION]*/
                 case CHANNELIO: {
                     cioExecute();
                     break;

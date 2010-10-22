@@ -2354,34 +2354,39 @@ hbp.dumpState();
      *                  its metadata
      * @throws OutOfMemoryError if there was insufficient memory to do the copy
      */
-    static ObjectMemorySerializer.ControlBlock copyObjectGraph(Object object) {
-        Assert.always(GC.inRam(object));
-
-        /*
-         * Free up as much memory as possible.
-         */
-        collectGarbage(true);
-
-        ObjectMemorySerializer.ControlBlock cb = new ObjectMemorySerializer.ControlBlock();
-
-        int graphSize = (int)(GC.totalMemory() - GC.freeMemory());
-        byte[] bits = new byte[GC.calculateOopMapSizeInBytes(graphSize)];
-        cb.oopMap = new com.sun.squawk.util.BitSet(bits);
-        executeCOG(object, cb);
-
-        if (cb.memory == null) {
-            throw VM.getOutOfMemoryError();
-        }
-
-        // Adjust the oop map to be exactly the right size
-        byte[] memory = cb.memory;
-        byte[] newBits = new byte[GC.calculateOopMapSizeInBytes(memory.length)];
-        GC.arraycopy(bits, 0, newBits, 0, newBits.length);
-        cb.oopMap = new com.sun.squawk.util.BitSet(newBits);
-
-        return cb;
+    static ObjectMemorySerializer.ControlBlock copyObjectGraph(Object object) throws HostedPragma {
+/*if[!ENABLE_ISOLATE_MIGRATION]*/
+        Assert.shouldNotReachHere();
+        return null;
+/*else[ENABLE_ISOLATE_MIGRATION]*/
+//        Assert.always(GC.inRam(object));
+//
+//        /*
+//         * Free up as much memory as possible.
+//         */
+//        collectGarbage(true);
+//
+//        ObjectMemorySerializer.ControlBlock cb = new ObjectMemorySerializer.ControlBlock();
+//
+//        int graphSize = (int)(GC.totalMemory() - GC.freeMemory());
+//        byte[] bits = new byte[GC.calculateOopMapSizeInBytes(graphSize)];
+//        cb.oopMap = new com.sun.squawk.util.BitSet(bits);
+//        executeCOG(object, cb);
+//
+//        if (cb.memory == null) {
+//            throw VM.getOutOfMemoryError();
+//        }
+//
+//        // Adjust the oop map to be exactly the right size
+//        byte[] memory = cb.memory;
+//        byte[] newBits = new byte[GC.calculateOopMapSizeInBytes(memory.length)];
+//        GC.arraycopy(bits, 0, newBits, 0, newBits.length);
+//        cb.oopMap = new com.sun.squawk.util.BitSet(newBits);
+//
+//        return cb;
+/*end[ENABLE_ISOLATE_MIGRATION]*/
     }
-    
+
     static boolean executingHooks;
 
     private static void cleanupTaskExecutors() {

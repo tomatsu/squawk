@@ -216,10 +216,13 @@ public class FieldOffsets {
      */
     public final static long com_sun_squawk_VMThread$stackSize = (/*VAL*/false/*SQUAWK_64*/ ? 2 : 4) | INT;
 
-    /**
-     * The offset of the 'savedStackChunks' field in com.sun.squawk.Isolate.
-     */
-    public final static long com_sun_squawk_Isolate$savedStackChunks = (/*VAL*/false/*SQUAWK_64*/ ? 0 : 0) | OOP;
+/*if[!ENABLE_ISOLATE_MIGRATION]*/
+/*else[ENABLE_ISOLATE_MIGRATION]*/
+//    /**
+//     * The offset of the 'savedStackChunks' field in com.sun.squawk.Isolate.
+//     */
+//    public final static long com_sun_squawk_Isolate$savedStackChunks = (/*VAL*/false/*SQUAWK_64*/ ? 0 : 0) | OOP;
+/*end[ENABLE_ISOLATE_MIGRATION]*/
     
     /**
      * The offset of the 'trace' field in java.lang.Throwable. Used by VM.printVMStackTrace()..

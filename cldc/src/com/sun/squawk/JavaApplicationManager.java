@@ -149,31 +149,34 @@ public class JavaApplicationManager {
             isolate.start();
             isolate.join();
 
-            /*
-             * If the isolate was hibernated then save it and restart it.
-             */
-            while (isolate.isHibernated() && testoms) {
-                try {
-                    String url = "file://" + isolate.getMainClassName() + ".isolate";
-                    DataOutputStream dos = Connector.openDataOutputStream(url);
-                    isolate.save(dos, url, VM.isBigEndian());
-                    System.out.println("Saved isolate to " + url);
-                    dos.close();
-
-                    DataInputStream dis = Connector.openDataInputStream(url);
-                    /*isolate = */                    Isolate.load(dis, url);
-                    dis.close();
-
-                    isolate.unhibernate();
-                    isolate.join();
-
-                } catch (java.io.IOException ioe) {
-                    System.err.println("I/O error while trying to save or re-load isolate: ");
-                    ioe.printStackTrace();
-                    break;
-                }
-            }
-
+/*if[!ENABLE_ISOLATE_MIGRATION]*/
+/*else[ENABLE_ISOLATE_MIGRATION]*/
+//            /*
+//             * If the isolate was hibernated then save it and restart it.
+//             */
+//            while (isolate.isHibernated() && testoms) {
+//                try {
+//                    String url = "file://" + isolate.getMainClassName() + ".isolate";
+//                    DataOutputStream dos = Connector.openDataOutputStream(url);
+//                    isolate.save(dos, url, VM.isBigEndian());
+//                    System.out.println("Saved isolate to " + url);
+//                    dos.close();
+//
+//                    DataInputStream dis = Connector.openDataInputStream(url);
+//                    /*isolate = */                    Isolate.load(dis, url);
+//                    dis.close();
+//
+//                    isolate.unhibernate();
+//                    isolate.join();
+//
+//                } catch (java.io.IOException ioe) {
+//                    System.err.println("I/O error while trying to save or re-load isolate: ");
+//                    ioe.printStackTrace();
+//                    break;
+//                }
+//            }
+/*end[ENABLE_ISOLATE_MIGRATION]*/
+            
             /*
              * Get the exit status.
              */

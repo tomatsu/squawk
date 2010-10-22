@@ -4810,7 +4810,11 @@ foundSlot:
                     Address cb = popAddress();
                     Address object = popAddress();
                     Address collector = popAddress();
+/*if[ENABLE_ISOLATE_MIGRATION]*/
                     pushAddress(copyObjectGraph(collector, object, cb, allocTop));
+/*else[ENABLE_ISOLATE_MIGRATION]*/
+//                  pushAddress(0);
+/*end[ENABLE_ISOLATE_MIGRATION]*/
                     break;
                 }
 /*else[VM2C]*/
@@ -4920,7 +4924,7 @@ foundSlot:
 /*end[KERNEL_SQUAWK]*/
 
                 default: {
-/*                   fprintf(stderr, "*** Undefined native method: *** %d\n", iparm); */
+                    fprintf(stderr, "*** Undefined native method: *** %d\n", iparm);
                     pushInt(iparm);
                     call(com_sun_squawk_VM_undefinedNativeMethod);
                     break;

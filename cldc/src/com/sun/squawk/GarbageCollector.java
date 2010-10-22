@@ -270,41 +270,44 @@ public abstract class GarbageCollector implements GlobalStaticFields {
      * and the collection guard has been reset.
      */
     abstract void postCollection();
-
-    /**
-     * Copies an object graph. Upon entry, <code>cb.oopMap</code> must be an oop map initialized
-     * to have a bit for every word in the used part of the heap. The current value of the other two fields of
-     * <code>cb</code> are ignored. If the return value is null, there was not enough room for
-     * the copy of the graph. Otherwise, it will be the address of a byte array containing the copied
-     * graph, <code>cb.root</code> will be the offset (in bytes) to the copy of <code>object</code> in the byte array
-     * and <code>cb.start</code> will be the address that all internal pointers within the copied graph are relative to.
-     *
-     * @param object   the root of the object graph to copy
-     * @param cb       the in and out parameters of this call
-     * @param allocTop the current top of the allocation space - all the space between this address and the
-     *                 top of the heap is free
-     * @return the address of the byte array containing the copied graph or null if insufficent memory
-     */
-    final Address copyObjectGraph(Address object, ObjectMemorySerializer.ControlBlock cb, Address allocTop) {
-        Address result;
-        if (!NATIVE_GC_ONLY && interpGC) {
-            result = copyObjectGraphInJava(object, cb, allocTop);
-        } else {
-            result = copyObjectGraphInC(object, cb, allocTop);
-        }
-        return result;
-    }
-
-    /**
-     * Hook for using the translated-to-C version of the collector.
-     */
-    final native Address copyObjectGraphInC(Address object, ObjectMemorySerializer.ControlBlock cb, Address allocTop);
-
-    /**
-     * Implements graph copying as a Java routine. It is this routine that will be translated to C and hooked
-     * in as the implementation of {@link #copyObjectGraphInC}.
-     */
-    abstract Address copyObjectGraphInJava(Address object, ObjectMemorySerializer.ControlBlock cb, Address allocTop);
+    
+/*if[!ENABLE_ISOLATE_MIGRATION]*/
+/*else[ENABLE_ISOLATE_MIGRATION]*/
+//    /**
+//     * Copies an object graph. Upon entry, <code>cb.oopMap</code> must be an oop map initialized
+//     * to have a bit for every word in the used part of the heap. The current value of the other two fields of
+//     * <code>cb</code> are ignored. If the return value is null, there was not enough room for
+//     * the copy of the graph. Otherwise, it will be the address of a byte array containing the copied
+//     * graph, <code>cb.root</code> will be the offset (in bytes) to the copy of <code>object</code> in the byte array
+//     * and <code>cb.start</code> will be the address that all internal pointers within the copied graph are relative to.
+//     *
+//     * @param object   the root of the object graph to copy
+//     * @param cb       the in and out parameters of this call
+//     * @param allocTop the current top of the allocation space - all the space between this address and the
+//     *                 top of the heap is free
+//     * @return the address of the byte array containing the copied graph or null if insufficent memory
+//     */
+//    final Address copyObjectGraph(Address object, ObjectMemorySerializer.ControlBlock cb, Address allocTop) {
+//        Address result;
+//        if (!NATIVE_GC_ONLY && interpGC) {
+//            result = copyObjectGraphInJava(object, cb, allocTop);
+//        } else {
+//            result = copyObjectGraphInC(object, cb, allocTop);
+//        }
+//        return result;
+//    }
+//
+//    /**
+//     * Hook for using the translated-to-C version of the collector.
+//     */
+//    final native Address copyObjectGraphInC(Address object, ObjectMemorySerializer.ControlBlock cb, Address allocTop);
+//
+//    /**
+//     * Implements graph copying as a Java routine. It is this routine that will be translated to C and hooked
+//     * in as the implementation of {@link #copyObjectGraphInC}.
+//     */
+//    abstract Address copyObjectGraphInJava(Address object, ObjectMemorySerializer.ControlBlock cb, Address allocTop);
+/*end[ENABLE_ISOLATE_MIGRATION]*/
 
     /**
      * Dumps various timing information to the console.
@@ -449,48 +452,49 @@ public abstract class GarbageCollector implements GlobalStaticFields {
         references = reference;
     }
 
-/*if[FINALIZATION]*/
-    /*---------------------------------------------------------------------------*\
-     *                                 Finalization                              *
-    \*---------------------------------------------------------------------------*/
-
-    /**
-     * Queue of pending finalizers.
-     */
-    protected Finalizer finalizers;
-
-    /**
-     * Adds a finalizer to the queue of finalizers.
-     *
-     * @param finalizer the finalizer to add
-     */
-    final void addFinalizer(Finalizer finalizer) {
-        finalizer.setNext(finalizers);
-        finalizers = finalizer;
-    }
-
-    /**
-     * Removes a finalizer from the queue of finalizers.
-     *
-     * @param obj the object of the finalizer
-     */
-    final void eliminateFinalizer(Object obj) {
-        Finalizer prev = null;
-        Finalizer finalizer = finalizers;
-        while (finalizer != null) {
-            if (finalizer.getObject() == obj) {
-                Finalizer next = finalizer.getNext();
-                if (prev == null) {
-                    finalizers = next;
-                } else {
-                    prev.setNext(next);
-                }
-                return;
-            }
-            prev = finalizer;
-            finalizer = finalizer.getNext();
-        }
-    }
+/*if[!FINALIZATION]*/
+/*else[FINALIZATION]*/
+//    /*---------------------------------------------------------------------------*\
+//     *                                 Finalization                              *
+//    \*---------------------------------------------------------------------------*/
+//
+//    /**
+//     * Queue of pending finalizers.
+//     */
+//    protected Finalizer finalizers;
+//
+//    /**
+//     * Adds a finalizer to the queue of finalizers.
+//     *
+//     * @param finalizer the finalizer to add
+//     */
+//    final void addFinalizer(Finalizer finalizer) {
+//        finalizer.setNext(finalizers);
+//        finalizers = finalizer;
+//    }
+//
+//    /**
+//     * Removes a finalizer from the queue of finalizers.
+//     *
+//     * @param obj the object of the finalizer
+//     */
+//    final void eliminateFinalizer(Object obj) {
+//        Finalizer prev = null;
+//        Finalizer finalizer = finalizers;
+//        while (finalizer != null) {
+//            if (finalizer.getObject() == obj) {
+//                Finalizer next = finalizer.getNext();
+//                if (prev == null) {
+//                    finalizers = next;
+//                } else {
+//                    prev.setNext(next);
+//                }
+//                return;
+//            }
+//            prev = finalizer;
+//            finalizer = finalizer.getNext();
+//        }
+//    }
 /*end[FINALIZATION]*/
 
     /*---------------------------------------------------------------------------*\

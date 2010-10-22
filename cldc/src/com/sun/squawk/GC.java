@@ -975,42 +975,45 @@ public class GC implements GlobalStaticFields {
         return ((size / HDR.BYTES_PER_WORD) + 7) / 8;
     }
 
-    /**
-     * @see VM#copyObjectGraph(Object)
-     */
-    static void copyObjectGraph(Address object, ObjectMemorySerializer.ControlBlock cb) {
-        /*
-         * Trace.
-         */
-        if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_OBJECT_GRAPH_COPYING)) {
-            VM.print("** Copying object graph rooted by ");
-            VM.print(GC.getKlass(object).getName());
-            VM.print(" instance @ ");
-            VM.printAddress(object);
-            VM.print(" ** (collection count: ");
-            VM.print(getTotalCount());
-            VM.print(", backward branch count:");
-            VM.print(VM.getBranchCount());
-            VM.println(")");
-        }
-
-        /*
-         * Set the collector re-entry guard.
-         */
-        Assert.always(!collecting);
-        collecting = true;
-
-        Address copiedObjects = collector.copyObjectGraph(object, cb, allocTop);
-
-        /*
-         * Unset the collector re-entry guard.
-         */
-        collecting = false;
-
-        // Update the fields of the control block that weren't updated by the collector
-        Assert.always(copiedObjects.isZero() || !cb.start.isZero(), "collector must have recorded base address for internal pointers in copied object graph");
-        cb.memory = (byte[])copiedObjects.toObject();
-    }
+/*if[!ENABLE_ISOLATE_MIGRATION]*/
+/*else[ENABLE_ISOLATE_MIGRATION]*/
+//    /**
+//     * @see VM#copyObjectGraph(Object)
+//     */
+//    static void copyObjectGraph(Address object, ObjectMemorySerializer.ControlBlock cb) {
+//        /*
+//         * Trace.
+//         */
+//        if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_OBJECT_GRAPH_COPYING)) {
+//            VM.print("** Copying object graph rooted by ");
+//            VM.print(GC.getKlass(object).getName());
+//            VM.print(" instance @ ");
+//            VM.printAddress(object);
+//            VM.print(" ** (collection count: ");
+//            VM.print(getTotalCount());
+//            VM.print(", backward branch count:");
+//            VM.print(VM.getBranchCount());
+//            VM.println(")");
+//        }
+//
+//        /*
+//         * Set the collector re-entry guard.
+//         */
+//        Assert.always(!collecting);
+//        collecting = true;
+//
+//        Address copiedObjects = collector.copyObjectGraph(object, cb, allocTop);
+//
+//        /*
+//         * Unset the collector re-entry guard.
+//         */
+//        collecting = false;
+//
+//        // Update the fields of the control block that weren't updated by the collector
+//        Assert.always(copiedObjects.isZero() || !cb.start.isZero(), "collector must have recorded base address for internal pointers in copied object graph");
+//        cb.memory = (byte[])copiedObjects.toObject();
+//    }
+/*end[ENABLE_ISOLATE_MIGRATION]*/
 
     private static void encodeLengthWordError() throws NotInlinedPragma {
 			VM.println("encodeLengthWord");
@@ -1127,27 +1130,29 @@ public class GC implements GlobalStaticFields {
     static Object newInstance(Klass klass) {
         Object oop = allocate((klass.getInstanceSize() * HDR.BYTES_PER_WORD) + HDR.basicHeaderSize, klass, -1);
 
-/*if[FINALIZATION]*/
-        /*
-         * If the object requires finalization and it is in RAM then allocate
-         * a Finalizer for it. (Objects in ROM or NVM cannot be finalized.)
-         */
-        if (!VM.isHosted() && klass.hasFinalizer() && GC.inRam(oop)) {
-            collector.addFinalizer(new Finalizer(oop));
-        }
+/*if[!FINALIZATION]*/
+/*else[FINALIZATION]*/
+//        /*
+//         * If the object requires finalization and it is in RAM then allocate
+//         * a Finalizer for it. (Objects in ROM or NVM cannot be finalized.)
+//         */
+//        if (!VM.isHosted() && klass.hasFinalizer() && GC.inRam(oop)) {
+//            collector.addFinalizer(new Finalizer(oop));
+//        }
 /*end[FINALIZATION]*/
         return oop;
     }
 
-/*if[FINALIZATION]*/
-    /**
-     * Eliminate a finalizer.
-     *
-     * @param obj the object of the finalizer
-     */
-    static void eliminateFinalizer(Object obj) {
-        collector.eliminateFinalizer(obj);
-    }
+/*if[!FINALIZATION]*/
+/*else[FINALIZATION]*/
+//    /**
+//     * Eliminate a finalizer.
+//     *
+//     * @param obj the object of the finalizer
+//     */
+//    static void eliminateFinalizer(Object obj) {
+//        collector.eliminateFinalizer(obj);
+//    }
 /*end[FINALIZATION]*/
 
     /**
@@ -1336,8 +1341,8 @@ public class GC implements GlobalStaticFields {
     }
     
     /**
-     * GC may temporarily encode a ptrs's value so it os not a valid ptr.
-     * Try to dect this case.
+     * GC may temporarily encode a ptrs's value so it is not a valid ptr.
+     * Try to detect this case.
      * @param ptr
      * @return true if ptr looks like a valid pointer
      */

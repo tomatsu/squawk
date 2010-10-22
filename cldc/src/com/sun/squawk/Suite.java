@@ -29,11 +29,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.util.Enumeration;
 import java.util.Vector;
-
-import javax.microedition.io.*;
 
 import com.sun.squawk.pragma.HostedPragma;
 import com.sun.squawk.util.Arrays;
@@ -790,20 +787,6 @@ public final class Suite {
 
     /**
      * Serializes the object graph rooted by this suite and writes it to a given stream.
-     * The endianess of the serialized object graph is the endianess of the unerdlying platform.
-     *
-     * @param  dos       the DataOutputStream to which the serialized suite should be written
-     * @param  uri       the URI identifier of the serialized suite
-     *
-     * @throws OutOfMemoryError if there was insufficient memory to do the save
-     * @throws IOException if there was some IO problem while writing the output
-     */
-    public void save(DataOutputStream dos, String uri) throws java.io.IOException, OutOfMemoryError {
-        save(dos, uri, VM.isBigEndian());
-    }
-
-    /**
-     * Serializes the object graph rooted by this suite and writes it to a given stream.
      *
      * @param  dos       the DataOutputStream to which the serialized suite should be written
      * @param  uri       the URI identifier of the serialized suite
@@ -813,7 +796,7 @@ public final class Suite {
      * @throws OutOfMemoryError if there was insufficient memory to do the save
      * @throws IOException if there was some IO problem while writing the output
      */
-    public ObjectMemory save(DataOutputStream dos, String uri, boolean bigEndian) throws java.io.IOException, OutOfMemoryError {
+    public ObjectMemory save(DataOutputStream dos, String uri, boolean bigEndian) throws HostedPragma, java.io.IOException, OutOfMemoryError {
         stripClassesLater = null; // don't save this...
         ObjectMemorySerializer.ControlBlock cb = VM.copyObjectGraph(this);
         ObjectMemory parentMemory = null;
@@ -834,20 +817,6 @@ public final class Suite {
 
     /**
      * Serializes the object graph rooted by this suite and writes it to a given stream.
-     * The endianess of the serialized object graph is the endianess of the unerdlying platform.
-     *
-     * @param  dos       the DataOutputStream to which the serialized suite should be written
-     * @param  uri       the URI identifier of the serialized suite
-     *
-     * @throws OutOfMemoryError if there was insufficient memory to do the save
-     * @throws IOException if there was some IO problem while writing the output
-     */
-    public void saveKlassMetadatas(DataOutputStream dos, String uri) throws java.io.IOException, OutOfMemoryError {
-        saveKlassMetadatas(dos, uri, VM.isBigEndian());
-    }
-
-    /**
-     * Serializes the object graph rooted by this suite and writes it to a given stream.
      *
      * @param  dos       the DataOutputStream to which the serialized suite should be written
      * @param  uri       the URI identifier of the serialized suite
@@ -856,7 +825,7 @@ public final class Suite {
      * @throws OutOfMemoryError if there was insufficient memory to do the save
      * @throws IOException if there was some IO problem while writing the output
      */
-    public void saveKlassMetadatas(DataOutputStream dos, String uri, boolean bigEndian) throws java.io.IOException, OutOfMemoryError {
+    public void saveKlassMetadatas(DataOutputStream dos, String uri, boolean bigEndian) throws HostedPragma, java.io.IOException, OutOfMemoryError {
         int originalMemorySize = NativeUnsafe.getMemorySize();
         ObjectMemorySerializer.ControlBlock cb = VM.copyObjectGraph(metadatas);
         ObjectMemorySerializer.save(dos, uri, cb, getReadOnlyObjectMemory(), bigEndian);

@@ -354,8 +354,9 @@ public final class VMThread implements GlobalStaticFields {
         currentThread.handlePendingInterrupt();
 
         if (millis > 0) {
-/*if[FINALIZATION]*/
-            startFinalizers();
+/*if[!FINALIZATION]*/
+/*else[FINALIZATION]*/
+//          startFinalizers();
 /*end[FINALIZATION]*/
             addToTimerQueue(currentThread, millis);
             reschedule();
@@ -385,8 +386,9 @@ public final class VMThread implements GlobalStaticFields {
     * and allow other threads to execute.
     */
     public static void yield() {
-/*if[FINALIZATION]*/
-        startFinalizers();
+/*if[!FINALIZATION]*/
+/*else[FINALIZATION]*/
+//      startFinalizers();
 /*end[FINALIZATION]*/
         addToRunnableThreadsQueue(currentThread);
         reschedule();
@@ -522,7 +524,7 @@ public final class VMThread implements GlobalStaticFields {
      *
      * @param isolate the isolate to wait for
      */
-    final static void isolateJoin(Isolate isolate) {
+    static void isolateJoin(Isolate isolate) {
         if (currentThread.isolate == isolate) {
             throw new RuntimeException("Isolate cannot join itself");
         }
@@ -652,49 +654,42 @@ public final class VMThread implements GlobalStaticFields {
         }
     }
 
-    /**
-     * Unhibernate the isolate.
-     *
-     * @param isolate the isolate
-     */
-    final static void unhibernateIsolate(Isolate isolate) {
-
-//int rcount = 0;
-//int tcount = 0;
-        /*
-         * Add back the timer threads.
-         */
-        VMThread threads = isolate.getHibernatedTimerThreads();
-        while (threads != null) {
-            VMThread thread = threads;
-//System.out.println("unhibernating timer thread "+thread);
-//tcount++;
-            threads = thread.nextTimerThread;
-            thread.nextTimerThread = null;
-            long time = thread.time;
-            if (time == 0) {
-                time = 1;
-            }
-            timerQueue.add(thread, time);
-        }
-
-        /*
-         * Add back the runnable threads.
-         */
-        threads = isolate.getHibernatedRunThreads();
-        while (threads != null) {
-            VMThread thread = threads;
-            threads = thread.nextThread;
-            thread.nextThread = null;
-            thread.setNotInQueue(VMThread.Q_HIBERNATEDRUN);
-//System.out.println("unhibernating run thread "+thread);
-//rcount++;
-            addToRunnableThreadsQueue(thread);
-        }
-
-//System.out.println("unhibernated "+rcount+" rthreads");
-//System.out.println("unhibernated "+tcount+" tthreads");
-    }
+/*if[!ENABLE_ISOLATE_MIGRATION]*/
+/*else[ENABLE_ISOLATE_MIGRATION]*/
+//    /**
+//     * Unhibernate the isolate.
+//     *
+//     * @param isolate the isolate
+//     */
+//    final static void unhibernateIsolate(Isolate isolate) {
+//        /*
+//         * Add back the timer threads.
+//         */
+//        VMThread threads = isolate.getHibernatedTimerThreads();
+//        while (threads != null) {
+//            VMThread thread = threads;
+//            threads = thread.nextTimerThread;
+//            thread.nextTimerThread = null;
+//            long time = thread.time;
+//            if (time == 0) {
+//                time = 1;
+//            }
+//            timerQueue.add(thread, time);
+//        }
+//
+//        /*
+//         * Add back the runnable threads.
+//         */
+//        threads = isolate.getHibernatedRunThreads();
+//        while (threads != null) {
+//            VMThread thread = threads;
+//            threads = thread.nextThread;
+//            thread.nextThread = null;
+//            thread.setNotInQueue(VMThread.Q_HIBERNATEDRUN);
+//            addToRunnableThreadsQueue(thread);
+//        }
+//    }
+/*end[ENABLE_ISOLATE_MIGRATION]*/
 
     /**
      * Gets the name of this thread. If {@link #setName} has never been called for this
@@ -1242,24 +1237,25 @@ VM.println();
         rescheduleNext();
     }
 
-/*if[FINALIZATION]*/
-    /**
-     * Start any pending finalizers.
-     */
-    private static void startFinalizers() {
-        while (true) {
-            Finalizer finalizer = currentThread.isolate.removeFinalizer();
-            if (finalizer == null) {
-                 break;
-            }
-            try {
-                new Thread(finalizer).start();
-            } catch(OutOfMemoryError ex) {
-                currentThread.isolate.addFinalizer(finalizer); // Try again sometime later.
-                return;
-            }
-        }
-    }
+/*if[!FINALIZATION]*/
+/*else[FINALIZATION]*/
+//    /**
+//     * Start any pending finalizers.
+//     */
+//    private static void startFinalizers() {
+//        while (true) {
+//            Finalizer finalizer = currentThread.isolate.removeFinalizer();
+//            if (finalizer == null) {
+//                 break;
+//            }
+//            try {
+//                new Thread(finalizer).start();
+//            } catch(OutOfMemoryError ex) {
+//                currentThread.isolate.addFinalizer(finalizer); // Try again sometime later.
+//                return;
+//            }
+//        }
+//    }
 /*end[FINALIZATION]*/
 
     /**
@@ -1667,7 +1663,7 @@ VM.println("creating stack:");
     }
     
     public static long getTotalWaitTime() {
-        return (waitTimeHi32 << 32) | waitTimeLo32;
+        return ((long)waitTimeHi32 << 32) | waitTimeLo32;
     }
     
     /**
@@ -1912,8 +1908,9 @@ VM.println("creating stack:");
      * @param event the event number to wait for
      */
     private static void waitForEvent0(int event) {
-/*if[FINALIZATION]*/
-        startFinalizers();
+/*if[!FINALIZATION]*/
+/*else[FINALIZATION]*/
+//      startFinalizers();
 /*end[FINALIZATION]*/
         VMThread t = currentThread;
         t.setInQueue(VMThread.Q_EVENT);
@@ -1968,8 +1965,9 @@ VM.println("creating stack:");
      * @param event the event number to wait for
      */
     private static void waitForOSEvent0(int event) {
-/*if[FINALIZATION]*/
-        startFinalizers();
+/*if[!FINALIZATION]*/
+/*else[FINALIZATION]*/
+//        startFinalizers();
 /*end[FINALIZATION]*/
         VMThread t = currentThread;
         t.setInQueue(VMThread.Q_EVENT);

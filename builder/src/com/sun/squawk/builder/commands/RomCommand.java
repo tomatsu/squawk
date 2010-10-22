@@ -63,6 +63,12 @@ public class RomCommand extends Command {
      */
     protected boolean noNeedToCompile;
 
+    /**
+     * The root classes to search for methods to convert
+     */
+
+    private ArrayList<String> vm2cRootClasses;
+
     public RomCommand(Build env) {
         super(env, "rom");
     }
@@ -331,6 +337,12 @@ public class RomCommand extends Command {
     }
 
     private void updateVM2CGeneratedFile() {
+        vm2cRootClasses = new ArrayList<String>();
+
+        vm2cRootClasses.add("com.sun.squawk.VM");
+        vm2cRootClasses.add("com.sun.squawk.MethodBody");
+        vm2cRootClasses.add(env.getProperty("GC"));
+
         FileSet.Selector isOutOfDate = new FileSet.AndSelector(Build.JAVA_SOURCE_SELECTOR, new FileSet.DependSelector(new FileSet.Mapper() {
             public File map(File from) {
                 return VM2C_SRC_FILE;
@@ -376,8 +388,10 @@ public class RomCommand extends Command {
             args.add("-o:" + VM2C_SRC_FILE);
             args.add("-cp:");
             args.add("-sp:." + File.pathSeparator + preDir.getPath());
-            args.add("-root:com.sun.squawk.VM");
-            args.add("-root:" + env.getProperty("GC"));
+            for (String rootClass: vm2cRootClasses) {
+                env.log(env.verbose, "vm2c root class: " + rootClass);
+                args.add("-root:" + rootClass);
+            }
             args.addAll(new FileSet(preDir, Build.JAVA_SOURCE_SELECTOR).listStrings());
 
             File argsFile = new File("vm2c", "vm2c.input");

@@ -710,7 +710,10 @@ public final class MethodBody {
         Assert.that(val >= 0);
         return val;
     }
-    
+
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="MethodBody_minfoValue1_L")
+/*end[JAVA5SYNTAX]*/
     private static int minfoValue1(Object oop) throws NotInlinedPragma {
         int p = HDR.methodInfoStart - 1;
         int val;
@@ -724,7 +727,10 @@ public final class MethodBody {
         Assert.that(val >= 0);
         return val;
     }
-    
+
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="MethodBody_minfoValue2_L")
+/*end[JAVA5SYNTAX]*/
     private static int minfoValue2(Object oop) throws NotInlinedPragma {
         int p = HDR.methodInfoStart - 1;
         int val;
@@ -741,7 +747,10 @@ public final class MethodBody {
         Assert.that(val >= 0);
         return val;
     }
-    
+
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="MethodBody_minfoValue3_L")
+/*end[JAVA5SYNTAX]*/
     private static int minfoValue3(Object oop) throws NotInlinedPragma {
         int p = HDR.methodInfoStart - 1;
         int val;
@@ -801,12 +810,15 @@ public final class MethodBody {
         }
     }
 
-        /**
+    /**
      * Get the offset to the last byte of the Minfo area.
      *
      * @param oop the pointer to the method
      * @return the length in bytes
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="MethodBody_getOffsetToLastMinfoByte0_LII")
+/*end[JAVA5SYNTAX]*/
     private static int getOffsetToLastMinfoByte0(Object oop, int p, int b0) throws NotInlinedPragma {
             int offset = 3;
             if ((b0 & FMT_E) != 0) {
