@@ -131,6 +131,9 @@ public class Converter {
                             }
                         }
                     }
+                    method.hasCode = annotations.containsKey("code");
+                    method.isMacro = annotations.containsKey("macro");
+                    method.hasProxy = annotations.containsKey("proxy");
 
                     String impls = annotations.get("implementers");
                     if (impls != null) {

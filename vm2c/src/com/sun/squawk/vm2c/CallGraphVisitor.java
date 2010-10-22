@@ -68,27 +68,52 @@ public class CallGraphVisitor {
         return colours.keySet();
     }
 
+    private static boolean isEarlyMethod(ProcessedMethod method) {
+        return method.getInliningMode() == ProcessedMethod.MUST_INLINE ||
+                method.isMacro || method.hasProxy;
+    }
+
     private void scan(ProcessedMethod caller, Map<MethodSymbol, ProcessedMethod> methods,
             Map<ProcessedMethod, Object> colours, Stack<CallSite> calls) {
         Object colour = colours.get(caller);
         if (colour == WHITE) {
             colours.put(caller, GREY);
 
-            // Emit callees first
+
             if (caller.error == null) {
+                // do inline first:
                 for (CallSite call : caller.calls) {
                     ProcessedMethod callee = methods.get(call.callee);
-                    if (callee != null) {
+                    if (callee != null && isEarlyMethod(callee)) {
+                        calls.push(new CallSite(callee.sym, caller.sym, call.call));
+                        scan(callee, methods, colours, calls);
+                        calls.pop();
+                    }
+                }
+                
+            // Emit callees first
+            if (isEarlyMethod(caller)) {
+                doVisitMethod(caller, colours, calls);
+            }
+
+                for (CallSite call : caller.calls) {
+                    ProcessedMethod callee = methods.get(call.callee);
+                    if (callee != null && !isEarlyMethod(callee)) {
                         calls.push(new CallSite(callee.sym, caller.sym, call.call));
                         scan(callee, methods, colours, calls);
                         calls.pop();
                     }
                 }
             }
-            if (colours.get(caller) == GREY) {
-                visitMethod(caller, Collections.unmodifiableList(calls));
-                colours.put(caller, BLACK);
-            }
+
+            doVisitMethod(caller, colours, calls);
+        }
+    }
+
+    private void doVisitMethod(ProcessedMethod method, Map<ProcessedMethod, Object> colours, List<CallSite> calls) {
+        if (colours.get(method) == GREY) {
+            visitMethod(method, Collections.unmodifiableList(calls));
+            colours.put(method, BLACK);
         }
     }
 

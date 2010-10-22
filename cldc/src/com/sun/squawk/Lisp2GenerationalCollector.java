@@ -1125,13 +1125,29 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
     private final static int WRITE_BARRIER_VERIFY_VISITOR = 3;
 
     /**
+     * Mark an object referred to by the pointer at base + offset.
+     * @param base
+     * @param offset
+     */
+    private void markOop(Address base, int offset) throws AllowInlinedPragma {
+        Address object = NativeUnsafe.getAddress(base, offset);
+        if (!object.isZero()) {
+            markObject(object);
+        }
+    }
+
+    /**
      * Visit an object pointer.
      *
      * @param base   the base address
      * @param offset the offset (in words) from <code>base</code> of the oop to visit
      * @return the value of the oop after visit is complete
      */
-    private void visitOop(int visitor, Address base, int offset) throws AllowInlinedPragma {
+    private void visitOop(int visitor, Address base, int offset)
+/*if[!DEBUG_CODE_ENABLED]*/
+            throws AllowInlinedPragma
+/*end[DEBUG_CODE_ENABLED]*/
+    {
         Address pointerAddress;
         Address object;
 
@@ -2357,18 +2373,6 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         }
     }
 
-    /**
-     * Mark an object referred to by the pointer at base + offset.
-     * @param base
-     * @param offset
-     */
-    private void markOop(Address base, int offset) throws AllowInlinedPragma {
-        Address object = NativeUnsafe.getAddress(base, offset);
-        if (!object.isZero()) {
-            markObject(object);
-        }
-    }
-
     /*-----------------------------------------------------------------------*\
      *                         Compute Address Phase                         *
     \*-----------------------------------------------------------------------*/
@@ -2435,8 +2439,13 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 
                 if (slopAllowed.ge(delta)) {
                     slopAllowed = slopAllowed.sub(delta.toInt());
-                    //killObject(objectDestination, delta.toPrimitive());
-					Assert.that(klass == GC.getKlass(object)); // make sure we didn't stomp on this object
+                    killObject(objectDestination, delta.toPrimitive());
+					//Assert.that(klass == GC.getKlass(object)); // make sure we didn't stomp on this object
+                    if (GC.GC_TRACING_SUPPORTED && tracing()) {
+                        VM.print(" left dead object in place. Slop remaining = ");
+                        VM.printOffset(slopAllowed);
+                        VM.println();
+                    }
                     objectDestination = object;
                 } else {
 

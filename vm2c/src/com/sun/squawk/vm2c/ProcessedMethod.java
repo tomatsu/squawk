@@ -92,10 +92,44 @@ public class ProcessedMethod {
      */
     final Set<CallSite> calls = new TreeSet<CallSite>();
 
+    public final static int NEVER_INLINE = -1;
+    public final static int MAY_INLINE = 0;
+    public final static int MUST_INLINE = 1;
+
+    final int shouldInline;
+
+    public boolean isMacro;
+    public boolean hasCode;
+    public boolean hasProxy;
+
     public ProcessedMethod(MethodSymbol method, JCTree.JCMethodDecl tree, JCTree.JCCompilationUnit unit) {
         this.sym = method;
         this.tree = tree;
         this.unit = unit;
+        List<JCTree.JCExpression> thrown = tree.thrown;
+        int _shouldInline = MAY_INLINE;
+
+        if (thrown != null) {
+            for (JCTree.JCExpression thrownExc : thrown) {
+                if ((thrownExc instanceof JCTree.JCIdent)) {
+                    JCTree.JCIdent t = (JCTree.JCIdent) thrownExc;
+                    String name = t.name.toString();
+                    if (name.equals("ForceInlinedPragma")
+                            || name.equals("AllowInlinedPragma")
+                            || name.equals("NativePragma")) {
+                        _shouldInline = MUST_INLINE;
+                        if (name.equals("AllowInlinedPragma")) {
+                            System.out.println("Auto inlining " + this);
+                        }
+                        break;
+                    } else if (name.equals("NotInlinedPragma")) {
+                        _shouldInline = NEVER_INLINE;
+                        break;
+                    }
+                }
+            }
+        }
+        this.shouldInline = _shouldInline;
     }
 
     public final boolean equals(Object o) {
@@ -107,6 +141,28 @@ public class ProcessedMethod {
     }
 
     public String toString() {
-        return sym.enclClass().fullname + "." + sym;
+        StringBuilder sb = new StringBuilder(sym.enclClass().fullname + "." + sym);
+        switch (shouldInline) {
+            case MUST_INLINE:
+                sb.append(" INLINE");
+                break;
+            case NEVER_INLINE:
+                sb.append(" NOINLINE");
+                break;
+        }
+        if (isMacro) {
+            sb.append(" MACRO");
+        } else if (hasProxy) {
+            sb.append(" PROXY");
+        } else if (hasCode) {
+            sb.append(" CODE");
+        }
+        
+        return sb.toString();
     }
+
+    public int getInliningMode() {
+        return shouldInline;
+    }
+
 }

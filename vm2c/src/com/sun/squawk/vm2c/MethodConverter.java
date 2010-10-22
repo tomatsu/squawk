@@ -234,39 +234,17 @@ public class MethodConverter extends JCTree.Visitor {
                 (method.enclClass().flags() & Flags.FINAL) == 0;
     }
 
-    private final static int NEVER_INLINE = -1;
-    private final static int MAY_INLINE = 0;
-    private final static int MUST_INLINE = 1;
-
     public void visitMethodDef(JCTree.JCMethodDecl tree) {
 
         Map<String, String> annotations = new AnnotationParser().parse(method);
         String cRoot = annotations.get("root");
         boolean isRoot = cRoot != null;
-        MethodSymbol method = this.method.sym;
-        assert tree.sym == method;
-        List<ProcessedMethod> impls = conv.getImplementersOf(method);
+        MethodSymbol methodSym = method.sym;
+        assert tree.sym == methodSym;
+        List<ProcessedMethod> impls = conv.getImplementersOf(methodSym);
 
         List<JCTree.JCExpression> thrown = tree.thrown;
-        int shouldInline = MAY_INLINE;
-
-        if (thrown != null) {
-            Iterator<JCTree.JCExpression> iter = thrown.iterator();
-            while (iter.hasNext()) {
-                JCTree.JCIdent t = (JCTree.JCIdent) iter.next();
-                String name = t.name.toString();
-                if (name.equals("ForceInlinedPragma") ||
-                        name.equals("AllowInlinedPragma") ||
-                        name.equals("NativePragma")) {
-                    shouldInline = MUST_INLINE;
-                    // System.out.println("Auto inlining " + method);
-                    break;
-                } else if (name.equals("NotInlinedPragma")) {
-                    shouldInline = NEVER_INLINE;
-                    break;
-                }
-            }
-        }
+        int shouldInline = method.getInliningMode();
 
         String code = annotations.get("code");
         String proxy = annotations.get("proxy");
@@ -280,37 +258,37 @@ public class MethodConverter extends JCTree.Visitor {
                 inconvertible(tree, "method with no body");
             }
 
-            if (isVirtual(method)) {
+            if (isVirtual(methodSym)) {
                 inconvertible(tree, "virtual method");
             }
         }
 
         ccode.align();
-        ccode.print(AnnotationParser.getDocComment(this.method.unit, tree, ccode.lmargin));
+        ccode.print(AnnotationParser.getDocComment(method.unit, tree, ccode.lmargin));
 
         if (macro != null) {
             ccode.print("#define ");
-            ccode.print(" " + conv.asString(method));
+            ccode.print(" " + conv.asString(methodSym));
         } else {
-            if (shouldInline == NEVER_INLINE) {
+            if (shouldInline == ProcessedMethod.NEVER_INLINE) {
                 ccode.print("NOINLINE ");
-            } else if (proxy != null || (shouldInline == MUST_INLINE)) {
+            } else if (proxy != null || (shouldInline == ProcessedMethod.MUST_INLINE)) {
                 ccode.print("INLINE ");
             } else {
                 ccode.print("static ");
             }
             ccode.print(conv.asString(tree.sym.type.getReturnType()));
-            ccode.print(" " + (isRoot ? cRoot : conv.asString(method)));
+            ccode.print(" " + (isRoot ? cRoot : conv.asString(methodSym)));
         }
-        if (conv.asString(method).equals("GC_isTracing_I")) {
+        if (conv.asString(methodSym).equals("GC_isTracing_I")) {
             int a = 1;
         }
         ccode.print("(");
 
         ccode.print(conv.getReceiverDecl(tree.sym, false));
         if (macro != null) {
-            int params = method.params().size();
-            for (VarSymbol param : method.params()) {
+            int params = methodSym.params().size();
+            for (VarSymbol param : methodSym.params()) {
                 ccode.print(" " + conv.subVarName(param.name));
                 if (--params != 0) {
                     ccode.print(", ");
@@ -322,7 +300,7 @@ public class MethodConverter extends JCTree.Visitor {
         ccode.print(") ");
 
         if (!impls.isEmpty()) {
-            this.dispatchAbstractMethod(tree, impls);
+            dispatchAbstractMethod(tree, impls);
         } else if (proxy != null) {
             ccode.println("{");
             ccode.indent();
@@ -330,7 +308,7 @@ public class MethodConverter extends JCTree.Visitor {
             if (tree.sym.type.getReturnType().tag != TypeTags.VOID) {
                 buf.append("return ");
             }
-            buf.append(proxy.length() == 0 ? method.name.toString() : proxy);
+            buf.append(proxy.length() == 0 ? methodSym.name.toString() : proxy);
             buf.append(makePassThroughInvocation(tree)).append(';');
             ccode.aprintln(buf);
             ccode.undent();
@@ -345,7 +323,7 @@ public class MethodConverter extends JCTree.Visitor {
                     break;
                 }
             }
-            if (method.type.getReturnType().tag != TypeTags.VOID && !hasReturn) {
+            if (methodSym.type.getReturnType().tag != TypeTags.VOID && !hasReturn) {
                 throw new InconvertibleNodeException(tree, "code annotation for non-void function does not include a return statement");
             }
             ccode.printFunctionBody(code);
