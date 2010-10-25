@@ -118,9 +118,9 @@ public class ProcessedMethod {
                             || name.equals("AllowInlinedPragma")
                             || name.equals("NativePragma")) {
                         _shouldInline = MUST_INLINE;
-                        if (name.equals("AllowInlinedPragma")) {
-                            System.out.println("Auto inlining " + this);
-                        }
+//                        if (name.equals("AllowInlinedPragma")) {
+//                            System.out.println("Auto inlining " + this);
+//                        }
                         break;
                     } else if (name.equals("NotInlinedPragma")) {
                         _shouldInline = NEVER_INLINE;
