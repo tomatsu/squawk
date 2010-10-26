@@ -4746,23 +4746,24 @@ foundSlot:
                     break;
                 }
 
-                case Native_com_sun_squawk_GarbageCollector_copyObjectGraphInC: {
-                    Address allocTop = popAddress();
-                    Address cb = popAddress();
-                    Address object = popAddress();
-                    Address collector = popAddress();
-/*if[ENABLE_ISOLATE_MIGRATION]*/
-                    pushAddress(copyObjectGraph(collector, object, cb, allocTop));
-/*else[ENABLE_ISOLATE_MIGRATION]*/
-//                  pushAddress(0);
-/*end[ENABLE_ISOLATE_MIGRATION]*/
-                    break;
-                }
 /*else[VM2C]*/
 //              case Native_com_sun_squawk_GarbageCollector_hasNativeImplementation: {
 //                  pushInt(false);
 //                  break;
 //              }
+/*end[VM2C]*/
+
+/*if[VM2C]*/
+/*if[ENABLE_ISOLATE_MIGRATION]*/
+                case Native_com_sun_squawk_GarbageCollector_copyObjectGraphInC: {
+                    Address allocTop = popAddress();
+                    Address cb = popAddress();
+                    Address object = popAddress();
+                    Address collector = popAddress();
+                    pushAddress(copyObjectGraph(collector, object, cb, allocTop));
+                    break;
+                }
+/*end[ENABLE_ISOLATE_MIGRATION]*/
 /*end[VM2C]*/
 
 /*if[LISP2_BITMAP]*/

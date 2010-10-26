@@ -162,7 +162,7 @@ public class RomCommand extends Command {
         // pass in properties builder was passed on command line:
         for (Object key: env.dynamicProperties.keySet()) {
             Object value = env.dynamicProperties.get(key);
-            romizerArgs.add("-D:" + key.toString() + "=" + value.toString());
+            romizerArgs.add("-D" + key.toString() + "=" + value.toString());
         }
 
         // The remaining args are the modules making up one or more suites
