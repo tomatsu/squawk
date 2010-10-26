@@ -262,6 +262,8 @@ public class Klass<T> {
      */
     public final static int ILLEGAL_METHOD_OFFSET = 0xFFFF;
 
+    public final static boolean ENABLE_DYNAMIC_CLASSLOADING = /*VAL*/false/*ENABLE_DYNAMIC_CLASSLOADING*/;
+
     /*---------------------------------------------------------------------------*\
      *                       Standard java.lang.Class API                        *
     \*---------------------------------------------------------------------------*/

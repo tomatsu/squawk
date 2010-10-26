@@ -309,7 +309,7 @@ void cioExecute(void) {
         }
 #else
         case ChannelConstants_COMPUTE_SHA1_FOR_MEMORY_REGION:{
-            fprintf(vmOut,"Internal Error: vmcore/cio.c called with op COMPUTE_SHA1_FOR_MEMORY_REGION, but was compiled with NATIVE_VERIFICATION=false.");
+            fprintf(vmOut,"Error: COMPUTE_SHA1_FOR_MEMORY_REGION called, but NATIVE_VERIFICATION=false.");
             fflush(vmOut);
             break;
         }

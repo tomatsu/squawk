@@ -546,51 +546,6 @@ class NativeVerifierHelper {
             return;
         }
 
-        case Native.com_sun_squawk_NativeUnsafe$call7: {
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(REF); // com.sun.squawk.Address
-            Assert.that(frame.isStackEmpty());
-            frame.push(INT); // int
-            return;
-        }
-
-        case Native.com_sun_squawk_NativeUnsafe$call8: {
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(REF); // com.sun.squawk.Address
-            Assert.that(frame.isStackEmpty());
-            frame.push(INT); // int
-            return;
-        }
-
-        case Native.com_sun_squawk_NativeUnsafe$call9: {
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(INT); // int
-            frame.pop(REF); // com.sun.squawk.Address
-            Assert.that(frame.isStackEmpty());
-            frame.push(INT); // int
-            return;
-        }
-
         case Native.com_sun_squawk_NativeUnsafe$cancelTaskExecutor: {
             frame.pop(REF); // com.sun.squawk.Address
             Assert.that(frame.isStackEmpty());
@@ -1269,16 +1224,6 @@ class NativeVerifierHelper {
             frame.pop(OOP); // com.sun.squawk.GarbageCollector (receiver)
             Assert.that(frame.isStackEmpty());
             frame.push(BOOLEAN); // boolean
-            return;
-        }
-
-        case Native.com_sun_squawk_GarbageCollector$copyObjectGraphInC: {
-            frame.pop(REF); // com.sun.squawk.Address
-            frame.pop(OOP); // com.sun.squawk.ObjectMemorySerializer$ControlBlock
-            frame.pop(REF); // com.sun.squawk.Address
-            frame.pop(OOP); // com.sun.squawk.GarbageCollector (receiver)
-            Assert.that(frame.isStackEmpty());
-            frame.push(REF); // com.sun.squawk.Address
             return;
         }
 

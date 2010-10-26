@@ -239,7 +239,7 @@ UWord loadBootstrapSuite(const char *file,
     fileSize = getFileSize(file);
     if (fileSize == -1) {
         fprintf(stderr, "Bootstrap suite file '%s' not found\n", file);
-        fatalVMError("bootstrap suite file not found");
+        fatalVMError("");
     } else if (size < fileSize) {
         fatalVMError("buffer size is too small for bootstrap suite");
     }
@@ -253,7 +253,7 @@ UWord loadBootstrapSuite(const char *file,
      * Read 'magic'
      */
     if (DataInputStream_readInt(&dis, "magic") != 0xdeadbeef) {
-        fatalVMError("magic in bootstrap suite is incorrect");
+        fatalVMError("bad magic in bootstrap suite");
     }
 
     /*

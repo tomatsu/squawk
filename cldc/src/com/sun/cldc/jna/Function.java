@@ -203,7 +203,7 @@ public class Function {
             preamble();
         }
 //        VM.setBlocked(true);
-        int result = NativeUnsafe.call7(funcAddr, i1, i2, i3, i4, i5, i6, i7);
+        int result = NativeUnsafe.call10(funcAddr, i1, i2, i3, i4, i5, i6, i7, 0, 0, 0);
         if (DEBUG) {
             postscript(result);
         }
@@ -216,7 +216,7 @@ public class Function {
             preamble();
         }
 //        VM.setBlocked(true);
-        int result = NativeUnsafe.call8(funcAddr, i1, i2, i3, i4, i5, i6, i7, i8);
+        int result = NativeUnsafe.call10(funcAddr, i1, i2, i3, i4, i5, i6, i7, i8, 0, 0);
         if (DEBUG) {
             postscript(result);
         }
@@ -229,7 +229,7 @@ public class Function {
             preamble();
         }
 //        VM.setBlocked(true);
-        int result = NativeUnsafe.call9(funcAddr, i1, i2, i3, i4, i5, i6, i7, i8, i9);
+        int result = NativeUnsafe.call10(funcAddr, i1, i2, i3, i4, i5, i6, i7, i8, i9, 0);
         if (DEBUG) {
             postscript(result);
         }

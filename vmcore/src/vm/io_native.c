@@ -742,6 +742,7 @@ int getError() {
     return 0;
 }
 
+#if com_sun_squawk_Klass_DEBUG_CODE_ENABLED
 int testIntStar1(int *outparam) {
     *outparam = 57;
     return 1111111;
@@ -750,6 +751,7 @@ int testIntStar1(int *outparam) {
 void testIntStar2(int *outparam) {
     *outparam = 73;
 }
+#endif
 
 /**
  * for timing purposes
@@ -777,8 +779,10 @@ static dlentry dltable[] = {
     {"squawk_select",   &squawk_select},
     {"cancel_squawk_select", &cancel_squawk_select},
     {"squawk_dummy_func", &squawk_dummy_func},
+#if com_sun_squawk_Klass_DEBUG_CODE_ENABLED
     {"testIntStar1",    &testIntStar1},
     {"testIntStar2",    &testIntStar2},
+#endif
 };
     
 #ifndef USE_CUSTOM_DL_CODE

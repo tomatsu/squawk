@@ -67,11 +67,6 @@ jlong sysTimeMicros() {
     return sysTimeMillis() * 1000;
 }
 
-void startTicker(int interval) {
-    fprintf(stderr, "Profiling not implemented");
-    exit(0);
-}
-
 extern void setup_java_interrupts();
 extern void usb_state_change();
 

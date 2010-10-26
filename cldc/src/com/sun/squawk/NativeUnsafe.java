@@ -561,36 +561,6 @@ public final class NativeUnsafe {
     }
 
     /**
-     * Call a function pointer with seven arguments
-     *
-     * @vm2c code( funcPtr7 f7 = (funcPtr7)address; return (*f7)(i1, i2, i3, i4, i5, i6, i7)); )
-     */
-    public static int call7(Address fptr, int i1, int i2, int i3, int i4, int i5, int i6, int i7)
-            throws NativePragma {
-        throw Assert.shouldNotReachHere("unimplemented when hosted");
-    }
-
-    /**
-     * Call a function pointer with eight arguments
-     *
-     * @vm2c code( funcPtr8 f8 = (funcPtr8)address; return (*f8)(i1, i2, i3, i4, i5, i6, i7, i8)); )
-     */
-    public static int call8(Address fptr, int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8)
-            throws NativePragma {
-        throw Assert.shouldNotReachHere("unimplemented when hosted");
-    }
-
-    /**
-     * Call a function pointer with nine arguments
-     *
-     * @vm2c code( funcPtr9 f9 = (funcPtr9)address; return (*f9)(i1, i2, i3, i4, i5, i6, i7, i8, i9)); )
-     */
-    public static int call9(Address fptr, int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, int i9)
-            throws NativePragma {
-        throw Assert.shouldNotReachHere("unimplemented when hosted");
-    }
-
-    /**
      * Call a function pointer with 10 arguments
      *
      * @vm2c code( funcPtr10 f10 = (funcPtr10)address; return (*f10)(i1, i2, i3, i4, i5, i6, i7, i8, i9, i10)); )

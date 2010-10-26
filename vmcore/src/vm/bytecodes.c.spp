@@ -4121,66 +4121,7 @@ foundSlot:
                     break;
                 }
 
-                case Native_com_sun_squawk_NativeUnsafe_call7: {
-                    int i7 = popInt();
-                    int i6 = popInt();
-                    int i5 = popInt();
-                    int i4 = popInt();
-                    int i3 = popInt();
-                    int i2 = popInt();
-                    int i1 = popInt();
-                    Address address = popAddress();
-                    funcPtr7 fptr = (funcPtr7)address;
-                    int result;
-                    nativeFuncPtr = fptr;
-                    result = (*fptr)(i1, i2, i3, i4, i5, i6, i7);
-                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
-                    nativeFuncPtr = NULL;
-                    pushInt(result);
-                    break;
-                }
-
-                case Native_com_sun_squawk_NativeUnsafe_call8: {
-                    int i8 = popInt();
-                    int i7 = popInt();
-                    int i6 = popInt();
-                    int i5 = popInt();
-                    int i4 = popInt();
-                    int i3 = popInt();
-                    int i2 = popInt();
-                    int i1 = popInt();
-                    Address address = popAddress();
-                    funcPtr8 fptr = (funcPtr8)address;
-                    int result;
-                    nativeFuncPtr = fptr;
-                    result = (*fptr)(i1, i2, i3, i4, i5, i6, i7, i8);
-                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
-                    nativeFuncPtr = NULL;
-                    pushInt(result);
-                    break;
-                }
-
-                case Native_com_sun_squawk_NativeUnsafe_call9: {
-                    int i9 = popInt();
-                    int i8 = popInt();
-                    int i7 = popInt();
-                    int i6 = popInt();
-                    int i5 = popInt();
-                    int i4 = popInt();
-                    int i3 = popInt();
-                    int i2 = popInt();
-                    int i1 = popInt();
-                    Address address = popAddress();
-                    funcPtr9 fptr = (funcPtr9)address;
-                    int result;
-                    nativeFuncPtr = fptr;
-                    result = (*fptr)(i1, i2, i3, i4, i5, i6, i7, i8, i9);
-                    set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
-                    nativeFuncPtr = NULL;
-                    pushInt(result);
-                    break;
-                }
-
+                /* yes, jump straight to 10... */
                 case Native_com_sun_squawk_NativeUnsafe_call10: {
                     int i10 = popInt();
                     int i9 = popInt();
@@ -4631,7 +4572,7 @@ foundSlot:
                 }
 
                 case Native_com_sun_squawk_VM_fatalVMError: {
-                    fatalInterpreterError("com_sun_squawk_VM_fatalVMError");
+                    fatalInterpreterError("VM.fatalVMError");
                     break;
                 }
 

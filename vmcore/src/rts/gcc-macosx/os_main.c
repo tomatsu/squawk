@@ -57,7 +57,9 @@ void cmdStr2argv(mainParameters* params, char* cmdLine) {
         return;
     }
 
+/*
 fprintf(stderr, "cmdLine: %s\n", cmdLine);
+*/
     i = 0;
     str = strtok(cmdLine, " ");
     if (str != NULL) {
@@ -113,10 +115,10 @@ char* CFString2CString(CFStringRef macStr) {
     CFIndex bufSize = CFStringGetMaximumSizeOfFileSystemRepresentation(macStr);
     char* result = (char*)malloc(bufSize);
     if (result == NULL) {
-        fatalVMError("Failure (malloc) in CFStringGetFileSystemRepresentation");
+        fatalVMError("CFString2CString");
     }
     if (!CFStringGetFileSystemRepresentation(macStr, result, bufSize)) {
-        fatalVMError("Failure in CFStringGetFileSystemRepresentation");
+        fatalVMError("CFString2CString");
     }
     return result;
 }
@@ -128,7 +130,6 @@ char* CFString2CString(CFStringRef macStr) {
 int readArgsFromPlist(mainParameters* params) {
     CFStringRef cmdlineRef = NULL;
 
-    OSStatus err = noErr;
     cmdlineRef = CFBundleGetValueForInfoDictionaryKey(
                     mainBundle,
                     CFSTR("SquawkCommandLineParameters"));

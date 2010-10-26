@@ -346,7 +346,7 @@ int setStream(int stream) {
     currentStream = stream;
     if (streams[currentStream] == null) {
         switch (currentStream) {
-#ifndef FLASH_MEMORY
+#if com_sun_squawk_Klass_ENABLE_DYNAMIC_CLASSLOADING
             case com_sun_squawk_VM_STREAM_SYMBOLS: {
                 streams[currentStream] = fopen("squawk_dynamic.sym", "w");
                 break;

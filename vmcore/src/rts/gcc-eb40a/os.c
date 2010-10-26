@@ -61,11 +61,6 @@ jlong sysTimeMicros() {
     return sysTimeMillis() * 1000;
 }
 
-void startTicker(int interval) {
-    fprintf(stderr, "Profiling not implemented");
-    exit(0);
-}
-
 void wait() {
 	unsigned int i, j;
 	for (i = 1; i<400000; i++) {

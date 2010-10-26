@@ -124,10 +124,8 @@ static char* monitorName(SimpleMonitor* mon) {
     sysAssumeAlways(mon);
     if (mon == threadEventMonitor) {
         return "threadEventMonitor";
-    } else if (threadEventMonitor == NULL) {
-        return "too early to tell monitor name";
     } else {
-        return "a TaskExecutor monitor";
+        return "unknown monitor";
     }
 }
 #else
@@ -144,7 +142,7 @@ static void monitorErrCheck(SimpleMonitor* mon, char* msg, int res, int expected
 }
 
 /**
- * Return true if the moutex is locked, false otherwise.
+ * Return true if the mutex is locked, false otherwise.
  * Non-blocking.
  */
 int SimpleMonitorIsLocked(SimpleMonitor* mon) {
@@ -159,10 +157,7 @@ int SimpleMonitorIsLocked(SimpleMonitor* mon) {
 SimpleMonitor* SimpleMonitorCreate() {
     SimpleMonitor* mon = (SimpleMonitor*)malloc(sizeof(SimpleMonitor));
     int res;
-    if (mon == NULL) {
-        fprintf(stderr, "out of memory in SimpleMonitorCreate\n");
-        return NULL;
-    }
+    sysAssumeAlways(mon);
     res = pthread_mutex_init(&(mon->mu), NULL);
     monitorErrCheck(mon, "SimpleMonitorCreate mutex", res, 0);
     res = pthread_cond_init(&(mon->cv), NULL);

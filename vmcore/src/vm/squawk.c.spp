@@ -838,18 +838,20 @@ void jvmUsage() {
  */
 void usage() {
     printf("Usage: \n");
-    printf("    -Xmx:<size>    set Squawk RAM size (default=%dKb)\n", DEFAULT_RAM_SIZE/1024);
-    printf("    -Xmxnvm:<size> set Squawk NVM size (default=%dKb)\n", DEFAULT_NVM_SIZE/1024);
-    printf("    -Xboot:<file>  load bootstrap suite from file (default=squawk.suite)\n");
-    printf("    -Xtgc:<n>      set GC trace flags where 'n' is the sum of:\n");
-    printf("                     1: minimal trace info of mem config and GC events\n");
+    printf("    -Xmx:<size>    set RAM size (%dKb)\n", DEFAULT_RAM_SIZE/1024);
+    printf("    -Xmxnvm:<size> set NVM size (%dKb)\n", DEFAULT_NVM_SIZE/1024);
+    printf("    -Xboot:<file>  load bootstrap suite from file (squawk.suite)\n");
+    printf("    -Xtgc:<n>      set GC trace flags:\n");
+    printf("                     1: trace mem config and GC events\n");
+#if com_sun_squawk_GC_GC_TRACING_SUPPORTED
     printf("                     2: trace allocations\n");
     printf("                     4: detailed trace of garbage collector\n");
     printf("                     8: detailed trace of object graph copying\n");
     printf("                    16: heap trace before each GC\n");
     printf("                    32: heap trace after each GC\n");
     printf("                    64: include heap contents in heap trace\n");
-    printf("    -Xtgca:<n>     start GC tracing at the 'n'th collection (default=0)\n");
+#endif
+    printf("    -Xtgca:<n>     start GC tracing at collection 'n' (0)\n");
 #if TRACE
     printf("    -Xts:<n>       start tracing after 'n' backward branches\n");
     printf("    -Xte:<n>       stop tracing after 'n' backward branches\n");
@@ -1051,7 +1053,7 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     if (memorySize == -1) {
         char* altName = sysGetAlternateBootstrapSuiteLocation(bootstrapSuiteFile);
         if (altName) {
-            printf("bootstrapSuiteFile not found in default location, trying %s\n", altName);
+            printf("bootstrap suite not found, trying %s\n", altName);
             bootstrapSuiteFile = altName;
             memorySize = getFileSize(bootstrapSuiteFile);
         }
@@ -1344,6 +1346,8 @@ Address processArgs(char *argv[], const int argc) {
 
     while (oldIndex != argc) {
         char *arg = argv[oldIndex];
+        char *wholeArg = arg;
+
         if (arg[0] != '-') {
             break; /* finished VM options part */
         }
@@ -1356,15 +1360,15 @@ Address processArgs(char *argv[], const int argc) {
             } else
 #endif
             if (startsWith(arg, "mxnvm:")) {
-                nvmSize = parseQuantity(arg+6, "-Xmxnvm:");
+                nvmSize = parseQuantity(arg+6, wholeArg);
             } else if (startsWith(arg, "mx:")) {
-                ramSize = roundDownToWord(parseQuantity(arg+3, "-Xmx:"));
+                ramSize = roundDownToWord(parseQuantity(arg+3, wholeArg));
             } else if (startsWith(arg, "boot:")) {
                 bootstrapSuiteFile = arg + 5;
             } else if (startsWith(arg, "tgca:")) {
-                com_sun_squawk_GC_traceThreshold = parseQuantity(arg+5, "-Xtgca:");
+                com_sun_squawk_GC_traceThreshold = parseQuantity(arg+5, wholeArg);
             } else if (startsWith(arg, "tgc:")) {
-                com_sun_squawk_GC_traceFlags = parseQuantity(arg+4, "-Xtgc:");
+                com_sun_squawk_GC_traceFlags = parseQuantity(arg+4, wholeArg);
 #ifndef FLASH_MEMORY
             } else if (equals(arg, "notrap")) {
                 notrap = true;
@@ -1375,15 +1379,15 @@ Address processArgs(char *argv[], const int argc) {
             } else if (equals(arg, "terr")) {
                 traceFile = stderr;
             } else if (startsWith(arg, "ts:")) {
-                setTraceStart(parseQuantityLong(arg+3, "-Xts:"));
+                setTraceStart(parseQuantityLong(arg+3, wholeArg));
             } else if (startsWith(arg, "te:")) {
-                setTraceEnd(parseQuantityLong(arg+3, "-Xte:"));
+                setTraceEnd(parseQuantityLong(arg+3, wholeArg));
             } else if (startsWith(arg, "tr:")) {
-                jlong start = parseQuantityLong(arg+3, "-Xtr:");
+                jlong start = parseQuantityLong(arg+3, wholeArg);
                 setTraceStart(start);
                 setTraceEnd(start + 1000);
             } else if (startsWith(arg, "stats:")) {
-                statsFrequency = parseQuantity(arg+6, "-Xstats:");
+                statsFrequency = parseQuantity(arg+6, wholeArg);
                 if (statsFrequency == 0) {
                     fprintf(stderr,"-Xstats:0 is invalid\n");
                     stopVM(-1);
@@ -1391,7 +1395,7 @@ Address processArgs(char *argv[], const int argc) {
 #endif /* TRACE */
 #ifdef PROFILING
             } else if (startsWith(arg, "prof:")) {
-                sampleFrequency = parseQuantity(arg+5, "-Xprof:");
+                sampleFrequency = parseQuantity(arg+5, wholeArg);
                 if (sampleFrequency == 0) {
                     fprintf(stderr,"-Xprof:0 is invalid\n");
                     stopVM(-1);
@@ -1399,7 +1403,7 @@ Address processArgs(char *argv[], const int argc) {
 #endif /* PROFILING */
             } else {
                 if (arg[0] != 0) {
-                    fprintf(stderr,"Unrecognised option: -X%s\n", arg);
+                    fprintf(stderr,"Unrecognised option: %s\n", wholeArg);
                 }
                 usage();
                 stopVM(0);
@@ -1710,30 +1714,30 @@ extern  void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddre
 
     fprintf(stderr, "fatalInterpreterError %s -- %s:%d\n", msg, file, line);
     fprintf(stderr, "    opcode: 0x%x\n", opcode);
+#if com_sun_squawk_Klass_DEBUG_CODE_ENABLED
     if (opcode != (opcode & 0xFF)) {
            fprintf(stderr, "    opcode overflowed!\n");
     }
+#endif
     fprintf(stderr, "    iparm: 0x%x\n", _iparm);
 
-#ifdef FLASH_MEMORY
-    printValueInRange(_ip, "ip", com_sun_squawk_VM_romStart, com_sun_squawk_VM_romEnd, "code");
-#else
+#ifdef com_sun_squawk_Klass_ENABLE_DYNAMIC_CLASSLOADING
     printValueInRange(_ip, "ip", com_sun_squawk_VM_romStart, com_sun_squawk_GC_ramEnd, "code");
+#else
+    printValueInRange(_ip, "ip", com_sun_squawk_VM_romStart, com_sun_squawk_VM_romEnd, "code");
 #endif
 
-    printValueInRange(ss,  "stack", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
-
     if (ss == com_sun_squawk_VMThread_serviceStack) {
-         fprintf(stderr, "    current stack is service stack\n");
-         stackHigh = Address_add(ss, getArrayLength(ss) * HDR_BYTES_PER_WORD);
-    } else if (inRAM(ss)) {
-         int cid = com_sun_squawk_Klass_id(getClass(ss));
-         stackHigh = Address_add(ss, getArrayLength(ss) * HDR_BYTES_PER_WORD);
-         if (cid == CID_LOCAL_ARRAY) {
-             userStack = TRUE;
-         } else {
-              fprintf(stderr, "        current stack has bad class id: %x\n", cid);
-         }
+        fprintf(stderr, "    stack: %p. current stack is service stack\n", ss);
+        stackHigh = Address_add(ss, getArrayLength(ss) * HDR_BYTES_PER_WORD);
+    } else if (printValueInRange(ss, "stack", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM")) {
+        int cid = com_sun_squawk_Klass_id(getClass(ss));
+        stackHigh = Address_add(ss, getArrayLength(ss) * HDR_BYTES_PER_WORD);
+        if (cid == CID_LOCAL_ARRAY) {
+            userStack = TRUE;
+        } else {
+            fprintf(stderr, "stack has bad class id: %x\n", cid);
+        }
     }
 
     printValueInRange(_sp, "sp", sl, stackHigh, "current stack");
@@ -1741,17 +1745,21 @@ extern  void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddre
 
     if (userStack) {
         Address thread = getObject(ss, SC_owner);
-        Address isolate = com_sun_squawk_VMThread_isolate(thread);
 
         printValueInRange(thread, "thread", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
         printStrSafely(com_sun_squawk_VMThread_name(thread), "thread name", com_sun_squawk_VM_romStart, com_sun_squawk_GC_ramEnd, "RAM or ROM");
-
-        if (printValueInRange(isolate, "isolate", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM")) {
-            printStrSafely(com_sun_squawk_Isolate_mainClassName(isolate), "isolate main class", 
-                com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
-            printStrSafely(com_sun_squawk_Isolate_args(isolate), "isolate args", 
-                com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
+#if com_sun_squawk_Klass_DEBUG_CODE_ENABLED
+        {
+            Address isolate = com_sun_squawk_VMThread_isolate(thread);
+            if (printValueInRange(isolate, "isolate", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM")) {
+                printStrSafely(com_sun_squawk_Isolate_mainClassName(isolate), "isolate main class",
+                        com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
+                printStrSafely(com_sun_squawk_Isolate_args(isolate), "isolate args",
+                        com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
+            }
         }
+#endif
+
     }
 
     fatalVMError("");

@@ -434,11 +434,6 @@ void osMilliSleep(long long millis) {
 
 /* ----------------------- Misc Support ------------------------*/
 
-void startTicker(int interval) {
-    fprintf(stderr, "Profiling not implemented");
-    exit(0);
-}
-
 #define USE_CUSTOM_DL_CODE 1
 
 

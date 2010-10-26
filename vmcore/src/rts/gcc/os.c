@@ -70,12 +70,6 @@ jint createJVM(JavaVM **jvm, void **env, void *args) {
 }
 #endif
 
-
-void startTicker(int interval) {
-    fprintf(stderr, "Profiling not implemented");
-    exit(0);
-}
-
 #define osloop()        /**/
 #define osbackbranch()  /**/
 #define osfinish()      /**/

@@ -35,12 +35,12 @@
 /* This "standard" C function is not provided on Mac OS X */
 char* strsignal(int signum) {
     switch (signum) {
-        case SIGABRT:     return "SIGABRT: Abnormal termination";
-        case SIGFPE:      return "SIGFPE: Floating-point error";
-        case SIGILL:      return "SIGILL: Illegal instruction";
-        case SIGINT:      return "SIGINT: CTRL+C signal";
-        case SIGSEGV:     return "SIGSEGV: Illegal storage access";
-        case SIGTERM:     return "SIGTERM: Termination request";
+        case SIGABRT:     return "SIGABRT";
+        case SIGFPE:      return "SIGFPE";
+        case SIGILL:      return "SIGILL";
+        case SIGINT:      return "SIGINT";
+        case SIGSEGV:     return "SIGSEGV";
+        case SIGTERM:     return "SIGTERM";
         default:          return "<unknown signal>";
     }
 }
@@ -54,11 +54,6 @@ jint createJVM(JavaVM **jvm, void **env, void *args) {
 }
 #endif
 
-
-void startTicker(int interval) {
-    fprintf(stderr, "Profiling not implemented");
-    exit(0);
-}
 
 #define osloop()        /**/
 #define osbackbranch()  /**/
