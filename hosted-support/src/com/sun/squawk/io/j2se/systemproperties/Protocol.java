@@ -43,7 +43,7 @@ public class Protocol extends ConnectionBase implements InputConnection {
      *                   timeout exceptions
      */
      public Connection open(String protocol, String name, int mode, boolean timeouts) throws IOException {
-         if (!name.equals("")) {
+         if (name.length() != 0) {
              throw new IllegalArgumentException( "Bad protocol option:" + name);
          }
          return this;

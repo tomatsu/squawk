@@ -24,8 +24,6 @@
 
 package java.io;
 
-import com.sun.squawk.io.j2me.channel.*;
-
 /**
  * A data input stream lets an application write primitive Java data
  * types to an output stream in a portable way. An application can

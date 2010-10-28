@@ -26,8 +26,6 @@ package com.sun.squawk.vm;
 
 import java.io.*;
 import javax.microedition.io.*;
-import com.sun.squawk.vm.ChannelConstants;
-import java.util.*;
 
 /**
  * Channel for stream IO.

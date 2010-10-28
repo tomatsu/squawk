@@ -791,7 +791,7 @@ public class Protocol extends ConnectionBaseAdapter implements FileConnection {
             if (exists()) {
                 int lastPos = name.length() - 1;
                 if (isDirectory()) {
-                    if (!name.equals("") && name.charAt(lastPos) != '/') {
+                    if (name.length() != 0 && name.charAt(lastPos) != '/') {
                         name += '/';
                     }
                 } else {

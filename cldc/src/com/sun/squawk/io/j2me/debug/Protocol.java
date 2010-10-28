@@ -54,7 +54,7 @@ public class Protocol extends ConnectionBase
      */
      public Connection open(String protocol, String name, int mode, boolean timeouts) throws IOException {
          err = name.equals("err");
-         if (!err && !name.equals("")) {
+         if (!err && name.length() != 0) {
              throw new IllegalArgumentException( "Bad protocol option:" + name);
          }
          return this;

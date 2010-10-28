@@ -872,7 +872,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         while(true) {
             line = readLine(in);
 
-            if (line == null || line.equals(""))
+            if (line == null || line.length() == 0)
                 return;
 
             colonIndex = line.indexOf(':');

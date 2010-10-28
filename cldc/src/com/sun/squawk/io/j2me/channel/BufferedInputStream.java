@@ -26,7 +26,6 @@
 package com.sun.squawk.io.j2me.channel;
 
 import java.io.*;
-import com.sun.squawk.*;
 
 
 /**

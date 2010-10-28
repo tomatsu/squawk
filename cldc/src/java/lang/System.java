@@ -298,7 +298,7 @@ public final class System {
         if (key == null) {
             throw new NullPointerException(/*"key can't be null"*/);
         }
-        if (key.equals("")) {
+        if (key.length() == 0) {
             throw new IllegalArgumentException(/*"key can't be empty"*/);
         }
 
