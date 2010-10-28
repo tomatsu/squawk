@@ -67,22 +67,24 @@ import com.sun.squawk.vm.*;
  * configured to translate classes to the Squawk suite format dynamically, while the URI specifies the suite which contains the translated class file org.example.App. In this example code
  * we specified that the child isolate will use the same suite as the parent Isolate.<p>
  *
- * <h3>Hibernation [OPTIONAL]</h3>
- * An isolate may be suspended in hibernation. Hibernation removes the isolate and all of the isolate's threads from further execution. Once an isolate is hibernated, it can be
+ * <h3>Hibernation</h3>
+ * An isolate may be suspended in hibernation. Hibernation removes the isolate and all of the isolate's threads from further execution.
+ *
+ * <h5><i>Optional</i></h5>
+ * Once an isolate is hibernated, it can be
  * serialized using the {@link Isolate#save(DataOutputStream, String)} method. The saved form of the isolate includes all reachable objects, the state of all static variables, and
  * the current execution context of all of the isolate's threads (the thread stacks, etc). The saved form can be stored in a file, sent over a network, etc.
- * {@link Isolate#load(DataInputStream, String)} can be used reconstruct the saved isolate.<p>
- * The hibernation feature is enabled by the Squawk build flag ENABLE_ISOLATE_MIGRATION, and is disabled by default.<p>
+ * {@link Isolate#load(DataInputStream, String)} can be used reconstruct the saved isolate. Isolate saving and restoring is controlled by the ENABLE_ISOLATE_MIGRATION build property.<p>
  *
  * <h3>Isolate Lifecycle</h3>
  *
- * An Isolate may be in one of several states: NEW, ALIVE, HIBERNATED [opt], and EXITED. The methods {@link Isolate#isNew()}, {@link Isolate#isAlive()}, {@link Isolate#isHibernated()},
+ * An Isolate may be in one of several states: NEW, ALIVE, HIBERNATED, and EXITED. The methods {@link Isolate#isNew()}, {@link Isolate#isAlive()}, {@link Isolate#isHibernated()},
  * {@link Isolate#isExited()} can be used to determine an isolate's current state. An Isolate starts out in the NEW state. When the {@link Isolate#start()} method is called the isolate
  * becomes ALIVE. {@link Isolate#hibernate()} causes an isolate to become HIBERNATED, while {@link Isolate#unhibernate()} brings a HIBERNATED back to ALIVE. An ALIVE
  * isolate may become EXITED by calling {@link Isolate#exit(int)}.<p>
  *
  * <h4>Isolate LifecycleNotification</h4>
- * An isolate can register listeners to be notified of changes in an isolate's lifecycle, such as hibernating [opt], unhibernating [opt], or exiting. An isolate can listen for it's own events,
+ * An isolate can register listeners to be notified of changes in an isolate's lifecycle, such as hibernating, unhibernating, or exiting. An isolate can listen for it's own events,
  * or for events on another isolate. To receive notifications of lifecycle events, create a class that implements {@link Isolate.LifecycleListener}, and register the listener using
  * {@link #addLifecycleListener} and one or more of the lifecycle event masks (such as {@link #SHUTDOWN_EVENT_MASK}). When the isolate state changes to the specified event, the system
  * will call the listener's {@link Isolate.LifecycleListener#handleLifecycleListenerEvent} method, passing in the appropriate isolate and event kind.
@@ -231,17 +233,17 @@ public final class Isolate implements Runnable {
 //     * The hibernated channel context.
 //     */
 //    private byte[] hibernatedChannelContext;
-//
-//    /**
-//     * List of threads ready to run after return from hibernated state.
-//     */
-//    private VMThread hibernatedRunThreads;
-//
-//    /**
-//     * List of threads to be placed on the timer queue after return from hibernated state.
-//     */
-//    private VMThread hibernatedTimerThreads;
 /*end[ENABLE_ISOLATE_MIGRATION]*/
+
+    /**
+     * List of threads ready to run after return from hibernated state.
+     */
+    private VMThread hibernatedRunThreads;
+
+    /**
+     * List of threads to be placed on the timer queue after return from hibernated state.
+     */
+    private VMThread hibernatedTimerThreads;
 
 /*if[!ENABLE_CHANNEL_GUI]*/
 /*else[ENABLE_CHANNEL_GUI]*/
@@ -319,12 +321,8 @@ public final class Isolate implements Runnable {
      * Isolate lifecycle callback handlers.
      */
     private CallbackManager shutdownHooks;
-    
-/*if[!ENABLE_ISOLATE_MIGRATION]*/
-/*else[ENABLE_ISOLATE_MIGRATION]*/
-//    private CallbackManager suspendHooks;
-//    private CallbackManager resumeHooks;
-/*end[ENABLE_ISOLATE_MIGRATION]*/
+    private CallbackManager suspendHooks;
+    private CallbackManager resumeHooks;
 
     /**
      * Registered to run at VM.exit() time.
@@ -812,27 +810,23 @@ public final class Isolate implements Runnable {
      */
     public final static int SHUTDOWN_EVENT_MASK = 1;
 
-/*if[!ENABLE_ISOLATE_MIGRATION]*/
-    public final static int SUPPORTED_EVENTS = SHUTDOWN_EVENT_MASK;
-/*else[ENABLE_ISOLATE_MIGRATION]*/
-//    /**
-//     * Event kind indicating that an isolate is hibernating.
-//     *
-//     * Used for {@link Isolate.LifecycleListener}s that will be called when the Isolate suspends via
-//     * {@link #hibernate}.
-//     */
-//    public final static int HIBERNATE_EVENT_MASK = 2;
-//
-//    /**
-//     * Event kind indicating that an isolate is unhibernating.
-//     *
-//     * Used for {@link Isolate.LifecycleListener}s that will be called when the Isolate resumes via
-//     * {@link #unhibernate}.
-//     */
-//    public final static int UNHIBERNATE_EVENT_MASK = 4;
-//
-//    public final static int SUPPORTED_EVENTS = SHUTDOWN_EVENT_MASK | HIBERNATE_EVENT_MASK | UNHIBERNATE_EVENT_MASK;
-/*end[ENABLE_ISOLATE_MIGRATION]*/
+    /**
+     * Event kind indicating that an isolate is hibernating.
+     *
+     * Used for {@link Isolate.LifecycleListener}s that will be called when the Isolate suspends via
+     * {@link #hibernate}.
+     */
+    public final static int HIBERNATE_EVENT_MASK = 2;
+
+    /**
+     * Event kind indicating that an isolate is unhibernating.
+     *
+     * Used for {@link Isolate.LifecycleListener}s that will be called when the Isolate resumes via
+     * {@link #unhibernate}.
+     */
+    public final static int UNHIBERNATE_EVENT_MASK = 4;
+
+    public final static int SUPPORTED_EVENTS = SHUTDOWN_EVENT_MASK | HIBERNATE_EVENT_MASK | UNHIBERNATE_EVENT_MASK;
 
     /**
      * Monitor isolate lifecycle events such as shutdown, hibernate, and unhibernate. Isolate life-cycle events can be
@@ -867,21 +861,18 @@ public final class Isolate implements Runnable {
                 }
                 return shutdownHooks;
             }
-/*if[!ENABLE_ISOLATE_MIGRATION]*/
-/*else[ENABLE_ISOLATE_MIGRATION]*/
-//            case HIBERNATE_EVENT_MASK: {
-//                if (suspendHooks == null) {
-//                    suspendHooks = new CallbackManager(false);
-//                }
-//                return suspendHooks;
-//            }
-//            case UNHIBERNATE_EVENT_MASK: {
-//                if (resumeHooks == null) {
-//                    resumeHooks = new CallbackManager(false);
-//                }
-//                return resumeHooks;
-//            }
-/*end[ENABLE_ISOLATE_MIGRATION]*/
+            case HIBERNATE_EVENT_MASK: {
+                if (suspendHooks == null) {
+                    suspendHooks = new CallbackManager(false);
+                }
+                return suspendHooks;
+            }
+            case UNHIBERNATE_EVENT_MASK: {
+                if (resumeHooks == null) {
+                    resumeHooks = new CallbackManager(false);
+                }
+                return resumeHooks;
+            }
             default:
                 throw new IllegalArgumentException("Illegal isolate event kind " + eventKind);
         }
@@ -1018,15 +1009,12 @@ public final class Isolate implements Runnable {
         if ((eventSet & SHUTDOWN_EVENT_MASK) != 0) {
             addLifecycleListener0(listener, SHUTDOWN_EVENT_MASK);
         }
-/*if[!ENABLE_ISOLATE_MIGRATION]*/
-/*else[ENABLE_ISOLATE_MIGRATION]*/
-//        if ((eventSet & HIBERNATE_EVENT_MASK) != 0) {
-//            addLifecycleListener0(listener, HIBERNATE_EVENT_MASK);
-//        }
-//        if ((eventSet & UNHIBERNATE_EVENT_MASK) != 0) {
-//            addLifecycleListener0(listener, UNHIBERNATE_EVENT_MASK);
-//        }
-/*end[ENABLE_ISOLATE_MIGRATION]*/
+        if ((eventSet & HIBERNATE_EVENT_MASK) != 0) {
+            addLifecycleListener0(listener, HIBERNATE_EVENT_MASK);
+        }
+        if ((eventSet & UNHIBERNATE_EVENT_MASK) != 0) {
+            addLifecycleListener0(listener, UNHIBERNATE_EVENT_MASK);
+        }
     }
 
     /**
@@ -1075,15 +1063,12 @@ public final class Isolate implements Runnable {
         if ((eventSet & SHUTDOWN_EVENT_MASK) != 0) {
             result &= removeLifecycleListener0(listener, SHUTDOWN_EVENT_MASK);
         }
-/*if[!ENABLE_ISOLATE_MIGRATION]*/
-/*else[ENABLE_ISOLATE_MIGRATION]*/
-//        if ((eventSet & HIBERNATE_EVENT_MASK) != 0) {
-//            result &= removeLifecycleListener0(listener, HIBERNATE_EVENT_MASK);
-//        }
-//        if ((eventSet & UNHIBERNATE_EVENT_MASK) != 0) {
-//            result &= removeLifecycleListener0(listener, UNHIBERNATE_EVENT_MASK);
-//        }
-/*end[ENABLE_ISOLATE_MIGRATION]*/
+        if ((eventSet & HIBERNATE_EVENT_MASK) != 0) {
+            result &= removeLifecycleListener0(listener, HIBERNATE_EVENT_MASK);
+        }
+        if ((eventSet & UNHIBERNATE_EVENT_MASK) != 0) {
+            result &= removeLifecycleListener0(listener, UNHIBERNATE_EVENT_MASK);
+        }
         return result;
     }
 
@@ -1809,33 +1794,33 @@ public final class Isolate implements Runnable {
 //
 //        return isolate;
 //    }
-//
-//    /**
-//     * Hibernate the isolate. The <code>handleLifecycleListenerEvent()</code> method will be called on any {@link LifecycleListener LifecycleListeners} registered
-//     * to handle <code>HIBERNATE</code> events on this isolate.  Any Channel I/O will be hibernated, and interisolate communication {@link com.sun.squawk.io.mailboxes.Channel channels} will be broken.
-//     * If the current thread is in this isolate then this function will only return when the isolate is unhibernated.
-//     *
-//     * @throws IOException if the underlying IO system cannot be serialized
-//     * @throws IllegalStateException if this isolate is not <code>ALIVE</code> or if it has a debugger attached to it
-//     */
-//    public void hibernate() throws java.io.IOException, IllegalStateException {
-//        if (state == NEW) {
-//            throw new IllegalStateException("cannot hiberate an unstarted isolate");
-//        }
-//        if (state >= HIBERNATED) {
-//            throw new IllegalStateException("cannot hibernate a hibernated or exited isolate");
-//        }
-//        if (debugger != null) {
-//            throw new IllegalStateException("cannot hibernate an isolate with an attached debugger");
-//        }
-//
-//        if (VM.isVeryVerbose()) {
-//            System.out.println("[Hibernating " + isolateInfoStr() + "]");
-//        }
-//
-//        hibernate(HIBERNATED, true);
-//    }
 /*end[ENABLE_ISOLATE_MIGRATION]*/
+
+    /**
+     * Hibernate the isolate. The <code>handleLifecycleListenerEvent()</code> method will be called on any {@link LifecycleListener LifecycleListeners} registered
+     * to handle <code>HIBERNATE</code> events on this isolate.  Any Channel I/O will be hibernated, and inter-isolate communication {@link com.sun.squawk.io.mailboxes.Channel channels} will be broken.
+     * If the current thread is in this isolate then this function will only return when the isolate is unhibernated.
+     *
+     * @throws IOException if the underlying IO system cannot be serialized
+     * @throws IllegalStateException if this isolate is not <code>ALIVE</code> or if it has a debugger attached to it
+     */
+    public void hibernate() throws java.io.IOException, IllegalStateException {
+        if (state == NEW) {
+            throw new IllegalStateException("cannot hiberate an unstarted isolate");
+        }
+        if (state >= HIBERNATED) {
+            throw new IllegalStateException("cannot hibernate a hibernated or exited isolate");
+        }
+        if (debugger != null) {
+            throw new IllegalStateException("cannot hibernate an isolate with an attached debugger");
+        }
+
+        if (VM.isVeryVerbose()) {
+            System.out.println("[Hibernating " + isolateInfoStr() + "]");
+        }
+
+        hibernate(HIBERNATED, true);
+    }
 
     /**
      * Modifies the state of this isolate.
@@ -1861,22 +1846,16 @@ public final class Isolate implements Runnable {
             transitioningState = newState; // we are in process of moving to newState;
             if (doHooks) {
                 switch (newState) {
-
-/*if[!ENABLE_ISOLATE_MIGRATION]*/
-/*else[ENABLE_ISOLATE_MIGRATION]*/
-//                    case HIBERNATED: {
-//                        if (suspendHooks != null) {
-//                            runHooks(suspendHooks, "HIBERNATE_EVENT");
-//                        }
-//                        break;
-//                    }
-/*end[ENABLE_ISOLATE_MIGRATION]*/
-
+                    case HIBERNATED: {
+                        if (suspendHooks != null) {
+                            runHooks(suspendHooks, "HIBERNATE_EVENT");
+                        }
+                        break;
+                    }
                     case EXITED: {
                         runShutdownListeners();
                         break;
                     }
-
                     default:
                         throw new IllegalArgumentException("Illegal isolate state " + newState);
                 }
@@ -1923,9 +1902,15 @@ public final class Isolate implements Runnable {
         }
     }
 
-/*if[!ENABLE_ISOLATE_MIGRATION]*/
-  void addToHibernatedRunThread(VMThread thread) {
+    /*
+     * Add a thread to the list of hibernated run threads.
+     *
+     * @param thread the thread to add
+     */
+    void addToHibernatedRunThread(VMThread thread) {
         Assert.that(thread.nextThread == null);
+        thread.nextThread = hibernatedRunThreads;
+        hibernatedRunThreads = thread;
     }
 
     /*
@@ -1935,97 +1920,67 @@ public final class Isolate implements Runnable {
      */
     void addToHibernatedTimerThread(VMThread thread) {
         Assert.that(thread.nextTimerThread == null);
+        thread.nextTimerThread = hibernatedTimerThreads;
+        hibernatedTimerThreads = thread;
+    }
+
+    /**
+     * Unhibernate the isolate. The <code>handleLifecycleListenerEvent()</code> method will be called on any {@link LifecycleListener LifecycleListeners} registered
+     * to handle <code>UNHIBERNATE</code> events on this isolate.
+     *
+     * @throws IllegalStateException if the isolate is not <code>HIBERNATED</code>
+     */
+    public void unhibernate() {
+        if (state != HIBERNATED) {
+            throw new RuntimeException("Cannot unhibernate isolate that is not in hibernation state");
+        }
+        changeState(ALIVE);
+        // don't need to mess with transitioningState becuase we immediately switch to ALIVE state in above.
+
+        // Attach to current isolate as a child
+        Isolate currentIsolate = VM.getCurrentIsolate();
+        Assert.that(currentIsolate != null);
+        currentIsolate.addIsolate(this);
+
+        VMThread.unhibernateIsolate(this);
+
+        addVMShutdownHook();
+
+        if (resumeHooks != null) {
+            runHooks(resumeHooks, "UNHIBERNATE_EVENT");
+        }
+    }
+
+    /*
+     * Get all the hibernated run threads.
+     *
+     * @return the thread linked by thread.nextThread
+     */
+    VMThread getHibernatedRunThreads() {
+        VMThread res = hibernatedRunThreads;
+        hibernatedRunThreads = null;
+        return res;
+    }
+
+    /*
+     * Get all the hibernated timer threads.
+     *
+     * @return the thread linked by thread.nextTimerThread
+     */
+    VMThread getHibernatedTimerThreads() {
+        VMThread res = hibernatedTimerThreads;
+        hibernatedTimerThreads = null;
+        return res;
     }
 
     /**
      * Determines if this isolate is {@link #hibernate() hibernated}.
      *
-     * @return false always
+     * @return true if it is
      */
-    public boolean isHibernated() throws ForceInlinedPragma {
-        return false;
+    public boolean isHibernated() {
+        return state == HIBERNATED;
     }
-/*else[ENABLE_ISOLATE_MIGRATION]*/
-//    /*
-//     * Add a thread to the list of hibernated run threads.
-//     *
-//     * @param thread the thread to add
-//     */
-//    void addToHibernatedRunThread(VMThread thread) {
-//        Assert.that(thread.nextThread == null);
-//        thread.nextThread = hibernatedRunThreads;
-//        hibernatedRunThreads = thread;
-//    }
-//
-//    /*
-//     * Add a thread to the list of hibernated timer threads.
-//     *
-//     * @param thread the thread to add
-//     */
-//    void addToHibernatedTimerThread(VMThread thread) {
-//        Assert.that(thread.nextTimerThread == null);
-//        thread.nextTimerThread = hibernatedTimerThreads;
-//        hibernatedTimerThreads = thread;
-//    }
-//
-//    /**
-//     * Unhibernate the isolate. The <code>handleLifecycleListenerEvent()</code> method will be called on any {@link LifecycleListener LifecycleListeners} registered
-//     * to handle <code>UNHIBERNATE</code> events on this isolate.
-//     *
-//     * @throws IllegalStateException if the isolate is not <code>HIBERNATED</code>
-//     */
-//    public void unhibernate() {
-//        if (state != HIBERNATED) {
-//            throw new RuntimeException("Cannot unhibernate isolate that is not in hibernation state");
-//        }
-//        changeState(ALIVE);
-//        // don't need to mess with transitioningState becuase we immediately switch to ALIVE state in above.
-//
-//        // Attach to current isolate as a child
-//        Isolate currentIsolate = VM.getCurrentIsolate();
-//        Assert.that(currentIsolate != null);
-//        currentIsolate.addIsolate(this);
-//
-//        VMThread.unhibernateIsolate(this);
-//
-//        addVMShutdownHook();
-//
-//        if (resumeHooks != null) {
-//            runHooks(resumeHooks, "UNHIBERNATE_EVENT");
-//        }
-//    }
-//
-//    /*
-//     * Get all the hibernated run threads.
-//     *
-//     * @return the thread linked by thread.nextThread
-//     */
-//    VMThread getHibernatedRunThreads() {
-//        VMThread res = hibernatedRunThreads;
-//        hibernatedRunThreads = null;
-//        return res;
-//    }
-//
-//    /*
-//     * Get all the hibernated timer threads.
-//     *
-//     * @return the thread linked by thread.nextTimerThread
-//     */
-//    VMThread getHibernatedTimerThreads() {
-//        VMThread res = hibernatedTimerThreads;
-//        hibernatedTimerThreads = null;
-//        return res;
-//    }
-//
-//    /**
-//     * Determines if this isolate is {@link #hibernate() hibernated}.
-//     *
-//     * @return true if it is
-//     */
-//    public boolean isHibernated() {
-//        return state == HIBERNATED;
-//    }
-/*end[ENABLE_ISOLATE_MIGRATION]*/
 
     /**
      * Determines if this isolate has been (re)started and not yet (re)hibernated or exited.

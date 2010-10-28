@@ -300,7 +300,7 @@ void cioExecute(void) {
         }
 
 #if NATIVE_VERIFICATION
-        case ChannelConstants_COMPUTE_SHA1_FOR_MEMORY_REGION:{
+        case ChannelConstants_INTERNAL_COMPUTE_SHA1_FOR_MEMORY_REGION:{
             int address=i1;
             int numberOfBytes=i2;
             unsigned char* buffer_to_write_sha_hash_into = o1;
@@ -308,7 +308,7 @@ void cioExecute(void) {
             break;
         }
 #else
-        case ChannelConstants_COMPUTE_SHA1_FOR_MEMORY_REGION:{
+        case ChannelConstants_INTERNAL_COMPUTE_SHA1_FOR_MEMORY_REGION:{
             fprintf(vmOut,"Error: COMPUTE_SHA1_FOR_MEMORY_REGION called, but NATIVE_VERIFICATION=false.");
             fflush(vmOut);
             break;

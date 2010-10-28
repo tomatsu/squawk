@@ -2225,16 +2225,6 @@ hbp.dumpState();
     }
 
     /**
-     * Create a Channel I/O context.
-     *
-     * @param hibernatedContext the handle for a hibernated I/O session
-     * @return the channel I/O context
-     */
-    static int createChannelContext(byte[] hibernatedContext) {
-        return execSyncIO(ChannelConstants.GLOBAL_CREATECONTEXT, 0, 0, 0, 0, 0, 0, hibernatedContext, null);
-    }
-
-    /**
      * Delete a channel I/O context.
      *
      * @param context the channel I/O context
@@ -2243,38 +2233,51 @@ hbp.dumpState();
         execSyncIO(context, ChannelConstants.CONTEXT_DELETE, 0, 0);
     }
 
-    /**
-     * Hibernate a channel context.
-     *
-     * @param context the channel I/O handle
-     * @return        the serialized IO sub-system
-     * @throws IOException if something went wrong when serializing the IO sub-system
-     */
-    static byte[] hibernateChannelContext(int context) throws IOException {
-
-        // Get buffer size
-        int bufferSize = execSyncIO(context, ChannelConstants.CONTEXT_HIBERNATE, 0, 0);
-
-        // Check that serialization succeeded
-        if (bufferSize < 0) {
-            raiseChannelException(context);
-        }
-
-        // Get cio data
-        try {
-            byte[] cioData = new byte[bufferSize];
-            int result = execSyncIO(context, ChannelConstants.CONTEXT_GETHIBERNATIONDATA, 0, cioData.length, 0, 0, 0, 0, null, cioData);
-            if (result != ChannelConstants.RESULT_OK) {
-                if (result == ChannelConstants.RESULT_EXCEPTION) {
-                    raiseChannelException(context);
-                }
-                throw new IOException("Bad result from hibernateChannelContext "+ result);
-            }
-            return cioData;
-        } catch (OutOfMemoryError e) {
-            throw new IOException("insufficient memory to serialize IO state");
-        }
-    }
+/*if[!ENABLE_ISOLATE_MIGRATION]*/
+/*else[ENABLE_ISOLATE_MIGRATION]*/
+//    /**
+//     * Create a Channel I/O context.
+//     *
+//     * @param hibernatedContext the handle for a hibernated I/O session
+//     * @return the channel I/O context
+//     */
+//    static int createChannelContext(byte[] hibernatedContext) {
+//        return execSyncIO(ChannelConstants.GLOBAL_CREATECONTEXT, 0, 0, 0, 0, 0, 0, hibernatedContext, null);
+//    }
+//
+//    /**
+//     * Hibernate a channel context.
+//     *
+//     * @param context the channel I/O handle
+//     * @return        the serialized IO sub-system
+//     * @throws IOException if something went wrong when serializing the IO sub-system
+//     */
+//    static byte[] hibernateChannelContext(int context) throws IOException {
+//
+//        // Get buffer size
+//        int bufferSize = execSyncIO(context, ChannelConstants.CONTEXT_HIBERNATE, 0, 0);
+//
+//        // Check that serialization succeeded
+//        if (bufferSize < 0) {
+//            raiseChannelException(context);
+//        }
+//
+//        // Get cio data
+//        try {
+//            byte[] cioData = new byte[bufferSize];
+//            int result = execSyncIO(context, ChannelConstants.CONTEXT_GETHIBERNATIONDATA, 0, cioData.length, 0, 0, 0, 0, null, cioData);
+//            if (result != ChannelConstants.RESULT_OK) {
+//                if (result == ChannelConstants.RESULT_EXCEPTION) {
+//                    raiseChannelException(context);
+//                }
+//                throw new IOException("Bad result from hibernateChannelContext "+ result);
+//            }
+//            return cioData;
+//        } catch (OutOfMemoryError e) {
+//            throw new IOException("insufficient memory to serialize IO state");
+//        }
+//    }
+/*end[ENABLE_ISOLATE_MIGRATION]*/
 
     /**
      * Gets the current time.

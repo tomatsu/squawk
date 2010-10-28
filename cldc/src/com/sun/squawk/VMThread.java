@@ -654,42 +654,39 @@ public final class VMThread implements GlobalStaticFields {
         }
     }
 
-/*if[!ENABLE_ISOLATE_MIGRATION]*/
-/*else[ENABLE_ISOLATE_MIGRATION]*/
-//    /**
-//     * Unhibernate the isolate.
-//     *
-//     * @param isolate the isolate
-//     */
-//    final static void unhibernateIsolate(Isolate isolate) {
-//        /*
-//         * Add back the timer threads.
-//         */
-//        VMThread threads = isolate.getHibernatedTimerThreads();
-//        while (threads != null) {
-//            VMThread thread = threads;
-//            threads = thread.nextTimerThread;
-//            thread.nextTimerThread = null;
-//            long time = thread.time;
-//            if (time == 0) {
-//                time = 1;
-//            }
-//            timerQueue.add(thread, time);
-//        }
-//
-//        /*
-//         * Add back the runnable threads.
-//         */
-//        threads = isolate.getHibernatedRunThreads();
-//        while (threads != null) {
-//            VMThread thread = threads;
-//            threads = thread.nextThread;
-//            thread.nextThread = null;
-//            thread.setNotInQueue(VMThread.Q_HIBERNATEDRUN);
-//            addToRunnableThreadsQueue(thread);
-//        }
-//    }
-/*end[ENABLE_ISOLATE_MIGRATION]*/
+    /**
+     * Unhibernate the isolate.
+     *
+     * @param isolate the isolate
+     */
+    static void unhibernateIsolate(Isolate isolate) {
+        /*
+         * Add back the timer threads.
+         */
+        VMThread threads = isolate.getHibernatedTimerThreads();
+        while (threads != null) {
+            VMThread thread = threads;
+            threads = thread.nextTimerThread;
+            thread.nextTimerThread = null;
+            long time = thread.time;
+            if (time == 0) {
+                time = 1;
+            }
+            timerQueue.add(thread, time);
+        }
+
+        /*
+         * Add back the runnable threads.
+         */
+        threads = isolate.getHibernatedRunThreads();
+        while (threads != null) {
+            VMThread thread = threads;
+            threads = thread.nextThread;
+            thread.nextThread = null;
+            thread.setNotInQueue(VMThread.Q_HIBERNATEDRUN);
+            addToRunnableThreadsQueue(thread);
+        }
+    }
 
     /**
      * Gets the name of this thread. If {@link #setName} has never been called for this

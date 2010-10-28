@@ -170,7 +170,7 @@ public class SignatureVerifier {
     		System.out.println("verify using native SHA1.\n\t Address for compute hash : "+address.toUWord().toInt()+
     				"Includes Offset: "+bufferOffset);
         }
-    	VM.execSyncIO(ChannelConstants.COMPUTE_SHA1_FOR_MEMORY_REGION,address.toUWord().toInt(), bufferLength , 0, 0, 0, 0, result, null);
+    	VM.execSyncIO(ChannelConstants.INTERNAL_COMPUTE_SHA1_FOR_MEMORY_REGION,address.toUWord().toInt(), bufferLength , 0, 0, 0, 0, result, null);
 		
 		result = Arrays.copy(result, 0, 20, 0, 20);
 		if (SignatureVerifier.DEBUG) {
@@ -295,7 +295,7 @@ public class SignatureVerifier {
 		dis.readInt(); // attributes
 		dis.readInt(); // int parentHash
 		String parentURL = dis.readUTF();
-		boolean hasParent = !parentURL.equals("");
+		boolean hasParent = parentURL.length() != 0;
 		dis.readInt(); // int rootOffset
 		int memorySize = dis.readInt();
 		int oopMapSize = GC.calculateOopMapSizeInBytes(memorySize);
@@ -448,7 +448,7 @@ public class SignatureVerifier {
 						+ (signatureOffset + SIGNATURE_HEADER_LENGTH));
 			}
 			long startTime = System.currentTimeMillis();
-			int r = VM.execSyncIO(ChannelConstants.COMPUTE_SHA1_FOR_MEMORY_REGION, suiteAddress, signatureOffset
+			int r = VM.execSyncIO(ChannelConstants.INTERNAL_COMPUTE_SHA1_FOR_MEMORY_REGION, suiteAddress, signatureOffset
 					+ SIGNATURE_HEADER_LENGTH, 0, 0, 0, 0, result, null);
 
 			result = Arrays.copy(result, 0, 20, 0, 20);
