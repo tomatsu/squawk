@@ -34,4 +34,5 @@ package com.sun.squawk.pragma;
  * internally represented in the array object format.
  */
 public class ReplacementConstructorPragma extends PragmaException {
+    private ReplacementConstructorPragma() {}
 }

@@ -237,26 +237,6 @@ public class Protocol extends ConnectionBase implements SocketConnection {
         }
     }
 
-    /**
-     * Open and return a data input stream for a connection.
-     *
-     * @return                 An input stream
-     * @exception IOException  If an I/O error occurs
-     */
-    public DataInputStream openDataInputStream() throws IOException {
-        return new DataInputStream(openInputStream());
-    }
-
-    /**
-     * Open and return a data output stream for a connection.
-     *
-     * @return                 An input stream
-     * @exception IOException  If an I/O error occurs
-     */
-    public DataOutputStream openDataOutputStream() throws IOException {
-        return new DataOutputStream(openOutputStream());
-    }
-
     public void setSocketOption(byte option, int value) throws IllegalArgumentException, IOException {
         ensureOpen();
         

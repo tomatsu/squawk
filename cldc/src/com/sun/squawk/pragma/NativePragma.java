@@ -32,5 +32,5 @@ package com.sun.squawk.pragma;
  * @see HostedPragma
  */
 public class NativePragma extends PragmaException {
-
+    private NativePragma() {}
 }

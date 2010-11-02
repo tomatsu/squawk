@@ -153,16 +153,6 @@ public abstract class ConnectionBaseAdapter extends ConnectionBase implements
     }
 
     /**
-     * Open and return a data input stream for a connection.
-     *
-     * @return                 An input stream
-     * @exception IOException  If an I/O error occurs
-     */
-    public DataInputStream openDataInputStream() throws IOException {
-        return new DataInputStream(openInputStream());
-    }
-
-    /**
      * Returns an output stream.
      *
      * @return     an output stream for writing bytes to this port.
@@ -182,16 +172,6 @@ public abstract class ConnectionBaseAdapter extends ConnectionBase implements
         maxOStreams--;
         oStreams++;
         return o;
-    }
-
-    /**
-     * Open and return a data output stream for a connection.
-     *
-     * @return                 An input stream
-     * @exception IOException  If an I/O error occurs
-     */
-    public DataOutputStream openDataOutputStream() throws IOException {
-        return new DataOutputStream(openOutputStream());
     }
 
     /**

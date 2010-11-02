@@ -25,14 +25,9 @@
 package com.sun.squawk.io.j2me.multicastoutput;
 
 import java.io.*;
-
-import com.sun.squawk.io.MulticastOutputStream;
-import javax.microedition.io.Connection;
-
 import com.sun.squawk.io.*;
 import com.sun.squawk.util.StringTokenizer;
 import java.util.Vector;
-
 import javax.microedition.io.*;
 
 /**

@@ -29,4 +29,5 @@ package com.sun.squawk.pragma;
  * by the translator.
  */
 public class NotInlinedPragma extends PragmaException {
+    private NotInlinedPragma() {}
 }

@@ -160,4 +160,6 @@ public class PragmaException extends RuntimeException {
             return 0;
         }
     }
+
+    PragmaException() {}
 }

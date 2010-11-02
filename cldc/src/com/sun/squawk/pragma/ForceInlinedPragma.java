@@ -35,4 +35,5 @@ package com.sun.squawk.pragma;
  * @see AllowInlinedPragma
  */
 public class ForceInlinedPragma extends AllowInlinedPragma {
+    private ForceInlinedPragma() {}
 }

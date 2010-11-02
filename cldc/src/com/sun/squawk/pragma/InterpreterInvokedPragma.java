@@ -29,5 +29,5 @@ package com.sun.squawk.pragma;
  * from the interpreter or from JIT compiled code.
  */
 public class InterpreterInvokedPragma extends PragmaException {
-
+    private InterpreterInvokedPragma() {}
 }

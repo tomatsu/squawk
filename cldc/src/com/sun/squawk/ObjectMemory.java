@@ -458,6 +458,7 @@ public final class ObjectMemory {
             }
         }
 
+/*if[DEBUG_CODE_ENABLED]*/
         // This is used to debug issues with isolate migration that seem to keep
         // popping up on the Sun SPOT platform.
         if (verifyClearOopMap && oopMap.cardinality() != 0) {
@@ -488,5 +489,6 @@ public final class ObjectMemory {
             throw new RuntimeException();
            // VM.fatalVMError();
         }
+/*end[DEBUG_CODE_ENABLED]*/
     }
 }
