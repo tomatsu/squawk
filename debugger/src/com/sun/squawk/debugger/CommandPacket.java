@@ -384,7 +384,7 @@ public final class CommandPacket extends Packet {
             append(getSize()).
             append("]:").
             append(toString(set, command));
-        if (Log.debug()) {
+        if (Log.DEBUG_ENABLED && Log.debug()) {
             appendData(buf);
         }
         return buf.toString();

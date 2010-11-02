@@ -95,7 +95,7 @@ public final class ReplyPacket extends Packet {
             buf.append(",error=").append(errorCode);
         }
         buf.append("]");
-        if (Log.debug()) {
+        if (Log.DEBUG_ENABLED && Log.debug()) {
             appendData(buf);
         }
         return buf.toString();

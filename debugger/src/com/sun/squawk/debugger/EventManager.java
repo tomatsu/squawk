@@ -107,7 +107,7 @@ public abstract class EventManager implements Runnable, EventNotifier.Consumer {
         if (Log.info()) {
             Log.log("Registered handler for event: " + request);
         }
-        if (Log.debug()) {
+        if (Log.DEBUG_ENABLED && Log.debug()) {
             logRegisteredRequests();
         }
     }
@@ -152,8 +152,7 @@ public abstract class EventManager implements Runnable, EventNotifier.Consumer {
                 request.cleared();
             }
         }
-
-        if (Log.debug()) {
+        if (Log.DEBUG_ENABLED && Log.debug()) {
             logRegisteredRequests();
         }
         return cleared != null;
@@ -218,7 +217,7 @@ public abstract class EventManager implements Runnable, EventNotifier.Consumer {
         boolean vmDeath = false;
         for (Enumeration e = requests.elements(); e.hasMoreElements(); ) {
             EventRequest request = (EventRequest) e.nextElement();
-            if (Log.debug()) {
+            if (Log.DEBUG_ENABLED && Log.debug()) {
                 Log.log("Testing event request for match: " + request);
             }
             if (request.matchKind(event.kind) && request.matchModifiers(matcher, event)) {
@@ -282,12 +281,14 @@ public abstract class EventManager implements Runnable, EventNotifier.Consumer {
     }
 
     public void logRegisteredRequests() {
+/*if[DEBUG_CODE_ENABLED]*/
         Log.log("Registered event requests [count=" + requests.size() + "]: ");
 
         for (Enumeration e = requests.elements(); e.hasMoreElements(); ) {
             EventRequest request = (EventRequest) e.nextElement();
             Log.log("    " + request);
         }
+/*end[DEBUG_CODE_ENABLED]*/
     }
 
     public abstract void send(Debugger.Event event, MatchedRequests mr) throws IOException, SDWPException;

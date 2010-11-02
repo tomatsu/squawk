@@ -727,7 +727,7 @@ public final class SDA extends Debugger {
             ReferenceTypeID typeID = getIDForClass(definingKlass);
             Location location = new Location(JDWP.getTypeTag(definingKlass), typeID, methodID, event.location.bci.toPrimitive());
             out.writeLocation(location, "location");
-            if (Log.debug()) {
+            if (Log.DEBUG_ENABLED && Log.debug()) {
                 Log.log("   Breakpoint in : " + definingKlass + "." + methodID + ":" + event.location.bci.toPrimitive());
             }
         }
@@ -744,7 +744,7 @@ public final class SDA extends Debugger {
         public SingleStep(int id, PacketInputStream in) throws SDWPException, IOException {
             super(id, in, JDWP.EventKind_SINGLE_STEP);
 
-            if (Log.debug()) {
+            if (Log.DEBUG_ENABLED && Log.debug()) {
                 Log.log("[SingleStep] Creating SingleStep...");
             }
             step = getStep();
@@ -777,7 +777,7 @@ public final class SDA extends Debugger {
             sdpOut.writeMethodID(DebuggerSupport.getIDForMethodBody(definingClass, start.mp), "method");
             sdpOut.writeLong(start.bci.toPrimitive(), "bci");
             sdp.sendCommand(sdpCommand);
-            if (Log.debug()) {
+            if (Log.DEBUG_ENABLED && Log.debug()) {
                 Log.log("[SingleStep] Received reply from proxy, constructing stepInfo");
             }
             /* Read reply packet and call on debugger to pass this on to the stepThread */
@@ -851,7 +851,7 @@ public final class SDA extends Debugger {
             Location location = new Location(JDWP.getTypeTag(definingKlass), typeID, methodID, event.location.bci.toPrimitive());
             out.writeLocation(location, "location");
 
-            if (Log.debug()) {
+            if (Log.DEBUG_ENABLED && Log.debug()) {
                 Log.log("   Stepped to : " + definingKlass + "." + methodID + ":" + event.location.bci.toPrimitive());
             }
         }
@@ -946,7 +946,7 @@ public final class SDA extends Debugger {
             Location location = new Location(JDWP.getTypeTag(definingKlass), typeID, methodID, event.location.bci.toPrimitive());
             out.writeLocation(location, "location");
 
-            if (Log.debug()) {
+            if (Log.DEBUG_ENABLED && Log.debug()) {
                 Log.log("   Throw from : " + definingKlass + "." + methodID + ":" + event.location.bci.toPrimitive());
             }
             // exception:
@@ -962,7 +962,7 @@ public final class SDA extends Debugger {
                 ReferenceTypeID catchTypeID = getIDForClass(catchType);
                 location = new Location(JDWP.getTypeTag(catchType), catchTypeID, catchMethodID, event.catchLocation.bci.toPrimitive());
                 out.writeLocation(location, "catchLocation");
-                if (Log.debug()) {
+                if (Log.DEBUG_ENABLED && Log.debug()) {
                     Log.log("   Catch at : " + catchType + "." + catchMethodID + ":" + event.catchLocation.bci.toPrimitive());
                 }
             }

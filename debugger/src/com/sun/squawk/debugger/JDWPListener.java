@@ -245,7 +245,7 @@ public abstract class JDWPListener implements Runnable {
                     try {
                         command.wait();
                     } catch (InterruptedException e) {
-                        if (Log.verbose()) {
+                        if (Log.DEBUG_ENABLED && Log.verbose()) {
                             Log.log("Waiting for reply interrupted: " + command);
                         }
                     }

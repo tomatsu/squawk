@@ -442,7 +442,7 @@ public final class SDPListener extends JDWPListener {
                 int offset = fieldID.getOffset();
                 byte tag = fieldID.getTag();
                 
-                if (Log.debug()) {
+                if (Log.DEBUG_ENABLED && Log.debug()) {
                     Log.log("    static field in " + klass + " of type " + (char) tag + " at offset " + offset);
                 }
                 // This should only occur if the proxy did not intercept a constant field or
@@ -1430,7 +1430,7 @@ public final class SDPListener extends JDWPListener {
                         Location location = new Location(JDWP.getTypeTag(definingClass), definingClassID, methodID, bci);
                         Assert.that(DebuggerSupport.getMethodBody(definingClass, methodID.getOffset(), methodID.isStatic()) == mp, "bad method lookup");
 
-                        if (Log.debug()) {
+                        if (Log.DEBUG_ENABLED && Log.debug()) {
                             Log.log("    " + definingClass + "[mid=" + methodID + "]@" + bci);
                         }
 

@@ -96,7 +96,7 @@ public final class EventNotifier {
 
         event = evt;
 
-        if (Log.debug()) {
+        if (Log.DEBUG_ENABLED && Log.debug()) {
             Log.log("Event producer (B): notifying consumers: " + evt);
         }
 
@@ -105,7 +105,7 @@ public final class EventNotifier {
         // be given a chance to run.
         notifyAll();
 
-        if (Log.debug()) {
+        if (Log.DEBUG_ENABLED && Log.debug()) {
             Log.log("Event producer (C): waiting for event consumer to finish: " + evt);
         }
 
@@ -124,7 +124,7 @@ public final class EventNotifier {
             }
         }
         // Event has been handled, and the thread has been resumed.
-        if (Log.debug()) {
+        if (Log.DEBUG_ENABLED && Log.debug()) {
             Log.log("Event producer (D): resuming after: " + evt);
         }
     }
@@ -139,7 +139,7 @@ public final class EventNotifier {
     public synchronized void consumeEvent(Consumer consumer) {
         // WAIT (C):
         // Wait for a producer to produce an event
-        if (Log.debug()) {
+        if (Log.DEBUG_ENABLED && Log.debug()) {
             Log.log("Event consumer (A): waiting for event");
         }
         
@@ -159,7 +159,7 @@ public final class EventNotifier {
             }
         }
         
-        if (Log.debug()) {
+        if (Log.DEBUG_ENABLED && Log.debug()) {
             Log.log("Event consumer (B): got event: " + event);
         }
         try {

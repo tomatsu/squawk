@@ -226,7 +226,7 @@ public final class JDWPConnection {
                     packet = new ReplyPacket(id, dataLength, in, errorCode);
                 }
 
-                if (Log.debug()) {
+                if (Log.DEBUG_ENABLED && Log.debug()) {
                     Log.log("");
 //                    Log.log("read("+url+"): " + packet);
                 }
@@ -247,7 +247,7 @@ public final class JDWPConnection {
     void writePacket(Packet packet) throws IOException {
         synchronized (out) {
             checkOpen();
-            if (Log.debug()) {
+            if (Log.DEBUG_ENABLED && Log.debug()) {
                 Log.log("");
 //                Log.log("write("+url+"): " + packet);
             }

@@ -54,6 +54,9 @@ public class Log {
      */
     public static final int DEBUG = 3;
 
+
+    public static final boolean DEBUG_ENABLED = /*VAL*/false/*DEBUG_CODE_ENABLED*/;
+
     /**
      * The current logging level.
      */
@@ -88,7 +91,7 @@ public class Log {
 //                  newlevel = DEBUG;
 //              } else {
 //                 // System.err.println("NOTE: Log level \"debug\" only supported in debug builds. Setting log level to \"verbose\"");
-//                  newlevel = DEBUG;
+//                  newlevel = VERBOSE;
 //              }
 /*end[DEBUG_CODE_ENABLED]*/
             } else {

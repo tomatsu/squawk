@@ -34,6 +34,7 @@ import com.sun.squawk.util.*;
  *
  */
 public final class PacketOutputStream {
+    private final static boolean ENABLE_VERBOSE = false;
 
     private final DataOutputStream dos;
 
@@ -49,7 +50,7 @@ public final class PacketOutputStream {
      * @throws IOException if there was an IO error while writing
      */
     public void writeByte(int value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[byte]     " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[byte]     " + s + "=" + value);
         dos.writeByte(value);
     }
 
@@ -61,7 +62,7 @@ public final class PacketOutputStream {
      * @throws IOException if there was an IO error while writing
      */
     public void writeBoolean(boolean value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[boolean]  " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[boolean]  " + s + "=" + value);
         dos.writeBoolean(value);
     }
 
@@ -73,7 +74,7 @@ public final class PacketOutputStream {
      * @throws IOException if there was an IO error while writing
      */
     public void writeChar(char value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[string]   " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[string]   " + s + "=" + value);
         dos.writeChar(value);
     }
 
@@ -85,7 +86,7 @@ public final class PacketOutputStream {
      * @throws IOException if there was an IO error while writing
      */
     public void writeShort(short value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[short]    " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[short]    " + s + "=" + value);
         dos.writeShort(value);
     }
 
@@ -97,7 +98,7 @@ public final class PacketOutputStream {
      * @throws IOException if there was an IO error while writing
      */
     public void writeInt(int value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[int]      " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[int]      " + s + "=" + value);
         dos.writeInt(value);
     }
 
@@ -109,7 +110,7 @@ public final class PacketOutputStream {
      * @throws IOException if there was an IO error while writing
      */
     public void writeLong(long value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[long]     " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[long]     " + s + "=" + value);
         dos.writeLong(value);
     }
 
@@ -122,7 +123,7 @@ public final class PacketOutputStream {
      * @throws IOException if there was an IO error while writing
      */
     public void writeFloat(float value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[float]    " + s + "=" + (int)value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[float]    " + s + "=" + (int)value);
         dos.writeInt(Float.floatToIntBits(value));
     }
 
@@ -134,7 +135,7 @@ public final class PacketOutputStream {
      * @throws IOException if there was an IO error while writing
      */
     public void writeDouble(double value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[double]   " + s + "=" + (long)value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[double]   " + s + "=" + (long)value);
         dos.writeLong(Double.doubleToLongBits(value));
     }
 /*end[FLOATS]*/
@@ -155,7 +156,7 @@ public final class PacketOutputStream {
      * @throws IOException if there was an IO error while writing
      */
     public void writeString(String value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[string]   " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[string]   " + s + "=" + value);
 
         // A String is encoded in a JDWP packet as a UTF-8 encoded array, not zero
         // terminated, preceded by a *four-byte* integer length.
@@ -163,40 +164,40 @@ public final class PacketOutputStream {
     }
 
     public void writeObjectID(ObjectID value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[object]   " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[object]   " + s + "=" + value);
         dos.writeInt(value.id);
     }
 
     public void writeReferenceTypeID(ReferenceTypeID value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[type]     " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[type]     " + s + "=" + value);
         dos.writeInt(value.id);
     }
 
     public void writeTaggedObjectID(TaggedObjectID value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[t-object] " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[t-object] " + s + "=" + value);
         dos.writeByte(value.tag);
         dos.writeInt(value.id);
     }
 
     public void writeMethodID(MethodID value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[method]   " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[method]   " + s + "=" + value);
         dos.writeInt(value.id);
     }
 
     public void writeFieldID(FieldID value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[field]    " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[field]    " + s + "=" + value);
         writeReferenceTypeID(value.definingClass, "defining class");
         dos.writeInt(value.encoding);
     }
 
     public void writeFrameID(FrameID value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[frame]    " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[frame]    " + s + "=" + value);
         writeObjectID(value.threadID, null);
         dos.writeInt(value.frame);
     }
 
     public void writeLocation(Location value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[location] " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[location] " + s + "=" + value);
         dos.writeByte(value.tag);
         writeReferenceTypeID(value.definingClass, null);
         writeMethodID(value.method, null);
@@ -204,7 +205,7 @@ public final class PacketOutputStream {
     }
 
     public void writeNullLocation(String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[location]  " + s + "=null");
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[location]  " + s + "=null");
         dos.writeByte(JDWP.TypeTag_CLASS);
         writeReferenceTypeID(ReferenceTypeID.NULL, null);
         dos.writeInt(0);
@@ -220,7 +221,7 @@ public final class PacketOutputStream {
      * @throws IOException if there was an IO error while writing
      */
     public void writePrimitive(byte tag, long value, String s) throws IOException {
-        if (s != null && Log.verbose()) Log.log("out[t-prim]:  " + s + "=" + value);
+        if (ENABLE_VERBOSE && s != null && Log.verbose()) Log.log("out[t-prim]:  " + s + "=" + value);
         dos.writeByte(tag);
         switch (tag) {
             case JDWP.Tag_VOID:                                   break;
