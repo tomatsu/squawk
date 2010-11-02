@@ -1,39 +1,30 @@
-//if[!FLASH_MEMORY]
-/*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
- * This code is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2
- * only, as published by the Free Software Foundation.
- *
- * This code is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License version 2 for more details (a copy is
- * included in the LICENSE file that accompanied this code).
- *
- * You should have received a copy of the GNU General Public License
- * version 2 along with this work; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
- *
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
- * information or have any questions.
- */
-
-package com.sun.squawk.io.j2me.file;
+package tests;
 
 import com.sun.squawk.VM;
 import java.io.*;
 import javax.microedition.io.*;
+import javax.microedition.midlet.MIDlet;
+import javax.microedition.midlet.MIDletStateChangeException;
 
 /**
+ * The startApp method of this class is called by the VM to start the
+ * application.
  *
- * Simple test case
+ * The manifest specifies this class as MIDlet-1, which means it will
+ * be selected for execution.
  */
-public class Test {
+public class TestFiles extends MIDlet {
+
+    protected void destroyApp(boolean arg0) throws MIDletStateChangeException {
+    }
+
+    protected void pauseApp() {
+    }
+    
+    protected void startApp() throws MIDletStateChangeException {
+        System.out.println("Do not run as a midlet, run as a class with a main method...");
+        notifyDestroyed();
+    }
 
     /**
      * test code
@@ -82,9 +73,6 @@ public class Test {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-    }
-
-    private Test() {
     }
 
 }
