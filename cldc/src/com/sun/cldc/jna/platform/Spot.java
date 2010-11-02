@@ -21,9 +21,9 @@
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-package com.sun.cldc.jna;
+package com.sun.cldc.jna.platform;
 
-import java.util.Hashtable;
+import com.sun.cldc.jna.Platform;
 
 /**
  *
@@ -34,43 +34,7 @@ public class Spot extends Platform {
         return false; // TODO: implement for real
     }
 
-    public boolean hasRuntimeExec() {
-        return false; // TODO: implement for real
-    }
-
-    public boolean isFreeBSD() {
-        return false; // TODO: implement for real
-    }
-
-    public boolean isLinux() {
-        return false; // TODO: implement for real
-    }
-
-    public boolean isMac() {
-        return false;
-    }
-
-    public boolean isOpenBSD() {
-        return false; // TODO: implement for real
-    }
-
-    public boolean isSolaris() {
-        return false;
-    }
-
-    public boolean isWindows() {
-        return false;
-    }
-
-    public boolean isWindowsCE() {
-        return false; // TODO: implement for real
-    }
-
-    public boolean isX11() {
-        return false; // TODO: implement for real
-    }
-
-        /**
+    /**
      * Get the name of the package that contains the native implementation for this platform:
      */
     public String getPlatformPackageName() {
@@ -83,7 +47,6 @@ public class Spot extends Platform {
     public String getPlatformNativePackageName() {
         return "com.sun.squawk.platform.spot.natives";
     }
-
 
     public Spot() {
     }

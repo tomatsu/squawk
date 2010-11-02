@@ -21,55 +21,25 @@
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
  */
+package com.sun.cldc.jna.platform;
 
-package com.sun.cldc.jna;
-
-import com.sun.squawk.VM;
+import com.sun.cldc.jna.Platform;
 import java.util.Hashtable;
 
 /**
  *
  * @author dw29446
  */
-public class Posix extends Platform {
-
+public class Windows extends Platform {
     public boolean deleteNativeLibraryAfterVMExit() {
         return false; // TODO: implement for real
     }
 
-    public boolean hasRuntimeExec() {
-        return true; // TODO: implement for real
-    }
-
-    public boolean isFreeBSD() {
-        return platformName().equals("freebsd");
-    }
-
-    public boolean isLinux() {
-        return platformName().equals("linux");
-    }
-
-    public boolean isMac() {
-        return platformName().equals("macosx");
-    }
-
-    public boolean isOpenBSD() {
-        return platformName().equals("openbsd");
-    }
-
-    public boolean isSolaris() {
-        return platformName().equals("solaris");
-    }
-
     public boolean isWindows() {
-        return false;
+        return true;
     }
 
     public boolean isWindowsCE() {
-        return false;
-    }
-
-    public boolean isX11() {
         return false; // TODO: implement for real
     }
 
@@ -77,23 +47,18 @@ public class Posix extends Platform {
      * Get the name of the package that contains the native implementation for this platform:
      */
     public String getPlatformPackageName() {
-        return "com.sun.squawk.platform.posix";
+        return "com.sun.squawk.platform.windows";
     }
 
     /**
      * Get the name of the package that contains the native implementation for this platform:
      */
     public String getPlatformNativePackageName() {
-        return  "com.sun.squawk.platform.posix." + platformName() + ".natives";
+        return "com.sun.squawk.platform.windows.natives";
     }
 
-    public Posix() {
-        if (isMac()) {
-            commonMappings.put("socket", "");
-            commonMappings.put("c", "");
-            commonMappings.put("resolv", "");
-            commonMappings.put("net", "");
-            commonMappings.put("nsl", "");
-        }
+    public Windows() {
+        commonMappings.put("c", "msvcrt");
+        commonMappings.put("socket", "winsock");
     }
 }

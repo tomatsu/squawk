@@ -44,23 +44,41 @@ public abstract class Platform {
     
     public abstract boolean deleteNativeLibraryAfterVMExit();
 
-    public abstract boolean hasRuntimeExec();
+    public boolean hasRuntimeExec() {
+        return false;
+    }
 
-    public abstract boolean isFreeBSD();
+    public boolean isFreeBSD() {
+        return false;
+    }
 
-    public abstract boolean isLinux();
+    public boolean isLinux() {
+        return false;
+    }
 
-    public abstract boolean isMac();
+    public boolean isMac() {
+        return false;
+    }
 
-    public abstract boolean isOpenBSD();
+    public boolean isOpenBSD() {
+        return false;
+    }
 
-    public abstract boolean isSolaris();
+    public boolean isSolaris() {
+        return false;
+    }
 
-    public abstract boolean isWindows();
+    public boolean isWindows() {
+        return false;
+    }
 
-    public abstract boolean isWindowsCE();
+    public boolean isWindowsCE() {
+        return false;
+    }
 
-    public abstract boolean isX11();
+    public boolean isX11() {
+        return false;
+    }
 
     /**
      * Get the name of the package that contains the platform classes (posix, windows, etc):
@@ -115,7 +133,7 @@ public abstract class Platform {
         return "Platform(" + platformName + ")";
     }
 
-    public final static String PLATFORM_PACKAGE = "com.sun.cldc.jna";
+    public final static String PLATFORM_PACKAGE = "com.sun.cldc.jna.platform";
 
     private static Object getInstance(String name) {
         String fullname = PLATFORM_PACKAGE + "." + name;

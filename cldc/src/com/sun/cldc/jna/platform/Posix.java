@@ -21,72 +21,70 @@
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-package com.sun.cldc.jna;
 
-import java.util.Hashtable;
+package com.sun.cldc.jna.platform;
+
+import com.sun.cldc.jna.Platform;
 
 /**
  *
  * @author dw29446
  */
-public class Windows extends Platform {
+public class Posix extends Platform {
+
     public boolean deleteNativeLibraryAfterVMExit() {
         return false; // TODO: implement for real
     }
 
     public boolean hasRuntimeExec() {
-        return false; // TODO: implement for real
+        return true; // TODO: implement for real
     }
 
     public boolean isFreeBSD() {
-        return false; // TODO: implement for real
+        return platformName().equals("freebsd");
     }
 
     public boolean isLinux() {
-        return false; // TODO: implement for real
+        return platformName().equals("linux");
     }
 
     public boolean isMac() {
-        return false;
+        return platformName().equals("macosx");
     }
 
     public boolean isOpenBSD() {
-        return false; // TODO: implement for real
+        return platformName().equals("openbsd");
     }
 
     public boolean isSolaris() {
-        return false;
-    }
-
-    public boolean isWindows() {
-        return true;
-    }
-
-    public boolean isWindowsCE() {
-        return false; // TODO: implement for real
+        return platformName().equals("solaris");
     }
 
     public boolean isX11() {
         return false; // TODO: implement for real
     }
 
-        /**
+    /**
      * Get the name of the package that contains the native implementation for this platform:
      */
     public String getPlatformPackageName() {
-        return "com.sun.squawk.platform.windows";
+        return "com.sun.squawk.platform.posix";
     }
 
     /**
      * Get the name of the package that contains the native implementation for this platform:
      */
     public String getPlatformNativePackageName() {
-        return "com.sun.squawk.platform.windows.natives";
+        return  "com.sun.squawk.platform.posix." + platformName() + ".natives";
     }
 
-
-    public Windows() {
-        commonMappings.put("c", "msvcrt");
-        commonMappings.put("socket", "winsock");
+    public Posix() {
+        if (isMac()) {
+            commonMappings.put("socket", "");
+            commonMappings.put("c", "");
+            commonMappings.put("resolv", "");
+            commonMappings.put("net", "");
+            commonMappings.put("nsl", "");
+        }
     }
 }
