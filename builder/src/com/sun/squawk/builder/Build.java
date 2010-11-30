@@ -2184,7 +2184,7 @@ public class Build {
         dynamicProperties = new Properties();
         platform = Platform.createPlatform(this);
         // target ccompiler set later...
-        jdk = new JDK(platform.getExecutableExtension());
+        jdk = new JDK(platform);
         preprocessor = new Preprocessor();
         preprocessor.properties = properties;
         macroizer = new Macroizer();

@@ -24,6 +24,7 @@
 
 package com.sun.squawk.builder;
 
+import com.sun.squawk.builder.platform.Platform;
 import java.io.File;
 import java.io.PrintStream;
 
@@ -35,19 +36,21 @@ public class JDK {
 
     private final File home;
     private final String executableExtension;
+    private final Platform platform;
 
     /**
      * Creates an instance through which the tools of a JDK can be accessed.
      *
-     * @param executableExtension  the platform-dependent extension used for executable files (e.g. ".exe" on Windows).
+     * @param platform  the host platform
      */
-    public JDK(String executableExtension) {
+    public JDK(Platform platform) {
         File home = new File(System.getProperty("java.home"));
         if (home.getPath().endsWith("jre")) {
             home = home.getParentFile();
         }
         this.home = home;
-        this.executableExtension = executableExtension;
+        this.executableExtension = platform.getExecutableExtension();
+        this.platform = platform;
     }
 
     /**
@@ -121,6 +124,17 @@ public class JDK {
      */
     public final File getJNI_MDIncludePath() {
         File jniMd = Build.find(home, "jni_md.h", false);
+        if (jniMd == null) {
+            if (platform.isMacOsX()) {
+                String osVer = System.getProperty("os.version");
+                String SDKVer = "/Developer/SDKs/MacOSX10.6.sdk";
+                if (osVer != null && osVer.contains("10.5")) {
+                    SDKVer = "/Developer/SDKs/MacOSX10.5.sdk";
+                }
+                jniMd = Build.find(new File(SDKVer), "jni_md.h", false);
+            }
+        }
+
         if (jniMd == null) {
             throw new BuildException("could not find 'jni_md.h' under '" + home.getPath() + "'");
         }
