@@ -112,11 +112,47 @@ class PrivateOutputStream extends OutputStream {
         int old;
         if (parent.err) {
             old = VM.setStream(VM.STREAM_STDERR);
-            VM.print((char)b);
         } else {
             old = VM.setStream(VM.STREAM_STDOUT);
-            VM.print((char)b);
         }
+            VM.print((char)b);
+        VM.setStream(old);
+        }
+
+   /**
+     * Writes <code>len</code> bytes from the specified byte array
+     * starting at offset <code>off</code> to this output stream.
+     * <p>
+     * If <code>b</code> is <code>null</code>, a
+     * <code>NullPointerException</code> is thrown.
+     * <p>
+     * If <code>off</code> is negative, or <code>len</code> is negative, or
+     * <code>off+len</code> is greater than the length of the array
+     * <code>b</code>, then an <tt>IndexOutOfBoundsException</tt> is thrown.
+     *
+     * @param      b     the data.
+     * @param      off   the start offset in the data.
+     * @param      len   the number of bytes to write.
+     * @exception  IOException  if an I/O error occurs. In particular,
+     *             an <code>IOException</code> is thrown if the output
+     *             stream is closed.
+     */
+    public void write(byte b[], int off, int len) throws IOException {
+        if (b == null) {
+            throw new NullPointerException();
+        } else if ((off < 0) || (off > b.length) || (len < 0) ||
+                   ((off + len) > b.length) || ((off + len) < 0)) {
+            throw new IndexOutOfBoundsException();
+        } else if (len == 0) {
+            return;
+        }
+        int old;
+        if (parent.err) {
+            old = VM.setStream(VM.STREAM_STDERR);
+        } else {
+            old = VM.setStream(VM.STREAM_STDOUT);
+        }
+        VM.printBytes(b, off, len);
         VM.setStream(old);
     }
 

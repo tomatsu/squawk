@@ -1794,6 +1794,25 @@ hbp.dumpState();
     }
 
     /**
+     * Prints bytes (as C chars) to the VM stream.
+     *
+     * @param      b     the data.
+     * @param      off   the start offset in the data.
+     * @param      len   the number of bytes to write.
+     */
+    public static void printBytes(byte b[], int off, int len) {
+        if (b == null) {
+            throw new NullPointerException();
+        } else if ((off < 0) || (off > b.length) || (len < 0)
+                || ((off + len) > b.length) || ((off + len) < 0)) {
+            throw new IndexOutOfBoundsException();
+        } else if (len == 0) {
+            return;
+        }
+        executeCIO(-1, ChannelConstants.INTERNAL_PRINTBYTES, -1, off, len, 0, 0, 0, 0, b, null);
+    }
+
+    /**
      * Prints the name of a global oop to the VM stream.
      *
      * @param index   the index of the variable to print

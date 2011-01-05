@@ -147,6 +147,9 @@ public final class MulticastOutputStream extends OutputStream {
      * @return  the previous output stream identified by <code>name</code> or null if there wasn't one
      */
     public OutputStream add(String name, OutputStream out) {
+        if (name == null || out == null) {
+            throw new IllegalArgumentException();
+        }
         return (OutputStream)streams.put(name, out);
     }
 

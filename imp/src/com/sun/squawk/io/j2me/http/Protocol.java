@@ -148,9 +148,10 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                     c.close();
                 }
             }
-            
+            System.exit(0);
         } catch (IOException ex) {
             ex.printStackTrace();
+            System.exit(1);
         }
     }
 /*end[FLASH_MEMORY]*/

@@ -22,13 +22,11 @@
  * information or have any questions.
  */
 
-/**
- * Hello
- */
 package com.sun.cldc.i18n;
 
+import com.sun.cldc.i18n.j2me.ISO8859_1_Reader;
+import com.sun.cldc.i18n.j2me.ISO8859_1_Writer;
 import java.io.*;
-//import com.sun.squawk.util.Assert;
 
 /**
  * This class provides general helper functions for the J2ME environment.
@@ -99,22 +97,33 @@ public class Helper {
         }
 
         /* Get the reader from the encoding */
-        StreamReader fr = (StreamReader)getStreamReaderOrWriter(name, "_Reader");
+        StreamReader fr = (StreamReader)getStreamReaderOrWriter(name, true);
 
         /* Open the connection and return*/
         return fr.open(is, name);
     }
 
-    private static Object getStreamReaderOrWriter(String name, String suffix)
+    private static Object getStreamReaderOrWriter(String name, boolean reader)
         throws UnsupportedEncodingException {
         if (name == null) {
             throw new NullPointerException();
         }
-
+        if (ISO8859_1_ONLY_SUPPORTED) {
+            if (isISO8859_1(name)) {
+                if (reader) {
+                    return new ISO8859_1_Reader();
+                } else {
+                    return new ISO8859_1_Writer();
+                }
+            } else {
+                throw new UnsupportedEncodingException();
+            }
+        } else {
         name = internalNameForEncoding(name);
 
         try {
              String className;
+                String suffix = reader ? "_Reader" : "_Writer";
 
              /* Get the reader class name */
              className = defaultMEPath + '.' + name + suffix;
@@ -144,7 +153,7 @@ public class Helper {
             );
         }
     }
-
+    }
 
     /**
      * Get a writer for an OutputStream
@@ -182,7 +191,7 @@ public class Helper {
         }
 
         /* Get the writer from the encoding */
-        StreamWriter sw = (StreamWriter)getStreamReaderOrWriter(name, "_Writer");
+        StreamWriter sw = (StreamWriter)getStreamReaderOrWriter(name, false);
 
         /* Open it on the output stream and return */
         return sw.open(os, name);
@@ -290,7 +299,7 @@ public class Helper {
      private static synchronized char[] byteToCharArray0(byte[] buffer, int offset, int length, String enc) throws UnsupportedEncodingException {
         /* If we don't have a cached reader then make one */
         if(lastReaderEncoding == null || !lastReaderEncoding.equals(enc)) {
-            lastReader = (StreamReader)getStreamReaderOrWriter(enc, "_Reader");
+            lastReader = (StreamReader)getStreamReaderOrWriter(enc, true);
             lastReaderEncoding = enc;
         }
 
@@ -338,7 +347,7 @@ public class Helper {
     private static synchronized byte[] charToByteArray0(char[] buffer, int offset, int length, String enc) throws UnsupportedEncodingException {
         /* If we don't have a cached writer then make one */
         if(lastWriterEncoding == null || !lastWriterEncoding.equals(enc)) {
-            lastWriter = (StreamWriter)getStreamReaderOrWriter(enc, "_Writer");
+            lastWriter = (StreamWriter)getStreamReaderOrWriter(enc, false);
             lastWriterEncoding = enc;
         }
 

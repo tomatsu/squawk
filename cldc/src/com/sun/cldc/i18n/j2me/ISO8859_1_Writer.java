@@ -34,12 +34,21 @@ import com.sun.cldc.i18n.*;
  */
 public class ISO8859_1_Writer extends StreamWriter {
 
+    /**
+     * If set to zero, disable buffering.
+     */
     final private static int BUFFERSIZE = 32;
 
     /**
      * Buffer to speed up things.
      */
-    private byte[] buf = new byte[BUFFERSIZE];
+    private final byte[] buf;
+
+    public ISO8859_1_Writer() {
+        if (BUFFERSIZE > 0) {
+             buf = new byte[BUFFERSIZE];
+        }
+    }
 
     /**
      * Write a single character.
@@ -62,12 +71,13 @@ public class ISO8859_1_Writer extends StreamWriter {
      *
      * @exception  IOException  If an I/O error occurs
      */
-    synchronized public void write(char cbuf[], int off, int len) throws IOException {
-/*
+    public void write(char cbuf[], int off, int len) throws IOException {
+        synchronized (lock) {
+            if (BUFFERSIZE == 0) {
         while(len-- > 0) {
             write(cbuf[off++]);
         }
-*/
+            } else {
         while(len > 0) {
             int i = 0;
             while(len > 0 && i < BUFFERSIZE) {
@@ -75,6 +85,8 @@ public class ISO8859_1_Writer extends StreamWriter {
                 len--;
             }
             out.write(buf, 0, i);
+        }
+    }
         }
     }
 
@@ -87,12 +99,13 @@ public class ISO8859_1_Writer extends StreamWriter {
      *
      * @exception  IOException  If an I/O error occurs
      */
-    synchronized public void write(String str, int off, int len) throws IOException {
-/*
+    public void write(String str, int off, int len) throws IOException {
+        synchronized (lock) {
+            if (BUFFERSIZE == 0) {
         for (int i = 0 ; i < len ; i++) {
             write(str.charAt(off + i));
         }
-*/
+            } else {
         while(len > 0) {
             int i = 0;
             while(len > 0 && i < BUFFERSIZE) {
@@ -100,6 +113,8 @@ public class ISO8859_1_Writer extends StreamWriter {
                 len--;
             }
             out.write(buf, 0, i);
+        }
+    }
         }
     }
 

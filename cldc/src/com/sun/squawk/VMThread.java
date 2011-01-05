@@ -1644,8 +1644,8 @@ VM.println("creating stack:");
                 VM.waitForEvent(delta);
                 waitTime = VM.getTimeMillis() - waitTime;
                 oldWaitTimeTotal += waitTime;
-                waitTimeHi32 = (int)(oldWaitTimeTotal >> 32);
-                waitTimeLo32 = (int)(oldWaitTimeTotal & 0xFFFFFFFF);
+                waitTimeHi32 = (int)(oldWaitTimeTotal >>> 32);
+                waitTimeLo32 = (int)(oldWaitTimeTotal & 0xFFFFFFFFL);
             }
         }
         

@@ -172,6 +172,22 @@ void cioExecute(void) {
             break;
         }
 
+        case ChannelConstants_INTERNAL_PRINTBYTES: {
+            Address bytes = o1;
+            int offset = i1;
+            int len = i2;
+            int blen = (int)getArrayLength(bytes);
+            int i;
+            /*fprintf(stderr, "IPB: %d:%d\n", offset, len);*/
+            assumeAlways(offset >= 0 && len >= 0);
+            assumeAlways(offset + len <= blen);
+            for (i = 0; i < len; i++) {
+                fprintf(vmOut, "%c", getByte(bytes, offset + i));
+            }
+            fflush(vmOut);
+            break;
+        }
+
         case ChannelConstants_INTERNAL_PRINTCONFIGURATION: {
             fprintf(stderr, "native VM build flags: %s\n", BUILD_FLAGS);
             break;
