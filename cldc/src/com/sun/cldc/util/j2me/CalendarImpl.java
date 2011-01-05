@@ -381,7 +381,7 @@ public class CalendarImpl extends Calendar {
         int month = calendar.get(Calendar.MONTH) + 1;
         int day = calendar.get(Calendar.DAY_OF_MONTH);
         int hour_of_day = calendar.get(Calendar.HOUR_OF_DAY);
-        int hour = calendar.get(Calendar.HOUR);
+//        int hour = calendar.get(Calendar.HOUR);
         int minute = calendar.get(Calendar.MINUTE);
         int seconds = calendar.get(Calendar.SECOND);
 
@@ -687,7 +687,7 @@ public class CalendarImpl extends Calendar {
      * @param denominator a divisor which must be > 0
      * @return the floor of the quotient.
      */
-    private static final long floorDivide(long numerator, long denominator) {
+    public static final long floorDivide(long numerator, long denominator) {
         // We do this computation in order to handle
         // a numerator of Long.MIN_VALUE correctly
         return (numerator >= 0) ?

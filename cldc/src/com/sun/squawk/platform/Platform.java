@@ -107,7 +107,7 @@ public class Platform {
         }
     }
 
-    public static GCFFile getFileHandler() {
+    public static synchronized GCFFile getFileHandler() {
         if (IS_NATIVE) {
             if (gcfFile == null) {
                 gcfFile = (GCFFile) getPlatformInstance("GCFFileImpl");

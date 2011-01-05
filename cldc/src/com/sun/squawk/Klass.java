@@ -278,7 +278,7 @@ public class Klass<T> {
      * @param klass the Klass object
      * @return the Class object
      */
-    public static Class asClass(Klass klass) {
+    public static synchronized Class asClass(Klass klass) {
         if (klassToClass == null) {
             klassToClass = new SquawkHashtable();
             klassClass = VM.getCurrentIsolate().getBootstrapSuite().lookup("java.lang.Class");
@@ -324,9 +324,9 @@ public class Klass<T> {
 
         Klass klass = Klass.lookupKlass(className);
         ClassNotFoundException cnfe = null;
-        Isolate isolate = VM.getCurrentIsolate();
         if (klass == null) {
 /*if[ENABLE_DYNAMIC_CLASSLOADING]*/
+            Isolate isolate = VM.getCurrentIsolate();
             if (isolate.getLeafSuite().isClosed()) {
                 cnfe = new ClassNotFoundException(className + " [The current isolate has no class path]");
             } else if ((className.startsWith("java.") ||
@@ -354,11 +354,13 @@ public class Klass<T> {
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         }
 
-
         if (klass != null && klass.getState() != Klass.STATE_DEFINED) {
             klass.initialiseClass();
             return klass;
         }
+
+        // handle error cases:
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
         if (VM.getCurrentIsolate().getLeafSuite().shouldThrowNoClassDefFoundErrorFor(className)) {
             if (cnfe != null && cnfe.getMessage() != null) {
                 throw new NoClassDefFoundError(cnfe.getMessage());
@@ -368,6 +370,12 @@ public class Klass<T> {
         if (cnfe != null) {
             throw cnfe;
         }
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//        if (VM.getCurrentIsolate().getLeafSuite().shouldThrowNoClassDefFoundErrorFor(className)) {
+//            throw new NoClassDefFoundError(className);
+//        }
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
+
         throw new ClassNotFoundException(className);
     }
 

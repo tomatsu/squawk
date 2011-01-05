@@ -96,7 +96,7 @@ import com.sun.cldc.util.TimeZoneImplementation;
  */
 public class TimeZoneImpl extends TimeZoneImplementation {
 
-    public static String HOME_ID = null;
+    static String HOME_ID = null;
     private static final String DEFAULT_ID = "PST";
 
     public TimeZoneImpl() {}

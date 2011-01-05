@@ -28,9 +28,7 @@
 
 package com.sun.squawk.platform.posix.vxworks.natives;
 
-import com.sun.squawk.platform.posix.natives.*;
 import com.sun.cldc.jna.*;
-import com.sun.cldc.jna.ptr.*;
 
 public class IoctlImpl extends com.sun.squawk.platform.posix.natives.IoctlImpl {
 

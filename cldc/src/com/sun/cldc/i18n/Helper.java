@@ -314,11 +314,11 @@ public class Helper {
 
         try {
             /* Read the input */
-            int numread = lastReader.read(outbuf, 0, size);
-            if (numread<size) {
+            int numread = 0;
+            while (numread < size) {
                 // this may happen only if the last character is truncated
                 // (say, it should be of 3 bytes, but there are only 2).
-                lastReader.read(outbuf, numread, size-numread);
+                numread += lastReader.read(outbuf, numread, size-numread);
             }
             /* Close the reader */
             lastReader.close();

@@ -44,11 +44,15 @@ public class JavaApplicationManager {
      * Purely static class should not be instantiated.
      */
     private JavaApplicationManager() {}
-    
+
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
     /**
      * The class path to use when loading through the translator instance (if any).
      */
     private static String classPath;
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//  private static final String classPath = null;
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
 
     /**
      * The suite to which the leaf suite will be bound (if any).

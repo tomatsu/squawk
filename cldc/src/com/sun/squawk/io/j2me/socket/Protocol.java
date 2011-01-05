@@ -53,10 +53,10 @@ public class Protocol extends ConnectionBase implements SocketConnection {
     private boolean copen = false;
 
     /** Input stream open flag */
-    protected boolean isopen = false;
+    protected volatile boolean isopen = false;
 
     /** Output stream open flag */
-    protected boolean osopen = false;
+    protected volatile boolean osopen = false;
     
     /** port number */
     private int port;
@@ -119,11 +119,13 @@ public class Protocol extends ConnectionBase implements SocketConnection {
 /* #endif */
             );
         }
+        synchronized (this) {
 //System.err.println("open: hostname: " + hostname + " port: " + port + " mode: " + mode);
-        handle = gcfSockets.open(remoteHostName, port, mode);
-        opens++;
-        copen = true;
-        this.mode = mode;
+            handle = gcfSockets.open(remoteHostName, port, mode);
+            opens++;
+            copen = true;
+            this.mode = mode;
+        }
         return this;
      }
     
@@ -136,10 +138,12 @@ public class Protocol extends ConnectionBase implements SocketConnection {
      * @param fd the accepted socket handle
      */
     public Protocol(int fd) {
-        handle = fd;
-        opens++;
-        copen = true;
-        mode = Connector.READ_WRITE;
+    	synchronized (this) {
+            handle = fd;
+            opens++;
+            copen = true;
+            mode = Connector.READ_WRITE;
+        }
      }
 
     /**
@@ -281,7 +285,7 @@ class PrivateInputStream extends InputStream {
     /**
      * Pointer to the connection
      */
-    private Protocol parent;
+    private volatile Protocol parent;
 
     /**
      * End of file flag
@@ -409,7 +413,7 @@ class PrivateInputStream extends InputStream {
      *
      * @exception  IOException  if an I/O error occurs
      */
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         if (parent != null) {
             ensureOpen();
             parent.realClose();
@@ -520,7 +524,7 @@ class PrivateOutputStream extends OutputStream {
      *
      * @exception  IOException  if an I/O error occurs
      */
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         if (parent != null) {
             ensureOpen();
             parent.realClose();

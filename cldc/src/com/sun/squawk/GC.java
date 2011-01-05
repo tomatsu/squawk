@@ -2051,7 +2051,7 @@ public class GC implements GlobalStaticFields {
      */
     public static void initHeapStats() {
         if (heapstats == null) {
-            heapstats = new SquawkHashtable(500);
+            SquawkHashtable table = new SquawkHashtable(500);
             
             Suite[] suites = getSuites();
             for (int i = 0; i < suites.length; i++) {
@@ -2060,13 +2060,14 @@ public class GC implements GlobalStaticFields {
                 for (int j = 0; j < classCount; j++) {
                     Klass k = s.getKlass(j);
                     if (k.isInstantiable()) {
-                        Assert.always(heapstats.get(s.getKlass(j)) == null);
-                        heapstats.put(s.getKlass(j), new ClassStat());
+                        Assert.always(table.get(s.getKlass(j)) == null);
+                        table.put(s.getKlass(j), new ClassStat());
                     }
                 }
             }
             
-            heapstats.put(DYNAMIC_CLASSES, new ClassStat());
+            table.put(DYNAMIC_CLASSES, new ClassStat());
+            heapstats = table;
         }
     }
     

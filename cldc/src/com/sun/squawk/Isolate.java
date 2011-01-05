@@ -1253,8 +1253,6 @@ public final class Isolate implements Runnable {
             }
             if (internedString == null) {
                 internedString = value;
-            } else {
-                value = internedString;
             }
             internedStrings.put(internedString, internedString);
         }
@@ -1429,7 +1427,7 @@ public final class Isolate implements Runnable {
      */
     private void removeVMShutdownHook() {
         if (shutdownHook != null) {
-            boolean did = VM.removeShutdownHook(this, shutdownHook);
+            VM.removeShutdownHook(this, shutdownHook);
             shutdownHook = null;
         }
     }
@@ -2665,6 +2663,7 @@ public final class Isolate implements Runnable {
     // TODO: See if this can be conditional on ENABLE_DEBUGGER
     /**
      * The breakpoints that have been set in this isolate.
+     * Read by the interpreter loop.
      */
     private Breakpoint[] breakpoints;
 }

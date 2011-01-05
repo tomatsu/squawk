@@ -1410,9 +1410,7 @@ public class Build {
             	copy(phoneMeSourceRoot + "midp/src/core/javautil/reference/classes", "cldc/phoneme", "cldc/src", "java/lang");
             	copy(phoneMeSourceRoot + "midp/src/core/javautil/classes", "imp/phoneme", "imp/src", "java/util");
             	copy(phoneMeSourceRoot + "midp/src/core/javautil/reference/classes", "imp/phoneme", "imp/src", "java/util");
-            	// copy(phoneMeSourceRoot + "midp/src/core/javautil/reference/classes", "imp/phoneme", "imp/src", "com/sun/midp/util/DateParser.java");
-                cp(new File(phoneMeSourceRoot + "midp/src/core/javautil/reference/classes", "com/sun/midp/util/DateParser.java"), new File("imp/phoneme", "com/sun/midp/util/DateParser.java"), false);
-
+            	
             	copy(phoneMeSourceRoot + "midp/src/protocol/http/classes", "imp/phoneme", "imp/src", "javax/microedition/io");
             	cp(new File(phoneMeSourceRoot + "midp/src/ams/ams_api/reference/classes", "javax/microedition/midlet/MIDletStateChangeException.java"), new File("imp/phoneme", "javax/microedition/midlet/MIDletStateChangeException.java"), false);
             	cp(new File(phoneMeSourceRoot + "midp/src/ams/ams_api/reference/classes", "javax/microedition/midlet/package.html"),                    new File("imp/phoneme", "javax/microedition/midlet/package.html"), false);

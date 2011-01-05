@@ -185,7 +185,11 @@ public final class NativeUnsafe {
         } else {
             Assert.that(value instanceof Address);
             unresolvedClassPointers.remove(ea);
-            setUWord(ea, 0, ((Address)value).toUWord());
+            if (value == null) {
+                setUWord(ea, 0, UWord.zero());
+            } else {
+                setUWord(ea, 0, ((Address)value).toUWord());
+            }
         }
         oopMap.set(ea.asIndex() / HDR.BYTES_PER_WORD);
         setType0(ea.asIndex(), AddressType.REF);
