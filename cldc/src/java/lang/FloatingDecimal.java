@@ -1804,7 +1804,7 @@ class FloatingDecimal{
     };
 
     // approximately ceil( log2( long5pow[i] ) )
-    private static final int n5bits[] = {
+    private static final byte n5bits[] = {
 	0,
 	3,
 	5,
