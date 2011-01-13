@@ -58,6 +58,9 @@ public abstract class DataType {
          */
         public boolean equals(Object o) {
             // Only equal if type of identifer is equal as well as the value of the identifer
+            if (o == null) {
+                return false;
+            }
             return o.getClass() == this.getClass() && ((FourByteID)o).id == this.id;
         }
 
@@ -344,7 +347,7 @@ public abstract class DataType {
         public boolean equals(Object o) {
             if (o instanceof FrameID) {
                 FrameID other = (FrameID) o;
-                return other.threadID == threadID && other.threadID == threadID;
+                return other.threadID == threadID && other.frame == frame;
             }
             return false;
         }
