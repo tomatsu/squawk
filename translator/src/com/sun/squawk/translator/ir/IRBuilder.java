@@ -1494,6 +1494,7 @@ public final class IRBuilder {
             instruction.addTarget(i, caseValue, target);
             lastCaseValue = caseValue;
         }
+        instruction.finishBuilding();
         append(instruction);
         processBasicBlockDelimiter(instruction, defaultTarget, instruction.getTargets());
         frame.resetMaxStack();

@@ -244,6 +244,8 @@ public final class ClassFile {
     }
 
     private static int[] INT_ARRAY_DUMMY = new int[0];
+    private static short[] SHORT_ARRAY_DUMMY = new short[0];
+    private static byte[] BYTE_ARRAY_DUMMY = new byte[0];
 
     /**
      * Sorts the object table according to the access count. Elements with the same
@@ -286,6 +288,38 @@ public final class ClassFile {
                     } else if (class1 == INT_ARRAY_DUMMY.getClass()) {
                         int[] arr1 = (int[])o1;
                         int[] arr2 = (int[])o2;
+                        for (int i = 0; ; ++i) {
+                            if (i == arr1.length) {
+                                Assert.that(arr2.length != i);
+                                return -1;
+                            }
+                            if (i == arr2.length) {
+                                return 1;
+                            }
+                            int diff = arr1[i] - arr2[i];
+                            if (diff != 0) {
+                                return diff;
+                            }
+                        }
+                    } else if (class1 == SHORT_ARRAY_DUMMY.getClass()) {
+                        short[] arr1 = (short[]) o1;
+                        short[] arr2 = (short[]) o2;
+                        for (int i = 0;; ++i) {
+                            if (i == arr1.length) {
+                                Assert.that(arr2.length != i);
+                                return -1;
+                            }
+                            if (i == arr2.length) {
+                                return 1;
+                            }
+                            int diff = arr1[i] - arr2[i];
+                            if (diff != 0) {
+                                return diff;
+                            }
+                        }
+                    } else if (class1 == BYTE_ARRAY_DUMMY.getClass()) {
+                        byte[] arr1 = (byte[]) o1;
+                        byte[] arr2 = (byte[])o2;
                         for (int i = 0; ; ++i) {
                             if (i == arr1.length) {
                                 Assert.that(arr2.length != i);

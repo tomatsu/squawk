@@ -583,12 +583,32 @@ public class InstructionTracer implements InstructionVisitor {
     public void doLookupSwitch(LookupSwitch instruction) {
         out.append("lookupswitch default=" + getAddressOf(instruction.getDefaultTarget()));
         Target[] targets = instruction.getTargets();
-        int[] caseValues = instruction.getCaseValues();
         out.append(" npairs=" + targets.length + " (");
-        for (int i = 0; i != targets.length; ++i) {
-            out.append(caseValues[i] + " -> " + getAddressOf(targets[i]));
-            if (i != targets.length - 1) {
-                out.append(", ");
+
+        Object caseValuesObject = instruction.getCaseValues();
+        if (caseValuesObject instanceof int[]) {
+            int[] caseValues = (int[]) caseValuesObject;
+            for (int i = 0; i != targets.length; ++i) {
+                out.append(caseValues[i] + " -> " + getAddressOf(targets[i]));
+                if (i != targets.length - 1) {
+                    out.append(", ");
+                }
+            }
+        } else if (caseValuesObject instanceof short[]) {
+            short[] caseValues = (short[]) caseValuesObject;
+            for (int i = 0; i != targets.length; ++i) {
+                out.append(caseValues[i] + " -> " + getAddressOf(targets[i]));
+                if (i != targets.length - 1) {
+                    out.append(", ");
+                }
+            }
+        } else if (caseValuesObject instanceof byte[]) {
+            byte[] caseValues = (byte[]) caseValuesObject;
+            for (int i = 0; i != targets.length; ++i) {
+                out.append(caseValues[i] + " -> " + getAddressOf(targets[i]));
+                if (i != targets.length - 1) {
+                    out.append(", ");
+                }
             }
         }
         out.append(")");

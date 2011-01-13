@@ -25,6 +25,7 @@
 package com.sun.squawk.translator.ir.instr;
 
 import com.sun.squawk.translator.ir.*;
+import com.sun.squawk.util.Assert;
 
 /**
  * An instance of <code>LookupSwitch</code> represents an instruction that
@@ -40,6 +41,9 @@ public final class LookupSwitch extends Switch {
      * The case values.
      */
     private final int[] caseValues;
+    private int minCase;
+    private int maxCase;
+    private Object resultValues;
 
     /**
      * Creates a <code>LookupSwitch</code> representing an instruction that
@@ -54,6 +58,8 @@ public final class LookupSwitch extends Switch {
     public LookupSwitch(StackProducer key, int casesCount, Target defaultTarget) {
         super(key, casesCount, defaultTarget);
         this.caseValues = new int[casesCount];
+        this.minCase = Integer.MAX_VALUE;
+        this.maxCase = Integer.MIN_VALUE;
     }
 
     /**
@@ -66,6 +72,16 @@ public final class LookupSwitch extends Switch {
     public void addTarget(int index, int caseValue, Target target) {
         super.addTarget(index, target);
         caseValues[index] = caseValue;
+        if (caseValue < minCase) {
+            minCase = caseValue;
+        }
+        if (caseValue > maxCase) {
+            maxCase = caseValue;
+        }
+    }
+
+    public void finishBuilding() {
+        resultValues = getSmallestCaseValues();
     }
 
     /**
@@ -73,8 +89,33 @@ public final class LookupSwitch extends Switch {
      *
      * @return the case match constant values
      */
-    public int[] getCaseValues() {
-        return caseValues;
+    public Object getCaseValues() {
+        return resultValues;
+    }
+
+    /**
+     * Gets the case match constant values.
+     *
+     * @return the case match constant values
+     */
+    private Object getSmallestCaseValues() {
+        Object result = caseValues;
+        if (minCase >= Byte.MIN_VALUE && maxCase <= Byte.MAX_VALUE) {
+            byte[] barray = new byte[caseValues.length];
+            for (int i = 0; i < barray.length; i++) {
+                Assert.that(caseValues[i] == (byte)caseValues[i]);
+                barray[i] = (byte)caseValues[i];
+            }
+            result = barray;
+        } else if (minCase >= Short.MIN_VALUE && maxCase <= Short.MAX_VALUE) {
+            short[] sarray = new short[caseValues.length];
+            for (int i = 0; i < sarray.length; i++) {
+                Assert.that(caseValues[i] == (short)caseValues[i]);
+                sarray[i] = (short)caseValues[i];
+            }
+            result = sarray;
+        }
+        return result;
     }
 
     /**
@@ -93,7 +134,8 @@ public final class LookupSwitch extends Switch {
      * @return the object or null if there is none
      */
     public Object getConstantObject() {
-        return caseValues;
+        Assert.that(resultValues != null, "not yet finished building");
+        return resultValues;
     }
 
     /**
