@@ -1457,9 +1457,9 @@ public class ObjectMemoryMapper {
      */
     private String getMethodHeaderText(Object oop) {
         StringBuffer sb    = new StringBuffer();
-        int localCount     = MethodBody.decodeLocalCount(oop);
-        int parameterCount = MethodBody.decodeParameterCount(oop);
-        int maxStack       = MethodBody.decodeStackCount(oop);
+        int localCount     = MethodHeader.decodeLocalCount(oop);
+        int parameterCount = MethodHeader.decodeParameterCount(oop);
+        int maxStack       = MethodHeader.decodeStackCount(oop);
 
         sb.append("p="+parameterCount+" l="+localCount+" s="+maxStack);
         totalMethodLocals += localCount;
@@ -1486,17 +1486,15 @@ public class ObjectMemoryMapper {
             } else {
                totalMinfoSize += 1;
             }
-            if (MethodBody.decodeExceptionTableSize(oop) >= 128 ) {
+            if (MethodHeader.decodeExceptionTableSize(oop) >= 128 ) {
                totalMinfoSize += 2;
             } else {
                totalMinfoSize += 1;
             }
-            if (MethodBody.decodeRelocationTableSize(oop) >= 128 ) {
-               totalMinfoSize += 2;
-            } else {
-               totalMinfoSize += 1;
-            }
-            if (MethodBody.decodeTypeTableSize(oop) >= 128 ) {
+
+            totalMinfoSize += 1;
+
+            if (MethodHeader.decodeTypeTableSize(oop) >= 128 ) {
                totalMinfoSize += 2;
             } else {
                totalMinfoSize += 1;
@@ -1506,7 +1504,7 @@ public class ObjectMemoryMapper {
         // Format the oopmap.
         if (parameterCount+localCount > 0) {
             sb.append(" map=");
-            int offset = MethodBody.decodeOopmapOffset(oop);
+            int offset = MethodHeader.decodeOopmapOffset(oop);
             for (int i = 0 ; i < parameterCount+localCount ; i++) {
                 int pos = i / 8;
                 int bit = i % 8;
@@ -1519,7 +1517,7 @@ public class ObjectMemoryMapper {
         // Format the type map.
         if (parameterCount+localCount > 0) {
             sb.append(" types=");
-            Klass[] types = MethodBody.decodeTypeMap(oop);
+            Klass[] types = MethodHeader.decodeTypeMap(oop);
             for (int i = 0; i != types.length; ++i) {
                 String name = types[i].getName();
                 int index = name.indexOf("java.lang.");
@@ -1535,28 +1533,27 @@ public class ObjectMemoryMapper {
 
 
         // Format the exception table (if any).
-        int exceptionTableSize = MethodBody.decodeExceptionTableSize(oop);
+        int exceptionTableSize = MethodHeader.decodeExceptionTableSize(oop);
         totalMethodExceptionTableSize += (exceptionTableSize); //in bytes
         if (exceptionTableSize != 0) {
             sb.append(" exceptionTable={");
-            int size   = MethodBody.decodeExceptionTableSize(oop);
-            int offset = MethodBody.decodeExceptionTableOffset(oop);
+            int size   = MethodHeader.decodeExceptionTableSize(oop);
+            int offset = MethodHeader.decodeExceptionTableOffset(oop);
             VMBufferDecoder dec = new VMBufferDecoder(oop, offset);
             long end = offset + size;
             VM.asKlass(NativeUnsafe.getObject(oop, HDR.methodDefiningClass));
             while (dec.getOffset() < end) {
-                sb.append(" [start="+dec.readUnsignedInt()).
-                    append(" end="+dec.readUnsignedInt()).
-                    append(" handler="+dec.readUnsignedInt()).
+                sb.append(" [start="+dec.readUnsignedShort()).
+                    append(" end="+dec.readUnsignedShort()).
+                    append(" handler="+dec.readUnsignedShort()).
                     append(" catch_type="+dec.readUnsignedShort()).
                     append("]");
             }
             sb.append(" }");
         }
-        totalRelocationTableSize += MethodBody.decodeRelocationTableSize(oop);
-        totalTypeTableSize += MethodBody.decodeTypeTableSize(oop); //in bytes
+        totalTypeTableSize += MethodHeader.decodeTypeTableSize(oop); //in bytes
         
-        if (MethodBody.isInterpreterInvoked(oop)) {
+        if (MethodHeader.isInterpreterInvoked(oop)) {
             sb.append(" INTERPRETER_INVOKED");
         }
         return sb.toString();
@@ -1867,7 +1864,7 @@ public class ObjectMemoryMapper {
      * Prints a line for a stack chunk slot corresponding to a local variable or parameter.
      *
      * @param lp     the address of the local variable or parameter
-     * @param type   the type of the local variable or parameter as specified by {@link MethodBody.decodeTypeMap(Object)}
+     * @param type   the type of the local variable or parameter as specified by {@link MethodHeader.decodeTypeMap(Object)}
      * @param name   the name of the local variable or parameter
      */
     private void printLocalOrParameterLine(Address lp, Klass type, String name) {
@@ -1904,9 +1901,9 @@ public class ObjectMemoryMapper {
             append(" ----------");
         out.println(buf);
 
-        int localCount     = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp);
-        int parameterCount = MethodBody.decodeParameterCount(mp);
-        Klass[] typeMap     = MethodBody.decodeTypeMap(mp);
+        int localCount     = isInnerMostActivation ? 1 : MethodHeader.decodeLocalCount(mp);
+        int parameterCount = MethodHeader.decodeParameterCount(mp);
+        Klass[] typeMap     = MethodHeader.decodeTypeMap(mp);
         int typeIndex = typeMap.length;
 
 

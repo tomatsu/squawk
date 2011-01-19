@@ -1332,13 +1332,14 @@ public final class Isolate implements Runnable {
      * @return the I/O handle
      */
     int getChannelContext() {
+        if (channelContext == 0) {
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
+            channelContext = VM.createChannelContext(null);
 /*else[ENABLE_ISOLATE_MIGRATION]*/
-//        if (channelContext == 0) {
-//            channelContext = VM.createChannelContext(hibernatedChannelContext);
-//            hibernatedChannelContext = null;
-//        }
+//          channelContext = VM.createChannelContext(hibernatedChannelContext);
+//          hibernatedChannelContext = null;
 /*end[ENABLE_ISOLATE_MIGRATION]*/
+        }
         return channelContext;
     }
 

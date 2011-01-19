@@ -779,10 +779,10 @@
          * @return the value
          */
 /*if[VM2C]*/
-static int             MethodBody_minfoValue1_L(Address);
-static int             MethodBody_minfoValue2_L(Address);
-static int             MethodBody_minfoValue3_L(Address);
-static int             MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int p, int b0);
+static int             MethodHeader_minfoValue1_L(Address);
+static int             MethodHeader_minfoValue2_L(Address);
+static int             MethodHeader_minfoValue3_L(Address);
+static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, int p, int b0);
 /*else[VM2C]*/
 //static int NativeUnsafe_getByte_LI(Address base, int offset) {
 //    return getByte(base, offset);
@@ -792,7 +792,7 @@ static int             MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int
 //    return getUByte(base, offset);
 //}
 //
-//static int MethodBody_minfoValue1_L(Address oop) {
+//static int MethodHeader_minfoValue1_L(Address oop) {
 //    int p;
 //    int val;
 //    p = -13 - 1;
@@ -808,7 +808,7 @@ static int             MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int
 //    return val;
 //}
 //
-//static int MethodBody_minfoValue2_L(Address oop) {
+//static int MethodHeader_minfoValue2_L(Address oop) {
 //    int p;
 //    int val;
 //    p = -13 - 1;
@@ -827,7 +827,7 @@ static int             MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int
 //    return val;
 //}
 //
-//static int MethodBody_minfoValue3_L(Address oop) {
+//static int MethodHeader_minfoValue3_L(Address oop) {
 //    int p;
 //    int val;
 //    p = -13 - 1;
@@ -848,16 +848,13 @@ static int             MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int
 //    
 //    return val;
 //}
-//static int MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int p, int b0) {
+//static int MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, int p, int b0) {
 //    int offset;
 //    offset = 3;
 //    if ((b0 & 1) != 0) {
 //        offset++;
 //    }
 //    if ((b0 & 2) != 0) {
-//        offset++;
-//    }
-//    if ((b0 & 4) != 0) {
 //        offset++;
 //    }
 //    while (offset-- > 0) {
@@ -935,7 +932,7 @@ static int             MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int
                 int b1 = getb1($mp);
                 return decodeStackCount(b0, b1);
             } else {
-                return MethodBody_minfoValue1_L($mp);
+                return MethodHeader_minfoValue1_L($mp);
             }
         }
 
@@ -951,7 +948,7 @@ static int             MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int
                 int b1 = getb1($mp);
                 return decodeLocalCount(b0, b1);
             } else {
-                return MethodBody_minfoValue2_L($mp);
+                return MethodHeader_minfoValue2_L($mp);
             }
         }
 
@@ -966,7 +963,7 @@ static int             MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int
             if (b0 < 128) {
                 return decodeParmCount(b0);
             } else {
-                return MethodBody_minfoValue3_L($mp);
+                return MethodHeader_minfoValue3_L($mp);
             }
         }
 
@@ -982,7 +979,7 @@ static int             MethodBody_getOffsetToLastMinfoByte0_LII(Address oop, int
             if (b0 < 128) {
                 return p;
             } else {
-                return MethodBody_getOffsetToLastMinfoByte0_LII($mp, p, b0);
+                return MethodHeader_getOffsetToLastMinfoByte0_LII($mp, p, b0);
             }
         }
 

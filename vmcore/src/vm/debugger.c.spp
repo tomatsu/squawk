@@ -70,7 +70,7 @@ boolean isInterpreterInvoked(UWordAddress mp) {
     if (b0 < 128) {
         return false;
     } else {
-        return (b0 & com_sun_squawk_MethodBody_FMT_I) != 0;
+        return (b0 & com_sun_squawk_MethodHeader_FMT_I) != 0;
     }
 }
 

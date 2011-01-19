@@ -304,27 +304,8 @@ public class DebuggerSupport {
         Object[] table = isStatic ? klass.getStaticMethods() : klass.getVirtualMethods();
         Assert.that(0 <= offset && offset < table.length);
         Object method = table[offset];
-        Assert.that(isValidMethodBody(method));
+        Assert.that(VM.isValidMethodBody(method));
         return method;
-    }
-
-    /**
-     * Return the length of <code>methodBody</code> (the byte code array) in bytes.
-     *
-     * @param methodBody Object
-     * @return number of bytecodes
-     */
-    public static int getMethodBodyLength(Object methodBody) {
-        Assert.that(isValidMethodBody(methodBody));
-        if (VM.isHosted()) {
-            return ( (MethodBody) methodBody).getCode().length;
-        } else {
-            return GC.getArrayLength(methodBody);
-        }
-    }
-
-    private static boolean isValidMethodBody(final Object methodBody) {
-        return (methodBody != null) && ((VM.isHosted() && methodBody instanceof MethodBody) || (GC.getKlass(methodBody) == Klass.BYTECODE_ARRAY));
     }
 
     /**
@@ -335,7 +316,7 @@ public class DebuggerSupport {
      * @return the JDWP identifier for <code>methodBody</code>
      */
     public static MethodID getIDForMethodBody(Klass definingClass, final Object methodBody) {
-        Assert.that(isValidMethodBody(methodBody));
+        Assert.that(VM.isValidMethodBody(methodBody));
         Assert.that(definingClass == getDefiningClass(methodBody));
         Object [] methods = definingClass.getVirtualMethods();
         for (int i = 0; i != methods.length; i++) {
@@ -447,8 +428,8 @@ public class DebuggerSupport {
                 inspector.inspectFrame(mp, bci, thisFrame, frame);
                 if (inspector.doSlots) {
 
-                    int localCount = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp);
-                    int parameterCount = MethodBody.decodeParameterCount(mp);
+                    int localCount = isInnerMostActivation ? 1 : MethodHeader.decodeLocalCount(mp);
+                    int parameterCount = MethodHeader.decodeParameterCount(mp);
                     Klass[] typeMap = inspector.getTypeMap(thisFrame, mp, parameterCount);
 //VM.print("localCount: ");
 //    VM.println(localCount);
@@ -514,7 +495,7 @@ public class DebuggerSupport {
 //            if (fp.isZero()) {
 //                return 0;
 //            } else {
-//                if (MethodBody.isInterpreterInvoked(mp)) {
+//                if (MethodHeader.isInterpreterInvoked(mp)) {
 //                    return thisFrame + 1;
 //                }
 //            }
@@ -715,7 +696,7 @@ public class DebuggerSupport {
         /**
          * Figure out the type map for the given frameNo and method pointer.
          * 
-         * The default implemention decodes the typemap in the method object, but that only includes
+         * The default implementation decodes the typemap in the method object, but that only includes
          * ref/prim types (Object vs int). The debugger agent (SDA) gets more specific type info from the 
          * the debugger proxy.
          * 
@@ -725,7 +706,7 @@ public class DebuggerSupport {
          * @return a klass array with one klass per physical word (eg. longs and doubles will have two entries)
          */
         public Klass[] getTypeMap(int frameNo, Object mp, int parameterCount) {
-            return MethodBody.decodeTypeMap(mp);
+            return MethodHeader.decodeTypeMap(mp);
         }
     }
 

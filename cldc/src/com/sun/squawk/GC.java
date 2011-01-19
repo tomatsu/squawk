@@ -1906,7 +1906,7 @@ public class GC implements GlobalStaticFields {
     static Address oopToBlock(Klass klass, Address object) {
         if (Klass.isSquawkArray(klass)) {
             if (Klass.getSystemID(klass) == CID.BYTECODE_ARRAY) {
-                return MethodBody.oopToBlock(object);   // Method
+                return MethodHeader.oopToBlock(object);   // Method
             } else {
                 return object.sub(HDR.arrayHeaderSize); // Array
             }
@@ -2433,9 +2433,9 @@ public class GC implements GlobalStaticFields {
 //        /*
 //         * Get the method pointer and setup to go through the parameters and locals.
 //         */
-//        int localCount     = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp.toObject());
-//        int parameterCount = MethodBody.decodeParameterCount(mp.toObject());
-//        int mapOffset      = MethodBody.decodeOopmapOffset(mp.toObject());
+//        int localCount     = isInnerMostActivation ? 1 : MethodHeader.decodeLocalCount(mp.toObject());
+//        int parameterCount = MethodHeader.decodeParameterCount(mp.toObject());
+//        int mapOffset      = MethodHeader.decodeOopmapOffset(mp.toObject());
 //        int bitOffset      = -1;
 //        int byteOffset     = 0;
 //

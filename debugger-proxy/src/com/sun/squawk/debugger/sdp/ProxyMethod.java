@@ -130,7 +130,7 @@ public class ProxyMethod {
                 lnt = LineNumberTable.NATIVE_TABLE;
             } else {
                 Object methodBody = DebuggerSupport.getMethodBody(definingKlass, id.getOffset(), id.isStatic());
-                int methodLength = DebuggerSupport.getMethodBodyLength(methodBody);
+                int methodLength = VM.getMethodBodyLength(methodBody);
 
                 LineNumberTable.Entry[] entries = new LineNumberTable.Entry[table.length];
                 for (int i = 0; i < table.length; i++) {

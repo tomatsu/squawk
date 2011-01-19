@@ -597,6 +597,21 @@ public class VM {
         return /*VAL*/true/*TYPEMAP*/;
     }
 
+        /**
+     * Return the length of <code>methodBody</code> (the byte code array) in bytes.
+     *
+     * @param methodBody Object
+     * @return number of bytecodes
+     */
+    public static int getMethodBodyLength(Object methodBody) {
+        Assert.that(isValidMethodBody(methodBody));
+        return ( (MethodBody) methodBody).getCode().length;
+    }
+
+    static boolean isValidMethodBody(final Object methodBody) {
+        return (methodBody != null) && ((VM.isHosted() && methodBody instanceof MethodBody) || (GC.getKlass(methodBody) == Klass.BYTECODE_ARRAY));
+    }
+
 
     /*=======================================================================*\
      *                              Symbols dumping                          *

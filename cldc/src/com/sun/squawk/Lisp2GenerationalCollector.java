@@ -1783,9 +1783,9 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         /*
          * Get the method pointer and setup to go through the parameters and locals.
          */
-        int localCount     = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp.toObject());
-        int parameterCount = MethodBody.decodeParameterCount(mp.toObject());
-        int mapOffset      = MethodBody.decodeOopmapOffset(mp.toObject());
+        int localCount     = isInnerMostActivation ? 1 : MethodHeader.decodeLocalCount(mp.toObject());
+        int parameterCount = MethodHeader.decodeParameterCount(mp.toObject());
+        int mapOffset      = MethodHeader.decodeOopmapOffset(mp.toObject());
         int bitOffset      = -1;
         int byteOffset     = 0;
 
@@ -2715,8 +2715,8 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 //        while (!fp.isZero()) {
 //
 //            Object mp = NativeUnsafe.getObject(fp, FP.method);
-//            int localCount = isInnerMostActivation ? 1 : MethodBody.decodeLocalCount(mp);
-//            int stackCount = MethodBody.decodeStackCount(mp);
+//            int localCount = isInnerMostActivation ? 1 : MethodHeader.decodeLocalCount(mp);
+//            int stackCount = MethodHeader.decodeStackCount(mp);
 //            int reserved = (localCount + stackCount + FP.FIXED_FRAME_SIZE)  * HDR.BYTES_PER_WORD;
 //            if (fp.sub(reserved).lo(lastReservedSlot)) {
 //                lastReservedSlot = fp.sub(reserved);

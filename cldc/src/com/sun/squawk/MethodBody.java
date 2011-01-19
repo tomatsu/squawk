@@ -36,40 +36,7 @@ import com.sun.squawk.pragma.AllowInlinedPragma;
  * such as exception handler tables, oop map for the activation frame etc.
  *
  */
-public final class MethodBody {
-
-    /**
-     * Configuration option.
-     * <p>
-     * If set true then a long or double local variable will be
-     * referenced as slot+0. If set false then it is addressed as slot+1.
-     * <p>
-     * Setting this false is will produce the correct offsets when the locals
-     * are allocated at a negative offset from the frame pointer (which is common
-     * for virtually all C ABIs).
-     */
-    public final static boolean LOCAL_LONG_ORDER_NORMAL = false;
-    
-    
-    /**
-     * The method info is capable of encoding the types of the parameters and locals,
-     * but this is currently only used for debugging when using the CheneyCollector (see checkActivationForAddresses()).
-     * 
-     * Since the LARGE format can impose a 5% penalty on method calls (complicating extend and return),
-     * only generate type tables when asserts are on.
-     */
-    public static final boolean ENABLE_SPECIFIC_TYPE_TABLES = Klass.ASSERTIONS_ENABLED;
-    
-    /**
-     * This was sketched out, but not used. Optimize away in the mean time...
-     */
-    public static final boolean ENABLE_RELOCATION_TABLES = false;
-    
-    
-    /**
-     * Debug LARGE format.
-     */
-    public static final boolean FORCE_LARGE_FORMAT = /*VAL*/false/*DEBUG_CODE_ENABLED*/;
+public final class MethodBody extends MethodHeader {
 
     /**
      * The enclosing method.
@@ -108,7 +75,7 @@ public final class MethodBody {
     private final byte[] code;
     
     /**
-     * Record if this is a constructor that inlined it call to a super consctructor.
+     * Record if this is a constructor that inlined it call to a super constructor.
      */
     private boolean inlinedSuperConstructor;
 
@@ -303,57 +270,7 @@ public final class MethodBody {
     \*-----------------------------------------------------------------------*/
 
     /**
-     * Minfo format encodings.
-     */
-    private final static int FMT_LARGE   = 0x80,   // specifies a large minfo section
-                             FMT_E       = 0x01,   // specifies that there is an exception table
-                             FMT_R       = 0x02,   // specifies that there is a relocation table
-                             FMT_T       = 0x04,   // specifies that there is a type table
-                             FMT_I       = 0x08;   // specifies that the method is only invoked by the interpreter
-
-    /**
-     * Encode the method header. The format of the header is described by the
-     * following pseudo-C structures:
-     * <p><hr><blockquote><pre>
-     *  header {
-     *      {
-     *           u2 type;                               // class id of a float, long, double, Address, Offset or UWord local variable
-     *           u4 index;                              // index of the local variable
-     *      } type_table[type_table_size];
-     *      {                                           // TBD: not yet designed/used
-     *      } relocation_table[relocation_table_size];
-     *      {
-     *          u4 start_pc;
-     *          u4 end_pc;
-     *          u4 handler_pc;
-     *          u2 catch_type;    // index into defining class's objectTable
-     *      } exception_table[exception_table_size];
-     *      u1 oopMap[oopMap_size];
-     *      union {
-     *          {
-     *              u1 lo;      //  lllsssss
-     *              u1 hi;      //  0pppppll
-     *          } small_minfo;  //  'lllll' is locals_count, 'sssss' is max_stack, 'ppppp' is parameters_count
-     *          {
-     *              minfo_size type_table_size;         // exists only if 'T' bit in 'fmt' is set
-     *              minfo_size relocation_table_size;   // exists only if 'R' bit in 'fmt' is set
-     *              minfo_size exception_table_size;    // exists only if 'E' bit in 'fmt' is set
-     *              minfo_size parameters_count;
-     *              minfo_size locals_count;
-     *              minfo_size max_stack;
-     *              u1 fmt;                             // 1000ITRE
-     *          } large_minfo;
-     *      }
-     *  }
-     *
-     * The minfo_size type is a u1 value if its high bit is 0, otherwise its a u2 value where
-     * the high bit is masked off.
-     *
-     * </pre></blockquote><hr><p>
-     *
-     * The structures described above are actually stored in a byte array
-     * encoded and decoded with a {@link ByteBufferEncoder} and
-     * {@link ByteBufferDecoder} respectively.
+     * Encode the method header. 
      *
      * @param enc encoder
      */
@@ -365,7 +282,7 @@ public final class MethodBody {
          * Encode the type table.
          */
         start = enc.getSize();
-        if (MethodBody.ENABLE_SPECIFIC_TYPE_TABLES) {
+        if (ENABLE_SPECIFIC_TYPE_TABLES) {
             for (int i = 0 ; i < localTypes.length ; i++) {
                 Klass k = localTypes[i];
                 switch (k.getSystemID()) {
@@ -384,24 +301,15 @@ public final class MethodBody {
         int typeTableSize = enc.getSize() - start;
 
         /*
-         * Encode the relocation table.
-         */
-        start = enc.getSize();
-        if (MethodBody.ENABLE_RELOCATION_TABLES) {
-            // what goes here, anyway?
-        }
-        int relocTableSize = enc.getSize() - start;
-
-        /*
          * Encode the exception table.
          */
         start = enc.getSize();
         if (exceptionTable != null) {
             for(int i = 0 ; i < exceptionTable.length ; i++) {
                 ExceptionHandler handler = exceptionTable[i];
-                enc.addUnsignedInt(handler.getStart());
-                enc.addUnsignedInt(handler.getEnd());
-                enc.addUnsignedInt(handler.getHandler());
+                enc.addUnsignedShort(handler.getStart());
+                enc.addUnsignedShort(handler.getEnd());
+                enc.addUnsignedShort(handler.getHandler());
                 int handlerTypeIndex = definingMethod.getDefiningClass().getObjectIndex(handler.getKlass());
                 if (handlerTypeIndex < 0 || handlerTypeIndex > 0xFFFF) {
                     System.out.println("index off in exception table for " + definingMethod + ", " + handlerTypeIndex + ", for handler class " + handler.getKlass());
@@ -433,7 +341,6 @@ public final class MethodBody {
 
         Assert.that(oopMapSize == ((localsCount+parametersCount+7)/8));
         Assert.that(typeTableSize      < 32768);
-        Assert.that(relocTableSize     < 32768);
         Assert.that(exceptionTableSize < 32768);
         Assert.that(localsCount        < 32768);
         Assert.that(parametersCount    < 32768);
@@ -443,7 +350,7 @@ public final class MethodBody {
          * Write the minfo area.
          *
          * The minfo is written in reverse. There are two formats, a compact one where there is no
-         * type table, relocation table, exception table, and the number of words for local variables,
+         * type table, exception table, and the number of words for local variables,
          * parameters, and stack are all less than 32 words, and there is a large format where the only
          * limits are that none of these values may exceed 32767.
          */
@@ -452,7 +359,6 @@ public final class MethodBody {
             parametersCount    < 32 &&
             maxStack           < 32 &&
             typeTableSize      == 0 &&
-            relocTableSize     == 0 &&
             exceptionTableSize == 0 &&
             !definingMethod.isInterpreterInvoked()
            ) {
@@ -470,10 +376,6 @@ public final class MethodBody {
                 writeMinfoSize(enc, typeTableSize);
                 fmt |= FMT_T;
             }
-            if (relocTableSize > 0) {
-                writeMinfoSize(enc, relocTableSize);
-                fmt |= FMT_R;
-            }
             if (exceptionTableSize > 0) {
                 writeMinfoSize(enc, exceptionTableSize);
                 fmt |= FMT_E;
@@ -485,19 +387,6 @@ public final class MethodBody {
             writeMinfoSize(enc, localsCount);
             writeMinfoSize(enc, maxStack);
             enc.addUnsignedByte(fmt);
-        }
-    }
-
-    /**
-     * Roundup the data in the ByteBufferEncoder so that it is modulo HDR.BYTES_PER_WORD in length
-     * after some extra data is added.
-     *
-     * @param enc the encoder
-     * @param extra the number of bytes that will be added
-     */
-    private void roundup(ByteBufferEncoder enc, int extra) {
-        while ((enc.getSize()+extra) % HDR.BYTES_PER_WORD != 0) {
-            enc.addUnsignedByte(0);
         }
     }
 
@@ -553,411 +442,7 @@ public final class MethodBody {
     }
 /*end[TYPEMAP]*/
 
-    /*-----------------------------------------------------------------------*\
-     *                                Decoding                               *
-    \*-----------------------------------------------------------------------*/
-
-    /**
-     * Determines if a given method is only invoked from the interpreter
-     *
-     * @param oop the pointer to the method
-     * @return true if oop is an intrepreter invoked only method
-     */
-    public static boolean isInterpreterInvoked(Object oop) {
-        int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
-        if (b0 < 128) {
-            return false;
-        } else {
-            return (b0 & FMT_I) != 0;
-        }
-    }
-
-    /**
-     * Decodes the parameter count from the method header.
-     *
-     * @param oop the pointer to the method
-     * @return the number of parameters
-     */
-    static int decodeParameterCount(Object oop) throws AllowInlinedPragma {
-        int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
-        if (b0 < 128) {
-            return b0 >> 2;
-        } else {
-            return minfoValue3(oop);
-        }
-    }
-
-    /**
-     * Decodes the local variable count from the method header.
-     *
-     * @param oop the pointer to the method
-     * @return the number of locals
-     */
-    static int decodeLocalCount(Object oop) throws AllowInlinedPragma {
-        int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
-        if (b0 < 128) {
-            int b1 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart-1);
-            return (((b0 << 8) | b1) >> 5) & 0x1F;
-        } else {
-            return minfoValue2(oop);
-        }
-    }
-
-    /**
-     * Decodes the stack count from the method header.
-     *
-     * @param oop the pointer to the method
-     * @return the number of stack words
-     */
-    static int decodeStackCount(Object oop) throws AllowInlinedPragma {
-        int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
-        if (b0 < 128) {
-            int b1 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart-1);
-            return b1 & 0x1F;
-        } else {
-            return minfoValue1(oop);
-        }
-    }
-
-    /**
-     * Decodes the exception table size from the method header.
-     *
-     * @param oop the pointer to the method
-     * @return the number of bytes
-     */
-    static int decodeExceptionTableSize(Object oop) throws AllowInlinedPragma {
-        int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
-        if (b0 < 128 || ((b0 & FMT_E) == 0)) {
-            return 0;
-        }
-        return minfoValue4(oop);
-    }
-
-    /**
-     * Decodes the relocation table size from the method header.
-     *
-     * @param oop the pointer to the method
-     * @return the number of bytes
-     */
-    static int decodeRelocationTableSize(Object oop) {
-        if (MethodBody.ENABLE_RELOCATION_TABLES) {
-            int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
-            if (b0 < 128 || ((b0 & FMT_R) == 0)) {
-                return 0;
-            }
-            int offset = 4;
-            if ((b0 & FMT_E) != 0) {
-                offset++;
-            }
-            return minfoValue(oop, offset);
-        } else {
-            return 0;
-        }
-    }
-
-    /**
-     * Decodes the type table size from the method header.
-     *
-     * @param oop the pointer to the method
-     * @return the number of bytes
-     */
-    static int decodeTypeTableSize(Object oop) {
-        if (MethodBody.ENABLE_SPECIFIC_TYPE_TABLES) {
-            int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);
-            if (b0 < 128 || ((b0 & FMT_T) == 0)) {
-                return 0;
-            }
-            int offset = 4;
-            if ((b0 & FMT_E) != 0) {
-                offset++;
-            }
-            if ((b0 & FMT_R) != 0) {
-                offset++;
-            }
-            return minfoValue(oop, offset);
-        } else {
-            return 0;
-        }
-    }
-    
-    /**
-     * Decode a counter from the minfo area.
-     *
-     * This is the canonnical, unrolled form. Callers actually use the unrolled forms below.
-     *
-     * Note that these methods are also translated to C (as part of the vm2c process. So these
-     * methods are actually the source for the interpreter too.
-     *
-     * @param oop the pointer to the method
-     * @param offset the ordinal offset of the counter (e.g. 1st, 2nd, ...  etc.)
-     * @return the value
-     */
-    private static int minfoValue(Object oop, int offset) throws NotInlinedPragma {
-        int p = HDR.methodInfoStart - 1;
-        int val = -1;
-        Assert.that((NativeUnsafe.getUByte(oop, p+1) & FMT_LARGE) != 0);
-        while(offset-- > 0) {
-            val = NativeUnsafe.getUByte(oop, p--);
-            if (val > 127) {
-                p--;
-            }
-        }
-        if (val > 127) {
-            val = val & 0x7F;
-            val = val << 8;
-            val = val | (NativeUnsafe.getUByte(oop, p-1));
-        }
-        Assert.that(val >= 0);
-        return val;
-    }
-
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(root="MethodBody_minfoValue1_L")
-/*end[JAVA5SYNTAX]*/
-    private static int minfoValue1(Object oop) throws NotInlinedPragma {
-        int p = HDR.methodInfoStart - 1;
-        int val;
-        Assert.that((NativeUnsafe.getUByte(oop, p+1) & FMT_LARGE) != 0);
-        val = NativeUnsafe.getUByte(oop, p--);
-        if (val > 127) {
-            val = val & 0x7F;
-            val = val << 8;
-            val = val | (NativeUnsafe.getUByte(oop, p));
-        }
-        Assert.that(val >= 0);
-        return val;
-    }
-
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(root="MethodBody_minfoValue2_L")
-/*end[JAVA5SYNTAX]*/
-    private static int minfoValue2(Object oop) throws NotInlinedPragma {
-        int p = HDR.methodInfoStart - 1;
-        int val;
-        Assert.that((NativeUnsafe.getUByte(oop, p+1) & FMT_LARGE) != 0);
-        if (NativeUnsafe.getByte(oop, p--) < 0) {
-            p--;
-        }
-        val = NativeUnsafe.getUByte(oop, p--);
-        if (val > 127) {
-            val = val & 0x7F;
-            val = val << 8;
-            val = val | NativeUnsafe.getUByte(oop, p);
-        }
-        Assert.that(val >= 0);
-        return val;
-    }
-
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(root="MethodBody_minfoValue3_L")
-/*end[JAVA5SYNTAX]*/
-    private static int minfoValue3(Object oop) throws NotInlinedPragma {
-        int p = HDR.methodInfoStart - 1;
-        int val;
-        Assert.that(((NativeUnsafe.getUByte(oop, p+1)) & FMT_LARGE) != 0);
-        if (NativeUnsafe.getByte(oop, p--) < 0) {
-            p--;
-        }
-        if (NativeUnsafe.getByte(oop, p--) < 0) {
-            p--;
-        }
-        val = NativeUnsafe.getUByte(oop, p--);
-        if (val > 127) {
-            val = val & 0x7F;
-            val = val << 8;
-            val = val | NativeUnsafe.getUByte(oop, p);
-        }
-        Assert.that(val >= 0);
-        return val;
-    }
-    
-    private static int minfoValue4(Object oop) throws NotInlinedPragma  {
-        int p = HDR.methodInfoStart - 1;
-        int val;
-        Assert.that(((NativeUnsafe.getByte(oop, p+1)) & FMT_LARGE) != 0);
-        if (NativeUnsafe.getByte(oop, p--) < 0) {
-            p--;
-        }
-        if (NativeUnsafe.getByte(oop, p--) < 0) {
-            p--;
-        }
-        if (NativeUnsafe.getByte(oop, p--) < 0) {
-            p--;
-        }
-        val = NativeUnsafe.getUByte(oop, p--);
-        if (val > 127) {
-            val = val & 0x7F;
-            val = val << 8;
-            val = val | NativeUnsafe.getUByte(oop, p);
-        }
-        Assert.that(val >= 0);
-        return val;
-    }
-            
-    /**
-     * Get the offset to the last byte of the Minfo area.
-     *
-     * @param oop the pointer to the method
-     * @return the length in bytes
-     */
-    private static int getOffsetToLastMinfoByte(Object oop) {
-        int p = HDR.methodInfoStart;
-        int b0 = NativeUnsafe.getUByte(oop, p--);
-        if (b0 < 128) {
-            return p;
-        } else {
-            return getOffsetToLastMinfoByte0(oop, p, b0);
-        }
-    }
-
-    /**
-     * Get the offset to the last byte of the Minfo area.
-     *
-     * @param oop the pointer to the method
-     * @return the length in bytes
-     */
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(root="MethodBody_getOffsetToLastMinfoByte0_LII")
-/*end[JAVA5SYNTAX]*/
-    private static int getOffsetToLastMinfoByte0(Object oop, int p, int b0) throws NotInlinedPragma {
-            int offset = 3;
-            if ((b0 & FMT_E) != 0) {
-                offset++;
-            }
-            if ((b0 & FMT_R) != 0) {
-                offset++;
-            }
-            if ((b0 & FMT_T) != 0) {
-                offset++;
-            }
-            while(offset-- > 0) {
-                int val = NativeUnsafe.getUByte(oop, p--);
-                if (val > 127) {
-                    p--;
-                }
-            }
-        return p + 1;
-    }
-
-    /**
-     * Decodes the offset from the method header to the start of the oop map.
-     *
-     * @param oop the pointer to the method
-     * @return the offset in bytes
-     */
-    static int decodeOopmapOffset(Object oop) {
-        int vars = decodeLocalCount(oop) + decodeParameterCount(oop);
-        int oopmapLth = (vars+7)/8;
-        return getOffsetToLastMinfoByte(oop) - oopmapLth;
-    }
-
-    /**
-     * Decodes the offset from the method header to the start of the exception table.
-     *
-     * @param oop the pointer to the method
-     * @return the offset in bytes
-     */
-    static int decodeExceptionTableOffset(Object oop) {
-        int vars = decodeLocalCount(oop) + decodeParameterCount(oop);
-        int oopmapLth = (vars+7)/8;
-        return getOffsetToLastMinfoByte(oop) - oopmapLth - decodeExceptionTableSize(oop);
-    }
-
-    /**
-     * Decodes the offset from the method header to the start of the relocation table.
-     *
-     * @param oop the pointer to the method
-     * @return the offset in bytes
-     */
-    static int decodeRelocationTableOffset(Object oop) {
-        int vars = decodeLocalCount(oop) + decodeParameterCount(oop);
-        int oopmapLth = (vars+7)/8;
-        return getOffsetToLastMinfoByte(oop) - oopmapLth - decodeExceptionTableSize(oop) - decodeRelocationTableSize(oop);
-    }
-
-    /**
-     * Decodes the offset from the method header to the start of the type table.
-     *
-     * @param oop the pointer to the method
-     * @return the offset in bytes
-     */
-    static int decodeTypeTableOffset(Object oop) {
-        int vars = decodeLocalCount(oop) + decodeParameterCount(oop);
-        int oopmapLth = (vars+7)/8;
-        return getOffsetToLastMinfoByte(oop) - oopmapLth - decodeExceptionTableSize(oop) - decodeRelocationTableSize(oop) - decodeTypeTableSize(oop);
-    }
-
-    /**
-     * Decodes the oopmap and type table into an array of Klass instances.
-     * <p>
-     * This cannot be used by the garbage collector because it allocates an object.
-     *
-     * @param oop  the pointer to the method
-     * @return the type map as an array of Klass instances
-     */
-    static Klass[] decodeTypeMap(Object oop) {
-
-        int localCount     = decodeLocalCount(oop);
-        int parameterCount = decodeParameterCount(oop);
-
-        Klass types[] = new Klass[parameterCount+localCount];
-
-        /*
-         * Decodes the oopmap.
-         */
-        if (types.length > 0) {
-            int offset = decodeOopmapOffset(oop);
-            for (int i = 0 ; i < types.length ; i++) {
-                int pos = i / 8;
-                int bit = i % 8;
-                int bite = NativeUnsafe.getUByte(oop, offset+pos);
-                boolean isRef = ((bite>>bit)&1) != 0;
-                types[i] = (isRef) ? Klass.OBJECT : Klass.INT;
-            }
-        }
-
-        /*
-         * Decodes the type table.
-         */
-        if (decodeTypeTableSize(oop) > 0) {
-            int size   =  decodeTypeTableSize(oop);
-            int offset =  decodeTypeTableOffset(oop);
-            VMBufferDecoder dec = new VMBufferDecoder(oop, offset);
-            int end = offset + size;
-            while (dec.getOffset() < end) {
-                int cid  = dec.readUnsignedShort();
-                int slot = dec.readUnsignedInt();
-                int slot2 = slot < parameterCount || LOCAL_LONG_ORDER_NORMAL ? slot + 1 : slot - 1;
-                switch (cid) {
-                    case CID.ADDRESS: types[slot]  = Klass.ADDRESS; break;
-                    case CID.OFFSET:  types[slot]  = Klass.OFFSET;  break;
-                    case CID.UWORD:   types[slot]  = Klass.UWORD;   break;
-                    case CID.LONG:    types[slot]  = Klass.LONG;
-                                      types[slot2] = Klass.LONG2;   break;
-                    case CID.FLOAT:   types[slot]  = Klass.FLOAT;   break;
-                    case CID.DOUBLE:  types[slot]  = Klass.DOUBLE;
-                                      types[slot2] = Klass.DOUBLE2; break;
-                    default: Assert.shouldNotReachHere();
-                }
-            }
-        }
-        return types;
-    }
-
-    /**
-     * Return the address of the first word of the object header.
-     *
-     * @param oop the pointer to the method
-     * @return the VM address of the header
-     */
-    static Address oopToBlock(Address oop) throws NotInlinedPragma {
-        int offset = decodeTypeTableOffset(oop.toObject());
-        while ((offset % HDR.BYTES_PER_WORD) != 0) {
-            --offset;
-        }
-        offset -= HDR.BYTES_PER_WORD; // skip back the header length word
-        return oop.add(offset);
-    }
+  
 
 
 /*if[DEBUG_CODE_ENABLED]*/
@@ -1010,9 +495,9 @@ public final class MethodBody {
             VMBufferDecoder dec = new VMBufferDecoder(oop, offset);
             for (int i = 0 ; i < exceptionTable.length ; i++) {
                 ExceptionHandler handler = exceptionTable[i];
-                Assert.that(dec.readUnsignedInt() == handler.getStart());
-                Assert.that(dec.readUnsignedInt() == handler.getEnd());
-                Assert.that(dec.readUnsignedInt() == handler.getHandler());
+                Assert.that(dec.readUnsignedShort() == handler.getStart());
+                Assert.that(dec.readUnsignedShort() == handler.getEnd());
+                Assert.that(dec.readUnsignedShort() == handler.getHandler());
                 Assert.that(getDefiningClass().getObject(dec.readUnsignedShort()) == handler.getKlass());
             }
             dec.checkOffset(offset + size);
@@ -1039,11 +524,6 @@ public final class MethodBody {
             }
             dec.checkOffset(offset + size);
         }
-
-        /*
-         * Check the relocation table.
-         */
-        Assert.that(decodeRelocationTableSize(oop) == 0);
 
         /*
          * Check the bytecodes.

@@ -340,7 +340,7 @@ public class RomCommand extends Command {
         vm2cRootClasses = new ArrayList<String>();
 
         vm2cRootClasses.add("com.sun.squawk.VM");
-        vm2cRootClasses.add("com.sun.squawk.MethodBody");
+        vm2cRootClasses.add("com.sun.squawk.MethodHeader");
         vm2cRootClasses.add(env.getProperty("GC"));
 
         FileSet.Selector isOutOfDate = new FileSet.AndSelector(Build.JAVA_SOURCE_SELECTOR, new FileSet.DependSelector(new FileSet.Mapper() {

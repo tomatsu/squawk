@@ -36,6 +36,7 @@ import java.util.Stack;
 /*end[OLD_IIC_MESSAGES]*/
 import com.sun.squawk.io.mailboxes.Mailbox;
 import com.sun.squawk.peripheral.PeripheralRegistry;
+import com.sun.squawk.platform.Platform;
 import com.sun.squawk.platform.SystemEvents;
 import com.sun.squawk.pragma.GlobalStaticFields;
 import com.sun.squawk.pragma.InterpreterInvokedPragma;
@@ -1172,8 +1173,8 @@ hbp.dumpState();
              * Setup the preallocated VMBufferDecoder to decode the header
              * of the method for the frame being tested.
              */
-            int size   = MethodBody.decodeExceptionTableSize(mp);
-            int offset = MethodBody.decodeExceptionTableOffset(mp);
+            int size   = MethodHeader.decodeExceptionTableSize(mp);
+            int offset = MethodHeader.decodeExceptionTableOffset(mp);
             vmbufferDecoder.reset(mp, offset);
             int end = offset + size;
 
@@ -1185,9 +1186,9 @@ hbp.dumpState();
              * Iterate through the handlers for this method.
              */
             while (vmbufferDecoder.getOffset() < end) {
-                start_bci     = UWord.fromPrimitive(vmbufferDecoder.readUnsignedInt());
-                end_bci       = UWord.fromPrimitive(vmbufferDecoder.readUnsignedInt());
-                handler_bci   = UWord.fromPrimitive(vmbufferDecoder.readUnsignedInt());
+                start_bci     = UWord.fromPrimitive(vmbufferDecoder.readUnsignedShort());
+                end_bci       = UWord.fromPrimitive(vmbufferDecoder.readUnsignedShort());
+                handler_bci   = UWord.fromPrimitive(vmbufferDecoder.readUnsignedShort());
                 int handler  = vmbufferDecoder.readUnsignedShort();
 
                 /*
@@ -1399,6 +1400,21 @@ hbp.dumpState();
     @Vm2c(code="setObject(_fp, FP_returnIP, pip);")
 /*end[JAVA5SYNTAX]*/
     native static void setPreviousIP(Address fp, Address pip);
+
+    /**
+     * Return the length of <code>methodBody</code> (the byte code array) in bytes.
+     *
+     * @param methodBody Object
+     * @return number of bytecodes
+     */
+    public static int getMethodBodyLength(Object methodBody) {
+        Assert.that(isValidMethodBody(methodBody));
+        return GC.getArrayLength(methodBody);
+    }
+
+    static boolean isValidMethodBody(final Object methodBody) {
+        return (methodBody != null) && (GC.getKlass(methodBody) == Klass.BYTECODE_ARRAY);
+    }
 
     /*-----------------------------------------------------------------------*\
      *                          Oop/int convertion                           *
@@ -2252,17 +2268,23 @@ hbp.dumpState();
         execSyncIO(context, ChannelConstants.CONTEXT_DELETE, 0, 0);
     }
 
+    /**
+     * Create a Channel I/O context.
+     *
+     * @param hibernatedContext the handle for a hibernated I/O session, or null
+     * @return the channel I/O context
+     */
+    static int createChannelContext(byte[] hibernatedContext) {
+        if (Platform.IS_DELEGATING || Platform.IS_SOCKET) {
+            return execSyncIO(ChannelConstants.GLOBAL_CREATECONTEXT, 0, 0, 0, 0, 0, 0, hibernatedContext, null);
+        } else {
+            return ChannelConstants.CHANNEL_GENERIC;
+        }
+    }
+
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
 /*else[ENABLE_ISOLATE_MIGRATION]*/
-//    /**
-//     * Create a Channel I/O context.
-//     *
-//     * @param hibernatedContext the handle for a hibernated I/O session
-//     * @return the channel I/O context
-//     */
-//    static int createChannelContext(byte[] hibernatedContext) {
-//        return execSyncIO(ChannelConstants.GLOBAL_CREATECONTEXT, 0, 0, 0, 0, 0, 0, hibernatedContext, null);
-//    }
+
 //
 //    /**
 //     * Hibernate a channel context.
