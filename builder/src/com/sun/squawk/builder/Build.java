@@ -994,7 +994,7 @@ public class Build {
      * Installs commands from a properties file or directory.
      * If dotPropertiesFile is a directory, try to load dotPropertiesFile + "/builder.properties".
      *
-     * @param pluginsFile  the properties file to load from
+     * @param dotPropertiesFile  the properties file to load from
      */
     protected void processBuilderDotPropertiesFile(File dotPropertiesFile) {
         if (dotPropertiesFile.isDirectory()) {
@@ -1036,6 +1036,9 @@ public class Build {
                 urls = new URL[classpath.length];
                 for (int i = 0; i < classpath.length; i++) {
                     File f = new File(classpath[i]);
+                    if (!f.isAbsolute()) { // if relative, make absolute based on location on properties file
+                        f = new File(dotPropertiesFile.getParentFile().getAbsoluteFile(), classpath[i]);
+                    }
                     String url = f.getAbsolutePath();
 
                     // Make sure the url class loader recognises directories
@@ -1117,9 +1120,9 @@ public class Build {
     }
     
     /**
-     * Convert a space-seperated class path into a platform-specific classpath
-     * @param path string of class path elements that may be space seperated
-     * @return string of classpath elements that are seperated by platofrms seperator
+     * Convert a space-separated class path into a platform-specific classpath
+     * @param path string of class path elements that may be space separated
+     * @return string of classpath elements that are separated by platforms separated
      */
     public String spacesToPath(String path) {
         if (path == null) {
@@ -1719,12 +1722,12 @@ public class Build {
         if (checkDependencies) {
             for (String dependencyName: command.getDependencyNames()) {
                 Command dependency = getCommandForced(dependencyName);
-                if (!runSet.contains(dependency)) {
+                if (!hasBeenRun(dependency, NO_ARGS)) {
                     run(dependency, NO_ARGS);
                 }
             }
         }
-        if (!runSet.contains(command)) {
+        if (!hasBeenRun(command, args)) {
             if (command instanceof Target) {
                 log(brief, "[building " + command.getName() + "...]");
             } else if (command instanceof GeneratorCommand) {
@@ -1750,7 +1753,7 @@ public class Build {
                 System.err.println("Exception while running command " + command);
                 throw e;
             }
-            runSet.add(command);
+            rememberRun(command, args);
 
             for (String triggeredCommandName: command.getTriggeredCommandNames()) {
                 Command triggeredCommand = getCommandForced(triggeredCommandName);
@@ -1759,12 +1762,40 @@ public class Build {
         }
     }
 
+    private boolean isWantingPpcCompilerOnMac;
+
+    /**
+     * Record of command that has been run
+     */
+    static class CommandRun {
+        final Command command;
+        final String[] args;
+        final int cachedHash;
+
+        CommandRun(Command command, String[] args) {
+            this.command = command;
+            this.args = args;
+            this.cachedHash = command.hashCode() + Arrays.hashCode(args);
+        }
+
+        @Override
+        public int hashCode() {
+            return cachedHash;
+        }
+
+        public boolean equals(Object obj) {
+            if (obj instanceof CommandRun) {
+                CommandRun b = (CommandRun)obj;
+                return this.command.equals(b.command) && Arrays.equals(this.args, b.args);
+            }
+            return false;
+        }
+    }
+
     /**
      * The set of commands that have been run.
      */
-    private Set<Command> runSet = new HashSet<Command>();
-
-    private boolean isWantingPpcCompilerOnMac;
+    private Set<CommandRun> runSet = new HashSet<CommandRun>();
 
     /**
      * Clears the set of commands that have been run.
@@ -1779,8 +1810,17 @@ public class Build {
      * @param command   the command to test
      * @return true if <code>command</code> has not been run since the last call to {@link #clearRunSet}.
      */
-    public boolean hasBeenRun(Command command) {
-        return runSet.contains(command);
+    public boolean hasBeenRun(Command command, String[] args) {
+        return runSet.contains(new CommandRun(command, args));
+    }
+
+    /**
+     * Determines if a given command has been run.
+     *
+     * @param command   the command to remember
+     */
+    public void rememberRun(Command command, String[] args) {
+        runSet.add(new CommandRun(command, args));
     }
 
     public static final String[] NO_ARGS = {};

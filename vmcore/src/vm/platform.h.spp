@@ -96,7 +96,9 @@
 #endif /* _MSC_VER */
 
 #ifndef _MSC_VER
-#    define O_BINARY 0 /* for compatibility with open() and close() on Windows */
+#    ifndef O_BINARY
+#        define O_BINARY 0 /* for compatibility with open() and close() on Windows */
+#    endif /* O_BINARY */
 #    ifndef FLASH_MEMORY
 #	    include <sys/mman.h>
 #    endif /* FLASH_MEMORY */

@@ -22,8 +22,6 @@
  * information or have any questions.
  */
 
-#define TRUE 1
-#define FALSE 0
 
 // Size of class to class state cache.
 #define CLASS_CACHE_SIZE 6
@@ -44,6 +42,11 @@ const char *format(const char* fmt);
 #include "io_native.h"
 
 #include "os.c"
+
+#ifndef TRUE
+#define TRUE 1
+#define FALSE 0
+#endif
 
 // Single or user and kernel Squawk systems.
 #ifndef KERNEL_SQUAWK
@@ -1031,7 +1034,7 @@ static char* getAlternateBootstrapSuiteLocation(char* bootstrapSuiteName);
  * @param argc      the number of components in argv
  */
 Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *bootstrapSuiteFile) {
-
+ diagnostic("in setupMemory\n");
     int pageSize = sysGetPageSize();
 
     int serviceChunkSize = SERVICE_CHUNK_SIZE;
@@ -1137,7 +1140,7 @@ fprintf(stderr, "&&&& Special int val2 = %lx\n", val2);
     assume(isWordAligned((UWord)com_sun_squawk_GC_ramStart));
     assume(isWordAligned((UWord)com_sun_squawk_VMThread_serviceStack));
 
-    if (com_sun_squawk_GC_traceFlags != 0) {
+    if (1 || com_sun_squawk_GC_traceFlags != 0) {
         fprintf(stderr, format("ROM relocated to %A\n"), com_sun_squawk_VM_romStart);
         fprintf(stderr, format("Memory start    = %A\n"), memory);
         fprintf(stderr, format("Memory end      = %A\n"), memoryEnd);
@@ -1330,6 +1333,8 @@ Address processArgs(char *argv[], const int argc) {
 
     int nvmSize = DEFAULT_NVM_SIZE;
     int ramSize = DEFAULT_RAM_SIZE;
+
+    diagnostic("in processArgs\n");
 
 /*if[!EMULATOR_LAUNCHER]*/
 #ifdef PROFILING
@@ -1537,7 +1542,7 @@ Address Squawk_setup(int argc, char *argv[]) {
      * Sanity check.
      */
     assume(sizeof(UWord) == sizeof(Address));
-
+ diagnostic("in Squawk_setup\n");
     /*
      * Check that the build flags were correct.
      */
@@ -1852,7 +1857,7 @@ void Squawk_main(int argc, char *argv[]) {
         Squawk_kernelMain(kernelArgsCount, kernelArgs);
     }
 #endif /* KERNEL_SQUAWK */
-
+ diagnostic("in Squawk_main\n");
     Squawk_run(argc, argv);
     fatalVMError("return from interpreter loop in non-kernel mode");
 }
@@ -1864,6 +1869,7 @@ void Squawk_main(int argc, char *argv[]) {
  * @param argv the parameter argument vector
  */
 int Squawk_main_wrapper(int argc, char *argv[]) {
+    diagnostic("in Squawk_main_wrapper\n");
     int ignore = initializeGlobals(&userGlobals);
     
 /*if[!EMULATOR_LAUNCHER]*/
@@ -1920,7 +1926,7 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
 
 #ifndef VXWORKS
 int main(int argc, char *argv[]) {
-
+    diagnostic("In main - squawk.c\n");
 #ifdef __APPLE__
     os_main(argc, argv);
 #else

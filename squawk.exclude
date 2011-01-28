@@ -57,9 +57,10 @@ PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.j2me.file.*
 PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.j2me.socket.*
 PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.j2me.serversocket.*
 # Currently the platform classes are only used by PLATFORM_TYPE=NATIVE, but that may change...
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.Platform
+PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.BaseGCFFile
 PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.GCFFile
 PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.GCFSockets
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.BaseFileHandler
 PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.posix.*
 PLATFORM_TYPE!=NATIVE                          com.sun.squawk.microedition.io.*
 PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.ConnectionBaseInterface
@@ -75,7 +76,8 @@ PLATFORM_TYPE!=NATIVE                           com.sun.squawk.platform.windows.
 ###############################################
 # Classes that don't need to be on device, but on desktop:
 ###############################################
-# FLASH_MEMORY=true                            CLASSSPEC
+FLASH_MEMORY=true                            com.sun.cldc.jna.platform.Windows
+FLASH_MEMORY=true                            com.sun.cldc.jna.platform.Posix
 
 ###############################################
 # Classes that don't need to be on desktop device, but on device:

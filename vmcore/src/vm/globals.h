@@ -351,7 +351,7 @@ int setStream(int stream) {
                 streams[currentStream] = fopen("squawk_dynamic.sym", "w");
                 break;
             }
-#endif /* FLASH_MEMORY */
+#endif /* ENABLE_DYNAMIC_CLASSLOADING */
             default: {
                 NORETURN void fatalVMError(char *msg);
                 fatalVMError("Bad INTERNAL_SETSTREAM");
