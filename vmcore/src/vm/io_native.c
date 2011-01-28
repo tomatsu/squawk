@@ -343,10 +343,6 @@ int checkForEvents() {
 }
 #endif
 
-static void diagnosticWithValue(char* str, int val) {
-    fprintf(stderr, "%s = %d\n", str, val);
-}
-
 static void printOutstandingEvents() {
     SimpleMonitorLock(threadEventMonitor);
     EventRequest* current = eventRequests;

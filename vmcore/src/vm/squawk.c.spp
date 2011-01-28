@@ -48,6 +48,28 @@ const char *format(const char* fmt);
 #define FALSE 0
 #endif
 
+#ifndef DIAGNOSTICS_ENABLED
+/* for ARM, defined in arm-library, otherwise do it here. */
+
+#if defined(ASSUME) && ASSUME != 0
+#define DIAG_INTRO	"[DIAG] "
+void diagnosticPrimWithValue(char* msg, int len, int val) {
+    sysPrint(DIAG_INTRO);
+    sysPrint(msg);
+	iprintf("%s %.*s %#x\r\n", DIAG_INTRO, len, msg, val);
+}
+void diagnostic(char * msg) {
+	diagnosticPrimWithValue(msg, strlen(msg), 0);
+}
+void diagnosticWithValue(char * msg, int val) {
+	diagnosticPrimWithValue(msg, strlen(msg), val);
+}
+#else  /* no assume */
+#define diagnostic(a) /**/
+#define diagnosticWithValue(a,b) /**/
+#endif /* no assume */
+#endif /* DIAGNOSTICS_ENABLED */
+
 // Single or user and kernel Squawk systems.
 #ifndef KERNEL_SQUAWK
 #define KERNEL_SQUAWK false
