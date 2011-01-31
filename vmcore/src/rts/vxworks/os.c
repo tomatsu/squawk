@@ -22,6 +22,9 @@
  * information or have any questions.
  */
 
+#define TRUE 1
+#define FALSE 0
+
 /* The package that contains the native code to use for a "NATIVE" platform type*/
 #define sysPlatformName() "vxworks"
 

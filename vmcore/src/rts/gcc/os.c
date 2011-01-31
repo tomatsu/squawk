@@ -22,6 +22,9 @@
  * information or have any questions.
  */
 
+#define TRUE 1
+#define FALSE 0
+
 #include <stdlib.h>
 #include <sys/time.h>
 #include <dlfcn.h>

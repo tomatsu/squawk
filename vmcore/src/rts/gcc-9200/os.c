@@ -22,6 +22,9 @@
  * information or have any questions.
  */
 
+#define TRUE 1
+#define FALSE 0
+
 #include "system.h"
 #include "systemtimer.h"
 #include <syscalls-9200-io.h>

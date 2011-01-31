@@ -32,6 +32,9 @@
 #define SERVICE_CHUNK_SIZE (8*1024)
 #define IODOTC "eb40a-io.c"
 
+#define TRUE 1
+#define FALSE 0
+
 #include <stdlib.h>
 #include <sys/time.h>
 typedef long long int64_t;

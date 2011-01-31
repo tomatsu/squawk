@@ -43,11 +43,6 @@ const char *format(const char* fmt);
 
 #include "os.c"
 
-#ifndef TRUE
-#define TRUE 1
-#define FALSE 0
-#endif
-
 #ifndef DIAGNOSTICS_ENABLED
 /* for ARM, defined in arm-library, otherwise do it here. */
 
@@ -69,6 +64,10 @@ void diagnosticWithValue(char * msg, int val) {
 #define diagnosticWithValue(a,b) /**/
 #endif /* no assume */
 #endif /* DIAGNOSTICS_ENABLED */
+
+#ifndef DEBUG_STARTUP
+#define DEBUG_STARTUP 0
+#endif
 
 // Single or user and kernel Squawk systems.
 #ifndef KERNEL_SQUAWK
@@ -1066,6 +1065,9 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     int argvTotalSize = calculateSizeForCopyOfCStringArray(argc, argv);
     int offset;
 
+    diagnosticWithValue("setupMemory: ram size", ramSize);
+    diagnosticWithValue("setupMemory: nvmSize size", nvmSize);
+
 #ifdef FLASH_MEMORY
     memorySize = roundUp(ramSize - (pageSize-1), pageSize);
     ramSize = memorySize - roundUp(serviceChunkSize, pageSize) - roundUp(argvTotalSize, pageSize) - roundUp(nvmSize, pageSize);
@@ -1162,22 +1164,22 @@ fprintf(stderr, "&&&& Special int val2 = %lx\n", val2);
     assume(isWordAligned((UWord)com_sun_squawk_GC_ramStart));
     assume(isWordAligned((UWord)com_sun_squawk_VMThread_serviceStack));
 
-    if (1 || com_sun_squawk_GC_traceFlags != 0) {
-        fprintf(stderr, format("ROM relocated to %A\n"), com_sun_squawk_VM_romStart);
-        fprintf(stderr, format("Memory start    = %A\n"), memory);
-        fprintf(stderr, format("Memory end      = %A\n"), memoryEnd);
+    if (DEBUG_STARTUP || com_sun_squawk_GC_traceFlags != 0) {
+        fprintf(stderr, format("ROM relocated to %x\n"), com_sun_squawk_VM_romStart);
+        fprintf(stderr, format("Memory start    = %x\n"), memory);
+        fprintf(stderr, format("Memory end      = %x\n"), memoryEnd);
 #if TYPEMAP
-        fprintf(stderr, format("Type map start  = %A\n"), getTypePointer(memory));
-        fprintf(stderr, format("Type map end    = %A\n"), getTypePointer(memoryEnd));
+        fprintf(stderr, format("Type map start  = %x\n"), getTypePointer(memory));
+        fprintf(stderr, format("Type map end    = %x\n"), getTypePointer(memoryEnd));
 #endif /* TYPEMAP */
-        fprintf(stderr, format("ROM start       = %A\n"), com_sun_squawk_VM_romStart);
-        fprintf(stderr, format("ROM end         = %A\n"), com_sun_squawk_VM_romEnd);
-        fprintf(stderr, format("NVM start       = %A\n"), com_sun_squawk_GC_nvmStart);
-        fprintf(stderr, format("NVM end         = %A\n"), com_sun_squawk_GC_nvmEnd);
-        fprintf(stderr, format("RAM start       = %A\n"), com_sun_squawk_GC_ramStart);
-        fprintf(stderr, format("RAM end         = %A\n"), com_sun_squawk_GC_ramEnd);
-        fprintf(stderr, format("serviceStack    = %A\n"), com_sun_squawk_VMThread_serviceStack);
-        fprintf(stderr, format("Bootstrap suite = %A\n"), suite);
+        fprintf(stderr, format("ROM start       = %x\n"), com_sun_squawk_VM_romStart);
+        fprintf(stderr, format("ROM end         = %x\n"), com_sun_squawk_VM_romEnd);
+        fprintf(stderr, format("NVM start       = %x\n"), com_sun_squawk_GC_nvmStart);
+        fprintf(stderr, format("NVM end         = %x\n"), com_sun_squawk_GC_nvmEnd);
+        fprintf(stderr, format("RAM start       = %x\n"), com_sun_squawk_GC_ramStart);
+        fprintf(stderr, format("RAM end         = %x\n"), com_sun_squawk_GC_ramEnd);
+        fprintf(stderr, format("serviceStack    = %x\n"), com_sun_squawk_VMThread_serviceStack);
+        fprintf(stderr, format("Bootstrap suite = %x\n"), suite);
     }
 
     return suite;
