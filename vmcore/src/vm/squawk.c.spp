@@ -1892,7 +1892,6 @@ void Squawk_main(int argc, char *argv[]) {
  * @param argv the parameter argument vector
  */
 int Squawk_main_wrapper(int argc, char *argv[]) {
-    diagnostic("in Squawk_main_wrapper\n");
     int ignore = initializeGlobals(&userGlobals);
     
 /*if[!EMULATOR_LAUNCHER]*/
@@ -1927,6 +1926,7 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
 //    free(executablePath);
 //    free(executableName);
 /*end[EMULATOR_LAUNCHER]*/
+    diagnostic("in Squawk_main_wrapper\n");
 
     /*
      * Lose the first argument (the path to the executable program).
