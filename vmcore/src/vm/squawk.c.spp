@@ -1055,7 +1055,6 @@ static char* getAlternateBootstrapSuiteLocation(char* bootstrapSuiteName);
  * @param argc      the number of components in argv
  */
 Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *bootstrapSuiteFile) {
- diagnostic("in setupMemory\n");
     int pageSize = sysGetPageSize();
 
     int serviceChunkSize = SERVICE_CHUNK_SIZE;
