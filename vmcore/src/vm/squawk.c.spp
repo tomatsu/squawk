@@ -49,9 +49,7 @@ const char *format(const char* fmt);
 #if defined(ASSUME) && ASSUME != 0
 #define DIAG_INTRO	"[DIAG] "
 void diagnosticPrimWithValue(char* msg, int len, int val) {
-    sysPrint(DIAG_INTRO);
-    sysPrint(msg);
-	iprintf("%s %.*s %#x\r\n", DIAG_INTRO, len, msg, val);
+    printf("%s %.*s %#x\r\n", DIAG_INTRO, len, msg, val);
 }
 void diagnostic(char * msg) {
 	diagnosticPrimWithValue(msg, strlen(msg), 0);
