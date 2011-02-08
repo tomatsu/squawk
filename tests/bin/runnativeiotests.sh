@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -ex
 #
 
 ./squawk com.sun.squawk.io.j2me.http.file file://build.properties

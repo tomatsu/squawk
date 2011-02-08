@@ -546,6 +546,7 @@ public class Converter {
     /**
      * Initializes the table used to rename C local variables whose name
      * corresponds with a global variable defined in vmcore/src/vm/global.h.
+     * Can ignore conditionally defined variables such as io_socket, etc.
      */
     private Map<Name, Name> initLocalVarNameSubs(final Name.Table t) {
         Map<Name, Name> m = new HashMap<Name, Name>();
@@ -570,48 +571,13 @@ public class Converter {
         m.put(asName("Oops"), asName("_Oops"));
         m.put(asName("Buffers"), asName("_Buffers"));
         m.put(asName("BufferCount"), asName("_BufferCount"));
-        m.put(asName("JNI_env"), asName("_JNI_env"));
-        m.put(asName("isCalledFromJava"), asName("_isCalledFromJava"));
-        m.put(asName("vmStartScope"), asName("_vmStartScope"));
-        m.put(asName("traceFile"), asName("_traceFile"));
-        m.put(asName("traceFileOpen"), asName("_traceFileOpen"));
-        m.put(asName("traceServiceThread"), asName("_traceServiceThread"));
-        m.put(asName("traceLastThreadID"), asName("_traceLastThreadID"));
-        m.put(asName("jvm"), asName("_jvm"));
-        m.put(asName("ioport"), asName("_ioport"));
-        m.put(asName("iosocket"), asName("_iosocket"));
-        m.put(asName("result_low"), asName("_result_low"));
-        m.put(asName("result_high"), asName("_result_high"));
-        m.put(asName("io_ops_time"), asName("_io_ops_time"));
-        m.put(asName("io_ops_count"), asName("_io_ops_count"));
         m.put(asName("cachedClassState"), asName("_cachedClassState"));
         m.put(asName("cachedClass"), asName("_cachedClass"));
-        m.put(asName("cachedClassAccesses"), asName("_cachedClassAccesses"));
-        m.put(asName("cachedClassHits"), asName("_cachedClassHits"));
         m.put(asName("pendingMonitors"), asName("_pendingMonitors"));
         m.put(asName("pendingMonitorStackPointer"), asName("_pendingMonitorStackPointer"));
-        m.put(asName("pendingMonitorAccesses"), asName("_pendingMonitorAccesses"));
-        m.put(asName("pendingMonitorHits"), asName("_pendingMonitorHits"));
         m.put(asName("streams"), asName("_streams"));
         m.put(asName("currentStream"), asName("_currentStream"));
-        m.put(asName("channelIO_clazz"), asName("_channelIO_clazz"));
-        m.put(asName("channelIO_execute"), asName("_channelIO_execute"));
-        m.put(asName("channelIO_notifyWaiters"), asName("_channelIO_notifyWaiters"));
         m.put(asName("STREAM_COUNT"), asName("_STREAM_COUNT"));
-        m.put(asName("setLongCounter(high,"), asName("_setLongCounter(high,"));
-        m.put(asName("getLongCounter(high,"), asName("_getLongCounter(high,"));
-        m.put(asName("getBranchCount()"), asName("_getBranchCount()"));
-        m.put(asName("getTraceStart()"), asName("_getTraceStart()"));
-        m.put(asName("getTraceEnd()"), asName("_getTraceEnd()"));
-        m.put(asName("setTraceStart(x)"), asName("_setTraceStart(x)"));
-        m.put(asName("setTraceEnd(x)"), asName("_setTraceEnd(x)"));
-        m.put(asName("statsFrequency"), asName("_statsFrequency"));
-        m.put(asName("getBranchCount()"), asName("_getBranchCount()"));
-        m.put(asName("sampleFrequency"), asName("_sampleFrequency"));
-        m.put(asName("instructionCount"), asName("_instructionCount"));
-        m.put(asName("total_extends"), asName("_total_extends"));
-        m.put(asName("total_slots"), asName("_total_slots"));
-        m.put(asName("lastStatCount"), asName("_lastStatCount"));
         m.put(asName("notrap"), asName("_notrap"));
         return m;
     }

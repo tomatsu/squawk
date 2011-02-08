@@ -44,16 +44,16 @@ UWord loadBootstrapSuiteFromFlash(
                         int     *hash) {
 	 // ROM starts at the flash address set on command line
     Address javabytecodesbase = (Address) atoi(bootstrapSuiteFile);
-    diagnosticWithValue("javabytecodesbase: ", (int)javabytecodesbase);
-    diagnosticWithValue("suite offset: ", getUWord(javabytecodesbase, 0));
     *suite = (void *)(getUWord(javabytecodesbase, 0) + javabytecodesbase);
-    diagnosticWithValue("suite ptr: ", (int)*suite);
     *hash = (int)getUWord(javabytecodesbase, 1);
     UWord size=getUWord(javabytecodesbase, 2);
     *romStart=(void *)(javabytecodesbase + NUMBER_OF_BYTES_IN_BYTECODE_HEADER);
-        diagnosticWithValue("suite size: ",size);
-        diagnosticWithValue("romStart: ",(int)*romStart);
-
+    
+    diagnosticWithValue("javabytecodesbase: ", (int) javabytecodesbase);
+    diagnosticWithValue("rootOffset: ", (int) *suite);
+    diagnosticWithValue("hash: ", getUWord(javabytecodesbase, 0));
+    diagnosticWithValue("suite size: ", size);
+    diagnosticWithValue("romStart: ", (int) *romStart);
     return size;
 }
 
