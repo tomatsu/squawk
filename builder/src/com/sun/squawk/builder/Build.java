@@ -1517,6 +1517,10 @@ public class Build {
         addJavaCommand("omfconv", "hosted-support/classes:mapper/classes:cldc/classes:translator/classes", false, "", "com.sun.squawk.ObjectMemoryFileEndianessConverter", "mapper").
             setDescription("object memory file endianess converter");
 
+        // Add the "flashconv" command
+        addJavaCommand("flashconv", "hosted-support/classes:mapper/classes:cldc/classes:translator/classes", false, "", "com.sun.squawk.suiteconverter.FlashConverter", "mapper").
+            setDescription("object memory file endianess converter");
+
         // Add the "sdproxy" command
         addJavaCommand("sdproxy", "romizer/classes:hosted-support/classes:debugger/classes:debugger-proxy/classes:cldc/classes:translator/classes", false, "", "com.sun.squawk.debugger.sdp.SDP", "debugger-proxy").
             setDescription("Debugger proxy for translating between Squawk VM and normal JDPA debuggers");
