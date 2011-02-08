@@ -1484,7 +1484,7 @@ VM.println("creating stack:");
          * Stack extension will not work if com.sun.squawk.Klass has not been initialized as
          * the Klass.LOCAL static variable will be null.
          */
-        Assert.always(VM.isCurrentIsolateInitialized(), "cannot extend stack until com.sun.squawk.Class is initialized");
+        Assert.always(VM.isCurrentIsolateInitialized()); // "cannot extend stack until com.sun.squawk.Class is initialized"
         Assert.always(currentThread == VMThread.serviceThread);
 
         /*

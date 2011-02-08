@@ -67,7 +67,7 @@ public class VM {
      * @param omf  the file to test
      * @return true if the object memory in <code>omf</code> is big, false otherwise
      */
-    static boolean isBigEndian(File omf) {
+    public static boolean isBigEndian(File omf) {
         try {
             DataInputStream dis = new DataInputStream(new FileInputStream(omf));
             boolean result = ObjectMemoryLoader.loadHeader(dis, "file://" + omf.getPath()).isBigEndian();

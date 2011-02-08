@@ -655,7 +655,7 @@ System.out.println("filePathelements=" + filePathelements);
         // Relocate the pointers within this object memory
         ObjectMemory.relocate(url, buffer, bufferAddress, oopMap, relocatedBufferAddress, canonicalStart, size, false, requiresEndianSwap, tracing, true);
 
-        Assert.always(oopMap.cardinality() == 0, "some pointers were not relocated");
+        Assert.always(oopMap.cardinality() == 0); // "some pointers were not relocated"
 
         // Swap the endianess if necessary
         if (requiresEndianSwap) {

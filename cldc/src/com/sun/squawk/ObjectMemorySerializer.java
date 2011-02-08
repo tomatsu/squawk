@@ -36,6 +36,9 @@ import com.sun.squawk.vm.*;
  *
  */
 public class ObjectMemorySerializer {
+
+    public static final int CURRENT_MAJOR_VERSION = 1;
+    public static final int CURRENT_MINOR_VERSION = 1;
     
     /**
      * Purely static class should not be instantiated.
@@ -101,8 +104,8 @@ public class ObjectMemorySerializer {
         sfos.writeInt(0xdeadbeef, "magic");
 
         // Write the version numbers
-        sfos.writeShort(1, "minor_version");
-        sfos.writeShort(1, "major_version");
+        sfos.writeShort(CURRENT_MINOR_VERSION, "minor_version");
+        sfos.writeShort(CURRENT_MAJOR_VERSION, "major_version");
 
         // Write the attributes
         int attributes = 0;
@@ -244,7 +247,7 @@ public class ObjectMemorySerializer {
                               true);
 
 //System.out.println("after self: oopMap.cardinality = " + oopMap.cardinality());
-        Assert.always(oopMap.cardinality() == 0, "some pointers were not relocated");
+        Assert.always(oopMap.cardinality() == 0); // "some pointers were not relocated"
         return canonicalStart;
     }
 

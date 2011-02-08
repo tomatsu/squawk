@@ -802,7 +802,7 @@ public final class Suite {
         ObjectMemory parentMemory = null;
         if (!isBootstrap()) {
             parentMemory = parent.getReadOnlyObjectMemory();
-            Assert.always(parentMemory != null, "parent not found: " + parent);
+            Assert.always(parentMemory != null); // "parent not found: " + parent
         }
         ObjectMemorySerializer.save(dos, uri, cb, parentMemory, bigEndian);
 

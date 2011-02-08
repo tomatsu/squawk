@@ -35,6 +35,7 @@ public abstract class GarbageCollector implements GlobalStaticFields {
     
     /** If build.properties defines NATIVE_GC_ONLY= true, then define constant NATIVE_GC_ONLY = true.*/
     public final static boolean NATIVE_GC_ONLY = /*VAL*/false/*NATIVE_GC_ONLY*/;
+    public final static boolean INTERP_GC_ONLY = !/*VAL*/false/*VM2C*/;
     
     /* package-private**/ GarbageCollector() {}
 
@@ -65,11 +66,16 @@ public abstract class GarbageCollector implements GlobalStaticFields {
         long freeBeforeGC = GC.freeMemory();
         long bytesAllocated = GC.getBytesAllocatedSinceLastGC();
         long start = VM.getTimeMillis();
-        if (!NATIVE_GC_ONLY && interpGC) {
+        if (INTERP_GC_ONLY) {
+            didFull = collectGarbageInJava(allocTop, forceFullGC);
+        } else if (NATIVE_GC_ONLY) {
+            didFull = collectGarbageInC(allocTop, forceFullGC);
+        } else if (interpGC) {
             didFull = collectGarbageInJava(allocTop, forceFullGC);
         } else {
             didFull = collectGarbageInC(allocTop, forceFullGC);
         }
+        
         lastCollectionTime = VM.getTimeMillis() - start;
         if (didFull) {
             totalFullCollectionTime += lastCollectionTime;
@@ -375,23 +381,26 @@ public abstract class GarbageCollector implements GlobalStaticFields {
      * @return      true if <code>arg</code> was a collector option
      */
     boolean processCommandLineOption(String arg) {
-        if (arg.equals("-nativegc")) {
-            if (!hasNativeImplementation()) {
-                System.out.println("Warning: unsupported -nativegc switch ignored");
-            } else {
-                interpGC = false;
+        if (!INTERP_GC_ONLY && !NATIVE_GC_ONLY) {
+            if (arg.equals("-nativegc")) {
+                if (!hasNativeImplementation()) {
+                    System.out.println("Warning: unsupported -nativegc switch ignored");
+                } else {
+                    interpGC = false;
+                }
+                return true;
+            } else if (arg.equals("-interpgc")) {
+                interpGC = true;
+                return true;
             }
-            return true;
-        } else if (!NATIVE_GC_ONLY && arg.equals("-interpgc")) {
-            interpGC = true;
-            return true;
+        }
 /*if[FLASH_MEMORY]*/
 /*else[FLASH_MEMORY]*/
-//        } else if (arg.equals("-usecgctimer")) {
+//      if (arg.equals("-usecgctimer")) {
 //            useMicrosecondTimer = true;
 //            return true;
+//      }
 /*end[FLASH_MEMORY]*/
-        }
         return false;
     }
 
@@ -401,7 +410,7 @@ public abstract class GarbageCollector implements GlobalStaticFields {
      * @param out  the stream on which to print the message
      */
     void usage(java.io.PrintStream out) {
-        if (hasNativeImplementation() && !NATIVE_GC_ONLY) {
+        if (!NATIVE_GC_ONLY && !INTERP_GC_ONLY && hasNativeImplementation()) {
             out.println("    -nativegc             use native version of collector (default)");
             out.println("    -interpgc             use interpreted version of collector");
         }

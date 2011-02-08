@@ -1660,9 +1660,9 @@ hbp.dumpState();
      */
     public static int setStream(int stream) {
 /*if[FLASH_MEMORY]*/
-        Assert.always(stream >= STREAM_STDOUT && stream <= STREAM_STDERR, "invalid stream specifier");
+        Assert.always(stream >= STREAM_STDOUT && stream <= STREAM_STDERR); // "invalid stream specifier"
 /*else[FLASH_MEMORY]*/
-//        Assert.always(stream >= STREAM_STDOUT && stream <= STREAM_SYMBOLS, "invalid stream specifier");
+//        Assert.always(stream >= STREAM_STDOUT && stream <= STREAM_SYMBOLS); // "invalid stream specifier"
 /*end[FLASH_MEMORY]*/
         return setStream0(stream);
     }

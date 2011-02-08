@@ -552,8 +552,8 @@ public class GC implements GlobalStaticFields {
         Assert.that(!VM.isHosted());
 
         // Get the pointers rounded correctly.
-        Assert.always(ramStart.eq(ramStart.roundUpToWord()), "RAM limit is not word aligned");
-        Assert.always(ramEnd.eq(ramEnd.roundDownToWord()), "RAM limit is not word aligned");
+        Assert.always(ramStart.eq(ramStart.roundUpToWord())); // "RAM limit is not word aligned"
+        Assert.always(ramEnd.eq(ramEnd.roundDownToWord()));   // "RAM limit is not word aligned"
 
         // Temporarily set the main allocation point to the start-end addresses
         // supplied. This allows permanent objects to be allocated outside the
@@ -851,7 +851,7 @@ public class GC implements GlobalStaticFields {
     private static Object allocate(int size, Object klass, int arrayLength) {
         Object oop = (excessiveGC && !VMThread.currentThread().isServiceThread()) ? null : allocatePrim(size, klass, arrayLength);
         if (oop == null) {
-            Assert.always(VM.isThreadingInitialized(), "insufficient memory to start VM");
+            Assert.always(VM.isThreadingInitialized()); // "insufficient memory to start VM"
             if (gcEnabled) {
                 VM.collectGarbage(false);
                 oop = allocatePrim(size, klass, arrayLength);
