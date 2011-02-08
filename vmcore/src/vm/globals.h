@@ -140,7 +140,6 @@ Globals kernelGlobals;    /* The kernel mode execution context */
 #if PLATFORM_TYPE_DELEGATING
 JNIEnv     *JNI_env;                    /* The pointer to the table of JNI function pointers. */
 
-jmp_buf     vmStartScope;               /* The frame in which the Squawk VM was started from Java. */
 JavaVM     *jvm;                        /* Handle to the JVM created via the Invocation API. This will be null if Squawk was called from Java code. */
 #endif
 
@@ -198,9 +197,6 @@ boolean     notrap;
 #define Oops                                defineGlobal(Oops)
 #define Buffers                             defineGlobal(Buffers)
 #define BufferCount                         defineGlobal(BufferCount)
-// #define JNI_env                             defineGlobal(JNI_env)
-// #define vmStartScope                        defineGlobal(vmStartScope)
-// #define jvm                                 defineGlobal(jvm)
 
 #if KERNEL_SQUAWK
     /* Nothing yet... */

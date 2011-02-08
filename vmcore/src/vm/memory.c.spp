@@ -34,6 +34,9 @@
 #define INLINE_UNALIGNED 
 #endif /* PLATFORM_UNALIGNED_LOADS */
 
+#ifndef PLATFORM_UNALIGNED_64_LOADS
+#define PLATFORM_UNALIGNED_64_LOADS PLATFORM_UNALIGNED_LOADS
+#endif
 
     /*-----------------------------------------------------------------------*\
      *                           Memory access verification                  *
@@ -681,7 +684,7 @@ void checkOneAddress(Address ea, int size, Address addr);
          * @param value  the value to write
          */
 /*MAC*/ void setLongAtWord(Address $base, Offset $offset, jlong $value) {
-            if (SQUAWK_64 || PLATFORM_UNALIGNED_LOADS) {
+            if (SQUAWK_64 || PLATFORM_UNALIGNED_64_LOADS) {
                 setLongAtWordTyped($base, $offset, AddressType_LONG, $value);
             } else {
                 const int highOffset = (PLATFORM_BIG_ENDIAN) ? $offset     : $offset + 1;
@@ -759,7 +762,7 @@ INLINE_UNALIGNED void setUnalignedInt(Address base, Offset offset, int value) {
          */
 INLINE_UNALIGNED void setUnalignedLong(Address base, Offset offset, jlong value) {
             signed char *ea = &((signed char *)base)[offset];
-            if (PLATFORM_UNALIGNED_LOADS || isAligned((UWord)ea, 8)) {
+            if (PLATFORM_UNALIGNED_64_LOADS || isAligned((UWord)ea, 8)) {
                 setLongTyped(ea, 0, AddressType_LONG, value);
             } else {
                 /* optimize for 32-bit registers */
@@ -892,7 +895,7 @@ INLINE_UNALIGNED void setUnalignedLong(Address base, Offset offset, jlong value)
          * @return the value
          */
 /*MAC*/ jlong getLongAtWord(Address $base, Offset $offset) {
-            if (SQUAWK_64 || PLATFORM_UNALIGNED_LOADS) {
+            if (SQUAWK_64 || PLATFORM_UNALIGNED_64_LOADS) {
                 return getLongAtWordTyped($base, $offset, AddressType_LONG);
             } else {
                 const int highOffset = (PLATFORM_BIG_ENDIAN) ? $offset     : $offset + 1;

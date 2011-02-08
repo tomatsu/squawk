@@ -225,7 +225,7 @@
          * @return the value
          */
 /*DEF*/ void fetchLong() {
-            if (PLATFORM_UNALIGNED_LOADS) {
+            if (PLATFORM_UNALIGNED_64_LOADS) {
                 flparm = getLongTyped(ip, 0, AddressType_BYTECODE);
                 ip += sizeof(jlong);
             } else {

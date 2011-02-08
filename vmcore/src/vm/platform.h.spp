@@ -61,7 +61,6 @@
 #define boolean int
 #define null ((void *)0)
 #define byte signed char
-//#define jlong long long  -- defined in jni_md.h
 #define ujlong unsigned jlong
 
 #include <string.h>
