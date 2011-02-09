@@ -1164,13 +1164,10 @@ VM.println();
          * Convert the block of memory allocated for the service thread's stack into a
          * proper object of type Klass.LOCAL_ARRAY.
          */
-        int length = NativeUnsafe.getUWord(serviceStack, HDR.length).toInt();
-        Assert.always(length > 0);
         GC.setHeaderClass(serviceStack, Klass.LOCAL_ARRAY);
-        GC.setHeaderLength(serviceStack, length);
         
         /*
-         * NOTE: The service statck has no backpointer to the service thread, and
+         * NOTE: The service stack has no backpointer to the service thread, and
          * is not GC.registerStackChunks(). It is allocated by C code, and isn't really in the heap?
          */
         //NativeUnsafe.setObject(serviceStack, SC.owner, serviceThread);

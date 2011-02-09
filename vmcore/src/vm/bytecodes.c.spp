@@ -332,11 +332,11 @@
 /*if[REVERSE_PARAMETERS]*/
             checkPush();
             setLong(--sp, 0, $value);
-            assume($value == getLong(sp, 0));
+            assumeInterp($value == getLong(sp, 0));
 /*else[REVERSE_PARAMETERS]*/
 //          setLong(sp++, 0, $value);
 //          checkPush();
-//          assume($value == getLong(sp, -1));
+//          assumeInterp($value == getLong(sp, -1));
 /*end[REVERSE_PARAMETERS]*/
         }
 #else
@@ -345,12 +345,12 @@
             checkPush();
             --sp;
             setLongAtWord(--sp, 0, $value);
-            assume($value == getLongAtWord(sp, 0));
+            assumeInterp($value == getLongAtWord(sp, 0));
 /*else[REVERSE_PARAMETERS]*/
 //          setLongAtWord(sp++, 0, $value);
 //          sp++;
 //          checkPush();
-//          assume($value == getLongAtWord(sp, -2));
+//          assumeInterp($value == getLongAtWord(sp, -2));
 /*end[REVERSE_PARAMETERS]*/
         }
 #endif
@@ -1146,9 +1146,9 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
          * @param mth the address of the method to be invoked
          */
 /*MAC*/ void callNoReset(Address $mth) {
-            assume($mth != 0);
-            assume(com_sun_squawk_Klass_id(getClass($mth)) == CID_BYTECODE_ARRAY);
-            assume(inCode($mth));
+            assumeInterp($mth != 0);
+            assumeInterp(com_sun_squawk_Klass_id(getClass($mth)) == CID_BYTECODE_ARRAY);
+            assumeInterp(inCode($mth));
             checkReferenceSlots();
             downPushAddress(ip);
             ip = $mth;
@@ -1174,8 +1174,8 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
             UWord   ipOffset   = ((UWord)ip) - oldMP;
             Address newThread  = com_sun_squawk_VMThread_otherThread;
             Address newStack   = (Address)com_sun_squawk_VMThread_stack(newThread);
-            assume(newStack != null);
-            assume(!com_sun_squawk_GC_collecting);
+            assumeInterp(newStack != null);
+            assumeInterp(!com_sun_squawk_GC_collecting);
 
 /*fprintf(stderr, format("%%%%%%%%%%%%%% fp = %A oldMP = %A ipoffset = %d ip=%A tid=%d oldThread=%A oldStack=%A newThread=%A newStack=%A\n"), fp, oldMP, ipOffset, ip, com_sun_squawk_VMThread_threadNumber(oldThread), oldThread, oldStack, newThread, newStack);*/
 
@@ -1184,9 +1184,9 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
              */
             if (oldStack == null) {
                 /* handle case from VMThread.abandonThread(). oldThread has died, and will not come back.*/
-                assume(com_sun_squawk_VMThread_state(oldThread) == com_sun_squawk_VMThread_DEAD);
+                assumeInterp(com_sun_squawk_VMThread_state(oldThread) == com_sun_squawk_VMThread_DEAD);
             } else {
-                assume(oldStack == (Address)ss);
+                assumeInterp(oldStack == (Address)ss);
                 setObject(oldStack, SC_lastFP, fp);
                 setUWord(oldStack, SC_lastBCI, ipOffset);
             }
@@ -1223,7 +1223,7 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
                  * If not simply switching back from the service thread to its caller
                  * then check that the number of pending monitor enter operations is zero.
                  */
-                assume(oldThread == com_sun_squawk_VMThread_serviceThread || pendingMonitorStackPointer == 0);
+                assumeInterp(oldThread == com_sun_squawk_VMThread_serviceThread || pendingMonitorStackPointer == 0);
 
             } else {
                 runningOnServiceThread = true;
@@ -1249,11 +1249,11 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
             } else {
                 Address hbp;
 
-                assume(getMP() != null);
+                assumeInterp(getMP() != null);
                 ipOffset = getUWord(ss, SC_lastBCI);
                 resetStackPointer();
                 ip = (ByteAddress)getMP() + ipOffset;
-                assume(inCode(ip));
+                assumeInterp(inCode(ip));
 
                 if (!runningOnServiceThread &&
                     (hbp = com_sun_squawk_VMThread_hitBreakpoint(newThread)) != null &&
@@ -1295,7 +1295,7 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
          * Switch to the service thread.
          */
 /*MAC*/ void threadSwitchFor(int $code) {
-            assume(!runningOnServiceThread);
+            assumeInterp(!runningOnServiceThread);
             com_sun_squawk_VMThread_otherThread = com_sun_squawk_VMThread_serviceThread;
             threadSwitch($code);
         }
@@ -3294,14 +3294,14 @@ foundSlot:
 /*MAC*/ void extendStack(Address $mp, int $slotsToClear) {
             Address mp = $mp;
             int nlocals, nstack;
-            assume(com_sun_squawk_VM_extendsEnabled);
+            assumeInterp(com_sun_squawk_VM_extendsEnabled);
             downPushAddress(fp);                        /* Save caller's frame pointer. */
             downPushAddress(mp);                        /* Method address.              */
             fp = sp;                                    /* Setup new frame pointer.     */
-            assume(getMP() == mp);
+            assumeInterp(getMP() == mp);
             nlocals = getLocalCount(mp);
             nstack  = getStackCount(mp);
-            assume($slotsToClear < nlocals);
+            assumeInterp($slotsToClear < nlocals);
             incExtends($slotsToClear);
             if (likely((fp - nlocals - nstack) > (sl + FP_FIXED_FRAME_SIZE))) {
                 UWordAddress oldsp = sp;
@@ -3327,7 +3327,7 @@ foundSlot:
                 }
             } else {
                 int overflow = (sl + FP_FIXED_FRAME_SIZE) - (fp - nlocals - nstack);
-                assume(getUWord(ss, SC_guard) == 0);
+                assumeInterp(getUWord(ss, SC_guard) == 0);
                 if (com_sun_squawk_GC_traceFlags > 1) {
                     fprintf(stderr, format(
                                             "*** Extending stack *** (stack size=%d, remaining stack=%d, bcount=%L)\n"),
@@ -3458,7 +3458,7 @@ foundSlot:
                 int res = popInt();
                 ip = (ByteAddress)getObject(fp, FP_returnIP);
                 fp = (UWordAddress)getObject(fp, FP_returnFP);
-                assume(inCode(ip));
+                assumeInterp(inCode(ip));
                 resetStackPointer();
                 pushInt(res);
             }
@@ -3477,7 +3477,7 @@ foundSlot:
                 jlong res = popLong();
                 ip = (ByteAddress)getObject(fp, FP_returnIP);
                 fp = (UWordAddress)getObject(fp, FP_returnFP);
-                assume(inCode(ip));
+                assumeInterp(inCode(ip));
                 resetStackPointer();
                 pushLong(res);
             }
@@ -3494,7 +3494,7 @@ foundSlot:
             Address res = popAddress();
             ip = (ByteAddress)getObject(fp, FP_returnIP);
             fp = (UWordAddress)getObject(fp, FP_returnFP);
-            assume(inCode(ip));
+            assumeInterp(inCode(ip));
             resetStackPointer();
             pushAddress(res);
         }
@@ -3509,7 +3509,7 @@ foundSlot:
 /*MAC*/ void do_return_v() {
             ip = (ByteAddress)getObject(fp, FP_returnIP);
             fp = (UWordAddress)getObject(fp, FP_returnFP);
-            assume(inCode(ip));
+            assumeInterp(inCode(ip));
             resetStackPointer();
         }
 
@@ -3607,7 +3607,7 @@ foundSlot:
 
                 case Native_com_sun_squawk_Offset_bytesToWords: {
                     Offset offset = (Offset)popWord();
-                    assume((offset % HDR_BYTES_PER_WORD) == 0);
+                    assumeInterp((offset % HDR_BYTES_PER_WORD) == 0);
                     pushWord(offset >> HDR_LOG2_BYTES_PER_WORD);
                     break;
                 }
@@ -4397,11 +4397,11 @@ foundSlot:
                     Address dst      = popAddress();
                     int     srcPos   = popInt();
                     Address src      = popAddress();
-                    assume(src != NULL);
-                    assume(dst != NULL);
-                    assume(srcPos >= 0);
-                    assume(dstPos >= 0);
-                    assume(length >= 0);
+                    assumeInterp(src != NULL);
+                    assumeInterp(dst != NULL);
+                    assumeInterp(srcPos >= 0);
+                    assumeInterp(dstPos >= 0);
+                    assumeInterp(length >= 0);
                     copyBytes(src, srcPos, dst, dstPos, length, nvmDst);
                     break;
                 }
@@ -4411,8 +4411,8 @@ foundSlot:
                     int     length   = popInt();
                     int     value    = popInt();
                     Address dst      = popAddress();
-                    assume(dst != NULL);
-                    assume(length >= 0);
+                    assumeInterp(dst != NULL);
+                    assumeInterp(length >= 0);
                     memset(dst, value, length);
                     break;
                 }
@@ -4472,7 +4472,7 @@ foundSlot:
                 case Native_com_sun_squawk_VM_setPreviousIP: {
                     Address pip = popAddress();
                     Address afp = popAddress();
-                    assume(inCode(ip));
+                    assumeInterp(inCode(ip));
                     setObject(afp, FP_returnIP, pip);
                     break;
                 }
@@ -4494,21 +4494,21 @@ foundSlot:
 
                 case Native_com_sun_squawk_VM_getGlobalInt: {
                     int index = popInt();
-                    assume(index < GLOBAL_INT_COUNT);
+                    assumeInterp(index < GLOBAL_INT_COUNT);
                     pushInt(Ints[index]);
                     break;
                 }
 
                 case Native_com_sun_squawk_VM_getGlobalAddr: {
                     int index = popInt();
-                    assume(index < GLOBAL_ADDR_COUNT);
+                    assumeInterp(index < GLOBAL_ADDR_COUNT);
                     pushAddress(Addrs[index]);
                     break;
                 }
 
                 case Native_com_sun_squawk_VM_getGlobalOop: {
                     int index = popInt();
-                    assume(index < GLOBAL_OOP_COUNT);
+                    assumeInterp(index < GLOBAL_OOP_COUNT);
                     pushAddress(Oops[index]);
                     break;
                 }
@@ -4521,7 +4521,7 @@ foundSlot:
                 case Native_com_sun_squawk_VM_setGlobalInt: {
                     int index  = popInt();
                     int value = popInt();
-                    assume(index < GLOBAL_INT_COUNT);
+                    assumeInterp(index < GLOBAL_INT_COUNT);
                     Ints[index] = (int)value;
                     break;
                 }
@@ -4529,7 +4529,7 @@ foundSlot:
                 case Native_com_sun_squawk_VM_setGlobalAddr: {
                     int index  = popInt();
                     Address value = popAddress();
-                    assume(index < GLOBAL_ADDR_COUNT);
+                    assumeInterp(index < GLOBAL_ADDR_COUNT);
                     Addrs[index] = value;
                     break;
                 }
@@ -4537,7 +4537,7 @@ foundSlot:
                 case Native_com_sun_squawk_VM_setGlobalOop: {
                     int index  = popInt();
                     Address value = popAddress();
-                    assume(index < GLOBAL_OOP_COUNT);
+                    assumeInterp(index < GLOBAL_OOP_COUNT);
                     Oops[index] = value;
                     break;
                 }
@@ -5775,7 +5775,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
          */
 /*MAC*/ void do_catch() {
             Address exception = (Address)com_sun_squawk_ServiceOperation_pendingException;
-            assume(exception != null);
+            assumeInterp(exception != null);
             com_sun_squawk_ServiceOperation_pendingException = 0;
             pushAddress(exception);
         }
@@ -5830,7 +5830,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
                 call(com_sun_squawk_VM_monitorexit);
             } else {
                 Address obj2 = pendingMonitors[--pendingMonitorStackPointer];
-                assume(obj == obj2);
+                assumeInterp(obj == obj2);
                 pendingMonitors[pendingMonitorStackPointer] = null;
                 updatePendingMonitorHits();
             }

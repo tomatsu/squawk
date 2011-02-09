@@ -198,11 +198,13 @@ public final class Lisp2Bitmap implements GlobalStaticFields {
 /*end[JAVA5SYNTAX]*/
     static native boolean testAndSetBitFor(Address ea);
 
+/*if[WRITE_BARRIER]*/
     public static void updateWriteBarrierForPointerArraycopy(Object dst, int dstPos, int length) {
         Address start = Address.fromObject(dst).add(dstPos * HDR.BYTES_PER_WORD);
         Address end = start.add(length * HDR.BYTES_PER_WORD);
         setBitsFor(start, end);
     }
+/*end[WRITE_BARRIER]*/
 
     /*---------------------------------------------------------------------------*\
      *                                Iterators                                  *

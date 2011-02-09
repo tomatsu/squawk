@@ -112,8 +112,10 @@ NORETURN void fatalVMError(char *msg) {
 
 #if defined(ASSUME) && ASSUME != 0
 #define assume(x) if (!(x))  { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #x, __FILE__, __LINE__); fatalVMError(""); }
+#define assumeInterp(x) if (!(x))  { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #x, __FILE__, __LINE__); fatalInterpreterError(""); }
 #else
 #define assume(x) /**/
+#define assumeInterp(x) /**/
 #endif /* ASSUME */
 
 /**
