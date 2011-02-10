@@ -165,13 +165,13 @@ System.out.println("Original root offset: 0x" + Integer.toHexString(rootOffset))
 	 * @throws IOException
 	 */
 	public void writeToStream(DataOutputStream dos) throws IOException {
-/*if[!VERIFY_SIGNATURES]*/
+///*if[!VERIFY_SIGNATURES]*/
         DataOutputStream output = dos;
         final int MAX_HEADER_SIZE = Integer.MAX_VALUE;
-/*else[VERIFY_SIGNATURES]*/
+///*else[VERIFY_SIGNATURES]*/
 //      SigningOutputStream output = new SigningOutputStream(dos);
 //      final int MAX_HEADER_SIZE = SignatureVerifier.MAXIMUM_HEADER_SIZE;
-/*end[VERIFY_SIGNATURES]*/
+///*end[VERIFY_SIGNATURES]*/
 
         if (hasParent()) {
             if (VM.isVerbose()) {
@@ -220,9 +220,9 @@ System.out.println("Original root offset: 0x" + Integer.toHexString(rootOffset))
         }
         output.write(objectMemory);
 
-/*if[!VERIFY_SIGNATURES]*/
+///*if[!VERIFY_SIGNATURES]*/
         output.flush();
-/*else[VERIFY_SIGNATURES]*/
+///*else[VERIFY_SIGNATURES]*/
 //		if (hasParent())
 //		// If this is not the bootstrap suite write the hash
 //		// and sign the suite.
@@ -232,7 +232,7 @@ System.out.println("Original root offset: 0x" + Integer.toHexString(rootOffset))
 //		}else{
 //			output.flushWithoutSignature();
 //		}
-/*end[VERIFY_SIGNATURES]*/
+///*end[VERIFY_SIGNATURES]*/
 	}
 
 	/**
