@@ -1735,7 +1735,7 @@ void Squawk_continue(Globals *gp) {
 }
 
 void printRange(char* label, void* start, void* end) {
-    iprintf("%s  : %p~%p [size:%d]\r\n", label, start, end, ((char*)end - (char*)start));
+    fprintf(stderr, "%s  : %p~%p [size:%d]\r\n", label, start, end, ((char*)end - (char*)start));
 }
 
 int printValueInRange(Address value, char* valueName, Address low, Address high, char* rangeName) {
