@@ -1,5 +1,6 @@
 /*
  * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This code is free software; you can redistribute it and/or modify
@@ -17,9 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
- * information or have any questions.
+ * Please contact Oracle, 16 Network Circle, Menlo Park, CA 94025 or
+ * visit www.oracle.com if you need additional information or have
+ * any questions.
  */
 
 #include "spi.h"
@@ -410,7 +411,7 @@ int avr_low_result = 0;
     		
     	case ChannelConstants_AVAILABLE_SERIAL_CHARS: {
                 int deviceType = i1;
-                res = sysAvailable(deviceType) ? 1 : 0;
+                res = sysAvailable(deviceType);
             }
     	    break;
 
