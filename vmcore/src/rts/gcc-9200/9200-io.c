@@ -746,6 +746,13 @@ int avr_low_result = 0;
     	case ChannelConstants_GET_DMA_BUFFER_ADDRESS:
     		res = (int)dma_buffer_address;
     		break;
+        case ChannelConstants_GET_RECORDED_OUTPUT: {
+            int len = i1;
+            int just_last = i2;
+            char* buf = send;
+            res = read_recorded_output(buf, len, just_last);
+            }
+            break;
         default:
     		res = ChannelConstants_RESULT_BADPARAMETER;
     }

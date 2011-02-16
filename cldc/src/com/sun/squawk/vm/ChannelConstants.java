@@ -1,5 +1,6 @@
 /*
  * Copyright 2004-2009 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This code is free software; you can redistribute it and/or modify
@@ -17,9 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
- * information or have any questions.
+ * Please contact Oracle, 16 Network Circle, Menlo Park, CA 94025 or
+ * visit www.oracle.com if you need additional information or have
+ * any questions.
  */
 
 package com.sun.squawk.vm;
@@ -338,6 +339,8 @@ public final class ChannelConstants {
 	
 	public static final int GET_DMA_BUFFER_SIZE                 = MISC_OPCODES + 18;
 	public static final int GET_DMA_BUFFER_ADDRESS              = MISC_OPCODES + 19;
+
+	public static final int GET_RECORDED_OUTPUT                 = MISC_OPCODES + 20;
 
     /*
      * Internal codes used to execute C code on the service stack.
