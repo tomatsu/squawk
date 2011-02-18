@@ -209,7 +209,11 @@ void printStackTracePrim(int opcode, ByteAddress traceIP, UWordAddress traceFP, 
 #define DEFAULT_NVM_SIZE   (8*1024*1024)
 #endif
 #define TIMEQUANTA 1000
+
+#ifndef MAX_BUFFERS
 #define MAX_BUFFERS 10
+#endif
+
 #define MAX_JVM_ARGS 20
 
 /**
@@ -1105,7 +1109,7 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
 #ifdef FLASH_MEMORY
     bootstrapSize = loadBootstrapSuiteFromFlash(bootstrapSuiteFile, &com_sun_squawk_VM_romStart, &suite, &com_sun_squawk_VM_bootstrapHash);
     com_sun_squawk_VM_bootstrapStart = com_sun_squawk_VM_romStart;
-	com_sun_squawk_VM_romEnd = (Address)(FLASH_BASE_ADDR + FLASH_BASE_SIZE);
+	com_sun_squawk_VM_romEnd = (Address)(get_flash_base() + get_flash_size());
 #else
     // ROM starts at the begining of the VM's memory buffer
     com_sun_squawk_VM_romStart = com_sun_squawk_VM_bootstrapStart = memory;
@@ -1180,6 +1184,7 @@ fprintf(stderr, "&&&& Special int val2 = %lx\n", val2);
         printRange("NVM       ", (char*)com_sun_squawk_GC_nvmStart, (char*)com_sun_squawk_GC_nvmEnd);
         printRange("RAM       ", (char*)com_sun_squawk_GC_ramStart, (char*)com_sun_squawk_GC_ramEnd);
         printRange("ServiceStk", (char*)com_sun_squawk_VMThread_serviceStack, (char*)Address_add(com_sun_squawk_VMThread_serviceStack, SERVICE_CHUNK_SIZE_MINUS2WORDS));
+        printRange("argv      ", (char*)com_sun_squawk_VM_argv, (char*)Address_add(memory, offset));
     }
 
     return suite;
@@ -1750,7 +1755,7 @@ void printStrSafely(Address value, char* valueName, Address low, Address high, c
     if (value == 0) {
         fprintf(stderr, "NULL.\n");
     } else if (result) {
-        printJavaString(value, stderr, null, 0);
+        printJavaString(value, stderr);
         fprintf(stderr, "\n");
     } else {
         fprintf(stderr, "%p is NOT in %s range %p .. %p\n", value, rangeName, low, high);

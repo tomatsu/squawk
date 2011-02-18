@@ -98,8 +98,10 @@ public final class Global {
         , tracing
         , runningOnServiceThread
         , currentThreadID
+/*if[GC_com.sun.squawk.CheneyCollector]*/
         , cheneyStartMemoryProtect
         , cheneyEndMemoryProtect
+/*end[GC_com.sun.squawk.CheneyCollector]*/
         , newCount
         , newHits;
 
@@ -159,8 +161,10 @@ public final class Global {
         tracing                                       = Int("tracing");
         runningOnServiceThread                        = Int("runningOnServiceThread");
         currentThreadID                               = Int("currentThreadID");
+/*if[GC_com.sun.squawk.CheneyCollector]*/
         cheneyStartMemoryProtect                      = Add("cheneyStartMemoryProtect");
         cheneyEndMemoryProtect                        = Add("cheneyEndMemoryProtect");
+/*end[GC_com.sun.squawk.CheneyCollector]*/
         newCount                                      = Int("newCount");
         newHits                                       = Int("newHits");
     }

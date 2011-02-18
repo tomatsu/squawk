@@ -104,7 +104,7 @@ void cioExecute(void) {
         }
 
         case ChannelConstants_INTERNAL_PRINTSTRING: {
-            printJavaString(o1, vmOut, null, 0);
+            printJavaString(o1, vmOut);
             break;
         }
 

@@ -947,9 +947,9 @@ public class GC implements GlobalStaticFields {
             VM.print(totalMemory());
             VM.print("), ");
             VM.print(collector.getLastGCTime());
-            VM.print("ms)");
+            VM.print("ms");
             collector.verbose();
-            VM.println();
+            VM.println("]");
         }
 
         // Update the relevant collection counter

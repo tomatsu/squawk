@@ -209,7 +209,7 @@ public abstract class GarbageCollector implements GlobalStaticFields {
      * Get the number of bytes scanned in the last collection.
 
      * This is a measure of how much "work" the collector did in the last GC. It measures the size of the heap that was last collected.
-     * With generational colelctors this may be much less than the size of the used heap.
+     * With generational collectors this may be much less than the size of the used heap.
      * 
      * It can also be used to compute "bytes surviving collection" = getBytesLastScanned() - getBytesLastFreed().
      * @return the number of bytes scanned in the last collection.

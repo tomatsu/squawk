@@ -1754,7 +1754,7 @@ hbp.dumpState();
      * @param str     the string to print
      */
 /*if[JAVA5SYNTAX]*/
-    @Vm2c(code="printJavaString(str, streams[currentStream], null, 0); fflush(streams[currentStream]);")
+    @Vm2c(code="printJavaString(str, streams[currentStream]);")
 /*end[JAVA5SYNTAX]*/
     static void printString(String str) {
         executeCIO(-1, ChannelConstants.INTERNAL_PRINTSTRING, -1, 0, 0, 0, 0, 0, 0, str, null);

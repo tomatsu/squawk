@@ -1066,29 +1066,18 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
 //#define UNICODE true
 
         /**
-         * Prints the contents of a Java String object to a given stream or appends
-         * them to a given buffer. No trailing '\0' is printed/appended.
+         * Prints the contents of a Java String object to a given stream.
+         * No trailing '\0' is printed/appended.
          *
          * @param str  the address of a Java String object
-         * @param out  where to print the string's contents (if 'out' is not null)
-         * @param buf  where to append the string's contents (if 'out' is null)
-         * @param bufLength the length of 'buf'
-         * @return the number of characters printed or appended
+         * @param out  where to print the string's contents
+         * @return the number of characters printed
          */
-        int printJavaString(Address str, FILE* out, char *buf, int bufLength) {
+        int printJavaString(Address str, FILE* out) {
             int i;
             int written = 0;
             if (str == null) {
-                if (out != null) {
-                    written = fprintf(out, "null");
-                } else {
-                    int min = 4;
-                    if (min > bufLength) {
-                        min = bufLength;
-                    }
-                    memmove(buf, "null", min);
-                    written = min;
-                }
+                written = fprintf(out, "null");
             } else {
                 int length = getArrayLength(str);
 #ifdef UNICODE
@@ -1096,41 +1085,69 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
                 if (com_sun_squawk_Klass_id(cls) == com_sun_squawk_StringOfBytes) {
 #endif
                     unsigned char *chars = (unsigned char *)str;
-                    if (out != null) {
-                        for (i = 0; i < length; i++) {
-                            fprintf(out, "%c", chars[i]);
-                        }
-                        written = length;
-                    } else {
-                        int min = length;
-                        if (min > bufLength) {
-                            min = bufLength;
-                        }
-                        memmove(buf, chars, min);
-                        written = min;
-                    }
+                    fprintf(out, "%.*s", length, chars);
+                    written = length;
 #ifdef UNICODE
                 } else {
                     unsigned short *chars = (unsigned short *)str;
                     if (com_sun_squawk_Klass_id(cls) != com_sun_squawk_String) {
                         fatalVMError("com_sun_squawk_VM_printString was not passed a string");
                     }
-                    if (out != null) {
-                        for (i = 0; i < length; i++) {
-                            fprintf(out, "%lc", chars[i]);
-                        }
-                        written = length;
-                    } else {
-                        for (i = 0; i < length && i < bufLength; i++) {
-                            buf[i] = (char)chars[i];
-                        }
-                        written = i;
+                    for (i = 0; i < length; i++) {
+                        fprintf(out, "%lc", chars[i]);
                     }
+                    written = length;
                 }
 #endif
             }
-            if (out != null) {
-                fflush(out);
+            fflush(out);
+            return written;
+        }
+
+        /**
+         * Appends the contents of a Java String object
+         * to a given buffer. No trailing '\0' is printed/appended.
+         *
+         * @param str  the address of a Java String object
+         * @param buf  where to append the string's contents
+         * @param bufLength the length of 'buf'
+         * @return the number of characters appended
+         */
+        int printJavaStringBuf(Address str, char *buf, int bufLength) {
+            int i;
+            int written = 0;
+            if (str == null) {
+                int min = 4;
+                if (min > bufLength) {
+                    min = bufLength;
+                }
+                memmove(buf, "null", min);
+                written = min;
+            } else {
+                int length = getArrayLength(str);
+#ifdef UNICODE
+                Address cls = getClass(str);
+                if (com_sun_squawk_Klass_id(cls) == com_sun_squawk_StringOfBytes) {
+#endif
+                    unsigned char *chars = (unsigned char *)str;
+                    int min = length;
+                    if (min > bufLength) {
+                        min = bufLength;
+                    }
+                    memmove(buf, chars, min);
+                    written = min;
+#ifdef UNICODE
+                } else {
+                    unsigned short *chars = (unsigned short *)str;
+                    if (com_sun_squawk_Klass_id(cls) != com_sun_squawk_String) {
+                        fatalVMError("com_sun_squawk_VM_printString was not passed a string");
+                    }
+                    for (i = 0; i < length && i < bufLength; i++) {
+                        buf[i] = (char)chars[i];
+                    }
+                    written = i;
+                }
+#endif
             }
             return written;
         }
@@ -4666,12 +4683,14 @@ foundSlot:
                     break;
                 }
 
+/*if[GC_com.sun.squawk.CheneyCollector]*/
                 case Native_com_sun_squawk_CheneyCollector_memoryProtect: {
                     cheneyEndMemoryProtect   = popAddress();
                     cheneyStartMemoryProtect = popAddress();
 /*fprintf(stderr, "*** cheneyStartMemoryProtect=%d, cheneyEndMemoryProtect=%d\n", cheneyStartMemoryProtect, cheneyEndMemoryProtect);*/
                     break;
                 }
+/*end[GC_com.sun.squawk.CheneyCollector]*/
 
                 case Native_com_sun_squawk_VM_addToClassStateCache: {
                     Address state = popAddress();
@@ -5726,7 +5745,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
             memmove(buf, name, pos);
             buf[pos++] = ':';
             buf[pos++] = ' ';
-            pos += printJavaString(java_lang_Throwable_detailMessage(exception), null, buf + pos, 999 - pos);
+            pos += printJavaStringBuf(java_lang_Throwable_detailMessage(exception), buf + pos, 999 - pos);
             buf[pos] = 0;
             printStackTracePrim(-1, ip, fp, buf, null);
         }

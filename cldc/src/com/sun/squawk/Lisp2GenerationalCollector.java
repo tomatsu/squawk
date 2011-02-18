@@ -1324,7 +1324,6 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 
         Address ipointer;
         Address destination;
-        Address pointerAddress;
 
         switch (visitor) {
             case MARK_VISITOR: {
@@ -1363,7 +1362,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 /*else[ENABLE_ISOLATE_MIGRATION]*/
 //                if (copyingObjectGraph) {
 //                    // Update the oop map
-//                    pointerAddress = base.add(offset * HDR.BYTES_PER_WORD);
+//                    Address pointerAddress = base.add(offset * HDR.BYTES_PER_WORD);
 //                    recordPointer(pointerAddress);
 //                }
 /*end[ENABLE_ISOLATE_MIGRATION]*/
@@ -1775,7 +1774,6 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 /*else[ENABLE_DYNAMIC_CLASSLOADING]*/
 //          Assert.that(!inHeap(returnMP)); // returnMP will never move, and will always be live.
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
-
         } else {
             Assert.that(returnFP.isZero(), "returnFP should be null when returnIP is null");
         }
@@ -3042,7 +3040,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
      * @param object    address of a object whose header has been modified to encode both the
      *                  location of its class or ObjectAssociation as well as where it will be
      *                  moved to
-     * @return the value of <code>object</code>'s vlass or ObjectAssociation
+     * @return the value of <code>object</code>'s klass or ObjectAssociation
      */
     private Address getClassOrAssociationFromForwardedObject(Address object) {
         Assert.that(isForwarded(object));
@@ -3866,7 +3864,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 
         // Trace all the non-moving objects in the collection space
         if (GC.GC_TRACING_SUPPORTED && tracing()) {
-           VM.println("********** Start Lisp2GenerationalCollector::compactObjects **********");
+            VM.println("********** Start Lisp2GenerationalCollector::compactObjects **********");
             Lisp2Bitmap.Iterator.start(collectionStart, firstMovingBlock, true);
             while (!(object = Lisp2Bitmap.Iterator.getNext()).isZero()) {
                 VM.print("Lisp2GenerationalCollector::compactObjects - object = ");

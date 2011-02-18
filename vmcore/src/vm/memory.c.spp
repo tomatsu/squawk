@@ -364,6 +364,14 @@ void checkOneAddress(Address ea, int size, Address addr);
 #define checkOneAddress(ea, size, addr)
 #endif /* BAD_ADDRESS */
 
+#ifdef com_sun_squawk_CheneyCollector
+#define cheneyCheck(ea) assume(cheneyStartMemoryProtect == 0 || \
+                   lo(ea, cheneyStartMemoryProtect) || \
+                   hieq(ea, cheneyEndMemoryProtect))
+#else
+#define cheneyCheck(ea)
+#endif /* com_sun_squawk_CheneyCollector */
+
         /**
          * Performs a number of checks on a given part of memory immediately after
          * it was written to.
@@ -373,9 +381,7 @@ void checkOneAddress(Address ea, int size, Address addr);
          */
 /*DEF*/ void checkPostWrite(Address $ea, int $size) {
             checkOneAddress($ea, $size, (Address)BAD_ADDRESS);
-            assume(cheneyStartMemoryProtect == 0 ||
-                   lo($ea, cheneyStartMemoryProtect) ||
-                   hieq($ea, cheneyEndMemoryProtect));
+            cheneyCheck($ea);
         }
 
         /**
@@ -1005,7 +1011,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
          */
 /*MAC*/ void swap2(Address $address) {
             char type = (TYPEMAP ? getType($address) : AddressType_UNDEFINED);
-            if (!isAligned((UWord)$address, 2)) {
+            if (!(PLATFORM_UNALIGNED_LOADS || isAligned((UWord)$address, 2))) {
                 int b0 = getUByteTyped($address, 0, AddressType_ANY);
                 int b1 = getUByteTyped($address, 1, AddressType_ANY);
                 setByteTyped($address, 0, AddressType_ANY, (char)b1);
@@ -1026,7 +1032,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
          */
         void swap4(Address address) {
             char type = (TYPEMAP ? getType(address) : AddressType_UNDEFINED);
-            if (!isAligned((UWord)address, 4)) {
+            if (!(PLATFORM_UNALIGNED_LOADS || isAligned((UWord)address, 4))) {
                 int b0 = getUByteTyped(address, 0, AddressType_ANY);
                 int b1 = getUByteTyped(address, 1, AddressType_ANY);
                 int b2 = getUByteTyped(address, 2, AddressType_ANY);
@@ -1053,7 +1059,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
          */
         void swap8(Address address) {
             char type = (TYPEMAP ? getType(address) : AddressType_UNDEFINED);
-            if (!isAligned((UWord)address, 8)) {
+            if (!(PLATFORM_UNALIGNED_LOADS || isAligned((UWord)address, 8))) {
                 int b0 = getUByteTyped(address, 0, AddressType_ANY);
                 int b1 = getUByteTyped(address, 1, AddressType_ANY);
                 int b2 = getUByteTyped(address, 2, AddressType_ANY);

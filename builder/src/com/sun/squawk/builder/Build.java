@@ -2562,24 +2562,39 @@ public class Build {
 
     /**
      * Test to see if the given platform property is set.
+     * Set the value of all of the derived platform properties.
      * 
      * @param platformOption
      */
     private void tryPlatformType(CCompiler.Options cOptions, String platformOption) {
-        String derivedPropName = "PLATFORM_TYPE_"+platformOption;
-         if (getProperty("PLATFORM_TYPE").equals(platformOption)) {
+        String derivedPropName = "PLATFORM_TYPE_" + platformOption;
+        if (getProperty("PLATFORM_TYPE").equals(platformOption)) {
             if (cOptions.platformType != null) {
-                throw new BuildException("platform type already set to " + cOptions.platformType); 
+                throw new BuildException("platform type already set to " + cOptions.platformType);
             }
             cOptions.platformType = platformOption;
-            cOptions.cflags += " -D"+derivedPropName+"=1";
+            cOptions.cflags += " -D" + derivedPropName + "=1";
             updateProperty(derivedPropName, "true", true);
             System.out.println("PLATFORM_TYPE=" + platformOption);
         } else {
             updateProperty(derivedPropName, "false", true);
         }
     }
-    
+
+    /**
+     * Given the value of the GC property, define a derived
+     */
+    private void tryGCProperty(String collectorName) {
+        String derivedPropName = "GC_" + collectorName;
+        if (getProperty("GC").equals(collectorName)) {
+            updateProperty(derivedPropName, "true", true);
+            System.out.println(derivedPropName + "=true");
+        } else {
+            updateProperty(derivedPropName, "false", true);
+            System.out.println(derivedPropName + "=false");
+        }
+    }
+
     /**
      * Parses and extracts the command line arguments passed to the builder that apply to the
      * builder in general as opposed to the command about to be run.
@@ -2829,7 +2844,11 @@ public class Build {
         if (cOptions.platformType == null) {
             throw new BuildException("PLATFORM_TYPE build property not specified");
         }
-        
+
+        tryGCProperty("com.sun.squawk.Lisp2Collector");
+        tryGCProperty("com.sun.squawk.Lisp2GenerationalCollector");
+        tryGCProperty("com.sun.squawk.CheneyCollector");
+
         // If no arguments were supplied, then
         if (argc == args.length) {
 

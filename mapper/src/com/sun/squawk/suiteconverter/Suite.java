@@ -115,7 +115,6 @@ public class Suite {
 		readParentHash(dis);
 		parentURL = dis.readUTF();
 		rootOffset = dis.readInt();
-System.out.println("Original root offset: 0x" + Integer.toHexString(rootOffset));
 		memorySize = dis.readInt();
 
 		int oopMapSize = calculateOopMapSizeInBytes(memorySize);

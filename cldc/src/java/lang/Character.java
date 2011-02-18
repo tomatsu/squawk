@@ -25,7 +25,6 @@
  */
 
 package java.lang;
-import com.sun.cldc.i18n.uclc.*;
 /*if[JAVA5SYNTAX]*/
 import com.sun.squawk.Java5Marker;
 /*end[JAVA5SYNTAX]*/
@@ -177,7 +176,9 @@ public final class Character extends Object {
      * @since   JDK1.0
      */
     public static boolean isLowerCase(char ch) {
-        return DefaultCaseConverter.isLowerCase(ch);
+        return (ch >= 'a' && ch <= 'z')
+                || (ch >= 0xDF && ch <= 0xF6)
+                || (ch >= 0xF8 && ch <= 0xFF);
     }
 
    /**
@@ -203,11 +204,15 @@ public final class Character extends Object {
      * @since   1.0
      */
     public static boolean isUpperCase(char ch) {
-        return DefaultCaseConverter.isUpperCase(ch);
+        return (ch >= 'A'  && ch <= 'Z')
+            || (ch >= 0xC0 && ch <= 0xD6)
+            || (ch >= 0xD8 && ch <= 0xDE );
     }
 
     /**
      * Determines if the specified character is a digit.
+     *
+     * This is currently only supported for ISO Latin-1 digits: "0" through "9".
      *
      * @param   ch   the character to be tested.
      * @return  <code>true</code> if the character is a digit;
@@ -215,7 +220,7 @@ public final class Character extends Object {
      * @since   JDK1.0
      */
     public static boolean isDigit(char ch) {
-        return DefaultCaseConverter.isDigit(ch);
+        return ch >= '0' && ch <= '9';
     }
 
     /**
@@ -235,7 +240,15 @@ public final class Character extends Object {
      * @since   JDK1.0
      */
     public static char toLowerCase(char ch) {
-        return DefaultCaseConverter.toLowerCase(ch);
+        if (isUpperCase(ch)) {
+            if (ch <= 'Z') {
+                return (char)(ch + ('a' - 'A'));
+            } else {
+                return (char)(ch + 0x20);
+            }
+        } else {
+            return ch;
+        }
     }
 
     /**
@@ -255,13 +268,23 @@ public final class Character extends Object {
      * @since   JDK1.0
      */
     public static char toUpperCase(char ch) {
-        return DefaultCaseConverter.toUpperCase(ch);
+        if (isLowerCase(ch)) {
+            if (ch <= 'z') {
+                return (char)(ch - ('a' - 'A'));
+            } else {
+                return (char)(ch - 0x20);
+            }
+        } else {
+            return ch;
+        }
     }
 
     /**
      * Returns the numeric value of the character <code>ch</code> in the
      * specified radix.
      *
+     * This is only supported for ISO Latin-1 characters.
+     * 
      * @param   ch      the character to be converted.
      * @param   radix   the radix.
      * @return  the numeric value represented by the character in the
@@ -270,7 +293,17 @@ public final class Character extends Object {
      * @since   JDK1.0
      */
     public static int digit(char ch, int radix) {
-        return DefaultCaseConverter.digit(ch, radix);
+        int value = -1;
+        if (radix >= Character.MIN_RADIX && radix <= Character.MAX_RADIX) {
+          if (isDigit(ch)) {
+              value = ch - '0';
+          }
+          else if (isUpperCase(ch) || isLowerCase(ch)) {
+              // Java supradecimal digit
+              value = (ch & 0x1F) + 9;
+          }
+        }
+        return (value < radix) ? value : -1;
     }
 
 /*if[JAVA5SYNTAX]*/

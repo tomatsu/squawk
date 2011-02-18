@@ -159,7 +159,7 @@ public final class ServiceOperation implements GlobalStaticFields {
         }
         } finally {
             // This should not happen, but am tracking odd failure...
-        VM.println("NOTE: Exiting ServiceOPeration.execute()");
+            VM.println("NOTE: Exiting ServiceOperation.execute()");
         }
     }
 
