@@ -1109,7 +1109,7 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
 #ifdef FLASH_MEMORY
     bootstrapSize = loadBootstrapSuiteFromFlash(bootstrapSuiteFile, &com_sun_squawk_VM_romStart, &suite, &com_sun_squawk_VM_bootstrapHash);
     com_sun_squawk_VM_bootstrapStart = com_sun_squawk_VM_romStart;
-	com_sun_squawk_VM_romEnd = (Address)(get_flash_base() + get_flash_size());
+	com_sun_squawk_VM_romEnd = (Address)(FLASH_BASE_ADDR + FLASH_BASE_SIZE);
 #else
     // ROM starts at the begining of the VM's memory buffer
     com_sun_squawk_VM_romStart = com_sun_squawk_VM_bootstrapStart = memory;
