@@ -699,8 +699,9 @@
          * @return the method
          */
 /*MAC*/ Address getStaticMethod(Address $cls, int $index) {
+            Address stable;
             assume($cls);
-            Address stable = com_sun_squawk_Klass_staticMethods($cls);
+            stable = com_sun_squawk_Klass_staticMethods($cls);
             assume(stable);
 	        assume((unsigned int)$index < (unsigned int)getArrayLength(stable));
             return ((Address *)stable)[$index];
@@ -713,8 +714,9 @@
          * @return the method
          */
 /*MAC*/ Address getVirtualMethod(Address $cls, int $index) {
+            Address vtable;
             assume($cls);
-            Address vtable = com_sun_squawk_Klass_virtualMethods($cls);
+            vtable = com_sun_squawk_Klass_virtualMethods($cls);
 	        assume((unsigned int)$index < (unsigned int)getArrayLength(vtable));
             return ((Address *)vtable)[$index];
         }
