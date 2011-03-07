@@ -111,6 +111,7 @@
           <itemPath>src/rts/gcc-9200/jni.h</itemPath>
           <itemPath>src/rts/gcc-9200/jni_md.h</itemPath>
           <itemPath>src/rts/gcc-9200/mmu_fat.c</itemPath>
+          <itemPath>src/rts/gcc-9200/mmu_fat.h</itemPath>
           <itemPath>src/rts/gcc-9200/os.c</itemPath>
           <itemPath>src/rts/gcc-9200/os_math.h</itemPath>
         </logicalFolder>

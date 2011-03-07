@@ -25,6 +25,7 @@
 #include "cache.h"
 #include "system.h"
 #include "flash.h"
+#include "mmu_fat.h"
 /*
  * This file contains routines that query the contents of the FlashFile FAT
  * and set up the MMU to match the virtual file settings in the FAT.
@@ -34,14 +35,6 @@
  * and Wright.
  */
 
-// FAT constants: these must match the constants in FlashManager.java and ConfigPage.java
-#define VIRTUAL_ADDRESS_FILE_COUNT			8
-#define FAT_SECTOR							5
-#define SECTOR_SIZE							0x10000
-#define VIRTUAL_ADDRESS_FILE_SPACING 		(1024*1024)
-#define VIRTUAL_ADDRESS_SPACE_LOWER_BOUND 	0x10800000
-#define VIRTUAL_ADDRESS_SPACE_UPPER_BOUND 	(VIRTUAL_ADDRESS_SPACE_LOWER_BOUND + (VIRTUAL_ADDRESS_FILE_COUNT*VIRTUAL_ADDRESS_FILE_SPACING))
-#define FAT_IDENTIFIER_V3					0x1234567A
 
 // FAT V2 constants - must match the same constants in FATRecord.java
 #define FILE_FAT_RECORD_TYPE				0

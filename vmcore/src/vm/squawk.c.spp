@@ -1109,8 +1109,17 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
 #ifdef FLASH_MEMORY
     bootstrapSize = loadBootstrapSuiteFromFlash(bootstrapSuiteFile, &com_sun_squawk_VM_romStart, &suite, &com_sun_squawk_VM_bootstrapHash);
     com_sun_squawk_VM_bootstrapStart = com_sun_squawk_VM_romStart;
-	com_sun_squawk_VM_romEnd = (Address)(FLASH_BASE_ADDR + FLASH_BASE_SIZE);
-#else
+
+#ifdef VIRTUAL_ADDRESS_SPACE_LOWER_BOUND
+    // on SPOTs and machines with MMU, flash memory may be virtually allocated to a larger range than specified by get_flash_base() + get_flash_size()
+    assume(VIRTUAL_ADDRESS_SPACE_LOWER_BOUND > com_sun_squawk_VM_romStart);
+    com_sun_squawk_VM_romEnd = VIRTUAL_ADDRESS_SPACE_UPPER_BOUND;
+    //com_sun_squawk_VM_romEnd = (Address)(FLASH_BASE_ADDR + FLASH_BASE_SIZE);
+#else /* VIRTUAL_ADDRESS_SPACE_LOWER_BOUND */
+    com_sun_squawk_VM_romEnd = (Address)(get_flash_base() + get_flash_size());
+#endif /* VIRTUAL_ADDRESS_SPACE_LOWER_BOUND */
+    
+#else /* FLASH_MEMORY */
     // ROM starts at the begining of the VM's memory buffer
     com_sun_squawk_VM_romStart = com_sun_squawk_VM_bootstrapStart = memory;
     bootstrapSize = loadBootstrapSuite(bootstrapSuiteFile, memory, memorySize, &suite, &com_sun_squawk_VM_bootstrapHash);

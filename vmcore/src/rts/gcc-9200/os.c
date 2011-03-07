@@ -32,6 +32,7 @@
 #include "spi.h"
 #include "avr.h"
 #include "9200-io.h"
+#include "mmu_fat.h"
 
 // Define the maximum number of user-supplied command line args we can accept
 #define SQUAWK_STARTUP_ARGS_MAX 20
