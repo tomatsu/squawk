@@ -57,7 +57,7 @@ public class RecordEntry extends RmsEntry implements IRecordEntry {
         if (length == 0) {
             return 0;
         }
-        if (length > bytesLength) {
+        if (length > bytesLength || length < 0) {
             throw new IndexOutOfBoundsException();
         }
         System.arraycopy(bytes, bytesOffset, buffer, offset, length);
@@ -85,7 +85,7 @@ public class RecordEntry extends RmsEntry implements IRecordEntry {
         DataInputStream input = memoryBlock.getDataInputStream();
         storeId = input.readInt();
         id = input.readInt();
-        bytesLength = input.readShort();
+        bytesLength = input.readShort() & 0xFFFF;
         bytesOffset = memoryBlock.getOffset() + memoryBlock.getByteArrayInputStream().getPos();
         bytes = memoryBlock.getBytes();
         input.skip(bytesLength);
