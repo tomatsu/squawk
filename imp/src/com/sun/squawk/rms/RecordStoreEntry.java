@@ -1,5 +1,6 @@
 /*
- * Copyright 2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2006-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2010-2011 Oracle. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This code is free software; you can redistribute it and/or modify
@@ -16,9 +17,9 @@
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -33,8 +34,13 @@ import javax.microedition.rms.RecordStoreException;
 import javax.microedition.rms.RecordStoreFullException;
 
 import com.sun.squawk.Address;
+import com.sun.squawk.VM;
 import com.sun.squawk.flash.IMemoryHeapBlock;
+import com.sun.squawk.util.DataOutputUTF8Encoder;
 
+/**
+ * A RecordStoreEntry is an entry that describes a RecordStore, which contains zero or more RecordEntry objects.
+ */
 public class RecordStoreEntry extends RmsEntry implements IRecordStoreEntry {
     
     public static final int TYPE = 3;
@@ -203,7 +209,7 @@ public class RecordStoreEntry extends RmsEntry implements IRecordStoreEntry {
                 if (!(entry instanceof IRecordEntry)) {
                     throw new RecordStoreException("System error found a non record entry where one expected");
                 }
-                size += ((IRecordEntry) entry).getBytesLength();
+                size += entry.size();
             }
         } catch (RecordStoreException e) {
             throw new RuntimeException(e.getMessage());
@@ -323,6 +329,10 @@ public class RecordStoreEntry extends RmsEntry implements IRecordStoreEntry {
         dataOut.writeUTF(name);
         dataOut.writeLong(lastModifiedTimestamp);
         dataOut.writeInt(version);
+    }
+
+    public int size() {
+        return 4 + (2 + DataOutputUTF8Encoder.lengthAsUTF(name)) + 8 + 4;
     }
     
 }

@@ -837,6 +837,8 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         // Phase 2: Insert forward pointers in unused near object bits
         // if doing a full collection (but not one forced by user), allow some slop in the dense prefix
         Offset slopAllowed = Offset.fromPrimitive(GC.roundDownToWord(collectionEnd.diff(collectionStart).toInt() / 100)); // 1%
+
+slopAllowed = Offset.zero();
         computeAddresses((forceFullGC || !isFullCollection()) ? Offset.zero() : slopAllowed);
         
         if (!firstMovingBlock.isZero()) {
@@ -1158,7 +1160,8 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
     {
         Address pointerAddress;
         Address object;
-
+        Assert.that(GC.inRam(base, base));
+        
         switch (visitor) {
             case MARK_VISITOR: {
                 markOop(base, offset);
@@ -1236,7 +1239,8 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
     private void visitOops(int visitor, Address base, int len) {
         Address pointerAddress;
         Address object;
-
+        Assert.that(GC.inRam(base, base));
+        
         switch (visitor) {
             case MARK_VISITOR: {
                 for (int i = 0; i < len; i++) {
@@ -1441,6 +1445,9 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
             if (isForwarded(object)) {
 /*if[ENABLE_DYNAMIC_CLASSLOADING]*/
                 updateClassPointerIfClassIsForwarded(object);
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//              Assert.that(!isClassPointer(object, getClassOrAssociationFromForwardedObject(object))
+//                          || !isForwarded(getClassOrAssociationFromForwardedObject(object))); // class is not forwarded if no DYNAMIC_CLASSLOADING
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
             } else {
                 // Update the pointer to a forwarded ObjectAssociation
@@ -1504,6 +1511,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
                     }
                     // All the pointer static fields precede the non-pointer fields
                     int end = CS.firstVariable + Klass.getRefStaticFieldsSize(gaklass);
+                    Assert.that(GC.inRam(object, object));
                     visitOops(visitor, object, end);
                 }
                 break;
@@ -1530,6 +1538,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
             }
             default: { // Pointer array
                 int length = GC.getArrayLengthNoCheck(object);
+                 Assert.that(GC.inRam(object, object));
                 visitOops(visitor, object, length);
                 break;
             }
@@ -1590,6 +1599,10 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
                 }
             }
         }
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//    Assert.that((visitor != UPDATE_VISITOR) || copyingObjectGraph || Klass.getSystemID(VM.asKlass(klass)) != CID.KLASS
+//            || NativeUnsafe.getAddress(object, (int)FieldOffsets.com_sun_squawk_Klass$oopMap).isZero()
+//            || !isForwarded(NativeUnsafe.getAddress(object, (int)FieldOffsets.com_sun_squawk_Klass$oopMap)));
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
 
         int instanceSize = Klass.getInstanceSize(VM.asKlass(klass));
@@ -1743,6 +1756,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
         Address mp  = NativeUnsafe.getAddress(fp, FP.method);
         Address returnFP = VM.getPreviousFP(fp);
         Address returnIP = VM.getPreviousIP(fp);
+        Assert.that(GC.inRam(fp, fp));
 
         /*
          * Trace.
@@ -1772,6 +1786,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 /*if[ENABLE_DYNAMIC_CLASSLOADING]*/
             visitInternalPointer(visitor, fp, FP.returnIP, returnMP);
 /*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//          Assert.that(!inHeap(returnIP));
 //          Assert.that(!inHeap(returnMP)); // returnMP will never move, and will always be live.
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         } else {
@@ -1844,6 +1859,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
      * @param visitor the visitor to apply to each pointer in the traversed objects
      */
     private void traverseWriteBarrierOops(Address start, Address end, int visitor) throws AllowInlinedPragma {
+        Assert.that(GC.inRam(start, end));
         Lisp2Bitmap.Iterator.start(start, end, false);
         Address objectAddress;
         while (!(objectAddress = Lisp2Bitmap.Iterator.getNext()).isZero()) {
@@ -1853,6 +1869,7 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
                 VM.printAddress(objectAddress);
                 VM.println();
             }
+            Assert.that(GC.inRam(objectAddress, objectAddress));
             visitOop(visitor, objectAddress, 0);
         }
     }

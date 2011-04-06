@@ -1,5 +1,6 @@
 /*
- * Copyright 1994-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2006-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2010-2011 Oracle. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This code is free software; you can redistribute it and/or modify
@@ -16,9 +17,9 @@
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -42,7 +43,7 @@ class DataOutputStream extends OutputStream implements DataOutput {
     protected OutputStream out;
 
     /**
-     * The input stream that has special optimizations to read more efficiently than the default
+     * The output stream that has special optimizations to read more efficiently than the default
      * implementation.  Creating a subclass did not work, since we had to change the final modifier
      * on some methods which prevented the TCK method signature from passing.
      *

@@ -1,5 +1,6 @@
 /*
- * Copyright 2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2006-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2010-2011 Oracle. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This code is free software; you can redistribute it and/or modify
@@ -16,9 +17,9 @@
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -37,9 +38,9 @@ public class RecordEntry extends RmsEntry implements IRecordEntry {
     
     protected int storeId;
     protected int id;
-    protected int bytesLength;
-    protected int bytesOffset;
-    protected byte[] bytes;
+    private int bytesLength;
+    private int bytesOffset;
+    private byte[] bytes;
 
     public RecordEntry() {
     }
@@ -79,6 +80,10 @@ public class RecordEntry extends RmsEntry implements IRecordEntry {
     public int getType() {
         return TYPE;
     }
+
+    public int size() {
+        return bytesLength + (4 + 4 + 2);
+    }
     
     public void readFrom(IMemoryHeapBlock memoryBlock) throws IOException {
         super.readFrom(memoryBlock);
@@ -92,6 +97,18 @@ public class RecordEntry extends RmsEntry implements IRecordEntry {
     }
     
     public void setBytes(byte[] bytes, int offset, int length) {
+        if (bytes == null) {
+            throw new IllegalArgumentException("null bytes");
+        }
+        if (offset < 0) {
+            throw new IllegalArgumentException("negative offset: " + offset);
+        }
+        if (length < 0) {
+            throw new IllegalArgumentException("negative length: " + length);
+        }
+        if (offset + length > bytes.length) {
+            throw new IllegalArgumentException("offset and length too large for array ");
+        }
         this.bytes = bytes;
         this.bytesOffset = offset;
         this.bytesLength = length;
