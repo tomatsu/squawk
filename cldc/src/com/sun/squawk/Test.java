@@ -106,6 +106,7 @@ public class Test {
         x51();
         x52();
         randomTimeTest();
+	sleepTest();
 
         // Give the finalizers (if any) a chance to run
         VMThread.yield();
@@ -741,7 +742,16 @@ public class Test {
         r.run();
     }
 
+    static void sleepTest() {
 
+        VM.println("Current time: " + new java.util.Date());
+
+	for(int i=1; i<=10; i++) {
+	    VM.waitForEvent(i*1000);
+	    VM.println("Sleep for " + i + " seconds...");
+            VM.println("Current time: " + new java.util.Date());
+	 }
+    }
 }
 
 class Base1 implements Runnable {
