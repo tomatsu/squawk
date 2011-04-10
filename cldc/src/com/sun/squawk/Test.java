@@ -744,13 +744,12 @@ public class Test {
 
     static void sleepTest() {
 
-        VM.println("Current time: " + new java.util.Date());
+        System.out.println("Current time is: " + new java.util.Date());
+        VM.waitForEvent(1000);
+        System.out.println("After sleep 1 second, time is: " + new java.util.Date());
+        VM.waitForEvent(3000);
+        System.out.println("After sleep 3 seconds, time is: " + new java.util.Date());
 
-	for(int i=1; i<=10; i++) {
-	    VM.waitForEvent(i*1000);
-	    VM.println("Sleep for " + i + " seconds...");
-            VM.println("Current time: " + new java.util.Date());
-	 }
     }
 }
 
