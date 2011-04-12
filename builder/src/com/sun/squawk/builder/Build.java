@@ -3061,11 +3061,11 @@ public class Build {
      * with the Java compiler into the "classes" directory. If <code>j2me == true</code> then
      * the class files in "classes" are preverified and written to "j2meclasses".
      *
-     * @param   classPath  the class path
+     * @param   compileClassPath the class path to compile against
+     * @param   preverifyClassPath the class path to preverify against
      * @param   baseDir    the base directory for generated directories (i.e. "preprocessed", "classes" and "j2meclasses")
      * @param   srcDirs    the set of directories that are searched recursively for the Java source files to be compiled
      * @param   j2me       specifies if the classes being compiled are to be deployed on a J2ME platform
-     * @param   version    set the java language version (default is 1.5 if version is null)
      * @param   extraArgs  extra javac arguments
      * @param   preprocess runs the {@link Preprocessor} over the sources if true
      */
@@ -3080,11 +3080,11 @@ public class Build {
      * with the Java compiler into the "classes" directory. If <code>j2me == true</code> then
      * the class files in "classes" are preverified and written to "j2meclasses".
      *
-     * @param   classPath  the class path
+     * @param   compileClassPath the class path to compile against
+     * @param   preverifyClassPath the class path to preverify against
      * @param   baseDir    the base directory for generated directories (i.e. "preprocessed", "classes" and "j2meclasses")
      * @param   srcDirs    the set of directories that are searched recursively for the Java source files to be compiled
      * @param   j2me       specifies if the classes being compiled are to be deployed on a J2ME platform
-     * @param   version    set the java language version (default is 1.5 if version is null)
      * @param   extraArgs  extra javac arguments
      * @param   preprocess runs the {@link Preprocessor} over the sources if true
      * @param   noJava5    do not allow Java 5 syntax
@@ -3134,8 +3134,8 @@ public class Build {
     /**
      * Retroweave a given set of Java class files.
      *
-     * @param   baseDir    the directory under which the "weaved" directory will be created
-     * @param   classesDirs    the set of directories that are searched recursively for the .class files that will be weaved
+     * @param   baseDir       the directory under which the "weaved" directory will be created
+     * @param   classesDir    the set of directories that are searched recursively for the .class files that will be weaved
      * @return the retroweaved output directory
      */
     public File retroweave(File baseDir, File classesDir) {
@@ -3165,6 +3165,7 @@ public class Build {
      * @param   baseDir    the directory under which the "preprocessed" directory exists
      * @param   srcDirs    the set of directories that are searched recursively for the source files to be compiled
      * @param   j2me       specifies if the classes being compiled are to be deployed on a J2ME platform
+     * @param   vm2c       use true if preprocessing as part of vm2c compile
      * @return the preprocessor output directory
      */
     public File preprocess(File baseDir, File[] srcDirs, boolean j2me, boolean vm2c) {

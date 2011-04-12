@@ -42,6 +42,67 @@ public final class Target extends Command {
     public List<String> extraArgs;
 
     /**
+     * FilePair encapsulates a file's canonical path as well as the (potentially) shorter path
+     * that it was created with. For collection purposes, we use the canonical path, but we can
+     * use the short path for command line arguments, etc.
+     *
+     * This was instigated by classpath length limits that ubuntu ran into
+     */
+    public static class FilePair {
+        private File canonicalName;
+        private File shortName;
+
+        /**
+         * Create a FilePair by calculating the file's canonical name.
+         * @param shortName
+         */
+        public FilePair(File shortName) {
+            this.shortName = shortName;
+            try {
+                this.canonicalName = shortName.getCanonicalFile();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                canonicalName = shortName;
+            }
+        }
+
+        public int hashCode() {
+            return canonicalName.hashCode();
+        }
+
+        public boolean equals(Object o) {
+            return canonicalName.equals(o);
+        }
+
+        /**
+         * @return the original, potentially shorter name that this was created with.
+         */
+        public File getFile() {
+            return shortName;
+        }
+
+        /**
+         * @return the canonical file path for the file this was created with.
+         */
+        public File getCanonicalFile() {
+            return canonicalName;
+        }
+
+        /**
+         * Convert a list of FilePairs to a list of Files.
+         * @param files
+         * @return
+         */
+        public static List<File> getFiles(List<FilePair> files) {
+            List<File> result = new ArrayList<File>();
+            for (FilePair fp : files) {
+                result.add(fp.getFile());
+            }
+            return result;
+        }
+    }
+
+    /**
      * Creates a new compilation command.
      *
      * @param extraClassPath the class path to compile against
@@ -100,26 +161,25 @@ public final class Target extends Command {
     }
 
     public List<File> getDependencyDirectories(String subPath, List<String> targetExceptions) {
-        List<File> result = new ArrayList<File>();
+        List<FilePair> result = new ArrayList<FilePair>();
         addDependencyDirectories(subPath, result, null);
-        return result;
+        return FilePair.getFiles(result);
     }
 
-    private void addFile(File base, String subPath, List<File> files) {
+    private void addFile(File base, String subPath, List<FilePair> files) {
         File file = base;
         if (subPath != null) {
             file = new File(base, subPath);
         }
-        try {
-            file = file.getCanonicalFile();
-            if (!files.contains(file)) {
-                files.add(file);
-            }
-        } catch (IOException e1) {
+        // We want to detect putting in two files that represent the same canonical file,
+        // without using the canonical file name - canonical files can create paths that are too long for some OSes (ubuntu).
+        FilePair fp = new FilePair(file);
+        if (!files.contains(fp)) {
+            files.add(fp);
         }
     }
 
-    public void addDependencyDirectories(String subPath, List<File> files, List<String> targetExceptions) {
+    public void addDependencyDirectories(String subPath, List<FilePair> files, List<String> targetExceptions) {
         addFile(baseDir, subPath, files);
         List<String> dependencies = getDependencyNames();
         for (String dependency: dependencies) {

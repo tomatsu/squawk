@@ -167,12 +167,12 @@ public class RomCommand extends Command {
 
         // The remaining args are the modules making up one or more suites
         boolean isBootstrapSuite = parentSuite == null;
-        List<File> allClassesLocations = new ArrayList<File>();
-        List<File> allJava5ClassesLocations = new ArrayList<File>();
+        List<Target.FilePair> allClassesLocations = new ArrayList<Target.FilePair>();
+        List<Target.FilePair> allJava5ClassesLocations = new ArrayList<Target.FilePair>();
         while (argc != args.length) {
 
-            List<File> classesLocations = new ArrayList<File>();
-            List<File> java5ClassesLocations = new ArrayList<File>();
+            List<Target.FilePair> classesLocations = new ArrayList<Target.FilePair>();
+            List<Target.FilePair> java5ClassesLocations = new ArrayList<Target.FilePair>();
             String suiteName = null;
             boolean createJars = true;
 
@@ -192,7 +192,7 @@ public class RomCommand extends Command {
                 }
 
                 if (module.endsWith(".jar") || module.endsWith(".zip")) {
-                    classesLocations.add(new File(module));
+                    classesLocations.add(new Target.FilePair(new File(module)));
                     module = new File(module).getName();
                     if (module.endsWith("_classes.jar")) {
                         // This is most likely the jar file build by a previous execution of the romizer
@@ -209,20 +209,20 @@ public class RomCommand extends Command {
                             suiteMetadata.addTargetIncluded(module);
                             Target target = (Target) moduleCommand;
                             suiteMetadata.addTargetsIncluded(target.getDependencyNames());
-                            List<File> dirs = new ArrayList<File>();
+                            List<Target.FilePair> dirs = new ArrayList<Target.FilePair>();
                             target.addDependencyDirectories(target.getPreverifiedDirectoryName(), dirs, parentSuiteMetadata.getTargetsIncluded());
                             target.addDependencyDirectories(target.getResourcesDirectoryName(), dirs, parentSuiteMetadata.getTargetsIncluded());
-                            for (File file: dirs) {
-                                if (!allClassesLocations.contains(file) && file.exists()) {
+                            for (Target.FilePair file: dirs) {
+                                if (!allClassesLocations.contains(file) && file.getCanonicalFile().exists()) {
                                     classesLocations.add(file);
                                     allClassesLocations.add(file);
                                 }
                             }
                             if (target.j2me) {
-                            	dirs = new ArrayList<File>();
+                            	dirs = new ArrayList<Target.FilePair>();
                             	target.addDependencyDirectories(target.getCompiledDirectoryName(), dirs, parentSuiteMetadata.getTargetsIncluded());
-                                for (File file: dirs) {
-                                	if (!allJava5ClassesLocations.contains(file) && file.exists()) {
+                                for (Target.FilePair file: dirs) {
+                                	if (!allJava5ClassesLocations.contains(file) && file.getCanonicalFile().exists()) {
                                 		java5ClassesLocations.add(file);
                                 		allJava5ClassesLocations.add(file);
                                 	}
@@ -244,7 +244,7 @@ public class RomCommand extends Command {
                 suiteName = bootstrapSuiteName;
                 romizerArgs.add("-o:" + suiteName);
                 if (extraCP != "") {
-                    classesLocations.add(new File(extraCP));
+                    classesLocations.add(new Target.FilePair(new File(extraCP)));
                 }
                 romizerArgs.add("-arch:" + arch);
                 romizerArgs.add("-endian:" + endian);
@@ -254,7 +254,8 @@ public class RomCommand extends Command {
             }
             StringBuilder cp = new StringBuilder();
             cp.append("-cp:");
-            for (File file: classesLocations) {
+            for (Target.FilePair fp: classesLocations) {
+                File file = fp.getFile();
                 cp.append(file.getPath());
                 cp.append(File.pathSeparatorChar);
             }
@@ -262,7 +263,8 @@ public class RomCommand extends Command {
             if (!java5ClassesLocations.isEmpty()) {
             	StringBuilder java5Cp = new StringBuilder();
             	java5Cp.append("-java5cp:");
-                for (File file: java5ClassesLocations) {
+                for (Target.FilePair fp: java5ClassesLocations) {
+                    File file = fp.getFile();
                 	java5Cp.append(file.getPath());
                 	java5Cp.append(File.pathSeparatorChar);
                 }
@@ -275,7 +277,8 @@ public class RomCommand extends Command {
                 romizerArgs.add("-jars");
             }
 
-            for (File file: classesLocations) {
+            for (Target.FilePair fp: classesLocations) {
+                File file = fp.getFile();
                 romizerArgs.add(file.getPath());
             }
 
