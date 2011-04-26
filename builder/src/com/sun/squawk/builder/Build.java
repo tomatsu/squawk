@@ -748,7 +748,7 @@ public class Build {
      * @return the created and installed command
      */
     public Target addTarget(boolean j2me, String baseDir, String dependencies, String extraClassPath, String extraSourceDirs) {
-        //log(true, "addTarget j2me: " + j2me + " baseDir:" + baseDir + " dependencies:" + dependencies + " extraClassPath:" + extraClassPath+ " extraSourceDirs:" + extraSourceDirs);
+ //log(true, "addTarget j2me: " + j2me + " baseDir:" + baseDir + " dependencies:" + dependencies + " extraClassPath:" + extraClassPath+ " extraSourceDirs:" + extraSourceDirs);
         File primarySrcDir = new File(baseDir, "src");
         File[] srcDirs;
         if (extraSourceDirs != null) {
@@ -1610,6 +1610,7 @@ public class Build {
                 if (parent != null) {
                     dependencies = dependencies + " " + parent;
                 }
+                log(verbose, "[    dependencies=" + dependencies + " cp=" + cp +" ...]");
 
                 Target compileTarget = addTarget(true, userBaseDir, dependencies, cp);
                 compileTarget.run(NO_ARGS);
@@ -1642,7 +1643,7 @@ public class Build {
             public void run(String[] args) {
                 if (args.length < 1) {
                     throw new CommandException(this, "module not specified");
-                } else if (args[0].indexOf('-') >= 0) {
+                } else if (args[0].indexOf('-') == 0) {
                     throw new CommandException(this, "no options allowed for user-clean");
                 }
                 String userBaseDir = args[0];

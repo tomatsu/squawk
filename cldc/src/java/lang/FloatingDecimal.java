@@ -1,25 +1,25 @@
 //if[FLOATS]   /* This will selectively exclude the entire file from the build */
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -538,396 +538,381 @@ class FloatingDecimal{
     private void
     dtoa( int binExp, long fractBits, int nSignificantBits )
     {
-	int	nFractBits; // number of significant bits of fractBits;
-	int	nTinyBits;  // number of these to the right of the point.
-	int	decExp;
+        int nFractBits; // number of significant bits of fractBits;
+        int nTinyBits;  // number of these to the right of the point.
+        int decExp;
 
-	// Examine number. Determine if it is an easy case,
-	// which we can do pretty trivially using float/long conversion,
-	// or whether we must do real work.
-	nFractBits = countBits( fractBits );
-	nTinyBits = Math.max( 0, nFractBits - binExp - 1 );
-	if ( binExp <= maxSmallBinExp && binExp >= minSmallBinExp ){
-	    // Look more closely at the number to decide if,
-	    // with scaling by 10^nTinyBits, the result will fit in
-	    // a long.
-	    if ( (nTinyBits < long5pow.length) && ((nFractBits + n5bits[nTinyBits]) < 64 ) ){
-		/*
-		 * We can do this:
-		 * take the fraction bits, which are normalized.
-		 * (a) nTinyBits == 0: Shift left or right appropriately
-		 *     to align the binary point at the extreme right, i.e.
-		 *     where a long int point is expected to be. The integer
-		 *     result is easily converted to a string.
-		 * (b) nTinyBits > 0: Shift right by expShift-nFractBits,
-		 *     which effectively converts to long and scales by
-		 *     2^nTinyBits. Then multiply by 5^nTinyBits to
-		 *     complete the scaling. We know this won't overflow
-		 *     because we just counted the number of bits necessary
-		 *     in the result. The integer you get from this can
-		 *     then be converted to a string pretty easily.
-		 */
-		long halfULP;
-		if ( nTinyBits == 0 ) {
-		    if ( binExp > nSignificantBits ){
-			halfULP = 1L << ( binExp-nSignificantBits-1);
-		    } else {
-			halfULP = 0L;
-		    }
-		    if ( binExp >= expShift ){
-			fractBits <<= (binExp-expShift);
-		    } else {
-			fractBits >>>= (expShift-binExp) ;
-		    }
-		    developLongDigits( 0, fractBits, halfULP );
-		    return;
-		}
-		/*
-		 * The following causes excess digits to be printed
-		 * out in the single-float case. Our manipulation of
-		 * halfULP here is apparently not correct. If we
-		 * better understand how this works, perhaps we can
-		 * use this special case again. But for the time being,
-		 * we do not.
-		 * else {
-		 *     fractBits >>>= expShift+1-nFractBits;
-		 *     fractBits *= long5pow[ nTinyBits ];
-		 *     halfULP = long5pow[ nTinyBits ] >> (1+nSignificantBits-nFractBits);
-		 *     developLongDigits( -nTinyBits, fractBits, halfULP );
-		 *     return;
-		 * }
-		 */
-	    }
-	}
-	/*
-	 * This is the hard case. We are going to compute large positive
-	 * integers B and S and integer decExp, s.t.
-	 *	d = ( B / S ) * 10^decExp
-	 *	1 <= B / S < 10
-	 * Obvious choices are:
-	 *	decExp = floor( log10(d) )
-	 * 	B      = d * 2^nTinyBits * 10^max( 0, -decExp )
-	 *	S      = 10^max( 0, decExp) * 2^nTinyBits
-	 * (noting that nTinyBits has already been forced to non-negative)
-	 * I am also going to compute a large positive integer
-	 *	M      = (1/2^nSignificantBits) * 2^nTinyBits * 10^max( 0, -decExp )
-	 * i.e. M is (1/2) of the ULP of d, scaled like B.
-	 * When we iterate through dividing B/S and picking off the
-	 * quotient bits, we will know when to stop when the remainder
-	 * is <= M.
-	 *
-	 * We keep track of powers of 2 and powers of 5.
-	 */
+        // Examine number. Determine if it is an easy case,
+        // which we can do pretty trivially using float/long conversion,
+        // or whether we must do real work.
+        nFractBits = countBits(fractBits);
+        nTinyBits = Math.max(0, nFractBits - binExp - 1);
+        if (binExp <= maxSmallBinExp && binExp >= minSmallBinExp) {
+            // Look more closely at the number to decide if,
+            // with scaling by 10^nTinyBits, the result will fit in
+            // a long.
+            if ((nTinyBits < long5pow.length) && ((nFractBits + n5bits[nTinyBits]) < 64)) {
+                /*
+                 * We can do this:
+                 * take the fraction bits, which are normalized.
+                 * (a) nTinyBits == 0: Shift left or right appropriately
+                 *     to align the binary point at the extreme right, i.e.
+                 *     where a long int point is expected to be. The integer
+                 *     result is easily converted to a string.
+                 * (b) nTinyBits > 0: Shift right by expShift-nFractBits,
+                 *     which effectively converts to long and scales by
+                 *     2^nTinyBits. Then multiply by 5^nTinyBits to
+                 *     complete the scaling. We know this won't overflow
+                 *     because we just counted the number of bits necessary
+                 *     in the result. The integer you get from this can
+                 *     then be converted to a string pretty easily.
+                 */
+                long halfULP;
+                if (nTinyBits == 0) {
+                    if (binExp > nSignificantBits) {
+                        halfULP = 1L << (binExp - nSignificantBits - 1);
+                    } else {
+                        halfULP = 0L;
+                    }
+                    if (binExp >= expShift) {
+                        fractBits <<= (binExp - expShift);
+                    } else {
+                        fractBits >>>= (expShift - binExp);
+                    }
+                    developLongDigits(0, fractBits, halfULP);
+                    return;
+                }
+                /*
+                 * The following causes excess digits to be printed
+                 * out in the single-float case. Our manipulation of
+                 * halfULP here is apparently not correct. If we
+                 * better understand how this works, perhaps we can
+                 * use this special case again. But for the time being,
+                 * we do not.
+                 * else {
+                 *     fractBits >>>= expShift+1-nFractBits;
+                 *     fractBits *= long5pow[ nTinyBits ];
+                 *     halfULP = long5pow[ nTinyBits ] >> (1+nSignificantBits-nFractBits);
+                 *     developLongDigits( -nTinyBits, fractBits, halfULP );
+                 *     return;
+                 * }
+                 */
+            }
+        }
+        /*
+         * This is the hard case. We are going to compute large positive
+         * integers B and S and integer decExp, s.t.
+         *	d = ( B / S ) * 10^decExp
+         *	1 <= B / S < 10
+         * Obvious choices are:
+         *	decExp = floor( log10(d) )
+         * 	B      = d * 2^nTinyBits * 10^max( 0, -decExp )
+         *	S      = 10^max( 0, decExp) * 2^nTinyBits
+         * (noting that nTinyBits has already been forced to non-negative)
+         * I am also going to compute a large positive integer
+         *	M      = (1/2^nSignificantBits) * 2^nTinyBits * 10^max( 0, -decExp )
+         * i.e. M is (1/2) of the ULP of d, scaled like B.
+         * When we iterate through dividing B/S and picking off the
+         * quotient bits, we will know when to stop when the remainder
+         * is <= M.
+         *
+         * We keep track of powers of 2 and powers of 5.
+         */
 
-	/*
-	 * Estimate decimal exponent. (If it is small-ish,
-	 * we could double-check.)
-	 *
-	 * First, scale the mantissa bits such that 1 <= d2 < 2.
-	 * We are then going to estimate
-	 *	    log10(d2) ~=~  (d2-1.5)/1.5 + log(1.5)
-	 * and so we can estimate
-	 *      log10(d) ~=~ log10(d2) + binExp * log10(2)
-	 * take the floor and call it decExp.
-	 * IMPL_NOTE -- use more precise constants here. It costs no more.
-	 */
-	double d2 = Double.longBitsToDouble(
-	    expOne | ( fractBits &~ fractHOB ) );
-	decExp = (int)Math.floor(
-	    (d2-1.5D)*0.289529654D + 0.176091259 + (double)binExp * 0.301029995663981 );
-	int B2, B5; // powers of 2 and powers of 5, respectively, in B
-	int S2, S5; // powers of 2 and powers of 5, respectively, in S
-	int M2, M5; // powers of 2 and powers of 5, respectively, in M
-	int Bbits; // binary digits needed to represent B, approx.
-	int tenSbits; // binary digits needed to represent 10*S, approx.
-	FDBigInt Sval, Bval, Mval;
+        /*
+         * Estimate decimal exponent. (If it is small-ish,
+         * we could double-check.)
+         *
+         * First, scale the mantissa bits such that 1 <= d2 < 2.
+         * We are then going to estimate
+         *	    log10(d2) ~=~  (d2-1.5)/1.5 + log(1.5)
+         * and so we can estimate
+         *      log10(d) ~=~ log10(d2) + binExp * log10(2)
+         * take the floor and call it decExp.
+         * IMPL_NOTE -- use more precise constants here. It costs no more.
+         */
+        double d2 = Double.longBitsToDouble(
+                expOne | (fractBits & ~fractHOB));
+        decExp = (int) Math.floor(
+                (d2 - 1.5D) * 0.289529654D + 0.176091259 + (double) binExp * 0.301029995663981);
+        int B2, B5; // powers of 2 and powers of 5, respectively, in B
+        int S2, S5; // powers of 2 and powers of 5, respectively, in S
+        int M2, M5; // powers of 2 and powers of 5, respectively, in M
+        int Bbits; // binary digits needed to represent B, approx.
+        int tenSbits; // binary digits needed to represent 10*S, approx.
+        FDBigInt Sval, Bval, Mval;
 
-	B5 = Math.max( 0, -decExp );
-	B2 = B5 + nTinyBits + binExp;
+        B5 = Math.max(0, -decExp);
+        B2 = B5 + nTinyBits + binExp;
 
-	S5 = Math.max( 0, decExp );
-	S2 = S5 + nTinyBits;
+        S5 = Math.max(0, decExp);
+        S2 = S5 + nTinyBits;
 
-	M5 = B5;
-	M2 = B2 - nSignificantBits;
+        M5 = B5;
+        M2 = B2 - nSignificantBits;
 
-	/*
-	 * the long integer fractBits contains the (nFractBits) interesting
-	 * bits from the mantissa of d ( hidden 1 added if necessary) followed
-	 * by (expShift+1-nFractBits) zeros. In the interest of compactness,
-	 * I will shift out those zeros before turning fractBits into a
-	 * FDBigInt. The resulting whole number will be
-	 * 	d * 2^(nFractBits-1-binExp).
-	 */
-	fractBits >>>= (expShift+1-nFractBits);
-	B2 -= nFractBits-1;
-	int common2factor = Math.min( B2, S2 );
-	B2 -= common2factor;
-	S2 -= common2factor;
-	M2 -= common2factor;
+        /*
+         * the long integer fractBits contains the (nFractBits) interesting
+         * bits from the mantissa of d ( hidden 1 added if necessary) followed
+         * by (expShift+1-nFractBits) zeros. In the interest of compactness,
+         * I will shift out those zeros before turning fractBits into a
+         * FDBigInt. The resulting whole number will be
+         * 	d * 2^(nFractBits-1-binExp).
+         */
+        fractBits >>>= (expShift + 1 - nFractBits);
+        B2 -= nFractBits - 1;
+        int common2factor = Math.min(B2, S2);
+        B2 -= common2factor;
+        S2 -= common2factor;
+        M2 -= common2factor;
 
-	/*
-	 * IMPL_NOTE: For exact powers of two, the next smallest number
-	 * is only half as far away as we think (because the meaning of
-	 * ULP changes at power-of-two bounds) for this reason, we
-	 * fix M2.
-	 */
-	if ( nFractBits == 1 )
-	    M2 -= 1;
+        /*
+         * IMPL_NOTE: For exact powers of two, the next smallest number
+         * is only half as far away as we think (because the meaning of
+         * ULP changes at power-of-two bounds) for this reason, we
+         * fix M2.
+         */
+        if (nFractBits == 1) {
+            M2 -= 1;
+        }
 
-	if ( M2 < 0 ){
-	    // oops.
-	    // since we cannot scale M down far enough,
-	    // we must scale the other values up.
-	    B2 -= M2;
-	    S2 -= M2;
-	    M2 =  0;
-	}
-	/*
-	 * Construct, Scale, iterate.
-	 * We use a symmetric test.
-	 */
-	char digits[] = this.digits = new char[18];
-	int  ndigit = 0;
-	boolean low, high;
-	long lowDigitDifference;
-	int  q;
+        if (M2 < 0) {
+            // oops.
+            // since we cannot scale M down far enough,
+            // we must scale the other values up.
+            B2 -= M2;
+            S2 -= M2;
+            M2 = 0;
+        }
+        /*
+         * Construct, Scale, iterate.
+         * We use a symmetric test.
+         */
+        digits = new char[18];
+        int ndigit = 0;
+        boolean low, high;
+        long lowDigitDifference;
+        int q;
 
-	/*
-	 * Detect the special cases where all the numbers we are about
-	 * to compute will fit in int or long integers.
-	 * In these cases, we will avoid doing FDBigInt arithmetic.
-	 * We use the same algorithms, except that we "normalize"
-	 * our FDBigInts before iterating. This is to make division easier,
-	 * as it makes our fist guess (quotient of high-order words)
-	 * more accurate!
-	 *
-	 * We use a symmetric test.
-	 */
-	Bbits = nFractBits + B2 + (( B5 < n5bits.length )? n5bits[B5] : ( B5*3 ));
-	tenSbits = S2+1 + (( (S5+1) < n5bits.length )? n5bits[(S5+1)] : ( (S5+1)*3 ));
-	if ( Bbits < 64 && tenSbits < 64){
-	    if ( Bbits < 32 && tenSbits < 32){
-		// wa-hoo! They're all ints!
-		int b = ((int)fractBits * small5pow[B5] ) << B2;
-		int s = small5pow[S5] << S2;
-		int m = small5pow[M5] << M2;
-		int tens = s * 10;
-		/*
-		 * Unroll the first iteration. If our decExp estimate
-		 * was too high, our first quotient will be zero. In this
-		 * case, we discard it and decrement decExp.
-		 */
-		ndigit = 0;
-		q = (int) ( b / s );
-		b = 10 * ( b % s );
-		m *= 10;
-		low  = (b <  m );
-		high = (b+m > tens );
-		if ( q >= 10 ) {
-		    // bummer, dude
-		    throw new RuntimeException(
-/* #ifdef VERBOSE_EXCEPTIONS */
-/// skipped                               "Assertion botch: excessivly large digit "+q
-/* #endif */
-                    );
-		} else if ( (q == 0) && ! high ){
-		    // oops. Usually ignore leading zero.
-		    decExp--;
-		} else {
-		    digits[ndigit++] = (char)('0' + q);
-		}
-		/*
-		 * IMPL_NOTE: Java spec sez that we always have at least
-		 * one digit after the . in either F- or E-form output.
-		 * Thus we will need more than one digit if we're using
-		 * E-form
-		 */
-		if ( decExp <= -3 || decExp >= 8 ){
-		    high = low = false;
-		}
-		while( ! low && ! high ){
-		    q = (int) ( b / s );
-		    b = 10 * ( b % s );
-		    m *= 10;
-		    if ( q >= 10 ){
-			// bummer, dude
-			throw new RuntimeException( 
-/* #ifdef VERBOSE_EXCEPTIONS */
-/// skipped                                   "Assertion botch: excessivly large digit "+q
-/* #endif */
-                        );
-		    }
-		    if ( m > 0L ){
-			low  = (b <  m );
-			high = (b+m > tens );
-		    } else {
-			// m might overflow!
-			// in this case, it is certainly > b,
-			// which won't
-			// and b+m > tens, too, since that has overflowed
-			// either!
-			low = true;
-			high = true;
-		    }
-		    digits[ndigit++] = (char)('0' + q);
-		}
-		lowDigitDifference = (b<<1) - tens;
-	    } else {
-		// still good! they're all longs!
-		long b = (fractBits * long5pow[B5] ) << B2;
-		long s = long5pow[S5] << S2;
-		long m = long5pow[M5] << M2;
-		long tens = s * 10L;
-		/*
-		 * Unroll the first iteration. If our decExp estimate
-		 * was too high, our first quotient will be zero. In this
-		 * case, we discard it and decrement decExp.
-		 */
-		ndigit = 0;
-		q = (int) ( b / s );
-		b = 10L * ( b % s );
-		m *= 10L;
-		low  = (b <  m );
-		high = (b+m > tens );
-		if ( q >= 10 ){
-		    // bummer, dude
-		    throw new RuntimeException(
-/* #ifdef VERBOSE_EXCEPTIONS */
-/// skipped                               "Assertion botch: excessivly large digit "+q
-/* #endif */
-                    );
-		} else if ( (q == 0) && ! high ){
-		    // oops. Usually ignore leading zero.
-		    decExp--;
-		} else {
-		    digits[ndigit++] = (char)('0' + q);
-		}
-		/*
-		 * IMPL_NOTE: Java spec sez that we always have at least
-		 * one digit after the . in either F- or E-form output.
-		 * Thus we will need more than one digit if we're using
-		 * E-form
-		 */
-		if ( decExp <= -3 || decExp >= 8 ){
-		    high = low = false;
-		}
-		while( ! low && ! high ){
-		    q = (int) ( b / s );
-		    b = 10 * ( b % s );
-		    m *= 10;
-		    if ( q >= 10 ){
-			// bummer, dude
-			throw new RuntimeException(
-/* #ifdef VERBOSE_EXCEPTIONS */
-/// skipped                                   "Assertion botch: excessivly large digit "+q
-/* #endif */
-                        );
-		    }
-		    if ( m > 0L ){
-			low  = (b <  m );
-			high = (b+m > tens );
-		    } else {
-			// m might overflow!
-			// in this case, it is certainly > b,
-			// which won't
-			// and b+m > tens, too, since that has overflowed
-			// either!
-			low = true;
-			high = true;
-		    }
-		    digits[ndigit++] = (char)('0' + q);
-		}
-		lowDigitDifference = (b<<1) - tens;
-	    }
-	} else {
-	    FDBigInt tenSval;
-	    int  shiftBias;
+        /*
+         * Detect the special cases where all the numbers we are about
+         * to compute will fit in int or long integers.
+         * In these cases, we will avoid doing FDBigInt arithmetic.
+         * We use the same algorithms, except that we "normalize"
+         * our FDBigInts before iterating. This is to make division easier,
+         * as it makes our fist guess (quotient of high-order words)
+         * more accurate!
+         *
+         * We use a symmetric test.
+         */
+        Bbits = nFractBits + B2 + ((B5 < n5bits.length) ? n5bits[B5] : (B5 * 3));
+        tenSbits = S2 + 1 + (((S5 + 1) < n5bits.length) ? n5bits[(S5 + 1)] : ((S5 + 1) * 3));
+        if (Bbits < 64 && tenSbits < 64) {
+            if (Bbits < 32 && tenSbits < 32) {
+                // wa-hoo! They're all ints!
+                int b = ((int) fractBits * small5pow[B5]) << B2;
+                int s = small5pow[S5] << S2;
+                int m = small5pow[M5] << M2;
+                int tens = s * 10;
+                /*
+                 * Unroll the first iteration. If our decExp estimate
+                 * was too high, our first quotient will be zero. In this
+                 * case, we discard it and decrement decExp.
+                 */
+                ndigit = 0;
+                q = (int) (b / s);
+                b = 10 * (b % s);
+                m *= 10;
+                low = (b < m);
+                high = (b + m > tens);
+                if (q >= 10) {
+                    // bummer, dude
+                    throw new RuntimeException( /* #ifdef VERBOSE_EXCEPTIONS */ /// skipped                               "Assertion botch: excessivly large digit "+q
+                            /* #endif */);
+                } else if ((q == 0) && !high) {
+                    // oops. Usually ignore leading zero.
+                    decExp--;
+                } else {
+                    digits[ndigit++] = (char) ('0' + q);
+                }
+                /*
+                 * IMPL_NOTE: Java spec sez that we always have at least
+                 * one digit after the . in either F- or E-form output.
+                 * Thus we will need more than one digit if we're using
+                 * E-form
+                 */
+                if (decExp <= -3 || decExp >= 8) {
+                    high = low = false;
+                }
+                while (!low && !high) {
+                    q = (int) (b / s);
+                    b = 10 * (b % s);
+                    m *= 10;
+                    if (q >= 10) {
+                        // bummer, dude
+                        throw new RuntimeException( /* #ifdef VERBOSE_EXCEPTIONS */ /// skipped                                   "Assertion botch: excessivly large digit "+q
+                                /* #endif */);
+                    }
+                    if (m > 0L) {
+                        low = (b < m);
+                        high = (b + m > tens);
+                    } else {
+                        // m might overflow!
+                        // in this case, it is certainly > b,
+                        // which won't
+                        // and b+m > tens, too, since that has overflowed
+                        // either!
+                        low = true;
+                        high = true;
+                    }
+                    digits[ndigit++] = (char) ('0' + q);
+                }
+                lowDigitDifference = (b << 1) - tens;
+            } else {
+                // still good! they're all longs!
+                long b = (fractBits * long5pow[B5]) << B2;
+                long s = long5pow[S5] << S2;
+                long m = long5pow[M5] << M2;
+                long tens = s * 10L;
+                /*
+                 * Unroll the first iteration. If our decExp estimate
+                 * was too high, our first quotient will be zero. In this
+                 * case, we discard it and decrement decExp.
+                 */
+                ndigit = 0;
+                q = (int) (b / s);
+                b = 10L * (b % s);
+                m *= 10L;
+                low = (b < m);
+                high = (b + m > tens);
+                if (q >= 10) {
+                    // bummer, dude
+                    throw new RuntimeException( /* #ifdef VERBOSE_EXCEPTIONS */ /// skipped                               "Assertion botch: excessivly large digit "+q
+                            /* #endif */);
+                } else if ((q == 0) && !high) {
+                    // oops. Usually ignore leading zero.
+                    decExp--;
+                } else {
+                    digits[ndigit++] = (char) ('0' + q);
+                }
+                /*
+                 * IMPL_NOTE: Java spec sez that we always have at least
+                 * one digit after the . in either F- or E-form output.
+                 * Thus we will need more than one digit if we're using
+                 * E-form
+                 */
+                if (decExp <= -3 || decExp >= 8) {
+                    high = low = false;
+                }
+                while (!low && !high) {
+                    q = (int) (b / s);
+                    b = 10 * (b % s);
+                    m *= 10;
+                    if (q >= 10) {
+                        // bummer, dude
+                        throw new RuntimeException( /* #ifdef VERBOSE_EXCEPTIONS */ /// skipped                                   "Assertion botch: excessivly large digit "+q
+                                /* #endif */);
+                    }
+                    if (m > 0L) {
+                        low = (b < m);
+                        high = (b + m > tens);
+                    } else {
+                        // m might overflow!
+                        // in this case, it is certainly > b,
+                        // which won't
+                        // and b+m > tens, too, since that has overflowed
+                        // either!
+                        low = true;
+                        high = true;
+                    }
+                    digits[ndigit++] = (char) ('0' + q);
+                }
+                lowDigitDifference = (b << 1) - tens;
+            }
+        } else {
+            FDBigInt tenSval;
+            int shiftBias;
 
-	    /*
-	     * We really must do FDBigInt arithmetic.
-	     * Fist, construct our FDBigInt initial values.
-	     */
-	    Bval = multPow52( new FDBigInt( fractBits  ), B5, B2 );
-	    Sval = constructPow52( S5, S2 );
-	    Mval = constructPow52( M5, M2 );
+            /*
+             * We really must do FDBigInt arithmetic.
+             * Fist, construct our FDBigInt initial values.
+             */
+            Bval = multPow52(new FDBigInt(fractBits), B5, B2);
+            Sval = constructPow52(S5, S2);
+            Mval = constructPow52(M5, M2);
 
-	    // normalize so that division works better
-	    Bval.lshiftMe( shiftBias = Sval.normalizeMe() );
-	    Mval.lshiftMe( shiftBias );
-	    tenSval = Sval.mult( 10 );
-	    /*
-	     * Unroll the first iteration. If our decExp estimate
-	     * was too high, our first quotient will be zero. In this
-	     * case, we discard it and decrement decExp.
-	     */
-	    ndigit = 0;
-	    q = Bval.quoRemIteration( Sval );
-	    Mval = Mval.mult( 10 );
-	    low  = (Bval.cmp( Mval ) < 0);
-	    high = (Bval.add( Mval ).cmp( tenSval ) > 0 );
-	    if ( q >= 10 ){
-		// bummer, dude
-		throw new RuntimeException(
-/* #ifdef VERBOSE_EXCEPTIONS */
-/// skipped                           "Assertion botch: excessivly large digit "+q
-/* #endif */
-                );
-	    } else if ( (q == 0) && ! high ){
-		// oops. Usually ignore leading zero.
-		decExp--;
-	    } else {
-		digits[ndigit++] = (char)('0' + q);
-	    }
-	    /*
-	     * IMPL_NOTE: Java spec sez that we always have at least
-	     * one digit after the . in either F- or E-form output.
-	     * Thus we will need more than one digit if we're using
-	     * E-form
-	     */
-	    if ( decExp <= -3 || decExp >= 8 ){
-		high = low = false;
-	    }
-	    while( ! low && ! high ){
-		q = Bval.quoRemIteration( Sval );
-		Mval = Mval.mult( 10 );
-		if ( q >= 10 ){
-		    // bummer, dude
-		    throw new RuntimeException(
-/* #ifdef VERBOSE_EXCEPTIONS */
-/// skipped                               "Assertion botch: excessivly large digit "+q
-/* #endif */
-                    );
-		}
-		low  = (Bval.cmp( Mval ) < 0);
-		high = (Bval.add( Mval ).cmp( tenSval ) > 0 );
-		digits[ndigit++] = (char)('0' + q);
-	    }
-	    if ( high && low ){
-		Bval.lshiftMe(1);
-		lowDigitDifference = Bval.cmp(tenSval);
-	    } else
-		lowDigitDifference = 0L; // this here only for flow analysis!
-	}
-	this.decExponent = decExp+1;
-	this.digits = digits;
-	this.nDigits = ndigit;
-	/*
-	 * Last digit gets rounded based on stopping condition.
-	 */
-	if ( high ){
-	    if ( low ){
-		if ( lowDigitDifference == 0L ){
-		    // it's a tie!
-		    // choose based on which digits we like.
-		    if ( (digits[nDigits-1]&1) != 0 ) roundup();
-		} else if ( lowDigitDifference > 0 ){
-		    roundup();
-		}
-	    } else {
-		roundup();
-	    }
-	}
+            // normalize so that division works better
+            Bval.lshiftMe(shiftBias = Sval.normalizeMe());
+            Mval.lshiftMe(shiftBias);
+            tenSval = Sval.mult(10);
+            /*
+             * Unroll the first iteration. If our decExp estimate
+             * was too high, our first quotient will be zero. In this
+             * case, we discard it and decrement decExp.
+             */
+            ndigit = 0;
+            q = Bval.quoRemIteration(Sval);
+            Mval = Mval.mult(10);
+            low = (Bval.cmp(Mval) < 0);
+            high = (Bval.add(Mval).cmp(tenSval) > 0);
+            if (q >= 10) {
+                // bummer, dude
+                throw new RuntimeException( /* #ifdef VERBOSE_EXCEPTIONS */ /// skipped                           "Assertion botch: excessivly large digit "+q
+                        /* #endif */);
+            } else if ((q == 0) && !high) {
+                // oops. Usually ignore leading zero.
+                decExp--;
+            } else {
+                digits[ndigit++] = (char) ('0' + q);
+            }
+            /*
+             * IMPL_NOTE: Java spec sez that we always have at least
+             * one digit after the . in either F- or E-form output.
+             * Thus we will need more than one digit if we're using
+             * E-form
+             */
+            if (decExp <= -3 || decExp >= 8) {
+                high = low = false;
+            }
+            while (!low && !high) {
+                q = Bval.quoRemIteration(Sval);
+                Mval = Mval.mult(10);
+                if (q >= 10) {
+                    // bummer, dude
+                    throw new RuntimeException( /* #ifdef VERBOSE_EXCEPTIONS */ /// skipped                               "Assertion botch: excessivly large digit "+q
+                            /* #endif */);
+                }
+                low = (Bval.cmp(Mval) < 0);
+                high = (Bval.add(Mval).cmp(tenSval) > 0);
+                digits[ndigit++] = (char) ('0' + q);
+            }
+            if (high && low) {
+                Bval.lshiftMe(1);
+                lowDigitDifference = Bval.cmp(tenSval);
+            } else {
+                lowDigitDifference = 0L; // this here only for flow analysis!
+            }
+        }
+        this.decExponent = decExp + 1;
+        this.nDigits = ndigit;
+        /*
+         * Last digit gets rounded based on stopping condition.
+         */
+        if (high) {
+            if (low) {
+                if (lowDigitDifference == 0L) {
+                    // it's a tie!
+                    // choose based on which digits we like.
+                    if ((digits[nDigits - 1] & 1) != 0) {
+                        roundup();
+                    }
+                } else if (lowDigitDifference > 0) {
+                    roundup();
+                }
+            } else {
+                roundup();
+            }
+        }
     }
 
     public String
@@ -961,7 +946,7 @@ class FloatingDecimal{
 		i += charLength;
 		if ( charLength < decExponent ){
 		    charLength = decExponent-charLength;
-		    JVM.unchecked_char_arraycopy(zero, 0, 
+		    JVM.unchecked_char_arraycopy(zero, 0,
                                                  result, i, charLength);
 		    i += charLength;
 		    result[i++] = '.';
@@ -970,7 +955,7 @@ class FloatingDecimal{
 		    result[i++] = '.';
 		    if ( charLength < nDigits ){
 			int t = nDigits - charLength;
-			JVM.unchecked_char_arraycopy( digits, charLength, 
+			JVM.unchecked_char_arraycopy( digits, charLength,
                                                       result, i, t );
 			i += t;
 		    } else{
@@ -981,18 +966,18 @@ class FloatingDecimal{
 		result[i++] = '0';
 		result[i++] = '.';
 		if ( decExponent != 0 ){
-		    JVM.unchecked_char_arraycopy( zero, 0, 
+		    JVM.unchecked_char_arraycopy( zero, 0,
                                                   result, i, -decExponent );
 		    i -= decExponent;
 		}
-		JVM.unchecked_char_arraycopy( digits, 0, 
+		JVM.unchecked_char_arraycopy( digits, 0,
                                               result, i, nDigits );
 		i += nDigits;
 	    } else {
 		result[i++] = digits[0];
 		result[i++] = '.';
 		if ( nDigits > 1 ){
-		    JVM.unchecked_char_arraycopy( digits, 1, 
+		    JVM.unchecked_char_arraycopy( digits, 1,
                                                   result, i, nDigits-1 );
 		    i += nDigits-1;
 		} else {
@@ -1213,7 +1198,7 @@ class FloatingDecimal{
 		// but then some trailing garbage, that might be ok.
 		// so we just fall through in that case.
 		// HUMBUG
-                if ( i == expAt ) 
+                if ( i == expAt )
 		    break parseNumber; // certainly bad
 	    }
 	    /*
@@ -1721,7 +1706,7 @@ class FloatingDecimal{
 	 * The alternative is to reproduce the whole multiple-precision
 	 * algorithm for float precision, or to try to parameterize it
 	 * for common usage. The former will take about 400 lines of code,
-	 * and the latter I tried without success. Thus we use the following 
+	 * and the latter I tried without success. Thus we use the following
 	 * solution here.
 	 */
 	mustSetRoundDir = true;

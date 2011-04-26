@@ -1834,6 +1834,56 @@ extern  void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddre
     fatalVMError("");
 }
 
+/*if[FLOATS]*/
+void fpTest() {
+    float f0 = 0.0;
+    float f1 = 1.0;
+    double d0 = 0.0;
+    double d1 = 1.0;
+    FILE *vmOut = streams[currentStream];
+
+        fprintf(vmOut, format("f0 = %i\n"), f2ib(f0));
+    fprintf(vmOut, format("f1 = %i\n"), f2ib(f1));
+    fprintf(vmOut, format("f0 + f0 = %i\n"), f2ib(f0 + f0));
+    fprintf(vmOut, format("f0 + f1 = %i\n"), f2ib(f0 + f1));
+    fprintf(vmOut, format("f0 * f1 = %i\n"), f2ib(f0 * f1));
+    fprintf(vmOut, format("f1 * f1 = %i\n"), f2ib(f1 * f1));
+    fprintf(vmOut, format("f1 + f1 = %i\n"), f2ib(f1 + f1));
+fflush(vmOut);
+
+    fprintf(vmOut, format("f0 = %f\n"), f0);fflush(vmOut);
+    fprintf(vmOut, format("f1 = %f\n"), f1);fflush(vmOut);
+    fprintf(vmOut, format("f0 + f0 = %f\n"), (f0 + f0));fflush(vmOut);
+    fprintf(vmOut, format("f0 + f1 = %f\n"), (f0 + f1));fflush(vmOut);
+    fprintf(vmOut, format("f0 * f1 = %f\n"), (f0 * f1));fflush(vmOut);
+    fprintf(vmOut, format("f1 * f1 = %f\n"), (f1 * f1));fflush(vmOut);
+    fprintf(vmOut, format("f1 + f1 = %f\n"), (f1 + f1));fflush(vmOut);
+
+    fprintf(vmOut, format("d0 = %D\n"), d0);fflush(vmOut);
+    fprintf(vmOut, format("d1 = %D\n"), d1);fflush(vmOut);
+    fprintf(vmOut, format("d0 + d0 = %D\n"), (d0 + d0));fflush(vmOut);
+    fprintf(vmOut, format("d0 + d1 = %D\n"), (d0 + d1));fflush(vmOut);
+    fprintf(vmOut, format("d0 * d1 = %D\n"), (d0 * d1));fflush(vmOut);
+    fprintf(vmOut, format("d1 * d1 = %D\n"), (d1 * d1));fflush(vmOut);
+    fflush(vmOut);
+
+    if (f0 == 0.0) {
+        fprintf(vmOut, "passed 1\n");
+    } else {
+        fprintf(vmOut, "failed 1\n");
+    }
+
+        if (f1 > f0) {
+        fprintf(vmOut, "passed 2\n");
+    } else {
+        fprintf(vmOut, "failed 2\n");
+    }
+
+}
+/*else[FLOATS]*/
+#define fpTest()
+/*end[FLOATS]*/
+
 /**
  * Runs the VM.
  *
@@ -1842,6 +1892,8 @@ extern  void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddre
  */
 void Squawk_run(int argc, char *argv[]) {
     Address bootstrapSuite = Squawk_setup(argc, argv);
+    
+//fpTest();
 
 #ifdef MACROIZE
     ByteAddress  ip = 0;            /* The instruction pointer. */
