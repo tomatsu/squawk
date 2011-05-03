@@ -44,6 +44,9 @@ public class TestStackTrace {
             }
         }
     }
+
+    private TestStackTrace() {
+    }
     
 }
 

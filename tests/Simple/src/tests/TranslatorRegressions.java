@@ -9,10 +9,6 @@
 
 package tests;
 
-import com.sun.squawk.*;
-import java.util.*;
-import java.io.IOException;
-
 /**
  *
  * @author dw29446
@@ -24,6 +20,9 @@ public class TranslatorRegressions {
         t1.testFor();
         t1.testIf();*/
         Test5.test();
+    }
+
+    private TranslatorRegressions() {
     }
     
 /*    static class Test1  {

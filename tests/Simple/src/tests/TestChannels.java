@@ -10,13 +10,9 @@
 package tests;
 
 import com.sun.squawk.*;
-import com.sun.squawk.util.Assert;
 import com.sun.squawk.io.mailboxes.*;
 
 import java.io.*;
-import javax.microedition.io.*;
-
-
 
 /**
  *

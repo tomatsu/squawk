@@ -26,4 +26,7 @@ public class TestSystemProperties {
         }
     }
 
+    private TestSystemProperties() {
+    }
+
 }

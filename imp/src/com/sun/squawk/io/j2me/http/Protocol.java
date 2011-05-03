@@ -50,7 +50,7 @@ import com.sun.squawk.io.ConnectionBase;
 public class Protocol extends ConnectionBase implements HttpConnection {
     
 /*if[!FLASH_MEMORY]*/
-    /** Call using a full URL (rmeber to include the FILE part!"
+    /** Call using a full URL (remember to include the FILE part!"
      * > squawk com.sun.squawk.io.j2me.http.Protocol http://www.yahoo.com/index.html
      */
     public static void main(String[] args) {

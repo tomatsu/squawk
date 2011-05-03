@@ -40,4 +40,7 @@ public class TestUnicode {
 		String e = c.toUpperCase();
 		System.out.println("uppercase: " + e);
 	}
+
+    private TestUnicode() {
+    }
 }

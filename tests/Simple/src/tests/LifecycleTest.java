@@ -1,7 +1,6 @@
 package tests;
 
 import com.sun.squawk.*;
-import com.sun.squawk.util.Assert;
 import java.io.IOException;
 /**
  * This is the isolate class that we will test.
@@ -134,6 +133,9 @@ public class LifecycleTest {
                 ex.printStackTrace();
             }
         }
+    }
+
+    private LifecycleTest() {
     }
     
 }

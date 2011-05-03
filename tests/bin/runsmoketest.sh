@@ -16,8 +16,19 @@ STAT=$?
 # status got trunctated from 12345 to 57
 if [ $STAT -eq 57 ]; then
 	echo good  $STAT
-	exit 0
 else
 	echo bad $STAT
 	exit $STAT
 fi
+
+./d user-clean tests/HelloWorld
+./d user-suite tests/HelloWorld
+./squawk -suite:tests/HelloWorld/HelloWorld
+
+./d user-clean tests/HelloWorldMain
+./d user-suite tests/HelloWorldMain
+./squawk -suite:tests/HelloWorldMain/HelloWorldMain tests.HelloWorldMain
+
+./d user-clean tests/Simple
+./d user-suite tests/Simple
+./squawk -suite:tests/Simple/Simple tests.TestAuto

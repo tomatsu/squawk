@@ -259,18 +259,18 @@ public class StartApplication extends MIDlet {
         te.stopTaskExecutor();
     }
 
-    private void testHTTP() {
-        System.out.println("testHTTP - try to read web page from desktop http server");
-        System.out.println("    NOTE: $$$$ is normal - it indicates that other Java threads can run while sockets are blocked on reads.");
-
-        String[] args = {"10.0.0.11", "80"};
-        try {
-            com.sun.squawk.io.j2me.socket.Test.main(args);
-            System.out.println("testHTTP - DONE");
-        } catch (IOException ex) {
-            System.err.println("Connection to web page failed: " + ex);
-        }
-    }
+//    private void testHTTP() {
+//        System.out.println("testHTTP - try to read web page from desktop http server");
+//        System.out.println("    NOTE: $$$$ is normal - it indicates that other Java threads can run while sockets are blocked on reads.");
+//
+//        String[] args = {"10.0.0.11", "80"};
+//        try {
+//            com.sun.squawk.io.j2me.socket.Test.main(args);
+//            System.out.println("testHTTP - DONE");
+//        } catch (IOException ex) {
+//            System.err.println("Connection to web page failed: " + ex);
+//        }
+//    }
 
     void testEcho() {
         System.out.println("testEcho");
@@ -315,8 +315,8 @@ public class StartApplication extends MIDlet {
         System.out.println("-----------------");
         testEcho();
 
-        System.out.println("-----------------");
-        testHTTP();
+//        System.out.println("-----------------");
+//        testHTTP();
 
 
         System.out.println("-----------------");

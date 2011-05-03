@@ -22,7 +22,7 @@ To run a test midlet that isn't listed in the manifest:
 > squawk -suite:tests/Simple/Simple -testMIDlet:tests.TestDestroyApp
 
 To run a test that is not a midlet:
-> squawk -suite:tests/HelloWorldMain tests.HelloWorldMain
+> squawk -suite:tests/HelloWorldMain/HelloWorldMain tests.HelloWorldMain
 
 
 

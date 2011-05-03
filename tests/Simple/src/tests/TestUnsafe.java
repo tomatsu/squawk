@@ -52,7 +52,7 @@ public class TestUnsafe {
             try {
                 if (x != Integer.parseInt(Integer.toString(x))) {
                     throw new RuntimeException("It didn't happen");
-                };
+                }
             } catch (NumberFormatException ex) {
                 ex.printStackTrace();
             }
@@ -163,6 +163,9 @@ public class TestUnsafe {
         peekIntArray(raw, 0, 2);*/
 
         
+    }
+
+    private TestUnsafe() {
     }
 
 }

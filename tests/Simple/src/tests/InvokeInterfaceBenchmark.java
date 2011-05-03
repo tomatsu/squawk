@@ -1,7 +1,5 @@
 package tests;
 
-import com.sun.squawk.util.*;
-
 /**
  * Tests speed of invokevirtual, invokestatic and invokeinterface.
  *
@@ -108,6 +106,9 @@ public class InvokeInterfaceBenchmark {
             C.s();
         }
         System.out.println("invokestatic: time = " + (System.currentTimeMillis() - start));
+    }
+
+    private InvokeInterfaceBenchmark() {
     }
 }
 

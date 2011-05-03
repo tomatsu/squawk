@@ -23,5 +23,8 @@ public class TestStackTraceIsolate {
         
         System.out.println("DONE Testing stack trace printing within an isolate.");
     }
+
+    private TestStackTraceIsolate() {
+    }
     
 }

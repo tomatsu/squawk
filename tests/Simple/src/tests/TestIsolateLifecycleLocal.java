@@ -10,7 +10,6 @@
 package tests;
 
 import com.sun.squawk.*;
-import com.sun.squawk.util.Assert;
 import java.io.IOException;
 
 /**
@@ -156,6 +155,9 @@ public class TestIsolateLifecycleLocal {
         VM.stopVM(100);
         
     }
+
+    private TestIsolateLifecycleLocal() {
+    }
     
 }
 
@@ -193,6 +195,9 @@ class BugInCallbackTest {
         };
         
         Isolate.currentIsolate().addLifecycleListener(shutdownListener, Isolate.SHUTDOWN_EVENT_MASK);
+    }
+
+    private BugInCallbackTest() {
     }
 }
 
@@ -237,6 +242,9 @@ class RecursiveLifecycleTest {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+    }
+
+    private RecursiveLifecycleTest() {
     }
 }
 

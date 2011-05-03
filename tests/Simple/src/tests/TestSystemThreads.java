@@ -73,4 +73,7 @@ public class TestSystemThreads {
         System.out.println("CHECK: Should see \"Exception in my wacky printStackTrace() method.\", followed by stack trace");
         
     }
+
+    private TestSystemThreads() {
+    }
 }
