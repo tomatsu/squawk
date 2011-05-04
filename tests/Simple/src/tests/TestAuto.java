@@ -23,7 +23,7 @@ public class TestAuto {
         //TestStackTrace.main(args); is trying to use dynamic classloading
 
         TestStackTraceIsolate.main(args);
-        //TestSync.main(args); too slow
+        //TestSync.main(args); too slow!
 
         TestSystemProperties.main(args);
         TestSystemThreads.main(args);

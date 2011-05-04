@@ -738,17 +738,6 @@ int getError() {
     return 0;
 }
 
-#if com_sun_squawk_Klass_DEBUG_CODE_ENABLED
-int testIntStar1(int *outparam) {
-    *outparam = 57;
-    return 1111111;
-}
-
-void testIntStar2(int *outparam) {
-    *outparam = 73;
-}
-#endif
-
 /**
  * for timing purposes
  */
@@ -762,8 +751,6 @@ typedef struct dlentryStruct {
     void* entry;
 } dlentry;
 
-#define DL_TABLE_SIZE 11
-
 static dlentry dltable[] = {
     {"sysFD_SIZE",      &sysFD_SIZE},
     {"sysSIZEOFSTAT",   &sysSIZEOFSTAT},
@@ -775,11 +762,9 @@ static dlentry dltable[] = {
     {"squawk_select",   &squawk_select},
     {"cancel_squawk_select", &cancel_squawk_select},
     {"squawk_dummy_func", &squawk_dummy_func},
-#if com_sun_squawk_Klass_DEBUG_CODE_ENABLED
-    {"testIntStar1",    &testIntStar1},
-    {"testIntStar2",    &testIntStar2},
-#endif
 };
+
+#define DL_TABLE_SIZE (sizeof(dltable) / sizeof(dlentry))
     
 #ifndef USE_CUSTOM_DL_CODE
 #define sys_RTLD_DEFAULT() RTLD_DEFAULT

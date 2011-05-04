@@ -353,11 +353,13 @@ public class ObjectGraphLoader {
         	Assert.that(suite.getKlass(i) == klass);
 		}
         KlassMetadata[] metadatas = getKlassMetadatasAt(NativeUnsafe.getAddress(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Suite$metadatas)));
-        for (KlassMetadata metadata : metadatas) {
-        	if (metadata != null) {
-        		suite.installMetadata(metadata);
-        	}
-		}
+        if (metadatas != null) {
+            for (KlassMetadata metadata : metadatas) {
+                if (metadata != null) {
+                    suite.installMetadata(metadata);
+                }
+            }
+        }
 
         addressToObjectMap.put(address, suite);
         objectToAddressMap.put(suite, address);
