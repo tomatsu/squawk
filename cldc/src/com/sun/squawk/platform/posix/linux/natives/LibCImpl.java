@@ -213,7 +213,7 @@ public class LibCImpl extends com.sun.squawk.platform.posix.natives.LibCImpl {
         if (nominalName.equals("stat")) {
             return "__xstat";
         } else if (nominalName.equals("fstat")) {
-            return "__xfstat";
+            return "__fxstat";
         } else {
             return nominalName;
         }
