@@ -50,6 +50,7 @@ const char *format(const char* fmt);
 #define DIAG_INTRO	"[DIAG] "
 void diagnosticPrimWithValue(char* msg, int len, int val) {
     printf("%s %.*s %#x\r\n", DIAG_INTRO, len, msg, val);
+    fflush(stdout);
 }
 void diagnostic(char * msg) {
 	diagnosticPrimWithValue(msg, strlen(msg), 0);
