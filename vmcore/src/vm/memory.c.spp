@@ -144,6 +144,8 @@ INLINE boolean setArrayLength(Address _oop, int _size);
             /*if (!isInTypedMemoryRange($ea)) {
                 fprintf(stderr, format("access outside of 'memory' chunk: %A\n"), $ea);
                 return;
+             }
+             */
 
             return (char *)$ea + memorySize;
         }
