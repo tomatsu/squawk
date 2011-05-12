@@ -29,6 +29,3 @@ fi
 ./d user-suite tests/HelloWorldMain
 ./squawk -suite:tests/HelloWorldMain/HelloWorldMain tests.HelloWorldMain
 
-./d user-clean tests/Simple
-./d user-suite tests/Simple
-./squawk -suite:tests/Simple/Simple tests.TestAuto
