@@ -4585,10 +4585,20 @@ foundSlot:
                     break;
                 }
 
-                case Native_com_sun_squawk_VM_hashcode:
+/*if[TYPEMAP]*/
+                case Native_com_sun_squawk_VM_hashcode: {
+                    pushInt((int)popAddress());
+                    break;
+                }
                 case Native_com_sun_squawk_VM_asKlass: {
                     break;
                 }
+/*else[TYPEMAP]*/
+//                case Native_com_sun_squawk_VM_hashcode:
+//                case Native_com_sun_squawk_VM_asKlass: {
+//                    break;
+//                }
+/*end[TYPEMAP]*/
 
                 case Native_com_sun_squawk_VM_fatalVMError: {
                     fatalInterpreterError("VM.fatalVMError");

@@ -144,6 +144,7 @@ public class ObjectMemorySerializer {
 
         // Relocate the memory
         Address canonicalStart = relocateMemory(cb.memory, cb.start, cb.oopMap, parent, Klass.TRACING_ENABLED && Tracer.isTracing("oms"));
+        Address srcAddress = VM.isHosted() ? cb.start : Address.fromObject(cb.memory);
 
         if (Klass.TRACING_ENABLED && Tracer.isTracing("oms")) {
 
@@ -159,7 +160,7 @@ public class ObjectMemorySerializer {
 
             for (int offset = oopMap.nextSetBit(0); offset != -1; offset = oopMap.nextSetBit(offset + 1)) {
                 int pointerAddress = canStart + (offset * HDR.BYTES_PER_WORD);
-                Address pointer = NativeUnsafe.getAddress(VM.isHosted() ? cb.start : Address.fromObject(cb.memory), offset);
+                Address pointer = NativeUnsafe.getAddress(srcAddress, offset);
                 out.println(pointerAddress + " [offset " + (offset * HDR.BYTES_PER_WORD) + "] : " + pointer.toUWord().toPrimitive());
             }
             out.close();
@@ -175,7 +176,7 @@ public class ObjectMemorySerializer {
         // Do endianess swapping if required
         final boolean requiresEndianSwap = (VM.isBigEndian() != bigEndian);
         if (requiresEndianSwap) {
-            ObjectMemory om = new ObjectMemory(VM.isHosted() ? cb.start : Address.fromObject(cb.memory), size, "", null, 0, parent);
+            ObjectMemory om = new ObjectMemory(srcAddress, size, "", null, 0, parent);
             ObjectMemoryEndianessSwapper.swap(om, false, true);
 
             if (VM.isHosted()) {
@@ -188,7 +189,7 @@ public class ObjectMemorySerializer {
 
 /*if[TYPEMAP]*/
         if (VM.usingTypeMap()) {
-            writeTypeMap(sfos, VM.isHosted() ? Address.zero() : Address.fromObject(cb.memory), size);
+            writeTypeMap(sfos, srcAddress, size);
         }
 /*end[TYPEMAP]*/
 

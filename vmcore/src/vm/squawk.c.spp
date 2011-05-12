@@ -1373,7 +1373,7 @@ Address processArgs(char *argv[], const int argc) {
     int nvmSize = DEFAULT_NVM_SIZE;
     int ramSize = DEFAULT_RAM_SIZE;
 
-    diagnostic("in processArgs\n");
+    diagnostic("in processArgs");
 
 /*if[!EMULATOR_LAUNCHER]*/
 #ifdef PROFILING
@@ -1584,7 +1584,8 @@ Address Squawk_setup(int argc, char *argv[]) {
      * Sanity check.
      */
     assume(sizeof(UWord) == sizeof(Address));
- diagnostic("in Squawk_setup\n");
+    diagnostic("in Squawk_setup");
+
     /*
      * Check that the build flags were correct.
      */
@@ -1951,7 +1952,7 @@ void Squawk_main(int argc, char *argv[]) {
         Squawk_kernelMain(kernelArgsCount, kernelArgs);
     }
 #endif /* KERNEL_SQUAWK */
- diagnostic("in Squawk_main\n");
+    diagnostic("in Squawk_main");
     Squawk_run(argc, argv);
     fatalVMError("return from interpreter loop in non-kernel mode");
 }
@@ -1997,7 +1998,7 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
 //    free(executablePath);
 //    free(executableName);
 /*end[EMULATOR_LAUNCHER]*/
-    diagnostic("in Squawk_main_wrapper\n");
+    diagnostic("in Squawk_main_wrapper");
 
     /*
      * Lose the first argument (the path to the executable program).
@@ -2020,7 +2021,7 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
 
 #ifndef VXWORKS
 int main(int argc, char *argv[]) {
-    diagnostic("In main - squawk.c\n");
+    diagnostic("In main - squawk.c");
 #ifdef __APPLE__
     os_main(argc, argv);
 #else

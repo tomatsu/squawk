@@ -76,6 +76,8 @@ int sda_bp_set_or_stepping; // TRUE if we have any breakpoints set or are in a s
  *                                  Errors                                   *
 \*---------------------------------------------------------------------------*/
 
+NORETURN void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddress _ip, UWordAddress _fp, UWordAddress _sp, char* file, int line);
+
 /**
  * Exits the VM with an error message.
  */
@@ -97,6 +99,10 @@ NORETURN void fatalVMError0(char *msg, boolean cleanup) {
 #if TRACE
         printStackTrace(msg);
 #endif
+/*if[MACROIZE]*/
+/*else[MACROIZE]*/
+//      fatalInterpreterError0("Last interpreter values:\n", -1, iparm, ip, fp, sp, "-", -1);
+/*end[MACROIZE]*/
     }
     stopVM0(-1, false);
 }
@@ -122,8 +128,6 @@ NORETURN void fatalVMError(char *msg) {
  * version of assume that is always enabled.
  */
 #define assumeAlways(x) if (!(x))  { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #x, __FILE__, __LINE__); fatalVMError(""); }
-
-NORETURN void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddress _ip, UWordAddress _fp, UWordAddress _sp, char* file, int line);
 
 /**
  * Exits the VM with an error message including various interpreter state.

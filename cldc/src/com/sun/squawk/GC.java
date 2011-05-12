@@ -24,6 +24,7 @@
 
 package com.sun.squawk;
 
+import com.sun.squawk.microedition.io.FileConnection;
 import java.io.*;
 import javax.microedition.io.*;
 
@@ -317,7 +318,9 @@ public class GC implements GlobalStaticFields {
         if (VM.isVeryVerbose()) {
             PrintStream out = null;
             try {
-                out = new PrintStream(Connector.openOutputStream("file://squawk.reloc"));
+                FileConnection f = (FileConnection)Connector.open("file://squawk.reloc");
+                f.create();
+                out = new PrintStream(f.openOutputStream());
                 for (int i = 0; i != readOnlyObjectMemories.length; ++i) {
                     om = readOnlyObjectMemories[i];
                     out.println(om.getURI() + "=" + om.getStart().toUWord().toPrimitive());

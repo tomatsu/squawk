@@ -1,1 +1,0 @@
-This directory is the content displayed when the Squawk java.net project home page is browsed.

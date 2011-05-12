@@ -144,7 +144,6 @@ INLINE boolean setArrayLength(Address _oop, int _size);
             /*if (!isInTypedMemoryRange($ea)) {
                 fprintf(stderr, format("access outside of 'memory' chunk: %A\n"), $ea);
                 return;
-            };*/
 
             return (char *)$ea + memorySize;
         }
@@ -1102,7 +1101,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
          * @param dataSize  the size (in bytes) of the value
          */
 /*MAC*/ void swap(Address $address, int $dataSize) {
-/*fprintf(stderr, format("swap(%A, %d)\n"), $address, $dataSize);*/
+            /*fprintf(stderr, format("swap(%A, %d)\n"), $address, $dataSize);*/
             switch ($dataSize) {
                 case 1:               break;
                 case 2: swap2($address); break;
@@ -1169,7 +1168,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
 
                 if (available < 0) {
                     /* The last allocation overflowed the allocEnd boundary */
-/*traceAllocation(null, size);*/
+                    /*traceAllocation(null, size);*/
                     return null;
                 } else {
                     /*
@@ -1180,7 +1179,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
                      */
                     available = Address_diff(com_sun_squawk_GC_heapEnd, block);
                     if (lt(available, size)) {
-/*traceAllocation(null, size);*/
+                        /*traceAllocation(null, size);*/
                         return null;
                     }
                 }
@@ -1199,7 +1198,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
             com_sun_squawk_GC_allocTop = Address_add(block, size);
             zeroWords(oop, com_sun_squawk_GC_allocTop);
             newCount++;
-/*traceAllocation(oop, size);*/
+            /*traceAllocation(oop, size);*/
             return oop;
         }
 
@@ -1256,7 +1255,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
          * Copies bytes using memmove.
          */
         void copyBytes(Address src, int srcPos, Address dst, int dstPos, int length, boolean nvmDst) {
-//fprintf(stderr, format("copying  %d bytes from %A at offset %d to %A at offset %d nvmDst=%d\n"), length, src, srcPos, dst, dstPos, nvmDst);
+            /*fprintf(stderr, format("copying  %d bytes from %A at offset %d to %A at offset %d nvmDst=%d\n"), length, src, srcPos, dst, dstPos, nvmDst);*/
             if (nvmDst) {
                 sysToggleMemoryProtection(com_sun_squawk_GC_nvmStart, com_sun_squawk_GC_nvmEnd, false);
             }
