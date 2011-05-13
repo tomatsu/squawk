@@ -1,6 +1,8 @@
 #!/bin/sh
 #
- 
+
+# "small" tests don't include imp, so no midlets!
+
 if [ $1 = SOCKET ]; then
     echo "Can't run smoke test on SOCKET platform"
     exit 0
@@ -21,9 +23,9 @@ else
 	exit $STAT
 fi
 
-java -jar build.jar user-clean tests/HelloWorld
-java -jar build.jar  user-suite tests/HelloWorld
-./squawk -suite:tests/HelloWorld/HelloWorld
+#java -jar build.jar user-clean tests/HelloWorld
+#java -jar build.jar  user-suite tests/HelloWorld
+#./squawk -suite:tests/HelloWorld/HelloWorld
 
 java -jar build.jar  user-clean tests/HelloWorldMain
 java -jar build.jar  user-suite tests/HelloWorldMain
