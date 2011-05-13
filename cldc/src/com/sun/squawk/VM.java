@@ -24,7 +24,9 @@
 
 package com.sun.squawk;
 
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
 import com.sun.cldc.jna.TaskExecutor;
+/*end[PLATFORM_TYPE_BARE_METAL]*/
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Enumeration;
@@ -2434,6 +2436,7 @@ hbp.dumpState();
     static boolean executingHooks;
 
     private static void cleanupTaskExecutors() {
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
         for (int i = 0; i < taskCache.size(); i++) {
             TaskExecutor te = (TaskExecutor) taskCache.elementAt(i);
             te.cancelTaskExecutor();
@@ -2449,6 +2452,7 @@ hbp.dumpState();
                 }
             }
         }
+/*end[PLATFORM_TYPE_BARE_METAL]*/
     }
 
     /**

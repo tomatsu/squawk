@@ -1,24 +1,25 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -67,7 +68,7 @@ public class Assert {
     protected static void throwAssertFailedException(String message)  throws NotInlinedPragma {
         System.err.flush();
         System.out.flush();
-        throw new RuntimeException(message);
+        throw new RuntimeException("Assertion failed: " + message);
     }
 
     /**
@@ -102,7 +103,7 @@ public class Assert {
 /*end[JAVA5SYNTAX]*/
     public static void that(boolean cond, String msg) {
         if (ASSERTS_ENABLED && !cond) {
-            throwAssertFailedException("Assertion failed: ", msg);
+            throwAssertFailedException(msg);
         }
     }
 
@@ -111,7 +112,7 @@ public class Assert {
 /*end[JAVA5SYNTAX]*/
     public static void that(boolean cond, String msg, String filename, int lineno) {
         if (ASSERTS_ENABLED && !cond) {
-            throwAssertFailedException("Assertion failed: ", msg, filename, lineno);
+            throwAssertFailedException("", msg, filename, lineno);
         }
     }
 
@@ -126,7 +127,7 @@ public class Assert {
 /*end[JAVA5SYNTAX]*/
     public static void that(boolean cond) {
         if (ASSERTS_ENABLED && !cond) {
-            throwAssertFailedException("Assertion failed");
+            throwAssertFailedException("");
         }
     }
 
@@ -135,7 +136,7 @@ public class Assert {
 /*end[JAVA5SYNTAX]*/
     public static void that(boolean cond, String filename, int lineno) {
         if (ASSERTS_ENABLED && !cond) {
-            throwAssertFailedException("Assertion failed ", "", filename, lineno);
+            throwAssertFailedException("", "", filename, lineno);
         }
     }
 
@@ -152,7 +153,7 @@ public class Assert {
     @Vm2c(macro="{ fprintf(stderr, \"shouldNotReachHere: %s -- %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHere(String msg) throws NotInlinedPragma {
-        throwAssertFailedException("Assertion failed: should not reach here: ", msg);
+        throwAssertFailedException("should not reach here: ", msg);
         // NO-OP
         return null;
     }
@@ -161,7 +162,7 @@ public class Assert {
     @Vm2c (macro="{ fprintf(stderr, \"shouldNotReachHere: %s -- %s:%d\n\", (char*)msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHere(String msg, String filename, int lineno) throws NotInlinedPragma {
-        throwAssertFailedException("Assertion failed: should not reach here: ", msg, filename, lineno);
+        throwAssertFailedException("should not reach here: ", msg, filename, lineno);
         // NO-OP
         return null;
     }
@@ -178,7 +179,7 @@ public class Assert {
     @Vm2c(macro="{ fprintf(stderr, \"shouldNotReachHere -- %s:%d\n\", __FILE__, __LINE__); fatalVMError(\"\"); }")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHere() {
-        throwAssertFailedException("Assertion failed: ", "should not reach here");
+        throwAssertFailedException("should not reach here");
         // NO-OP
         return null;
     }
@@ -187,7 +188,7 @@ public class Assert {
     @Vm2c (macro="{ fprintf(stderr, \"shouldNotReachHere -- %s:%d\n\", __FILE__, __LINE__); fatalVMError(\"\"); }")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHere(String filename, int lineno) {
-        throwAssertFailedException("Assertion failed: ", "should not reach here", filename, lineno);
+        throwAssertFailedException("", "should not reach here", filename, lineno);
         // NO-OP
         return null;
     }
@@ -215,7 +216,9 @@ public class Assert {
         }
     }
 
-    private static void printContext(String filename, int lineno) {
+    private static void printContext(String msg, String filename, int lineno) {
+        VM.print("Assertion failed: ");
+        VM.print(msg);
         VM.print("(");
         VM.print(filename);
         VM.print(":");
@@ -228,8 +231,7 @@ public class Assert {
 /*end[JAVA5SYNTAX]*/
     public static void thatFatal(boolean cond, String msg, String filename, int lineno) {
         if (!cond) {
-            VM.print("Assertion failed: ");
-            printContext(filename, lineno);
+            printContext("", filename, lineno);
             VM.println(msg);
             VM.fatalVMError();
         }
@@ -256,8 +258,7 @@ public class Assert {
 /*end[JAVA5SYNTAX]*/
     public static void thatFatal(boolean cond, String filename, int lineno) {
         if (!cond) {
-            VM.println("Assertion failed");
-            printContext(filename, lineno);
+            printContext("", filename, lineno);
             VM.fatalVMError();
         }
     }
@@ -286,9 +287,7 @@ public class Assert {
     @Vm2c (macro="{ fprintf(stderr, \"shouldNotReachHere: %s -- %s:%d\n\", (char*)msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHereFatal(String msg, String filename, int lineno) {
-        VM.print("Assertion failed: ");
-        VM.print("should not reach here: ");
-        printContext(filename, lineno);
+        printContext("should not reach here: ", filename, lineno);
         VM.println(msg);
         VM.fatalVMError();
         return null;
@@ -316,9 +315,7 @@ public class Assert {
     @Vm2c (macro="{ fprintf(stderr, \"shouldNotReachHere -- %s:%d\n\", __FILE__, __LINE__); fatalVMError(\"\"); }")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHereFatal(String filename, int lineno) {
-        VM.print("Assertion failed: ");
-        VM.print("should not reach here: ");
-        printContext(filename, lineno);
+        printContext("should not reach here: ", filename, lineno);
         VM.fatalVMError();
         return null;
     }
@@ -358,8 +355,7 @@ public class Assert {
     public static void always(boolean cond, String msg, String filename, int lineno) {
         if (!cond) {
             if (ASSERT_ALWAYS_IS_FATAL || VMThread.currentThread().isServiceThread()) {
-                VM.print("Assertion failed: ");
-                printContext(filename, lineno);
+                printContext("", filename, lineno);
                 VM.println(msg);
                 VM.fatalVMError();
             } else {
@@ -397,8 +393,7 @@ public class Assert {
     public static void always(boolean cond, String filename, int lineno) {
         if (!cond) {
             if (ASSERT_ALWAYS_IS_FATAL || VMThread.currentThread().isServiceThread()) {
-                VM.println("Assertion failed");
-                printContext(filename, lineno);
+                printContext("", filename, lineno);
                 VM.fatalVMError();
             } else {
                 throwAssertFailedException("Assertion failed", "", filename, lineno);

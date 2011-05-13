@@ -38,39 +38,39 @@ GC!=com.sun.squawk.CheneyCollector             com.sun.squawk.CheneyCollector*
 ###############################################
 # Classes only used when PLATFORM_TYPE = BARE_METAL 
 ###############################################
-# PLATFORM_TYPE!=BARE_METAL                    CLASSSPEC
+# PLATFORM_TYPE_BARE_METAL=false                    CLASSSPEC
 
 ###############################################
 # Classes only used when PLATFORM_TYPE = SOCKET
 ###############################################
-# PLATFORM_TYPE!=SOCKET                        CLASSSPEC
+# PLATFORM_TYPE_SOCKET=false                        CLASSSPEC
 
 ###############################################
 # Classes only used when PLATFORM_TYPE = DELEGATING 
 ###############################################
-PLATFORM_TYPE!=DELEGATING                      com.sun.squawk.io.j2me.channel.*
+PLATFORM_TYPE_DELEGATING=false                 com.sun.squawk.io.j2me.channel.*
 
 ###############################################
 # Classes only used when PLATFORM_TYPE = NATIVE 
 ###############################################
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.j2me.file.*
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.j2me.socket.*
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.j2me.serversocket.*
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.j2me.file.*
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.j2me.socket.*
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.j2me.serversocket.*
 # Currently the platform classes are only used by PLATFORM_TYPE=NATIVE, but that may change...
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.Platform
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.BaseGCFFile
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.GCFFile
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.GCFSockets
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.platform.posix.*
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.microedition.io.*
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.ConnectionBaseInterface
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.ConnectionBaseAdapter
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.BaseInputStream
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.BaseOutputStream
-PLATFORM_TYPE!=NATIVE                          com.sun.squawk.io.j2me.ParameterParser
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.platform.Platform
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.platform.BaseGCFFile
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.platform.GCFFile
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.platform.GCFSockets
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.platform.posix.*
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.microedition.io.*
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.ConnectionBaseInterface
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.ConnectionBaseAdapter
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.BaseInputStream
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.BaseOutputStream
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.j2me.ParameterParser
 
 #in progress:
-PLATFORM_TYPE!=NATIVE                           com.sun.squawk.platform.windows.*
+PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.platform.windows.*
 
 
 ###############################################

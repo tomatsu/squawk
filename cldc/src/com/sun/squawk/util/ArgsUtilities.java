@@ -1,35 +1,33 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
 package com.sun.squawk.util;
 
-import java.io.*;
 import java.util.Enumeration;
 import java.util.Vector;
-import javax.microedition.io.*;
 
-import com.sun.squawk.io.connections.ClasspathConnection;
 import com.sun.squawk.*;
 
 /**
@@ -38,43 +36,9 @@ import com.sun.squawk.*;
 public class ArgsUtilities {
     
     /**
-     * Skip svn entries, etc...
-     */
-    public final static String[] skipList = {".svn", ".DS_Store"};
-
-    private static boolean nameInSkipList(String name) {
-        for (int i = 0; i < skipList.length; i++) {
-            String skipTarget = skipList[i] + VM.getFileSeparatorChar();
-            if (name.startsWith(skipTarget)) {
-                return true;
-            } else if (name.indexOf(VM.getFileSeparatorChar() + skipTarget) >= 0) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    /**
      * Purely static class should not be instantiated.
      */
     private ArgsUtilities() {}
-
-    /**
-     * Reads all the lines of a file into a given vector.
-     *
-     * @param   file   the file to read
-     * @param   lines  the vector to augment
-     */
-    public static void readLines(String file, Vector lines) {
-        try {
-            InputStream is = Connector.openInputStream("file://" + file);
-            InputStreamReader isr = new InputStreamReader(is);
-            LineReader lr = new LineReader(isr);
-            lr.readLines(lines);
-        } catch (IOException ioe) {
-            throw new RuntimeException("Error while processing file '"+file+"': " + ioe);
-        }
-    }
 
     /**
      * Processes a file containing command line arguments. The file is parsed as a
@@ -85,7 +49,7 @@ public class ArgsUtilities {
      */
     public static void readArgFile(String name, Vector args) {
         Vector lines = new Vector();
-        readLines(name, lines);
+        LineReader.readLines(name, lines);
         for (Enumeration e = lines.elements(); e.hasMoreElements();) {
             String line = (String) e.nextElement();
             StringTokenizer st = new StringTokenizer(line);
@@ -172,165 +136,7 @@ public class ArgsUtilities {
         }
         return path;
     }
-
-    /**
-     * Processes a single command line argument that specifies a file containing a set of
-     * class names, one per line.
-     *
-     * @param   arg      the command line argument to process
-     * @param   classes  the list of class names to augment
-     */
-    public static void processClassListArg(String arg, Vector classes) {
-        readLines(arg, classes);
-    }
-
-    /**
-     * Processes a single command line argument that specifies a jar or zip
-     * file of class files.
-     *
-     * @param   arg      the command line argument to process
-     * @param   classes  the list of class names to augment
-     * @param   resources the list of resource to augment
-     */
-    public static void processClassJarOrZipArg(String arg, Vector classes, Vector resources) {
-        try {
-            ClasspathConnection cp = (ClasspathConnection)Connector.open("classpath://" + arg);
-            processClasspathConnection(cp, classes, resources);
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-    }
-
-    /**
-     * Processes a single command line argument that specifies a jar or zip
-     * file of class files.
-     *
-     * @param   cp      the command line argument to process
-     * @param   classes  the list of class names to augment
-     * @param   resources the list of resource to augment
-     */
-    public static void processClasspathConnection(ClasspathConnection cp, Vector classes, Vector resources) {
-        try {
-            DataInputStream dis = new DataInputStream(cp.openInputStream("//"));
-            try {
-                for (;;) {
-                    String name = dis.readUTF();
-                    if (name.endsWith(".class")) {
-                        name = name.substring(0, name.length() - ".class".length());
-                        name = name.replace('/', '.');
-                        classes.addElement(name);
-                    } else if (nameInSkipList(name)) {
-                        System.out.println("Skipping resource file: " + name);
-                        continue;
-                    } else {
-                        try {
-                            byte[] bytes = cp.getBytes(name);
-                            ResourceFile resource = new ResourceFile(name, bytes);
-                            resources.addElement(resource);
-                        } catch (IOException e) {
-                        }
-                    }
-                }
-            } catch (EOFException ex) {
-            }
-            dis.close();
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-    }
-
-    /**
-     * Processes a single command line argument that specifies one or more
-     * class names or resource names.
-     *
-     * @param   arg      the command line argument to process
-     * @param   classes  the list of class names to augment
-     * @param   resources Vector<ResourceFile> the list of resources to augment
-     */
-    public static void processClassArg(String arg, Vector classes, Vector resources) {
-        if (arg.charAt(0) == '@') {
-            arg = arg.substring(1);
-            processClassListArg(arg, classes);
-        } else if (arg.endsWith(".zip") || arg.endsWith(".jar")) {
-            processClassJarOrZipArg(arg, classes, resources);
-        } else {
-            DataInputStream dis = null;
-            try {
-                dis = Connector.openDataInputStream("file://" + arg + "//");
-                try {
-                    int baseDirPrefix = arg.length() + 1;
-                    while (true) {
-                        String fullName = dis.readUTF();
-                        if (fullName.indexOf(".svn/") != -1) {
-                            continue;
-                        }
-                        /*
-                         * Strip off the base directory name
-                         */
-                        String name = fullName.substring(baseDirPrefix);
-                        int indexOfExclude = name.indexOf(".svn/");
-                        if (indexOfExclude != -1) {
-                            continue;
-                        }
-                        indexOfExclude = name.indexOf(".hg/");
-                        if (indexOfExclude != -1) {
-                            continue;
-                        }
-                        indexOfExclude = name.indexOf("CVS/");
-                        if (indexOfExclude != -1) {
-                            continue;
-                        }
-                        if (fullName.endsWith(".DS_Store")) {
-                            continue;
-                        }
-                        if (name.endsWith(".class")) {
-                            name = name.substring(0, name.length() - ".class".length());
-                            name = name.replace('/', '.');
-                            classes.addElement(name);
-                        } else if (nameInSkipList(name)) {
-                            System.out.println("Skipping resource file: " + name);
-                            continue;
-                        } else {
-                            InputStream input= null;
-                            ByteArrayOutputStream output;
-                            try {
-                                input = Connector.openInputStream("file://" + fullName);
-                                output = new ByteArrayOutputStream(1024);
-                                byte[] buffer;
-                                int read;
-                                buffer = new byte[256];
-                                int bufferSize = buffer.length;
-                                while ((read = input.read(buffer, 0, bufferSize)) != -1) {
-                                    output.write(buffer, 0, read);
-                                }
-                                buffer = output.toByteArray();
-                                ResourceFile resource = new ResourceFile(name, buffer);
-                                resources.addElement(resource);
-                            } catch (IOException e) {
-                                if (input != null) {try {input.close();} catch (IOException e1) {}};
-                            }
-                        }
-                    }
-                } catch (EOFException ex) {
-                    return;
-                }
-            } catch (ConnectionNotFoundException e) {
-                // argument is not a directory - add it as a class name
-                classes.addElement(arg);
-            } catch (IOException ioe) {
-                throw new RuntimeException("error parsing '" + arg + "': " + ioe);
-            } finally {
-                if (dis != null) {
-                    try {
-                        dis.close();
-                    } catch (IOException ioe) {
-                        ioe.printStackTrace();
-                        Assert.shouldNotReachHere();
-                    }
-                }
-            }
-        }
-    }
+  
 
     /**
      * Cuts a string of white space separated tokens into an array of strings, one element for each token.
@@ -347,21 +153,5 @@ public class ArgsUtilities {
         }
         return res;
     }
-
-    /**
-     * Gets the argument to a command line option. If the argument is not
-     * provided, then a usage message is printed and RuntimeException is
-     * thrown.
-     *
-     * @param  args   the command line arguments
-     * @param  index  the index at which the option's argument is located
-     * @param  opt    the name of the option
-     * @return the value of the option's argument or null if it is missing
-     */
-    public static String getOptArg(String[] args, int index, String opt) {
-        if (index >= args.length) {
-            return null;
-        }
-        return args[index];
-    }
+    
 }

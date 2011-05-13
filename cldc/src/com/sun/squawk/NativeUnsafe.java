@@ -1,24 +1,25 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -590,22 +591,7 @@ public final class NativeUnsafe {
     public final static int NATIVE_TASK_NT_ERRNO_RESULT_OFFSET = NATIVE_TASK_LOW_RESULT_OFFSET + 1;
     public final static int NATIVE_TASK_ARGS_OFFSET = NATIVE_TASK_NT_ERRNO_RESULT_OFFSET + 1;
 
-    public static int getNativeTaskEventID(Address ntask) {
-        return getAsInt(ntask, NATIVE_TASK_EVENTID_OFFSET);
-    }
-
-    public static int getNativeTaskResult(Address ntask) {
-        return getAsInt(ntask, NATIVE_TASK_RESULT_OFFSET);
-    }
-
-    public static int getNativeTaskErrno(Address ntask) {
-        return getAsInt(ntask, NATIVE_TASK_NT_ERRNO_RESULT_OFFSET);
-    }
-
-    public static Address createTaskExecutor(Address name, int priority, int stacksize) throws NativePragma {
-        throw Assert.shouldNotReachHere("unimplemented when hosted");
-    }
-
+    /*  ----- Natives: define unconditionally to avoid renumbering native methods ------------*/
     public static int cancelTaskExecutor(Address taskExecutor) throws NativePragma {
         throw Assert.shouldNotReachHere("unimplemented when hosted");
     }
@@ -624,6 +610,24 @@ public final class NativeUnsafe {
         throw Assert.shouldNotReachHere("unimplemented when hosted");
     }
 
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
+
+    public static int getNativeTaskEventID(Address ntask) {
+        return getAsInt(ntask, NATIVE_TASK_EVENTID_OFFSET);
+    }
+
+    public static int getNativeTaskResult(Address ntask) {
+        return getAsInt(ntask, NATIVE_TASK_RESULT_OFFSET);
+    }
+
+    public static int getNativeTaskErrno(Address ntask) {
+        return getAsInt(ntask, NATIVE_TASK_NT_ERRNO_RESULT_OFFSET);
+    }
+
+    public static Address createTaskExecutor(Address name, int priority, int stacksize) throws NativePragma {
+        throw Assert.shouldNotReachHere("unimplemented when hosted");
+    }
+
     public static int waitForBlockingFunction(Address ntask) {
 //VM.println("waitForBlockingFunction()...");
         int evntid = getNativeTaskEventID(ntask);
@@ -638,6 +642,8 @@ System.err.println("deleteNativeTask failed");
         }
         return result;
     }
+    
+/*end[PLATFORM_TYPE_BARE_METAL]*/
 
     /*-----------------------------------------------------------------------*\
      *               Raw (byte-orietened) memory support                     *

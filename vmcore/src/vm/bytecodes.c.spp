@@ -4163,6 +4163,8 @@ foundSlot:
                     break;
                 }
 
+                /* BARE_METAL platforms don't support native threads, so can't support TaskExecutors */
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
                 case Native_com_sun_squawk_NativeUnsafe_createTaskExecutor: {
                     int stacksize = popInt();
                     int priority = popInt();
@@ -4213,7 +4215,8 @@ foundSlot:
                     pushAddress(result);
                     break;
                 }
-
+/*end[PLATFORM_TYPE_BARE_METAL]*/
+                
                 case Native_com_sun_squawk_Address_add: {
                     int offset = popInt();
                     Address addr = popAddress();
