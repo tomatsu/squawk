@@ -21,11 +21,11 @@ else
 	exit $STAT
 fi
 
-./d user-clean tests/HelloWorld
-./d user-suite tests/HelloWorld
+java -jar build.jar user-clean tests/HelloWorld
+java -jar build.jar  user-suite tests/HelloWorld
 ./squawk -suite:tests/HelloWorld/HelloWorld
 
-./d user-clean tests/HelloWorldMain
-./d user-suite tests/HelloWorldMain
+java -jar build.jar  user-clean tests/HelloWorldMain
+java -jar build.jar  user-suite tests/HelloWorldMain
 ./squawk -suite:tests/HelloWorldMain/HelloWorldMain tests.HelloWorldMain
 
