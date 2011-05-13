@@ -121,7 +121,7 @@ public class Protocol extends ConnectionBase implements ClasspathConnection {
 //System.out.println("trying "+"zip://"+classPathEntry+"~"+fileName);
                     InputStream _is = Connector.openDataInputStream("zip://"+classPathEntry+"@"+fileName);
                     if (is == null)  {
-                        if (!MULTIPLEINSTANCESCHECK) {
+                        if (_is != null && !MULTIPLEINSTANCESCHECK) {
                             return _is;
                         }
                         is = _is;
@@ -143,7 +143,7 @@ public class Protocol extends ConnectionBase implements ClasspathConnection {
 //System.out.println("trying "+"file://"+classPathEntry+"/"+fileName);
                     InputStream _is = Connector.openDataInputStream("file://" + classPathEntry + "/" + fileName);
                     if (is == null)  {
-                        if (!MULTIPLEINSTANCESCHECK) {
+                        if (_is != null && !MULTIPLEINSTANCESCHECK) {
                             return _is;
                         }
                         is = _is;
