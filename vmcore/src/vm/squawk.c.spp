@@ -1113,8 +1113,8 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
 
 #ifdef VIRTUAL_ADDRESS_SPACE_LOWER_BOUND
     // on SPOTs and machines with MMU, flash memory may be virtually allocated to a larger range than specified by get_flash_base() + get_flash_size()
-    assume(VIRTUAL_ADDRESS_SPACE_LOWER_BOUND > com_sun_squawk_VM_romStart);
-    com_sun_squawk_VM_romEnd = VIRTUAL_ADDRESS_SPACE_UPPER_BOUND;
+    assume((Address)VIRTUAL_ADDRESS_SPACE_LOWER_BOUND > com_sun_squawk_VM_romStart);
+    com_sun_squawk_VM_romEnd = (Address)VIRTUAL_ADDRESS_SPACE_UPPER_BOUND;
     //com_sun_squawk_VM_romEnd = (Address)(FLASH_BASE_ADDR + FLASH_BASE_SIZE);
 #else /* VIRTUAL_ADDRESS_SPACE_LOWER_BOUND */
     com_sun_squawk_VM_romEnd = (Address)(get_flash_base() + get_flash_size());

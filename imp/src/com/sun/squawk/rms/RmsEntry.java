@@ -1,5 +1,6 @@
 /*
- * Copyright 2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2006-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2010-2011 Oracle. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This code is free software; you can redistribute it and/or modify
@@ -16,9 +17,9 @@
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -30,10 +31,17 @@ import java.io.IOException;
 import com.sun.squawk.Address;
 import com.sun.squawk.flash.IMemoryHeapBlock;
 
+/*
+ * An abstract class that describes the variuous types of entries that are stored in the RMS:
+ *  - RecordEntry
+ *  - RecordStoreEntry
+ *  - RecordStoreSequenceEntry
+ *  - ApplicationEscriptorEntry
+ *  - UnknownEntry
+ */
 public abstract class RmsEntry implements IRmsEntry {
 
     protected Address address;
-    protected int size;
     
     public RmsEntry() {
     }
@@ -41,17 +49,20 @@ public abstract class RmsEntry implements IRmsEntry {
     public Address getAddress() {
         return address;
     }
-    
-    public void readFrom(IMemoryHeapBlock memoryBlock) throws IOException {
-    }
-    
+
     public void setAddress(Address address) {
         this.address = address;
     }
 
-    public int size() {
-        return size;
+    public void readFrom(IMemoryHeapBlock memoryBlock) throws IOException {
     }
+
+    /** Get the size of the entry including any bookkeeping data stored with this entry.
+     * This matches the number of bytes read/written by the readFrom()/writeTo() methods.
+     *
+     * @return the entry size in bytes
+     */
+    abstract public int size();
 
     public void writeTo(DataOutputStream dataOut) throws IOException {
     }

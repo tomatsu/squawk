@@ -93,7 +93,6 @@ VERIFY_SIGNATURES=false                         com.sun.squawk.security.verifier
 ###############################################
 # Obsolete properties?
 ###############################################
-RESOURCE.CONNECTION=false                      com.sun.squawk.io.connections.ClasspathConnection
 
 ###############################################
 # Classes on the way out. No known users:
