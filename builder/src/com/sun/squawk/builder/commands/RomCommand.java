@@ -203,29 +203,38 @@ public class RomCommand extends Command {
                     }
                 } else {
                     Command moduleCommand = env.getCommand(module);
+                    Target target = null;
                     if (moduleCommand instanceof Target) {
+                        target = (Target) moduleCommand;
+                    } else {
+                        // see if we can conjure up a target for this module.
+                        File moduleDir = new File(module);
+                        if (moduleDir.exists() && new File(moduleDir, "src").exists()) {
+                            target = env.addTarget(true, module, "");
+                        }
+                    }
+                    if (target != null) {
                         suiteMetadata.addTargetIncluded(module);
                         if (!parentSuiteMetadata.includesTarget(module)) {
                             suiteMetadata.addTargetIncluded(module);
-                            Target target = (Target) moduleCommand;
                             suiteMetadata.addTargetsIncluded(target.getDependencyNames());
                             List<Target.FilePair> dirs = new ArrayList<Target.FilePair>();
                             target.addDependencyDirectories(target.getPreverifiedDirectoryName(), dirs, parentSuiteMetadata.getTargetsIncluded());
                             target.addDependencyDirectories(target.getResourcesDirectoryName(), dirs, parentSuiteMetadata.getTargetsIncluded());
-                            for (Target.FilePair file: dirs) {
+                            for (Target.FilePair file : dirs) {
                                 if (!allClassesLocations.contains(file) && file.getCanonicalFile().exists()) {
                                     classesLocations.add(file);
                                     allClassesLocations.add(file);
                                 }
                             }
                             if (target.j2me) {
-                            	dirs = new ArrayList<Target.FilePair>();
-                            	target.addDependencyDirectories(target.getCompiledDirectoryName(), dirs, parentSuiteMetadata.getTargetsIncluded());
-                                for (Target.FilePair file: dirs) {
-                                	if (!allJava5ClassesLocations.contains(file) && file.getCanonicalFile().exists()) {
-                                		java5ClassesLocations.add(file);
-                                		allJava5ClassesLocations.add(file);
-                                	}
+                                dirs = new ArrayList<Target.FilePair>();
+                                target.addDependencyDirectories(target.getCompiledDirectoryName(), dirs, parentSuiteMetadata.getTargetsIncluded());
+                                for (Target.FilePair file : dirs) {
+                                    if (!allJava5ClassesLocations.contains(file) && file.getCanonicalFile().exists()) {
+                                        java5ClassesLocations.add(file);
+                                        allJava5ClassesLocations.add(file);
+                                    }
                                 }
                             }
                         }
