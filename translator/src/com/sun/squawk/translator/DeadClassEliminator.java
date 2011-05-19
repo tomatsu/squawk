@@ -164,8 +164,8 @@ public class DeadClassEliminator {
         int modifiers = klass.getModifiers();
         int suiteType = translator.getSuiteType();
 
-        if (/*translator.getSuite().isBootstrap() &&*/ VM.stripSymbols(klass) && !VM.isInternal(klass)) {
-            // if the symbol is stripped, and it wasn't marked as "internal" in the library.proprties file,
+        if (VM.isInternal(klass)) {
+            // if the symbol wasn't marked as "export" or "dynamic" in the library.proprties file,
             // then there is no way that this is externally visible.
             return false;
         } else {
@@ -174,8 +174,7 @@ public class DeadClassEliminator {
 
             switch (suiteType) {
                 case Suite.APPLICATION:
-                    // no possible child suite:
-                    return false;
+                    return VM.isDynamic(klass);
 
                 case Suite.LIBRARY:
                     // what can we do here
@@ -348,7 +347,7 @@ public class DeadClassEliminator {
                 if (!isMarked(klass)) {
                     if (trace) {
                         foundClasses.addElement(klass.toString());
-                        if (VM.isInternal(klass)) {
+                        if (VM.isCrossSuitePrivate(klass)) {
                             System.out.println(klass  + " is internal, why are we deleting???");
                         }
                     }

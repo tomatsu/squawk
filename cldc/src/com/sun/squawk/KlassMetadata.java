@@ -400,7 +400,7 @@ public class KlassMetadata {
             Tracer.traceln("Processing metadata for " + definedClass);
         }
 
-        if (VM.stripSymbols(definedClass)) {
+        if (!VM.isExported(definedClass)) {
             if (Klass.TRACING_ENABLED && Tracer.isTracing("stripping")) {
                 Tracer.traceln("  discarded all metadata");
             }

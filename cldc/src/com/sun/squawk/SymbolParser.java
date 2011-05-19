@@ -383,7 +383,7 @@ final class SymbolParser extends ByteBufferDecoder {
             for (int i = 0; i != count; ++i) {
                 select(category, i);
                 Klass fieldType = getSignatureType(getSignatureAt(0));
-                if (retainMember(type, modifiers, fieldType) && !VM.stripSymbols(klass.getField(i, category == STATIC_FIELDS))) {
+                if (retainMember(type, modifiers, fieldType) && VM.isExported(klass.getField(i, category == STATIC_FIELDS))) {
                     if (!keptAtLeastOne) {
                         symbolsBuffer.addUnsignedByte(category);
                         keptAtLeastOne = true;
@@ -442,7 +442,7 @@ final class SymbolParser extends ByteBufferDecoder {
                 if (!PragmaException.isHosted(pragmas) &&               // strip methods called only in hosted VM mode
                     !PragmaException.isInterpreterInvoked(pragmas) &&   // strip methods called from the interpreter
                     retainMember(type, modifiers, null) &&
-                    !VM.stripSymbols(klass.getMethod(i, category == STATIC_METHODS)))
+                    VM.isExported(klass.getMethod(i, category == STATIC_METHODS)))
                 {
                     // keeping this method:
                     if (!keptAtLeastOne) {

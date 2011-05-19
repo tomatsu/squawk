@@ -199,7 +199,7 @@ public class MethodDB {
      * Update the allMethods table and record that this method might override some other method.
      *
      * @param m the method to record.
-     * @parm estSize the estimated size of the method in # IR instructions. May pass zero if not tracing.
+     * @param estSize the estimated size of the method in # IR instructions. May pass zero if not tracing.
      */
     public void recordMethod(Method m, int estSize) {
         if (canonicalMethodEntryTable != null) {
@@ -217,7 +217,8 @@ public class MethodDB {
      /**
       * Update the calls table for caller.
       *
-      * @param m the method to record.
+      * @param caller 
+      * @param callee the method to record.
       */
      public void recordMethodCall(MethodDB.Entry caller, Method callee) {
         if (!callee.isHosted() && !callee.isNative()) {
@@ -233,7 +234,7 @@ public class MethodDB {
      * via the interface class.
      * 
      * @param mw MMethodDB.Entry of an inherited method.
-     * @param m Method of the inhereited method (matching mw).
+     * @param m Method of the inherited method (matching mw).
      * @param interfaces array of interfaces that the subclass implements
      */
     private void calcImplementsMerge(MethodDB.Entry mw, Method m, Klass[] interfaces) {
@@ -287,7 +288,7 @@ public class MethodDB {
      * Given a klass, check to so if it inherits any methods form a superclass that are valid implementations of one of it's interface's methods,
      * If so, record the overrides/supermethod information.
      *
-     * @param klass the klass to jcheck.
+     * @param klass the klass to check.
      */
     public void computeInheritedImplementorsInfo(Klass klass) {
         if (klass == Klass.OBJECT || klass.isArray() || klass.isInterface() || klass.isSynthetic()) {
@@ -341,12 +342,12 @@ public class MethodDB {
     \*---------------------------------------------------------------------------*/
     
     /**
-     * Given the method's access, the defining class' acess, and the suite type,
+     * Given the method's access, the defining class' access, and the suite type,
      * determine the final accessibility of the method outside of this suite.
      * 
      * Note that we are talking about the accessibility of a particular method, 
      * not all of the methods that override a super method. There are cases where
-     * a super method is not accessibole, but an override is. A latter check for overriding
+     * a super method is not accessible, but an override is. A latter check for overriding
      * will mark the super method as used.
      * 
      * @param mw the MMethodDB.Entry
@@ -360,8 +361,8 @@ public class MethodDB {
 
         if (Modifier.isPrivate(modifiers)) {
             return false;
-        } else if (translator.getSuite().isBootstrap() && VM.stripSymbols(m) && !VM.isInternal(m)) {
-            // if the symbol is stripped, and it wasn't marked as "internal" in the library.proprties file,
+        } else if (translator.getSuite().isBootstrap() && VM.isInternal(m)) {
+            // if the symbol is stripped, and it wasn't marked as "CrossSuitePrivate" in the library.proprties file,
             // then there is no way that this is externally visible.
             return false;
         } else {

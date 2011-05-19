@@ -178,9 +178,10 @@ public class VM {
         public static final int PRECEDENCE_CLASS = 1;
         public static final int PRECEDENCE_MEMBER = 2;
         
-        public static final int KEEP = 0;
-        public static final int STRIP = 1;
-        public static final int INTERNAL = 2;
+        public static final int EXPORT = 0;
+        public static final int INTERNAL = 1;
+        public static final int CROSS_SUITE_PRIVATE = 2;
+        public static final int DYNAMIC = 3;
 
         final int action;
         final int precedence;
@@ -345,19 +346,24 @@ public class VM {
      * stripped in library mode.
      * <p>
      * The key of each property in the file specifies a pattern that will be used to match
-     * a class, field or method that may be stripped. The value for a given keep must be
-     * "keep", "strip", or "internal". 
+     * a class, field or method that may be stripped.
      *
-     *  keep: Keep the symbols that match the pattern. 
+     * NOTE: Symbol exports are ignored when a suite is built as an application.
      *
-     *  strip: Remove the symbols that match the pattern. 
-     *         If the underlying method is not called within the suite, it me be removed.
+     *  export: Keep the symbols that match the pattern. If symbol is a class, then export members (methods and fields) also.
      *
-     *  internal: Remove the symbols that match the pattern, but keep the matching methods
-     *            even if not called within the suite. This is used when multiple suites are compiled togther.
+     *  export_class: export the specified class, but not necessarily the enclosing methods and fields.
+     *
+     *  dynamic: Will keep the symbol, even if the suite is built as an application. Use for classes loaded by Class.findClass().
+     *
+     *  internal: Remove the symbols that match the pattern.
+     *            If the underlying method is not called within the suite, it may be removed.
+     *
+     *  cross_suite_private: Remove the symbols that match the pattern, but keep the matching methods
+     *            even if not called within the suite. This is used when multiple suites are compiled together.
      *            The child suites can call methods even though symbols were stripped.
+     *            This mode is only enabled when ENABLE_DYNAMIC_CLASSLOADING is true.
      *
-     *  keepclass: Keep the specified class, but not necessarily the enclosing methods.
      * 
      * There are 3 different types of patterns that can be specified:
      *
@@ -365,10 +371,10 @@ public class VM {
      *    element in a package and the latter extends the match to include any sub-package.
      *    For example:
      *
-     *    java.**=keep
-     *    javax.**=keep
-     *    com.sun.**=strip
-     *    com.sun.squawk.*=keep
+     *    java.**=export
+     *    javax.**=export
+     *    com.sun.**=internal
+     *    com.sun.squawk.*=export
      *
      *    This will keep all the symbols in any package starting with "java." or "javax.".
      *    All symbols in a package starting with "com.sun." will also be stripped <i>except</i>
@@ -380,14 +386,14 @@ public class VM {
      *
      *  2. A class pattern is a fully qualified class name. For example:
      *
-     *    com.sun.squawk.Isolate=keep
+     *    com.sun.squawk.Isolate=export
      *
      *  3. A field or method pattern is a fully qualified class name joined to a field or method
      *     name by a '#' and (optionally) suffixed by parameter types for a method. For example:
      *
-     *    com.sun.squawk.Isolate#isTckTest=strip
-     *    com.sun.squawk.Isolate#clearErr(java.lang.String)=keep
-     *    com.sun.squawk.Isolate#removeThread(com.sun.squawk.VMThread,boolean)=strip
+     *    com.sun.squawk.Isolate#isTckTest=internal
+     *    com.sun.squawk.Isolate#clearErr(java.lang.String)=export
+     *    com.sun.squawk.Isolate#removeThread(com.sun.squawk.VMThread,boolean)=internal
      *
      * A member pattern takes precedence over a class pattern which in turn takes precedence
      * over a package pattern.
@@ -406,24 +412,27 @@ public class VM {
             for (Map.Entry<Object, Object> entry : properties.entrySet()) {
                 String k = (String) entry.getKey();
                 String v = (String) entry.getValue();
+                v = v.toLowerCase();
 
                 int action;
                 boolean scopeAll = true;
-                if ("keep".equalsIgnoreCase(v)) {
-                    action = Matcher.KEEP;
-                } else if ("keepclass".equalsIgnoreCase(v)) {
-                    action = Matcher.KEEP;
+                if ("export".equals(v)) {
+                    action = Matcher.EXPORT;
+                } else if ("export_class".equals(v)) {
+                    action = Matcher.EXPORT;
                     scopeAll = false;
-                } else if ("strip".equalsIgnoreCase(v)) {
-                    action = Matcher.STRIP;
-                } else if ("internal".equalsIgnoreCase(v)) {
+                } else if ("dynamic".equals(v)) {
+                    action = Matcher.DYNAMIC;
+                } else if ("internal".equals(v)) {
+                    action = Matcher.INTERNAL;
+                } else if ("cross_suite_private".equals(v)) {
                     if (enableDynamicClassloading) {
-                        action = Matcher.INTERNAL;
+                        action = Matcher.CROSS_SUITE_PRIVATE;
                     } else {
-                        action = Matcher.STRIP;
+                        action = Matcher.INTERNAL;
                     }
                 } else {
-                    throw new IllegalArgumentException("value for property " + k + " in " + path + " must be 'keep', 'strip', or 'internal'");
+                    throw new IllegalArgumentException("value for property " + k + " in " + path + " must be 'export', 'export_class', 'internal', 'dynamic', or 'cross_suite_private'");
                 }
 
                 if (k.endsWith("*")) {
@@ -459,16 +468,6 @@ public class VM {
         }
         return current;
     }
-    
-    /**
-     * Determines if the symbols for a class, field or method should be stripped.
-     *
-     * @param s   a class, field or method identifier
-     */
-    private static boolean strip(String s) {
-        Matcher current = getMatcher(s);
-        return current != null && (current.action != Matcher.KEEP);
-    }
 
     /**
      * Determines if all the symbolic information for a class should be stripped. This
@@ -476,20 +475,21 @@ public class VM {
      * based on their names.
      *
      * @param klass         the class to consider
-     * @return true if the class symbols should be stripped
+     * @return true if the class symbols should NOT be stripped
      */
-    public static boolean stripSymbols(Klass klass) {
-        boolean result = strip(klass.getName());
-        if (result & !isInternal(klass)) {
+    public static boolean isExported(Klass klass) {
+	    Matcher current = getMatcher(klass.getName());
+        boolean exported = current == null || (current.action == Matcher.EXPORT);
+        if (!exported && (current.action != Matcher.CROSS_SUITE_PRIVATE)) {
             klass.updateModifiers(Modifier.SUITE_PRIVATE);
         }
-        return result;
+        return exported;
     }
 
     /**
      * Create a string for this Member that will be used or matching.
      *
-     * @param member the memeber to name
+     * @param member the member to name
      * @return a string suitable or matchings
      */
     private static String getSymbolString(Member member) {
@@ -521,22 +521,23 @@ public class VM {
      * based on their names.
      *
      * @param member        the method or field to consider
-     * @return true if the class symbols should be stripped
+     * @return true if the class symbols should NOT be stripped
      */
-    public static boolean stripSymbols(Member member) {
-        return strip(getSymbolString(member));
+    public static boolean isExported(Member member) {
+	    Matcher current = getMatcher(getSymbolString(member));
+        return current == null || (current.action == Matcher.EXPORT);
     }
     
     /**
      * Determines if the field or method is internal, so should be retained (even if symbol gets stripped)
      *
      * @param member        the method or field to consider
-     * @return true if the class symbols should be stripped
+     * @return true if the class symbols should be (ped
      */
-    public static boolean isInternal(Member member) {
+    public static boolean isCrossSuitePrivate(Member member) {
         String s = getSymbolString(member);
         Matcher current = getMatcher(s);
-        return current != null && (current.action == Matcher.INTERNAL);
+        return current != null && (current.action == Matcher.CROSS_SUITE_PRIVATE);
     }
     
     /**
@@ -545,8 +546,41 @@ public class VM {
      * @param klass        the klass to consider
      * @return true if the class symbols should be stripped
      */
+    public static boolean isCrossSuitePrivate(Klass klass) {
+        Matcher current = getMatcher(klass.getName());
+        return current != null && (current.action == Matcher.CROSS_SUITE_PRIVATE);
+    }
+
+   /**
+     * Determines if the klass is loaded dynamically by find class, so should never be stripped.
+     *
+     * @param klass         the class to consider
+     * @return true if the class symbols should be stripped
+     */
+    public static boolean isDynamic(Klass klass) {
+        Matcher current = getMatcher(klass.getName());
+        return current != null && (current.action == Matcher.DYNAMIC);
+    }
+
+    /**
+     * Determines if the klass is internal (not exported, CROSS_SUITE_PRIVATE, or dynamic)
+     *
+     * @param klass         the class to consider
+     * @return true if the class symbols should be stripped
+     */
     public static boolean isInternal(Klass klass) {
         Matcher current = getMatcher(klass.getName());
+        return current == null || (current.action == Matcher.INTERNAL);
+    }
+    
+    /**
+     * Determines if the member is internal (not exported or CROSS_SUITE_PRIVATE)
+     *
+     * @param member        the method or field to consider
+     * @return true if the class symbols should be stripped
+     */
+    public static boolean isInternal(Member member) {
+	    Matcher current = getMatcher(getSymbolString(member));
         return current != null && (current.action == Matcher.INTERNAL);
     }
     

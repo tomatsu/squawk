@@ -4374,8 +4374,8 @@ hbp.dumpState();
      * @param klass         the class to consider
      * @return true if the class symbols should be stripped
      */
-    public static boolean stripSymbols(Klass klass) {
-        return false;
+    public static boolean isExported(Klass klass) {
+        return true;
     }
 
     /**
@@ -4386,8 +4386,8 @@ hbp.dumpState();
      * @param member        the method or field to consider
      * @return true if the class symbols should be stripped
      */
-    public static boolean stripSymbols(Member member) {
-        return false;
+    public static boolean isExported(Member member) {
+        return true;
     }
     
     /**
@@ -4396,7 +4396,7 @@ hbp.dumpState();
      * @param member        the method or field to consider
      * @return true if the class symbols should be stripped
      */
-    public static boolean isInternal(Member member) {
+    public static boolean isCrossSuitePrivate(Member member) {
         return false;
     }
     
@@ -4406,8 +4406,38 @@ hbp.dumpState();
      * @param klass         the class to consider
      * @return true if the class symbols should be stripped
      */
-    public static boolean isInternal(Klass klass) {
+    public static boolean isCrossSuitePrivate(Klass klass) {
         return false;
+    }
+
+   /**
+     * Determines if the klass is loaded dynamically by find class, so should never be stripped.
+     *
+     * @param klass         the class to consider
+     * @return true if the class symbols should be stripped
+     */
+    public static boolean isDynamic(Klass klass) {
+        return false;
+    }
+
+    /**
+     * Determines if the klass is internal (not exported, CROSS_SUITE_PRIVATE, or dynamic)
+     *
+     * @param klass         the class to consider
+     * @return true if the class symbols should be stripped
+     */
+    public static boolean isInternal(Klass klass) {
+	    return false;
+    }
+
+    /**
+     * Determines if the member is internal (not exported or CROSS_SUITE_PRIVATE)
+     *
+     * @param member        the method or field to consider
+     * @return true if the class symbols should be stripped
+     */
+    public static boolean isInternal(Member member) {
+	    return false;
     }
 
     /**

@@ -92,7 +92,7 @@ public class DeadMethodEliminator {
     }
     
     /**
-     * Is this a method that might be called by the system becuase the class exists?
+     * Is this a method that might be called by the system because the class exists?
      * This includes default constructors and static initializers.
      *
      * Report seperately to help identify code that could be eliminated by eliminating the class.
@@ -114,7 +114,7 @@ public class DeadMethodEliminator {
                 if (Arg.get(Arg.DELETE_UNUSED_PRIVATE_CONSTRUCTORS).getBool() && (m.isPrivate())) {
                     return false;
                 }
-               /* if (VM.stripSymbols(m.getDefiningClass())) {
+               /* if (!VM.isInternal(m.getDefiningClass())) {
                     // no way to look up this class dynamically, so can eliminate constructor if not called explicitly:
                     System.out.println("May eliminate " + m);
                     return false;
