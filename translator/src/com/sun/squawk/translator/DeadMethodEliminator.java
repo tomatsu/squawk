@@ -114,7 +114,7 @@ public class DeadMethodEliminator {
                 if (Arg.get(Arg.DELETE_UNUSED_PRIVATE_CONSTRUCTORS).getBool() && (m.isPrivate())) {
                     return false;
                 }
-               /* if (!VM.isInternal(m.getDefiningClass())) {
+               /* if (VM.isInternal(m.getDefiningClass())) {
                     // no way to look up this class dynamically, so can eliminate constructor if not called explicitly:
                     System.out.println("May eliminate " + m);
                     return false;

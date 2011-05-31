@@ -42,7 +42,7 @@ public class ProxySupport {
      */
     public static void initializeTranslator(String classPath) throws HostedPragma {
         if (VM.getCurrentIsolate() == null) {
-            Suite suite = new Suite("-proxy suite-", null);
+            Suite suite = new Suite("-proxy suite-", null, Suite.EXTENDABLE_LIBRARY);
             VM.setCurrentIsolate(null);
             Isolate isolate = new Isolate(null, null, suite);
             VM.setCurrentIsolate(isolate);

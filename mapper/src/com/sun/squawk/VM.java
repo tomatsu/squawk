@@ -84,7 +84,7 @@ public class VM {
      * @param classPath   the class search path
      */
     static void initializeTranslator(String classPath) {
-        Suite suite = new Suite("-open-", null);
+        Suite suite = new Suite("-open-", null, Suite.EXTENDABLE_LIBRARY);
         Isolate isolate = new Isolate(null, null, suite);
         VM.setCurrentIsolate(isolate);
 

@@ -190,7 +190,7 @@ public final class Arg {
 //                "                           <m> = <n> + <num parameters>. Don't inline if <n> = 0.");
 //        initArg(INLINE_OBJECT_CONSTRUCTOR, "inlineObjectConstructor", Arg.BOOLEAN, "true", //?
 //                "<bool> If inlining, always inline the constructor or Object.");
-        initArg(DEAD_CLASS_ELIMINATION, "deadClassElimination", Arg.BOOLEAN, "false",  // for now
+        initArg(DEAD_CLASS_ELIMINATION, "deadClassElimination", Arg.BOOLEAN, "true",
                 "<bool> Remove unused classes.");
         // this option make the debugging proxy's job have to do whole-suite analysis the exact same way as the original suite creation, 
         // which is slow and error prone. So turn off for now. 

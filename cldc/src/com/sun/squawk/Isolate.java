@@ -1401,7 +1401,7 @@ public final class Isolate implements Runnable {
 //                if (leafSuiteName == null) {
 //                    leafSuiteName = "-leaf" + VM.getNextHashcode() + "-";
 //                }
-//                leafSuite = new Suite(leafSuiteName, parent);
+//                leafSuite = new Suite(leafSuiteName, parent, Suite.EXTENDABLE_LIBRARY);
 //            }
 //        } else {
 //            leafSuite = bootstrapSuite;

@@ -1,11 +1,26 @@
-
 /*
- * Copyright 2004 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
- * This software is the proprietary information of Sun Microsystems, Inc.
- * Use is subject to license terms.
+ * This code is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2
+ * only, as published by the Free Software Foundation.
  *
- * This is a part of the Squawk JVM translator.
+ * This code is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included in the LICENSE file that accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Oracle, 16 Network Circle, Menlo Park, CA 94025 or
+ * visit www.oracle.com if you need additional information or have
+ * any questions.
  */
 
 package com.sun.squawk.translator;
@@ -18,13 +33,10 @@ import com.sun.squawk.util.*;
 import com.sun.squawk.Method;
 import com.sun.squawk.Field;
 import com.sun.squawk.Modifier;
-import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Vector;
 import com.sun.squawk.translator.ir.ReferenceRecordingVisitor;
 import com.sun.squawk.translator.ir.IR;
 import com.sun.squawk.translator.ir.Instruction;
-
 
 /**
  * Detect and remove unused classes.
@@ -45,6 +57,7 @@ public class DeadClassEliminator {
     /**
      * Mark this ref, and refs to superclass, interfaces, and component type (if an array).
      *
+     * @param klass
      * @return true if this is was unmarked
      */
     public boolean markClass(Klass klass) {
@@ -55,7 +68,9 @@ public class DeadClassEliminator {
         return false;
     }
 
-    /** Creates a new instance of DeadClassEliminator */
+    /** Creates a new instance of DeadClassEliminator
+     * @param translator
+     */
     public DeadClassEliminator(Translator translator) {
         this.translator = translator;
     }
@@ -64,21 +79,25 @@ public class DeadClassEliminator {
      *                         Track unused classes                              *
     \*---------------------------------------------------------------------------*/
 
-    private static Hashtable systemRoots = new Hashtable();
-        private static String[] systemRootsArray = {
-            "com.sun.squawk.VM",
-            "com.sun.squawk.ResourceFile",
-            "com.sun.squawk.ManifestProperty",
-            "com.sun.squawk.Suite",
-            "com.sun.squawk.KlassMetadata",
-            "com.sun.squawk.KlassMetadata$Full",
-            "com.sun.squawk.MethodMetadata",
-            "com.sun.squawk.FullMethodMetadata",
-            "com.sun.squawk.vm.FieldOffsets",
-            "com.sun.squawk.vm.MethodOffsets",
-            "com.sun.squawk.Klass",
-            "com.sun.squawk.StringOfBytes"
-        };
+    private static final Hashtable systemRoots = new Hashtable();
+    private static final String[] systemRootsArray = {
+        "com.sun.squawk.VM",
+        "com.sun.squawk.ResourceFile",
+        "com.sun.squawk.ManifestProperty",
+        "com.sun.squawk.Suite",
+        "com.sun.squawk.KlassMetadata",
+        "com.sun.squawk.KlassMetadata$1", // used by metadata suites
+        "com.sun.squawk.KlassMetadata$Full",
+        "com.sun.squawk.MethodMetadata",
+        "com.sun.squawk.FullMethodMetadata",
+        "com.sun.squawk.vm.FieldOffsets",
+        "com.sun.squawk.vm.MethodOffsets",
+        "com.sun.squawk.Klass",
+        "com.sun.squawk.Klass",
+        "com.sun.squawk.util.ArrayHashtable",// used by metadata suites
+        "com.sun.squawk.ObjectMemorySerializer$ControlBlock",// used by metadata suites
+        "com.sun.squawk.StringOfBytes"
+    };
 
     static {
         for (int i = 0; i < systemRootsArray.length; i++) {
@@ -88,8 +107,25 @@ public class DeadClassEliminator {
     }
 
     /**
+     * Is this class a MIDlet?
+     * 
+     * @param klass
+     * @return true if this class implements a MIDlet
+     */
+    private static boolean isMIDlet(Klass klass) {
+        Klass superklass = klass.getSuperclass();
+        while (superklass != null) {
+            if (superklass.getInternalName().equals("javax.microedition.midlet.MIDlet")) {
+                return true;
+            }
+            superklass = superklass.getSuperclass();
+        }
+        return false;
+    }
+
+    /**
      * Is this a class that might be called by the system through some basic mechanism,
-     * such as "main", called by interpreter, etc.
+     * such as "main", being a MIDlet, called by interpreter, etc.
      *
      * @param klass the klass
      * @return true if this is a basic root
@@ -105,6 +141,10 @@ public class DeadClassEliminator {
         }
 
         if (klass.hasMain()) {
+            return true;
+        }
+
+        if (isMIDlet(klass)) {
             return true;
         }
 
@@ -227,6 +267,7 @@ public class DeadClassEliminator {
     /**
      * Mark the class, and scan methods for references to other classes.
      * Push new references onto the markStack.
+     * @param klass
      */
     public void scanClassMethods(Klass klass) {
         ClassFile classFile = translator.lookupClassFile(klass);
@@ -245,6 +286,7 @@ public class DeadClassEliminator {
     /**
      * Mark the class, and scan methods for references to other classes.
      * Push new references onto the markStack.
+     * @param klass
      */
     public void scanClassFields(Klass klass) {
         for (int i = 0; i < klass.getFieldCount(true); i++) {
@@ -258,6 +300,7 @@ public class DeadClassEliminator {
     /**
      * Mark the class, and scan methods for references to other classes.
      * Push new references onto the markStack.
+     * @param klass
      */
     public void scanClassDeep(Klass klass) {
         if (markClass(klass)) {
@@ -308,7 +351,7 @@ public class DeadClassEliminator {
                 }
             }
         }
-        if (trace && foundClasses.size() != 0) {
+        if (trace && !foundClasses.isEmpty()) {
             Tracer.traceln("[translator DCE: ==== System roots:  " + foundClasses.size() + " =====");
             printVectorSorted(foundClasses, "System root: ");
         }
@@ -326,7 +369,7 @@ public class DeadClassEliminator {
                 }
             }
         }
-        if (trace && foundClasses.size() != 0) {
+        if (trace && !foundClasses.isEmpty()) {
             Tracer.traceln("[translator DCE: ==== Visible roots:  " + foundClasses.size() + " =====");
             printVectorSorted(foundClasses, "Visible root: ");
         }
@@ -356,14 +399,17 @@ public class DeadClassEliminator {
             }
         }
         if (trace || VM.isVeryVerbose()) {
-            if (foundClasses.size() != 0) {
+            if (!foundClasses.isEmpty()) {
                 Tracer.traceln("[translator DCE: ==== Unused classes:  " + foundClasses.size() + " (used classes: " + referencedClasses.size() + ") =====");
                 printVectorSorted(foundClasses, "    ");
             }
         }
-        Klass[] unusedKlasses = new Klass[unusedClasses.size()];
-        unusedClasses.copyInto(unusedKlasses);
-        suite.setUnusedClasses(unusedKlasses);
+        
+        if (!unusedClasses.isEmpty()) {
+            Klass[] unusedKlasses = new Klass[unusedClasses.size()];
+            unusedClasses.copyInto(unusedKlasses);
+            suite.setUnusedClasses(unusedKlasses);
+        }
     }
 
 }

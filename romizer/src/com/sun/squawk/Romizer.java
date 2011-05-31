@@ -645,7 +645,7 @@ public class Romizer {
             if (excludeFile != null) {
                 excludeClasses(classNames, excludeFile);
             }
-            suite = new Suite(new File(suiteName).getName(), parentSuite);
+            suite = new Suite(new File(suiteName).getName(), parentSuite, suiteType);
             for (String className: noClassDefFoundErrorClasses) {
             	if (suite.shouldThrowNoClassDefFoundErrorFor(className)) {
             		noClassDefFoundErrorClasses.remove(className);
@@ -809,7 +809,7 @@ public class Romizer {
         // Ensure no classes that were meant to be excluded have been included
         verifyExclusions(strippedSuite);
 
-        String suiteFileName =  suiteName + Suite.FILE_EXTENSION;
+        String suiteFileName = suiteName + Suite.FILE_EXTENSION;
         String url = "file://" + suiteFileName;
         DataOutputStream dos = Connector.openDataOutputStream(url);
 
@@ -825,7 +825,8 @@ public class Romizer {
         if (createMetadata) {
             String metadataUrl = "file://" + suiteFileName + Suite.FILE_EXTENSION_METADATA;
             DataOutputStream metadataDos = Connector.openDataOutputStream(metadataUrl);
-            Suite metadataSuite = suite.strip(Suite.METADATA, strippedSuite.getName() + Suite.FILE_EXTENSION + Suite.FILE_EXTENSION_METADATA, strippedSuite);
+            Suite metadataSuite = suite.strip(Suite.METADATA, suiteFileName + Suite.FILE_EXTENSION_METADATA, strippedSuite);
+            metadataSuite.close();
             int memorySizePrior = NativeUnsafe.getMemorySize();
             ObjectMemory objectMemory;
             ObjectGraphSerializer.pushObjectMap();
@@ -841,19 +842,22 @@ public class Romizer {
         }
 
         // Create the <suiteName>_classes.jar file of all the class files from which the suite was created
+        // base on the unstripped suite, which allows classes that are only used on host to end up in jar,
+        // even though eliminated from suite.
         if (createJars) {
             String jarFilePath = suiteName + "_classes.jar";
             File jarFile = new File(jarFilePath);
-            jarClasses(jarFile, strippedSuite, false);
+            jarClasses(jarFile, suite, false);
             generatedFiles.addElement(jarFile.getAbsolutePath());
             if (java5ClassPath != null) {
                 jarFilePath = suiteName + "_java5.jar";
                 jarFile = new File(jarFilePath);
-                jarClasses(jarFile, strippedSuite, true);
+                jarClasses(jarFile, suite, true);
                 generatedFiles.addElement(jarFile.getAbsolutePath());
             }
         }
 
+        // TODO: Do we really need to do this???
         // Ensures that saving worked
         NativeUnsafe.setMemorySize(memoryStart);
         ObjectMemory memory = ObjectMemoryLoader.load(Connector.openDataInputStream(url), url, false).objectMemory;

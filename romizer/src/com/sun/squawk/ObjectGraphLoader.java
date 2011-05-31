@@ -122,12 +122,14 @@ public class ObjectGraphLoader {
 		if (address.isZero()) {
 			return null;
 		}
+        Klass[] klasses;
     	Object object = addressToObjectMap.get(address);
 		if (object != null) {
-			return (Klass[]) object;
+            klasses = (Klass[]) object;
+			return klasses;
 		}
         int length = GC.getArrayLengthNoCheck(address);
-        Klass[] klasses = new Klass[length];
+        klasses = new Klass[length];
         for (int i=0; i < klasses.length; i++) {
         	klasses[i] = getKlassAt(NativeUnsafe.getAddress(address, i));
         }
@@ -320,6 +322,7 @@ public class ObjectGraphLoader {
             GC.setAllocTop(allocTop);
         }
         ObjectGraphSerializer.addObjectsToAddress(getObjectToAddressMap());
+        parentSuite.checkSuite();
         return parentSuite;
 	}
 
@@ -332,7 +335,7 @@ public class ObjectGraphLoader {
 			return (Suite) object;
 		}
 		String name = getStringAt(NativeUnsafe.getAddress(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Suite$name)));
-		Suite suite = new Suite(name, parent);
+		Suite suite = new Suite(name, parent, NativeUnsafe.getInt(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Suite$type)));
 
 		VM.setCurrentIsolate(null);
         Isolate isolate = new Isolate(null, null, suite);
@@ -340,18 +343,21 @@ public class ObjectGraphLoader {
         VM.setCurrentIsolate(isolate);
         
         // Force Klass init, as when in hosted mode it will load the bootstrap classes on its own
-        translator.setInKlassInit(true);
         Klass.getClass("-null-", false);
-        translator.setInKlassInit(false);
 
         skipKlassInternals = true;
         Klass[] klasses = getKlassesAt(NativeUnsafe.getAddress(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Suite$classes)));
         skipKlassInternals = false;
         for (int i=0; i < klasses.length; i++) {
         	Klass klass = klasses[i];
-        	initKlassInternals(klass);
-        	Assert.that(suite.getKlass(i) == klass);
+            if (klass != null) {
+                initKlassInternals(klass);
+                Assert.that(suite.getKlass(i) == klass);
+            } else {
+               suite.installFillerClassAndMetadata();
+            }
 		}
+
         KlassMetadata[] metadatas = getKlassMetadatasAt(NativeUnsafe.getAddress(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Suite$metadatas)));
         if (metadatas != null) {
             for (KlassMetadata metadata : metadatas) {
@@ -361,6 +367,10 @@ public class ObjectGraphLoader {
             }
         }
 
+        suite.close();
+        if (suite.getType() == Suite.METADATA && suite.getClassCount() != 0) {
+            throw new RuntimeException("Metadata suites should not have any classes. " + suite + " has " + suite.getClassCount());
+        }
         addressToObjectMap.put(address, suite);
         objectToAddressMap.put(suite, address);
 		return suite;

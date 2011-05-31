@@ -30,8 +30,6 @@ import com.sun.squawk.*;
 
 public class ObjectGraphLoaderTranslator implements TranslatorInterface {
 	
-	protected boolean inKlassInit;
-
 	public void close(int type) {
 	}
 
@@ -51,9 +49,6 @@ public class ObjectGraphLoaderTranslator implements TranslatorInterface {
 	}
 
 	public void load(Klass klass) {
-		if (inKlassInit) {
-			return;
-		}
 		return;
 	}
 
@@ -74,9 +69,5 @@ public class ObjectGraphLoaderTranslator implements TranslatorInterface {
     public boolean isOption(String arg) {
         return false;
     }
-
-	public void setInKlassInit(boolean inKlassInit) {
-		this.inKlassInit = inKlassInit;
-	}
 
 }

@@ -243,6 +243,11 @@ public class FieldOffsets {
      * The offset of the 'metadatas' field in com.sun.squawk.Suite. Used by com.sun.squawk.ObjectGraphLoader of the Romizer.
      */
     public final static long com_sun_squawk_Suite$metadatas = 2 | OOP;
+
+    /**
+     * The offset of the 'type' field in com.sun.squawk.Suite. Used by com.sun.squawk.ObjectGraphLoader of the Romizer.
+     */
+    public final static long com_sun_squawk_Suite$type = 3 | INT;
     
     /**
      * The offset of the 'definedClass' field in com.sun.squawk.KlassMetadata. Used by com.sun.squawk.ObjectGraphLoader of the Romizer.

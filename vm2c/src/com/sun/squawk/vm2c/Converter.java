@@ -702,7 +702,7 @@ public class Converter {
             String functionName = unqualifiedClassName + s;
             if (methodNames.containsValue(functionName)) {
                 functionName = qualifiedClassName + s;
-                assert !methodNames.containsKey(functionName);
+                assert !methodNames.containsValue(functionName);
             }
             methodNames.put(method, functionName);
         }
@@ -710,7 +710,7 @@ public class Converter {
     }
 
     /**
-     * Subsitutes a given variable name with another if it clashes with a global variable.
+     * Substitutes a given variable name with another if it clashes with a global variable.
      */
     public Name subVarName(Name varName) {
         Name subVarName = this.localVarNameSubs.get(varName);
