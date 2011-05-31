@@ -204,7 +204,11 @@ public class DeadClassEliminator {
         int modifiers = klass.getModifiers();
         int suiteType = translator.getSuiteType();
 
-        if (VM.isInternal(klass)) {
+        if (VM.isDynamic(klass)) {
+            // if "dynamic", then class may be loaded by Class.findClass(), so we have to assume that it is used.
+            Assert.always(!VM.isInternal(klass));
+            return true;
+        } else if (VM.isInternal(klass)) {
             // if the symbol wasn't marked as "export" or "dynamic" in the library.proprties file,
             // then there is no way that this is externally visible.
             return false;
@@ -214,8 +218,7 @@ public class DeadClassEliminator {
 
             switch (suiteType) {
                 case Suite.APPLICATION:
-                    return VM.isDynamic(klass);
-
+                    return false;
                 case Suite.LIBRARY:
                     // what can we do here
                     return true;

@@ -435,17 +435,22 @@ public class VM {
                     throw new IllegalArgumentException("value for property " + k + " in " + path + " must be 'export', 'export_class', 'internal', 'dynamic', or 'cross_suite_private'");
                 }
 
+                Matcher matcher = null;
                 if (k.endsWith("*")) {
-                    stripMatchers.add(new PackageMatcher(k, action));
+                    matcher = new PackageMatcher(k, action);
                 } else if (k.indexOf('#') != -1) {
-                    stripMatchers.add(new MemberMatcher(k, action));
+                    matcher = new MemberMatcher(k, action);
                 } else {
                     if (scopeAll) {
-                        stripMatchers.add(new ClassMatcher(k, action));
+                        matcher = new ClassMatcher(k, action);
                     } else {
-                        stripMatchers.add(new ClassOnlyMatcher(k, action));
+                        matcher = new ClassOnlyMatcher(k, action);
                     }
                 }
+//                if (isVerbose()) {
+//                   System.out.println("Match rule: " + matcher.toString());
+//                }
+                stripMatchers.add(matcher);
             }
         } catch (IOException e) {
             System.err.println("Error loading properties from " + path + ": " + e);

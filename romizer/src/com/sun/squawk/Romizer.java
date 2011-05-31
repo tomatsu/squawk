@@ -622,11 +622,9 @@ public class Romizer {
             throw new RuntimeException();
         }
 
-        if (suiteType == Suite.LIBRARY || suiteType == Suite.EXTENDABLE_LIBRARY) {
-            File file = new File(suiteName + "." + (suiteType == Suite.LIBRARY ? "library" : "extendable.library") + ".properties");
-            if (file.exists()) {
-                VM.resetSymbolsStripping(file);
-            }
+        File file = new File(suiteName + "." + (suiteType == Suite.EXTENDABLE_LIBRARY ? "extendable.library" : "library") + ".properties");
+        if (file.exists()) {
+            VM.resetSymbolsStripping(file);
         }
 
         // Parse class name args (if any)

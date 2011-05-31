@@ -479,10 +479,12 @@ public final class Suite {
     private void removeClass(Klass klass) {
         int suiteID = klass.getSuiteID();
         Assert.always(classes[suiteID] == klass);
-        Assert.always(metadatas[suiteID] == null || metadatas[suiteID].getDefinedClass() == klass);
+        Assert.always(metadatas == null || metadatas[suiteID] == null || metadatas[suiteID].getDefinedClass() == klass);
         checkWrite();
         classes[suiteID] = null;
-        metadatas[suiteID] = null;
+        if (metadatas != null) {
+            metadatas[suiteID] = null;
+        }
     }
 
     private void removeMetadata(Klass klass) {
@@ -1110,7 +1112,8 @@ public final class Suite {
 
     void checkSuite() {
         if (metadatas == null) {
-            System.out.println("<><><><><><><><> metadatas for " + this + " is null");
+            //System.out.println("<><><><><><><><> metadatas for " + this + " is null");
+            return;
         }
 
         for (int i = 0; i < classes.length; i++) {
