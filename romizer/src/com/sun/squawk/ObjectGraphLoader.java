@@ -352,6 +352,11 @@ public class ObjectGraphLoader {
         	Klass klass = klasses[i];
             if (klass != null) {
                 initKlassInternals(klass);
+                if (suite.getKlass(i) != klass) {
+                    System.err.println("Odd: classes are not equal at " + i);
+                    System.err.println("    suite.getKlass(i): " + suite.getKlass(i));
+                    System.err.println("    klass: " + klass);
+                }
                 Assert.that(suite.getKlass(i) == klass);
             } else {
                suite.installFillerClassAndMetadata();

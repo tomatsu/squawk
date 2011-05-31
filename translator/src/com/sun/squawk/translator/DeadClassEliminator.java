@@ -221,6 +221,12 @@ public class DeadClassEliminator {
                     return false;
                 case Suite.LIBRARY:
                     // what can we do here
+                    if (Modifier.isPackagePrivate(modifiers)) {
+                        // treat as internal?
+                        if (VM.isVerbose()) {
+                            System.out.println("### FYI - Found package-private class: " + klass);
+                        }
+                    }
                     return true;
                 default:
                     // extendable and debuggable suites leave all symbols externally visible.

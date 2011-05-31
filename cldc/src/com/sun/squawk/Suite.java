@@ -767,11 +767,11 @@ public final class Suite {
      */
     public boolean contains(Klass klass) {
         int id = klass.getSuiteID();
-        if (id < classes.length) {
+        if (id < classes.length && classes[id] != null) {
             if (classes[id] == klass) {
                 return true;
             } else if (klass.getInternalName().equals(classes[id].getInternalName())) {
-              System.out.println("!!! KLASSES NOT EQUAL, BUT SAME NAME: " + klass + " != " + classes[id]);
+                System.out.println("!!! KLASSES NOT EQUAL, BUT SAME NAME: " + klass + " != " + classes[id]);
             }
         }
         return false;

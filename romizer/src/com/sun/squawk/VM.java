@@ -575,7 +575,7 @@ public class VM {
      */
     public static boolean isInternal(Klass klass) {
         Matcher current = getMatcher(klass.getName());
-        return current == null || (current.action == Matcher.INTERNAL);
+        return current != null || (current.action == Matcher.INTERNAL);
     }
     
     /**
