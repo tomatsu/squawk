@@ -82,7 +82,9 @@ FLASH_MEMORY=true                            com.sun.cldc.jna.platform.Posix
 ###############################################
 # Classes that don't need to be on desktop device, but on device:
 ###############################################
-FLASH_MEMORY=false                             com.sun.squawk.io.j2me.spotsuite.*
+FLASH_MEMORY=false                            com.sun.squawk.io.j2me.spotsuite.*
+FLASH_MEMORY=false                            com.sun.cldc.jna.platform.Spot
+
 
 
 ###############################################
