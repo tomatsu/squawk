@@ -34,7 +34,7 @@ import java.util.Hashtable;
  * Provide simplified platform information
  */
 public abstract class Platform {
-    private final static boolean DEBUG = true;
+    private final static boolean DEBUG = false;
 
     private final static Platform INSTANCE = makePlatform();
 
