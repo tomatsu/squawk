@@ -407,8 +407,6 @@ public class Klass<T> {
      * Creates a new instance of a class. This method can only be called for a non-array,
      * non-interface class that {@link #hasDefaultConstructor has a default constructor}.
      * @return new object
-     * @throws java.lang.InstantiationException
-     * @throws java.lang.IllegalAccessException 
      */
     public final
 /*if[JAVA5SYNTAX]*/
@@ -652,9 +650,9 @@ T
         if (!base.isPrimitive()) {
             return name.substring(0, dimensions) + 'L' + name.substring(dimensions) + ';';
         }
-        char primitive = getSignatureFirstChar(base.getSystemID());
-        Assert.that(primitive != 'L');
-        return name.substring(0, dimensions) + primitive;
+        char primitiveCode = getSignatureFirstChar(base.getSystemID());
+        Assert.that(primitiveCode != 'L');
+        return name.substring(0, dimensions) + primitiveCode;
     }
 
     /**
@@ -833,7 +831,6 @@ T
      * @param superType  must be {@link #UNINITIALIZED_NEW}
      */
     protected Klass(String name, Klass superType) {
-        Assert.that(superType == Klass.UNINITIALIZED_NEW); // Only to be called by UninitializedObjectClass.
         this.name          = name;
         this.id            = Short.MIN_VALUE;
         this.modifiers     = Modifier.PUBLIC | Modifier.SYNTHETIC;
@@ -3571,34 +3568,14 @@ T
     public static Klass STRING_OF_BYTES;
 
     /**
-     * The type for a slot in a stack chunk.
-     */
-    public static Klass LOCAL;
-
-    /**
      * The type for a stack chunk.
      */
     public static Klass LOCAL_ARRAY;
 
     /**
-     * The type for a class state word.
-     */
-    public static Klass GLOBAL;
-
-    /**
      * The type for a class state structure.
      */
     public static Klass GLOBAL_ARRAY;
-
-    /**
-     * The type for a table of class state structures.
-     */
-    public static Klass GLOBAL_ARRAYARRAY;
-
-    /**
-     * The type for an element of a method.
-     */
-    public static Klass BYTECODE;
 
     /**
      * The type for an array of bytes that is a method.
@@ -3629,11 +3606,6 @@ T
      * The type for representing the directed distance between two machine addresses.
      */
     public static Klass OFFSET;
-
-    /**
-     * Container of methods for peeking and poking memory.
-     */
-    public static Klass NATIVEUNSAFE;
 
     /**
      * Finds one of the bootstrap classes, creating it if necessary.
@@ -3685,20 +3657,20 @@ T
     static {
         initBootstrapClasses();
     }
+
+    private final static int none = 0;
+    private final static int publik = Modifier.PUBLIC;
+    private final static int synthetic = publik | Modifier.SYNTHETIC;
+    private final static int synthetic2 = synthetic | Modifier.DOUBLEWORD;
+    private final static int primitive = synthetic | Modifier.PRIMITIVE;
+    private final static int primitive2 = primitive | Modifier.DOUBLEWORD;
+    private final static int squawkarray = publik | Modifier.SQUAWKARRAY;
+    private final static int squawkprimitive = Modifier.SQUAWKPRIMITIVE;
     
     static void initBootstrapClasses() {
-        final int none            = 0;
-        final int publik          = Modifier.PUBLIC;
-        final int synthetic       = publik    | Modifier.SYNTHETIC;
-        final int synthetic2      = synthetic | Modifier.DOUBLEWORD;
-        final int primitive       = synthetic | Modifier.PRIMITIVE;
-        final int primitive2      = primitive | Modifier.DOUBLEWORD;
-        final int squawkarray     = publik    | Modifier.SQUAWKARRAY;
-        final int squawkprimitive = Modifier.SQUAWKPRIMITIVE;
-
         TOP                = boot(null,          "-T-",                     -1,                    synthetic);
-        ONE_WORD           = boot(TOP,           "-1-",                     -1,                    synthetic);
-        TWO_WORD           = boot(TOP,           "-2-",                     -1,                    synthetic2);
+        ONE_WORD           = boot(TOP,           "-1-",                     -1,                    synthetic); // only used by translator
+        TWO_WORD           = boot(TOP,           "-2-",                     -1,                    synthetic2);// only used by translator
 
         INT                = boot(ONE_WORD,      "int",                     CID.INT,               primitive);
         BOOLEAN            = boot(INT,           "boolean",                 CID.BOOLEAN,           primitive);
@@ -3712,10 +3684,10 @@ T
         DOUBLE2            = boot(ONE_WORD,      "-double2-",               CID.DOUBLE2,           primitive2);
         VOID               = boot(TOP,           "void",                    CID.VOID,              synthetic);
 
-        REFERENCE          = boot(ONE_WORD,      "-ref-",                   -1,                    synthetic);
-        UNINITIALIZED      = boot(REFERENCE,     "-uninit-",                -1,                    synthetic);
-        UNINITIALIZED_THIS = boot(UNINITIALIZED, "-uninit_this-",           -1,                    synthetic);
-        UNINITIALIZED_NEW  = boot(UNINITIALIZED, "-uninit_new-",            -1,                    synthetic);
+        REFERENCE          = boot(ONE_WORD,      "-ref-",                   -1,                    synthetic); // only used by translator
+        UNINITIALIZED      = boot(REFERENCE,     "-uninit-",                -1,                    synthetic); // only used by translator
+        UNINITIALIZED_THIS = boot(UNINITIALIZED, "-uninit_this-",           -1,                    synthetic); // only used by translator
+        UNINITIALIZED_NEW  = boot(UNINITIALIZED, "-uninit_new-",            -1,                    synthetic); // only used by translator
 
         OBJECT             = boot(REFERENCE,     "java.lang.Object",        CID.OBJECT,            none);
         STRING             = boot(OBJECT,        "java.lang.String",        CID.STRING,            squawkarray);
@@ -3723,52 +3695,62 @@ T
         KLASS              = boot(OBJECT,        "com.sun.squawk.Klass",    CID.KLASS,             none);
         NULL               = boot(OBJECT,        "-null-",                  CID.NULL,              synthetic);
 
-        OBJECT_ARRAY       = boot(OBJECT,        "[java.lang.Object",       CID.OBJECT_ARRAY,      synthetic);
+        OBJECT_ARRAY       = boot(OBJECT,        "[java.lang.Object",       CID.OBJECT_ARRAY,      synthetic); // only used by translator/mapper
         STRING_ARRAY       = boot(OBJECT,        "[java.lang.String",       CID.STRING_ARRAY,      synthetic);
-        BOOLEAN_ARRAY      = boot(OBJECT,        "[boolean",                CID.BOOLEAN_ARRAY,     synthetic);
+        BOOLEAN_ARRAY      = boot(OBJECT,        "[boolean",                CID.BOOLEAN_ARRAY,     synthetic); // only used by translator
         BYTE_ARRAY         = boot(OBJECT,        "[byte",                   CID.BYTE_ARRAY,        synthetic);
-        CHAR_ARRAY         = boot(OBJECT,        "[char",                   CID.CHAR_ARRAY,        synthetic);
-        SHORT_ARRAY        = boot(OBJECT,        "[short",                  CID.SHORT_ARRAY,       synthetic);
-        INT_ARRAY          = boot(OBJECT,        "[int",                    CID.INT_ARRAY,         synthetic);
-        LONG_ARRAY         = boot(OBJECT,        "[long",                   CID.LONG_ARRAY,        synthetic);
-        FLOAT_ARRAY        = boot(OBJECT,        "[float",                  CID.FLOAT_ARRAY,       synthetic);
-        DOUBLE_ARRAY       = boot(OBJECT,        "[double",                 CID.DOUBLE_ARRAY,      synthetic);
+        CHAR_ARRAY         = boot(OBJECT,        "[char",                   CID.CHAR_ARRAY,        synthetic); // only used by translator
+        SHORT_ARRAY        = boot(OBJECT,        "[short",                  CID.SHORT_ARRAY,       synthetic); // only used by translator
+        INT_ARRAY          = boot(OBJECT,        "[int",                    CID.INT_ARRAY,         synthetic); // only used by translator
+        LONG_ARRAY         = boot(OBJECT,        "[long",                   CID.LONG_ARRAY,        synthetic); // only used by translator
+        FLOAT_ARRAY        = boot(OBJECT,        "[float",                  CID.FLOAT_ARRAY,       synthetic); // only used by translator
+        DOUBLE_ARRAY       = boot(OBJECT,        "[double",                 CID.DOUBLE_ARRAY,      synthetic); // only used by translator
 
+        // Ensure that all the reserved system classes are loaded if running in a hosted environment
+        if (VM.isHosted()) {
+            initBootstrapClassesHostedEarly();
+        }
         /*
          * Special implementation types.
          */
         STRING_OF_BYTES    = boot(STRING,        "com.sun.squawk.StringOfBytes", CID.STRING_OF_BYTES,   squawkarray);
-        LOCAL              = boot(ONE_WORD,      "-local-",                 CID.LOCAL,             synthetic);
         LOCAL_ARRAY        = boot(OBJECT,        "[-local-",                CID.LOCAL_ARRAY,       synthetic);
-        GLOBAL             = boot(ONE_WORD,      "-global-",                CID.GLOBAL,            synthetic);
         GLOBAL_ARRAY       = boot(OBJECT,        "[-global-",               CID.GLOBAL_ARRAY,      synthetic);
-        GLOBAL_ARRAYARRAY  = boot(OBJECT,        "[[-global-",              CID.GLOBAL_ARRAYARRAY, synthetic);
         ADDRESS            = boot(OBJECT,        "com.sun.squawk.Address",  CID.ADDRESS,           squawkprimitive);
         ADDRESS_ARRAY      = boot(OBJECT,        "[com.sun.squawk.Address", CID.ADDRESS_ARRAY,     none);
         UWORD              = boot(OBJECT,        "com.sun.squawk.UWord",    CID.UWORD,             squawkprimitive);
         UWORD_ARRAY        = boot(OBJECT,        "[com.sun.squawk.UWord",   CID.UWORD_ARRAY,       none);
         OFFSET             = boot(OBJECT,        "com.sun.squawk.Offset",   CID.OFFSET,            squawkprimitive);
-        NATIVEUNSAFE       = boot(OBJECT,        "com.sun.squawk.NativeUnsafe", CID.NATIVEUNSAFE,      none);
-
-        /*
-         * Methods.
-         */
-        BYTECODE           = boot(INT,           "-bytecode-",              CID.BYTECODE,          synthetic);
         BYTECODE_ARRAY     = boot(OBJECT,        "[-bytecode-",             CID.BYTECODE_ARRAY,    synthetic);
 
         // Ensure that all the reserved system classes are loaded if running in a hosted environment
         if (VM.isHosted()) {
-            loadReservedSystemClasses();
+            initBootstrapClassesHostedLate();
         }
 
         Assert.that(Klass.LONG2.isPrimitive());
         Assert.that(Klass.DOUBLE2.isPrimitive());
     }
 
+     /**
+     * Ensure that all the reserved system classes are loaded if running in a hosted environment.
+     */
+    private static void initBootstrapClassesHostedEarly() throws HostedPragma {
+        // Base classes have to be created before array classes
+        boot(ONE_WORD,      "-local-",                     CID.LOCAL,             synthetic);
+        boot(ONE_WORD,      "-global-",                    CID.GLOBAL,            synthetic);
+        boot(INT,           "-bytecode-",                  CID.BYTECODE,          synthetic);
+    }
+
     /**
      * Ensure that all the reserved system classes are loaded if running in a hosted environment.
      */
-    private static void loadReservedSystemClasses() throws HostedPragma {
+    private static void initBootstrapClassesHostedLate() throws HostedPragma {
+        // these classes have to be created for boostrap, but not looked up at runtime:
+        boot(OBJECT,        "[[-global-",                  CID.GLOBAL_ARRAYARRAY, synthetic);
+        boot(OBJECT,        "com.sun.squawk.NativeUnsafe", CID.NATIVEUNSAFE,      none);
+
+        // load all system classes:
         try {
             Isolate isolate = VM.getCurrentIsolate();
             Suite bootstrapSuite = isolate.getBootstrapSuite();

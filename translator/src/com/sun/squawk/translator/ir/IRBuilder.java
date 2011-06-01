@@ -122,6 +122,7 @@ public final class IRBuilder {
 
     /**
      * Return the built IR.
+     * @return the IR for this code
      */
     public IR getIR() {
         return ir;
@@ -665,8 +666,8 @@ public final class IRBuilder {
      * @param field       the referenced field
      * @param isPutfield  specifies if this is being called for <i>putfield</i>
      *                    which requires extra verification if used in a
-     *                    contructor to allow assignment to fields of the
-     *                    uninitialised object if the fields are declared in
+     *                    constructor to allow assignment to fields of the
+     *                    uninitialized object if the fields are declared in
      *                    the constructor's enclosing class
      * @return            the object reference
      */
@@ -828,7 +829,7 @@ public final class IRBuilder {
      /**
       * Insert an instruction producing a slot number to the head of a parameter list.
       *
-      * @param parameters the extisting parameter prodicing instructions
+      * @param parameters the existing parameter producing instructions
       * @param slot       the instruction producing the slot
       * @return           the new parameter list
       */
@@ -836,20 +837,16 @@ public final class IRBuilder {
          StackProducer[] newParms = new StackProducer[parameters.length + 1];
          if (Translator.REVERSE_PARAMETERS) {
              newParms[0] = slot;
-             for (int i = 0 ; i < parameters.length ; i++) {
-                 newParms[i+1] = parameters[i];
-             }
+             System.arraycopy(parameters, 0, newParms, 1, parameters.length);
          } else {
-             for (int i = 0 ; i < parameters.length ; i++) {
-                 newParms[i] = parameters[i];
-             }
+             System.arraycopy(parameters, 0, newParms, 0, parameters.length);
              newParms[parameters.length] = slot;
          }
          return newParms;
      }
 
     /**
-     * Make sure actualType is NOT a Squawk Priomitive (Address, UWord, etc) being passed as a parameter of tyep Object.
+     * Make sure actualType is NOT a Squawk Primitive (Address, UWord, etc) being passed as a parameter of type Object.
      * 
      * @param callee
      * @param actualType

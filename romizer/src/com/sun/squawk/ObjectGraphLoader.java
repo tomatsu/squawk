@@ -49,6 +49,7 @@ public class ObjectGraphLoader {
 	protected final Stack<Map<Object, Address>> objectToAddressMapStack = new Stack<Map<Object, Address>>();
 	protected ObjectGraphLoaderTranslator translator = new ObjectGraphLoaderTranslator();
 	protected boolean skipKlassInternals;
+    protected Suite suite;
 
 	public ObjectGraphLoader() {
 	}
@@ -132,6 +133,9 @@ public class ObjectGraphLoader {
         klasses = new Klass[length];
         for (int i=0; i < klasses.length; i++) {
         	klasses[i] = getKlassAt(NativeUnsafe.getAddress(address, i));
+            if (klasses[i] == null) {
+                suite.installFillerClassAndMetadata();
+            }
         }
         addressToObjectMap.put(address, klasses);
         objectToAddressMap.put(klasses, address);
@@ -335,7 +339,7 @@ public class ObjectGraphLoader {
 			return (Suite) object;
 		}
 		String name = getStringAt(NativeUnsafe.getAddress(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Suite$name)));
-		Suite suite = new Suite(name, parent, NativeUnsafe.getInt(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Suite$type)));
+		suite = new Suite(name, parent, NativeUnsafe.getInt(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Suite$type)));
 
 		VM.setCurrentIsolate(null);
         Isolate isolate = new Isolate(null, null, suite);
@@ -358,8 +362,6 @@ public class ObjectGraphLoader {
                     System.err.println("    klass: " + klass);
                 }
                 Assert.that(suite.getKlass(i) == klass);
-            } else {
-               suite.installFillerClassAndMetadata();
             }
 		}
 

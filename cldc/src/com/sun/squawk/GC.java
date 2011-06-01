@@ -1232,7 +1232,7 @@ public class GC implements GlobalStaticFields {
      * @return a pointer to the new stack or null if the allocation fails
      */
     static Object newStack(int length, VMThread owner) {
-        int size = roundUpToWord(HDR.arrayHeaderSize + length * Klass.LOCAL.getDataSize());
+        int size = roundUpToWord(HDR.arrayHeaderSize + (length * HDR.BYTES_PER_WORD));
         Object stack = allocatePrim(size, Klass.LOCAL_ARRAY, length);
         if (stack != null) {
             NativeUnsafe.setObject(stack, SC.owner, owner);
