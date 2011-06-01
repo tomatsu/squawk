@@ -107,7 +107,7 @@ public class JavaApplicationManager {
         }
 
         if (testMIDletClass != null) {
-            mainClassName = "com.sun.squawk.imp.MIDletMainWrapper";
+            mainClassName = Isolate.MIDLET_WRAPPER_CLASS;
             javaArgs = new String[] {"-name", testMIDletClass};
         } else if (args.length > 0) {
             /*

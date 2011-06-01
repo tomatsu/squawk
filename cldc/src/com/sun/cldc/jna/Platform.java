@@ -164,7 +164,7 @@ public abstract class Platform {
             }
             return result;
         }
-        VM.println("Error in makePlatform. Exiting...");
+        VM.println("Error in makePlatform for " + getNativePlatformName() + ". Exiting...");
         VM.haltVM(1);
         return null;
     }

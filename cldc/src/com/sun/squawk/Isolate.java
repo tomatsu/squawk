@@ -135,7 +135,7 @@ public final class Isolate implements Runnable {
     /**
      * The name of the wrapper class used to start up midlets.
      */
-    private final static String MIDLET_WRAPPER_CLASS = "com.sun.squawk.imp.MIDletMainWrapper";
+    final static String MIDLET_WRAPPER_CLASS = "com.sun.squawk.imp.MIDletMainWrapper";
 
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
 /*else[ENABLE_ISOLATE_MIGRATION]*/
