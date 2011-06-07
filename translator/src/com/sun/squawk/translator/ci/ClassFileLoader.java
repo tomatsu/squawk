@@ -424,7 +424,8 @@ public final class ClassFileLoader implements Context {
     }
 
     private static boolean isPragmaGlobalStaticFieldsInherited(Klass klass) {
-        return klass.getInternalName().equals("com.sun.squawk.pragma.GlobalStaticFieldsInherited");
+        return false;
+        //return klass.getInternalName().equals("com.sun.squawk.pragma.GlobalStaticFieldsInherited");
     }
 
     private static boolean implementsGlobalStaticFieldPragma(Klass[] interfaces, boolean inheritedOnly) {

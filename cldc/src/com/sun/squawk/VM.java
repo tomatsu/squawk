@@ -1,24 +1,25 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -36,7 +37,9 @@ import java.util.Stack;
 /*if[OLD_IIC_MESSAGES]*/
 //import com.sun.squawk.io.ServerConnectionHandler;
 /*end[OLD_IIC_MESSAGES]*/
+/*if[NEW_IIC_MESSAGES]*/
 import com.sun.squawk.io.mailboxes.Mailbox;
+/*end[NEW_IIC_MESSAGES]*/
 import com.sun.squawk.peripheral.PeripheralRegistry;
 import com.sun.squawk.platform.Platform;
 import com.sun.squawk.platform.SystemEvents;
@@ -50,7 +53,6 @@ import com.sun.squawk.util.IntHashtable;
 import com.sun.squawk.util.SquawkHashtable;
 import com.sun.squawk.util.SquawkVector;
 import com.sun.squawk.vm.ChannelConstants;
-import com.sun.squawk.vm.Global;
 import com.sun.squawk.vm.HDR;
 import com.sun.squawk.vm.Native;
 import com.sun.squawk.vm.SC;
@@ -196,11 +198,13 @@ public class VM implements GlobalStaticFields {
      * The name of the class to invoke main on when an isolate is being initialized.
      */
     private static String isolateInitializer;
-    
+
+/*if[NEW_IIC_MESSAGES]*/
     /**
      * Global hashtable of registered mailboxes.
      */
     private static SquawkHashtable registeredMailboxes;
+/*end[NEW_IIC_MESSAGES]*/
     
     /**
      * 
@@ -237,6 +241,10 @@ public class VM implements GlobalStaticFields {
      */
     private static Stack taskCache;
 
+    /**
+     * If true (1), then interpreter-level tracing is on.
+     */
+    private static int tracing;
     
 //    private static boolean isBlocked;
     
@@ -1522,15 +1530,15 @@ hbp.dumpState();
      * types as roots.
      */
 
-    /**
-     * Gets the number of global integer variables.
-     *
-     * @return  the number of global integer variables
-     */
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(macro="GLOBAL_INT_COUNT")
-/*end[JAVA5SYNTAX]*/
-    native static int getGlobalIntCount();
+//    /**
+//     * Gets the number of global integer variables.
+//     *
+//     * @return  the number of global integer variables
+//     */
+///*if[JAVA5SYNTAX]*/
+//    @Vm2c(macro="GLOBAL_INT_COUNT")
+///*end[JAVA5SYNTAX]*/
+//    native static int getGlobalIntCount();
 
     /**
      * Gets the value of an global integer variable.
@@ -1554,15 +1562,15 @@ hbp.dumpState();
 /*end[JAVA5SYNTAX]*/
     native static void setGlobalInt(int value, int index);
 
-    /**
-     * Gets the number of global pointer variables.
-     *
-     * @return  the number of global pointer variables
-     */
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(macro="GLOBAL_ADDR_COUNT")
-/*end[JAVA5SYNTAX]*/
-    native static int getGlobalAddrCount();
+//    /**
+//     * Gets the number of global pointer variables.
+//     *
+//     * @return  the number of global pointer variables
+//     */
+///*if[JAVA5SYNTAX]*/
+//    @Vm2c(macro="GLOBAL_ADDR_COUNT")
+///*end[JAVA5SYNTAX]*/
+//    native static int getGlobalAddrCount();
 
     /**
      * Gets the value of an global pointer variable.
@@ -2231,7 +2239,7 @@ hbp.dumpState();
      * Start the VM tracing if tracing support is enabled.
      */
     public static void startTracing() {
-        setGlobalInt(1, Global.getOffset(Global.tracing));
+        tracing = 1;
     }
 
     /**
@@ -3926,7 +3934,7 @@ hbp.dumpState();
          * @return total objects allocated
          */
         public static int getObjectsAllocatedTotal() {
-            return VM.getGlobalInt(Global.getOffset(Global.newCount));
+            return GC.newCount;
         }
         
         /**
@@ -4477,7 +4485,8 @@ hbp.dumpState();
     static void setIsolateInitializerClassName(String initializer) {
         isolateInitializer = initializer;
     }
-    
+
+/*if[NEW_IIC_MESSAGES]*/
     /*=======================================================================*\
      *               Inter-isolate communication support                     *
     \*=======================================================================*/
@@ -4517,7 +4526,6 @@ hbp.dumpState();
         }
         
         registeredMailboxes.remove(name);
-
     }
 
     /*
@@ -4529,6 +4537,7 @@ hbp.dumpState();
         }
         return null;
     }
+/*end[NEW_IIC_MESSAGES]*/
 
     /**
      * Answer the time in millis until another thread is runnable. Will return

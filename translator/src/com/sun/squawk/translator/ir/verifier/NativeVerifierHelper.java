@@ -1031,20 +1031,8 @@ class NativeVerifierHelper {
             return;
         }
 
-        case Native.com_sun_squawk_VM$getGlobalAddrCount: {
-            Assert.that(frame.isStackEmpty());
-            frame.push(INT); // int
-            return;
-        }
-
         case Native.com_sun_squawk_VM$getGlobalInt: {
             frame.pop(INT); // int
-            Assert.that(frame.isStackEmpty());
-            frame.push(INT); // int
-            return;
-        }
-
-        case Native.com_sun_squawk_VM$getGlobalIntCount: {
             Assert.that(frame.isStackEmpty());
             frame.push(INT); // int
             return;

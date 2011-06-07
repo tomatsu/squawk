@@ -1881,6 +1881,7 @@ T
          * global vars used by java->c translated methods but not by a java method (becuase Java method was dead method eliminated).
          **/
         if (hasGlobalStatics()) {
+            Assert.always(VM.getCurrentIsolate().getLeafSuite().isBootstrap(), "Can't use GlobalStaticFields pragma outside of boostrap suite");
             initializeGlobalStatics(this, fields);
         }
         

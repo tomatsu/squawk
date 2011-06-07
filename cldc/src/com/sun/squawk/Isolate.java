@@ -1,5 +1,6 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This code is free software; you can redistribute it and/or modify
@@ -17,8 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  *
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -29,8 +30,10 @@ import java.util.*;
 import javax.microedition.io.*;
 
 import com.sun.squawk.io.MulticastOutputStream;
+/*if[NEW_IIC_MESSAGES]*/
 import com.sun.squawk.io.mailboxes.Mailbox;
 import com.sun.squawk.io.mailboxes.MailboxAddress;
+/*end[NEW_IIC_MESSAGES]*/
 import com.sun.squawk.pragma.*;
 import com.sun.squawk.util.*;
 import com.sun.squawk.vm.*;
@@ -1861,7 +1864,9 @@ public final class Isolate implements Runnable {
             }
             removeVMShutdownHook();
 
+/*if[NEW_IIC_MESSAGES]*/
             cleanupMailboxes();
+/*end[NEW_IIC_MESSAGES]*/
 
             int channelContextToSave = getChannelContext();
 
@@ -2405,7 +2410,7 @@ public final class Isolate implements Runnable {
         return names;
     }
 
-
+/*if[NEW_IIC_MESSAGES]*/
     /*---------------------------------------------------------------------------*\
      *                            Inter-isolate messages                         *
     \*---------------------------------------------------------------------------*/
@@ -2517,6 +2522,7 @@ public final class Isolate implements Runnable {
         // will threads wake up still waiting for messages? And what about re-registering the
         // Mailbox?
     }
+/*end[NEW_IIC_MESSAGES]*/
 
     /*---------------------------------------------------------------------------*\
      *                            Debugger Support                               *
