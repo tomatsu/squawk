@@ -1,25 +1,26 @@
 //if[SUITE_VERIFIER]
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -40,7 +41,7 @@ final class TargetList {
     private abstract class Target {
         public int dst;
 
-        public Target(int dst) {
+        Target(int dst) {
             this.dst = dst;
         }
 
@@ -50,7 +51,7 @@ final class TargetList {
     private class ForwardTarget extends Target {
         public int src;
 
-        public ForwardTarget(int dst, int src) {
+        ForwardTarget(int dst, int src) {
             super(dst);
             this.src = src;
         }
@@ -61,7 +62,7 @@ final class TargetList {
     }
 
     private class ExceptionTarget extends Target {
-        public ExceptionTarget(int dst) {
+        ExceptionTarget(int dst) {
             super(dst);
         }
 
@@ -72,7 +73,7 @@ final class TargetList {
 
     private Vector targets;
 
-    public TargetList() {
+    TargetList() {
         targets = new Vector();
     }
 
@@ -114,7 +115,7 @@ class StackElement {
     private Klass klass;
     private int ip;
 
-    public StackElement(Klass k, int _ip) {
+    StackElement(Klass k, int _ip) {
         klass = k;
         ip = _ip;
     }
@@ -168,12 +169,12 @@ class StackElement {
 class UninitializedReference extends StackElement {
     private boolean param;
 
-    public UninitializedReference(Klass k, int ip, boolean param) {
+    UninitializedReference(Klass k, int ip, boolean param) {
         super(k, ip);
         this.param = param;
     }
 
-    public UninitializedReference(Klass k, int ip) {
+    UninitializedReference(Klass k, int ip) {
         this(k, ip, false);
     }
 
@@ -206,7 +207,7 @@ class UninitializedReference extends StackElement {
 class StackObject extends StackElement {
     private Object object;
 
-    public StackObject(Object o, Klass k, int ip) {
+    StackObject(Object o, Klass k, int ip) {
         super(k, ip);
         object = o;
     }
@@ -232,7 +233,7 @@ class StackObject extends StackElement {
 class StackConstInt extends StackElement {
     private int val;
 
-    public StackConstInt(int i, Klass k, int ip) {
+    StackConstInt(int i, Klass k, int ip) {
         super(k, ip);
         Assert.that(k == Klass.INT || k == Klass.SHORT || k == Klass.CHAR || k == Klass.BYTE || k == Klass.BOOLEAN);
         val = i;
@@ -259,7 +260,7 @@ class StackConstInt extends StackElement {
 class StackMethodSlot extends StackElement {
     private Method method;
 
-    public StackMethodSlot(Method m, int ip) {
+    StackMethodSlot(Method m, int ip) {
         super(Klass.INT, ip);
         method = m;
     }
@@ -292,7 +293,7 @@ final class Frame {
      *
      * @param body the method that will be verified
      */
-    public Frame(MethodBody body) {
+    Frame(MethodBody body) {
         stack = new StackElement[8];
         sp = 0;
         flow = true;
@@ -391,7 +392,7 @@ final class Frame {
      *
      * @return number of elements on the stack
      */
-    final int getSP() {
+    int getSP() {
         return sp;
     }
 
@@ -399,7 +400,7 @@ final class Frame {
      * Print the current contents of the stack.
      * Should only really be used for debugging purposes.
      */
-    final void printStack() {
+    void printStack() {
         for (int i = 0; i < sp; i++) {
             System.out.println("stack element " + i + ": " + stack[i].getKlass());
         }
@@ -410,7 +411,7 @@ final class Frame {
      *
      * @param e the element to push onto the stack
      */
-    private final void push(StackElement e) {
+    private void push(StackElement e) {
         if (sp >= stack.length) {
             StackElement tmp[] = new StackElement[Math.max(8, stack.length * 2)];
             System.arraycopy(stack, 0, tmp, 0, stack.length);
@@ -424,7 +425,7 @@ final class Frame {
      *
      * @param k the type of the data to be pushed onto the stack
      */
-    public final void push(Klass k) {
+    public void push(Klass k) {
         if (k.isInterface())
             k = Klass.OBJECT;
         push(new StackElement(k, ip));
@@ -435,7 +436,7 @@ final class Frame {
      * will look up which exception handler starts at the current
      * address and push the appropriate exception type.
      */
-    public final void pushHandlerException() {
+    public void pushHandlerException() {
         Assert.that(handlers != null);
         for (int i = 0; i < handlers.length; i++)
             if (handlers[i].getHandler() == ip) {
@@ -453,7 +454,7 @@ final class Frame {
      *
      * @see #popForInitialization()
      */
-    public final void pushUninitialized(Klass k) {
+    public void pushUninitialized(Klass k) {
         push(new UninitializedReference(k, ip));
     }
 
@@ -463,10 +464,12 @@ final class Frame {
      *
      * @param o the object to push
      */
-    public final void pushObject(Object o) {
+    public void pushObject(Object o) {
         Klass k = Klass.OBJECT;
         if (o instanceof String)
             k = Klass.STRING;
+        else if (o instanceof Klass)
+            k = Klass.KLASS;
         else if (o instanceof byte[])
             k = Klass.BYTE_ARRAY;
         else if (o instanceof short[])
@@ -488,7 +491,7 @@ final class Frame {
      * @param i the value to push
      * @param k the type of the value (BOOLEAN, BYTE, etc.)
      */
-    public final void pushConstInt(int i, Klass k) {
+    public void pushConstInt(int i, Klass k) {
         push(new StackConstInt(i, k, ip));
     }
 
@@ -497,7 +500,7 @@ final class Frame {
      *
      * @param i the value to push
      */
-    public final void pushConstInt(int i) {
+    public void pushConstInt(int i) {
         pushConstInt(i, Klass.INT);
     }
 
@@ -510,7 +513,7 @@ final class Frame {
      * @param m interface method being looked up by the findslot instruction
      * @see #popMethodSlot()
      */
-    public final void pushMethodSlot(Method m) {
+    public void pushMethodSlot(Method m) {
         push(new StackMethodSlot(m, ip));
     }
 
@@ -519,7 +522,7 @@ final class Frame {
      *
      * @return the top of the stack
      */
-    private final StackElement popElement() {
+    private StackElement popElement() {
         check(sp > 0, "tried to pop from empty stack");
         return stack[--sp];
     }
@@ -532,7 +535,7 @@ final class Frame {
      * @param k type the top of the stack should be
      * @return the top of the stack
      */
-    public final Klass pop(Klass k) {
+    public Klass pop(Klass k) {
         if (k.isInterface())
             k = Klass.OBJECT;
         StackElement e = popElement();
@@ -548,7 +551,7 @@ final class Frame {
      * @param r the uninitialized reference to initialize
      * @param a the array to look for the uninitialized reference in
      */
-    private final void initialize(UninitializedReference r, StackElement a[]) {
+    private void initialize(UninitializedReference r, StackElement a[]) {
         for (int i = 0; i < a.length; i++) {
             if (r.equals(a[i]))
                 a[i] = new StackElement(r.getKlass(), ip);
@@ -561,12 +564,12 @@ final class Frame {
      *
      * @param k type the top of the stack should be
      */
-    public final void popForInitialization(Klass k) {
+    public void popForInitialization(Klass k) {
         StackElement e = popElement();
         check(e instanceof UninitializedReference,
               "attempted to initialize object that has already been initialized", e);
         UninitializedReference r = (UninitializedReference)e;
-        check(r.checkKlass(k), "attempted to initialize object with a constructor from the wrong class", e);
+        check(r.checkKlass(k), "attempted to initialize object with a constructor from the wrong class (not " + k + ")", e);
         initialize(r, stack);
         initialize(r, specificLocals);
         initialize(r, specificParms);
@@ -577,7 +580,7 @@ final class Frame {
      *
      * @return the type of the top of the stack
      */
-    public final Klass pop() {
+    public Klass pop() {
         return popElement().getKlass();
     }
 
@@ -586,7 +589,7 @@ final class Frame {
      *
      * @return the top of the stack
      */
-    public final Object popObject() {
+    public Object popObject() {
         return ((StackObject)popElement()).getObject();
     }
 
@@ -595,7 +598,7 @@ final class Frame {
      *
      * @return the integer constant from the top of the stack
      */
-    public final Integer popConstInt() {
+    public Integer popConstInt() {
         StackElement e = popElement();
         check(isAssignable(Klass.INT, e.getKlass()), "tried to pop int off the stack, got " + e.getKlass(), e);
         if (e instanceof StackConstInt)
@@ -609,14 +612,14 @@ final class Frame {
      *
      * @return the interface method that was the input to the findslot instruction
      */
-    public final Method popMethodSlot() {
+    public Method popMethodSlot() {
         return ((StackMethodSlot)popElement()).getMethod();
     }
 
     /**
      * Set the current instruction pointer.
      */
-    public final void setIP(int ip) {
+    public void setIP(int ip) {
         //removeRecord(ip);
         this.ip = ip;
         if (flow)
@@ -629,7 +632,7 @@ final class Frame {
     /**
      * Get the current instruction pointer.
      */
-    public final int getIP() {
+    public int getIP() {
         return ip;
     }
 
@@ -638,8 +641,8 @@ final class Frame {
     private Hashtable localMap;
     private boolean changed;
 
-    private final void mergeArray(int _ip, boolean insert, Hashtable map,
-                                  StackElement types[], Klass generalTypes[], String name) {
+    private void mergeArray(int _ip, boolean insert, Hashtable map,
+                            StackElement types[], Klass generalTypes[], String name) {
         Integer ip = new Integer(_ip);
         if (!map.containsKey(ip)) {
             if (insert) {
@@ -673,18 +676,18 @@ final class Frame {
         }
     }
 
-    public final void mayCauseGC() {
+    public void mayCauseGC() {
         for (int i = 0; i < specificLocals.length; i++)
             if (specificLocals[i] == null)
                 check(generalLocals[i] != Klass.OBJECT, "local slot " + i + " was not written to");
     }
 
-    private final void mergeLocals(int ip, boolean insert) {
+    private void mergeLocals(int ip, boolean insert) {
         mergeArray(ip, insert, localMap, specificLocals, generalLocals, "local");
         mergeArray(ip, insert, parmMap, specificParms, generalParms, "parameter");
     }
 
-    private final void merge(int _ip, boolean insert) {
+    private void merge(int _ip, boolean insert) {
         mergeLocals(_ip, insert);
         Integer ip = new Integer(_ip);
         if (!stackMap.containsKey(ip)) {
@@ -723,13 +726,13 @@ final class Frame {
         }
     }
 
-    public final void addTarget(int ip) {
+    public void addTarget(int ip) {
         if (checkTargets)
             tlist.setForwardTarget(ip, this.ip);
         merge(ip, true);
     }
 
-    private final void checkForUninitialized(StackElement a[]) {
+    private void checkForUninitialized(StackElement a[]) {
         for (int i = 0; i < a.length; i++)
             if (a[i] != null)
                 if (a[i] instanceof UninitializedReference) {
@@ -738,13 +741,13 @@ final class Frame {
                 }
     }
 
-    private final void checkForUninitialized() {
+    private void checkForUninitialized() {
         checkForUninitialized(stack);
         checkForUninitialized(specificLocals);
         checkForUninitialized(specificParms);
     }
 
-    public final void addBackwardsTarget(int ip) {
+    public void addBackwardsTarget(int ip) {
         checkForUninitialized();
         if (checkTargets)
             check(bbtargets.containsKey(new Integer(ip)),
@@ -752,20 +755,20 @@ final class Frame {
         mergeLocals(ip, true);
     }
 
-    public final void doReturn() {
+    public void doReturn() {
         // checkForUninitialized(); <-- Not a valid assumption for the TCK javasoft.sqe.tests.vm.instr.newX.new006.new00601m1.new00601m1_wrapper
     }
 
-    public final void bbtarget() {
+    public void bbtarget() {
         if (checkTargets)
             bbtargets.put(new Integer(ip), this);
     }
 
-    public final void fallthrough() {
+    public void fallthrough() {
         flow = true;
     }
 
-    public final void finished() {
+    public void finished() {
         check(!flow, "control flows off the end of the code");
         if (checkTargets) {
             check(tlist.isEmpty(), "some forward branch targets are past the end of the code");
@@ -775,35 +778,35 @@ final class Frame {
         }
     }
 
-    public final Klass getGeneralParmType(int index) {
+    public Klass getGeneralParmType(int index) {
         return generalParms[index];
     }
 
-    public final Klass getParmType(int index) {
+    public Klass getParmType(int index) {
         return specificParms[index].getKlass();
     }
     
-    public final boolean isParmUninitialized(int index) {
+    public boolean isParmUninitialized(int index) {
         return specificParms[index] instanceof UninitializedReference;
     }
 
-    public final void setParmType(int index, Klass k) {
+    public void setParmType(int index, Klass k) {
         specificParms[index] = new StackElement(k, ip);
     }
 
-    public final Klass getGeneralLocalType(int index) {
+    public Klass getGeneralLocalType(int index) {
         return generalLocals[index];
     }
 
-    public final Klass getLocalType(int index) {
+    public Klass getLocalType(int index) {
         return specificLocals[index].getKlass();
     }
 
-    public final void setLocalType(int index, Klass k) {
+    public void setLocalType(int index, Klass k) {
         specificLocals[index] = new StackElement(k, ip);
     }
 
-    public final void load(int index) {
+    public void load(int index) {
         if (specificLocals[index] == null) {
             push(generalLocals[index]);
         } else {
@@ -811,33 +814,33 @@ final class Frame {
         }
     }
 
-    public final void loadparm(int index) {
+    public void loadparm(int index) {
         push(specificParms[index]);
     }
 
-    private final void store(int index, StackElement specific[], Klass general[]) {
+    private void store(int index, StackElement specific[], Klass general[]) {
         StackElement e = popElement();
         check(isAssignable(general[index], e.getKlass()),
               "" + e.getKlass() + " not assignable to " + general[index], e);
         specific[index] = e;
     }
 
-    public final void store(int index) {
+    public void store(int index) {
         check(index > 0, "attempted to store to local 0");
         store(index, specificLocals, generalLocals);
     }
 
-    public final void storeparm(int index) {
+    public void storeparm(int index) {
         store(index, specificParms, generalParms);
     }
 
-    public final boolean hasChanged() {
+    public boolean hasChanged() {
         boolean tmp = changed;
         changed = false;
         return tmp;
     }
 
-    public static final boolean isAssignable(Klass dst, Klass src) {
+    public static boolean isAssignable(Klass dst, Klass src) {
         if (dst.isInterface())
             dst = Klass.OBJECT;
         if (src == Klass.ADDRESS || src == Klass.UWORD || src == Klass.OFFSET) {
@@ -868,11 +871,11 @@ final class Frame {
         return dst.isAssignableFrom(src);
     }
 
-    public final void clearStack() {
+    public void clearStack() {
         sp = 0;
     }
 
-    public final boolean isStackEmpty() {
+    public boolean isStackEmpty() {
         return sp == 0;
     }
 }

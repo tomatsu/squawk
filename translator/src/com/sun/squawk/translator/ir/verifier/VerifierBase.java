@@ -1,25 +1,26 @@
 //if[SUITE_VERIFIER]
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -48,10 +49,10 @@ import com.sun.squawk.*;
  * <li>the start and end of the blocks of code covered by exception handlers
  *       are all the start of an instruction, or in the case of the end of such
  *       a block, one byte past the end of the method</li>
- * <li>the start of each exception handler is the start of an instuction</li>
+ * <li>the start of each exception handler is the start of an instruction</li>
  * </ul>
  *
- * Like the Java verifier, this verifier performs iterative dataflow analysis
+ * Like the Java verifier, this verifier performs iterative data flow analysis
  * to determine the types of elements on the stack.  It keeps track of which
  * objects from the object table and integer constants are on the stack and
  * in local variables.
@@ -253,6 +254,7 @@ public abstract class VerifierBase {
     /**
      * Or the (parameter<<8) into the value of the next bytecode and then
      * dispatch to the wide version of the opcode.
+     * @param n
      */
     protected void do_wide(int n) {
         opcode = fetchUByte() + OPC.Properties.WIDE_DELTA;
@@ -283,6 +285,7 @@ public abstract class VerifierBase {
     /**
      * Or the (parameter<<8) in to the value of the next bytecode and then
      * dispatch to the wide version of the opcode.
+     * @param n
      */
     protected void do_escape_wide(int n) {
         opcode = fetchUByte() + 256 + OPC.Properties.ESCAPE_WIDE_DELTA;
@@ -488,7 +491,7 @@ public abstract class VerifierBase {
      * @param specificType exact derived type from the stack
      */
     private void checkGeneralType(Klass generalType, Klass specificType) {
-        check(frame.isAssignable((generalType == OOP) ? OBJECT : generalType, specificType),
+        check(Frame.isAssignable((generalType == OOP) ? OBJECT : generalType, specificType),
               "" + specificType + " not assignable to " + generalType);
     }
 
@@ -740,9 +743,9 @@ public abstract class VerifierBase {
 
     protected void do_getstatic(Klass t) {
         frame.mayCauseGC();
-        Klass klass = (Klass)frame.popObject();
-        checkStaticFieldOffset(iparm - CS.firstVariable, t == OOP, klass);
-        Klass fieldKlass = getStaticType(klass, iparm);
+        Klass fklass = (Klass)frame.popObject();
+        checkStaticFieldOffset(iparm - CS.firstVariable, t == OOP, fklass);
+        Klass fieldKlass = getStaticType(fklass, iparm);
         check(frame.isStackEmpty(), "stack not empty at getstatic");
         frame.push(fieldKlass);
         checkGeneralType(t, fieldKlass);
@@ -756,9 +759,9 @@ public abstract class VerifierBase {
 
     protected void do_putstatic(Klass t) {
         frame.mayCauseGC();
-        Klass klass = (Klass)frame.popObject();
-        checkStaticFieldOffset(iparm - CS.firstVariable, t == OOP, klass);
-        Klass fieldKlass = getStaticType(klass, iparm);
+        Klass fklass = (Klass)frame.popObject();
+        checkStaticFieldOffset(iparm - CS.firstVariable, t == OOP, fklass);
+        Klass fieldKlass = getStaticType(fklass, iparm);
         frame.pop(fieldKlass);
         check(frame.isStackEmpty(), "stack not empty at putstatic");
         checkGeneralType(t, fieldKlass);
@@ -772,11 +775,11 @@ public abstract class VerifierBase {
 
     protected void do_getfield(Klass t) {
         frame.mayCauseGC();
-        Klass klass = frame.pop();
-        check(!klass.isPrimitive(), "attempted to get a field from a primitive type");
-        check(!klass.isArray(), "attempted to get a field from an array");
-        if (klass != NULL) {
-            Klass fieldKlass = getInstanceType(klass, getFieldByteOffset(t, iparm));
+        Klass fklass = frame.pop();
+        check(!fklass.isPrimitive(), "attempted to get a field from a primitive type");
+        check(!fklass.isArray(), "attempted to get a field from an array");
+        if (fklass != NULL) {
+            Klass fieldKlass = getInstanceType(fklass, getFieldByteOffset(t, iparm));
             frame.push(fieldKlass);
             checkGeneralType(t, fieldKlass);
         } else {
@@ -808,15 +811,15 @@ public abstract class VerifierBase {
 
     protected void do_putfield(Klass t) {
         Klass valueKlass = frame.pop();
-        Klass klass = frame.pop();
-        do_putfield_internal(t, klass, valueKlass);
+        Klass fklass = frame.pop();
+        do_putfield_internal(t, fklass, valueKlass);
     }
 
     protected void do_putfield0(Klass t) {
         Klass valueKlass = frame.pop();
         frame.loadparm(0);
-        Klass klass = frame.pop();
-        do_putfield_internal(t, klass, valueKlass);
+        Klass fklass = frame.pop();
+        do_putfield_internal(t, fklass, valueKlass);
     }
 
     private Method getVirtualMethod(Klass k, int index) {
@@ -848,17 +851,13 @@ public abstract class VerifierBase {
         }
 
         int mcount = k.getMethodCount(true);
-        if (mcount == 0 || k.getMethod(0, true).getOffset() > index) {
-            return getStaticMethod(k.getSuperclass(), index);
-        } else {
-            for (int i = 0; i < mcount; i++) {
-                Method m = k.getMethod(i, true);
-                if (!m.isHosted() && m.getOffset() == index) {
-                    return m;
-                }
+        for (int i = 0; i < mcount; i++) {
+            Method m = k.getMethod(i, true);
+            if (!m.isHosted() && m.getOffset() == index) {
+                return m;
             }
-            return null;
         }
+        return getStaticMethod(k.getSuperclass(), index);
     }
 
     private void do_invoke(Method m, Klass t, Klass rtype) {
@@ -886,20 +885,20 @@ public abstract class VerifierBase {
     }
 
     protected void do_invokevirtual(Klass t) {
-        Klass klass = null;
+        Klass fklass = null;
         if (Translator.REVERSE_PARAMETERS) {
-            klass = frame.pop();
+            fklass = frame.pop();
         } else {
             Vector stack = new Vector();
             while (!frame.isStackEmpty()) {
-                klass = frame.pop();
-                stack.addElement(klass);
+                fklass = frame.pop();
+                stack.addElement(fklass);
             }
             for (int i = stack.size() - 2; i >= 0; i--) {
                 frame.push((Klass)stack.elementAt(i));
             }
         }
-        if (klass == NULL) {
+        if (fklass == NULL) {
             while (!frame.isStackEmpty()) {
                 frame.pop();
             }
@@ -908,18 +907,19 @@ public abstract class VerifierBase {
             }
             frame.fallthrough();
         } else {
-            if (klass.isInterface()) {
-                klass = Klass.OBJECT;
+            if (fklass.isInterface()) {
+                fklass = Klass.OBJECT;
             }
-            Method m = getVirtualMethod(klass, iparm);
-            check(m != null, "could not find virtual method of index " + iparm + " in " + klass);
+            Method m = getVirtualMethod(fklass, iparm);
+            check(m != null, "could not find virtual method of index " + iparm + " in " + fklass);
             do_invoke(m, t);
         }
     }
     protected void do_invokestatic(Klass t) {
-        Klass klass = (Klass)frame.popObject();
-        Method m = getStaticMethod(klass, iparm);
-        check(m != null, "could not find static method of index " + iparm + " in " + klass);
+        Klass fklass = (Klass)frame.popObject();
+        Method m = getStaticMethod(fklass, iparm);
+        check(m.getDefiningClass() == fklass, "method " + m + " is not defined in " + fklass);
+        check(m != null, "could not find static method of index " + iparm + " in " + fklass);
         if (m.isConstructor()) {
             boolean isChainedConstructor = false;
             Method caller = this.body.getDefiningMethod();
@@ -965,70 +965,23 @@ public abstract class VerifierBase {
             do_invoke(m, t);
         }
     }
-    
-    protected void do_invokestatic_OLD(Klass t) {
-        Klass klass = (Klass)frame.popObject();
-        Method m = getStaticMethod(klass, iparm);
-        check(m != null, "could not find static method of index " + iparm + " in " + klass);
-        if (m.isConstructor()) {
-            if (Translator.REVERSE_PARAMETERS) {
-                boolean isChainedConstructor = false;
-                Method caller = this.body.getDefiningMethod();
-                if (m.isReplacementConstructor()) {
-                    frame.pop(m.getDefiningClass());
-                } else {
-                    isChainedConstructor = caller.isConstructor() 
-                                                && (caller.getDefiningClass() == m.getDefiningClass() ||
-                                                    caller.getDefiningClass().getSuperclass() == m.getDefiningClass())
-                                                && frame.isParmUninitialized(0);
-                    frame.popForInitialization(m.getDefiningClass());
-                }
-                if (isChainedConstructor) {
-                     // when a contructor calls a super constructor, the result type of the super call is the type of the CALLER. 
-                     do_invoke(m, t, caller.getDefiningClass());
-                } else {
-                    do_invoke(m, t);
-                }
-            } else {
-                frame.mayCauseGC();
-                Klass params[] = m.getParameterTypes();
-                for (int i = params.length - 1; i >= 0; i--) {
-                    frame.pop(grow(params[i]));
-                }
-                if (m.isReplacementConstructor()) {
-                    frame.pop(m.getDefiningClass());
-                } else {
-                    frame.popForInitialization(m.getDefiningClass());
-                }
-                check(frame.isStackEmpty(), "stack not empty after popping parameters to callee");
-                Klass rtype = m.getReturnType();
-                checkGeneralType(t, rtype);
-                if (t != VOID) {
-                    frame.push(rtype);
-                }
-                frame.fallthrough();
-            }
-        } else {
-            do_invoke(m, t);
-        }
-    }
 
     protected void do_invokesuper(Klass t) {
         Klass superklass = (Klass)frame.popObject();
-        Klass klass = null;
+        Klass fklass = null;
         if (Translator.REVERSE_PARAMETERS) {
-            klass = frame.pop();
+            fklass = frame.pop();
         } else {
             Vector stack = new Vector();
             while (!frame.isStackEmpty()) {
-                klass = frame.pop();
-                stack.addElement(klass);
+                fklass = frame.pop();
+                stack.addElement(fklass);
             }
             for (int i = stack.size() - 2; i >= 0; i--) {
                 frame.push((Klass)stack.elementAt(i));
             }
         }
-        check(Frame.isAssignable(superklass, klass), "invalid superclass");
+        check(Frame.isAssignable(superklass, fklass), "invalid superclass");
         Method m = getVirtualMethod(superklass, iparm);
         do_invoke(m, t);
     }
@@ -1083,12 +1036,12 @@ public abstract class VerifierBase {
             frame.pop(m.getDefiningClass());
         } else {
             Vector stack = new Vector();
-            Klass klass = null;
+            Klass fklass = null;
             while (!frame.isStackEmpty()) {
-                klass = frame.pop();
-                stack.addElement(klass);
+                fklass = frame.pop();
+                stack.addElement(fklass);
             }
-            check(Frame.isAssignable(m.getDefiningClass(), klass), "input to invokeslot does not match input to findslot");
+            check(Frame.isAssignable(m.getDefiningClass(), fklass), "input to invokeslot does not match input to findslot");
             for (int i = stack.size() - 2; i >= 0; i--) {
                 frame.push((Klass)stack.elementAt(i));
             }
@@ -1277,35 +1230,35 @@ public abstract class VerifierBase {
 
     protected void do_arraylength() {
         frame.mayCauseGC();
-        Klass klass = frame.pop();
-        check(klass == NULL || klass.isArray(), "attempted to get a length of something other than an array");
+        Klass fklass = frame.pop();
+        check(fklass == NULL || fklass.isArray(), "attempted to get a length of something other than an array");
         frame.push(INT);
         frame.fallthrough();
     }
 
     protected void do_new() {
         frame.mayCauseGC();
-        Klass klass = (Klass)frame.popObject();
+        Klass fklass = (Klass)frame.popObject();
         check(frame.isStackEmpty(), "stack not empty on new instruction");
-        frame.pushUninitialized(klass);
+        frame.pushUninitialized(fklass);
         frame.fallthrough();
     }
 
     protected void do_newarray() {
         frame.mayCauseGC();
-        Klass klass = (Klass)frame.popObject();
+        Klass fklass = (Klass)frame.popObject();
         frame.pop(INT);
         check(frame.isStackEmpty(), "stack not empty on newarray instruction");
-        frame.push(klass);
+        frame.push(fklass);
         frame.fallthrough();
     }
 
     protected void do_newdimension() {
         frame.mayCauseGC();
         frame.pop(INT);
-        Klass klass = frame.pop();
+        Klass fklass = frame.pop();
         check(frame.isStackEmpty(), "stack not empty on newdimension instruction");
-        frame.push(klass);
+        frame.push(fklass);
         frame.fallthrough();
     }
 
@@ -1327,7 +1280,7 @@ public abstract class VerifierBase {
 
     protected void do_instanceof() {
         frame.mayCauseGC();
-        Klass klass = (Klass)frame.popObject();
+        Klass fklass = (Klass)frame.popObject();
         frame.pop(OOP);
         check(frame.isStackEmpty(), "stack not empty on instanceof");
         frame.push(BOOLEAN);
@@ -1337,7 +1290,7 @@ public abstract class VerifierBase {
     protected void do_checkcast() {
         frame.mayCauseGC();
         Klass castklass = (Klass)frame.popObject();
-        Klass klass = frame.pop();
+        Klass fklass = frame.pop();
         check(frame.isStackEmpty(), "stack not empty on checkcast");
         frame.push(castklass);
         frame.fallthrough();
@@ -1346,10 +1299,10 @@ public abstract class VerifierBase {
     protected void do_aload(Klass t) {
         frame.mayCauseGC();
         frame.pop(INT);
-        Klass klass = frame.pop();
-        if (klass != NULL) {
-            check(klass.isArray(), "attempted to aload from something other than an array");
-            Klass componentKlass = klass.getComponentType();
+        Klass fklass = frame.pop();
+        if (fklass != NULL) {
+            check(fklass.isArray(), "attempted to aload from something other than an array");
+            Klass componentKlass = fklass.getComponentType();
             checkGeneralType(t, componentKlass);
             frame.push(componentKlass);
         }
@@ -1496,7 +1449,7 @@ class BytecodePrinter extends BytecodeTracer {
     private byte code[];
     private int pos;
 
-    public BytecodePrinter(java.io.PrintStream out, byte code[]) {
+    BytecodePrinter(java.io.PrintStream out, byte code[]) {
         this.out = out;
         this.code = code;
         pos = 0;
