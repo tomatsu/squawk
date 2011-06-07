@@ -152,34 +152,14 @@ public class FieldOffsets {
     public final static long com_sun_squawk_Klass$refStaticFieldsSize = 32 | SHORT;
 
     /**
-     * The offset of the 'indexForInit' field in com.sun.squawk.Klass.
-     */
-    public final static long com_sun_squawk_Klass$indexForInit = 33 | SHORT;
-
-    /**
-     * The offset of the 'indexForClinit' field in com.sun.squawk.Klass.
-     */
-    public final static long com_sun_squawk_Klass$indexForClinit = 34 | SHORT;
-
-    /**
-     * The offset of the 'indexForMain' field in com.sun.squawk.Klass.
-     */
-    public final static long com_sun_squawk_Klass$indexForMain = 35 | SHORT;
-
-    /**
      * The offset of the 'state' field in com.sun.squawk.Klass.
      */
-    public final static long com_sun_squawk_Klass$state = 72 | BYTE;
+    public final static long com_sun_squawk_Klass$state = 66 | BYTE;
 
     /**
      * The offset of the 'initModifiers' field in com.sun.squawk.Klass.
      */
-    public final static long com_sun_squawk_Klass$initModifiers = 73 | BYTE;
-
-    /**
-     * The offset of the 'mustClinit' field in com.sun.squawk.Klass.
-     */
-    public final static long com_sun_squawk_Klass$mustClinit = 74 | BYTE;
+    public final static long com_sun_squawk_Klass$initModifiers = 67 | BYTE;
 
     /**
      * The offset of the 'entryTable' field in com.sun.squawk.util.SquawkHashtable.

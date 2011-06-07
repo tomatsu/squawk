@@ -694,7 +694,7 @@ public final class ClassFileLoader implements Context {
          */
         ClassFileField field;
         if (constantValue != null) {
-            modifiers |= Modifier.CONSTANT;
+            modifiers |= Modifier.FIELD_CONSTANT;
             if (constantValue instanceof String) {
                 field = new ClassFileConstantField(fieldName, modifiers, fieldType, (String)constantValue);
             } else {
@@ -831,7 +831,7 @@ public final class ClassFileLoader implements Context {
          */
         if (!hasConstructor && !klass.isAbstract() && !klass.isInterface()) {
             ClassFileMethod method = new ClassFileMethod("<init>",
-                                                         Modifier.PUBLIC | Modifier.STATIC | Modifier.CONSTRUCTOR,
+                                                         Modifier.PUBLIC | Modifier.STATIC | Modifier.METHOD_CONSTRUCTOR,
                                                          klass,
                                                          Klass.NO_CLASSES,
                                                          0);
@@ -891,7 +891,7 @@ public final class ClassFileLoader implements Context {
 
                 if (Arrays.equals(matchTypes, method.getParameterTypes())) {
                     ctor = new ClassFileMethod("<init>",
-                        ctor.getModifiers() | Modifier.HAS_PRAGMAS,
+                        ctor.getModifiers() | Modifier.METHOD_HAS_PRAGMAS,
                         ctor.getReturnType(),
                         ctor.getParameterTypes(),
                         ctor.getPragmas() | PragmaException.REPLACEMENT_CONSTRUCTOR);
@@ -1004,7 +1004,7 @@ public final class ClassFileLoader implements Context {
         if (methodName.equals("<init>")) {
             Assert.that(methodSignature.returnType == Klass.VOID);
             methodSignature = methodSignature.modifyReturnType(klass);
-            modifiers |= (Modifier.CONSTRUCTOR | Modifier.STATIC);
+            modifiers |= (Modifier.METHOD_CONSTRUCTOR | Modifier.STATIC);
         }
 
         /*
@@ -1067,7 +1067,7 @@ public final class ClassFileLoader implements Context {
                 throw cfr.formatError("method with pragma is not non-virtual: " + methodName);
             }
 
-            modifiers |= Modifier.HAS_PRAGMAS;
+            modifiers |= Modifier.METHOD_HAS_PRAGMAS;
             if (PragmaException.isNative(pragmas)) {
                 modifiers |= Modifier.NATIVE;
             }

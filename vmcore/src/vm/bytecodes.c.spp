@@ -107,7 +107,6 @@
             return null;
         }
 
-
         /**
          * Test to see if a class needs initializing.
          *
@@ -115,14 +114,11 @@
          * @return true if it does.
          */
 /*MAC*/ boolean needsInitializing(Address $klass) {
-            if (!com_sun_squawk_Klass_mustClinit($klass)) {
-                return false;
+            if (com_sun_squawk_Klass_modifiers($klass) & com_sun_squawk_Modifier_KLASS_MUSTCLINIT) {
+                return getClassState($klass) == null;
             }
-            return getClassState($klass) == null;
+            return false;
         }
-
-
-
 
         /**
          * Invalidate the class state cache.
@@ -138,7 +134,6 @@
             }
             return res == 0;
         }
-
 
         /*-----------------------------------------------------------------------*\
          *                           Instruction decoding                        *

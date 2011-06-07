@@ -230,33 +230,9 @@ public class Klass<T> {
     private short refStaticFieldsSize;
 
     /**
-     * The vtable index for the default constructor of this class or
-     * -1 if no such method exists.
-     */
-    private short indexForInit = -1;
-
-    /**
-     * The vtable index for this class's <code>&lt;clinit&gt;</code> method or
-     * -1 if no such method exists.
-     */
-    private short indexForClinit = -1;
-
-    /**
-     * The vtable index for this class's <code>public static void main(String[])</code>
-     * method or -1 if no such method exists.
-     */
-    private short indexForMain = -1;
-
-    /**
      * The bottom 8 bits of the modifier for <init>() (if present).
      */
     private byte initModifiers;
-
-    /**
-     * True if this class, or a super class, has a <clinit>. The interpreter currently looks at this field,
-     * not the Modifiers.MUSTCLINIT bit.
-     */
-    private boolean mustClinit;
     
     /**
      * offset given to methods that are illegal to call, such as hosted methods.
@@ -380,7 +356,7 @@ public class Klass<T> {
         throw new ClassNotFoundException(className);
     }
 
-    void initForObjectGraphLoader(MethodBody[] virtualMethods, MethodBody[] staticMethods, Klass superType, Klass[] interfaces, Object[] objects, UWord[] oopMap, UWord oopMapWord, UWord[] dataMap, UWord dataMapWord, short dataMapLength, int modifiers, byte state, short instanceSizeBytes, short staticFieldsSize, short refStaticFieldsSize, short indexForInit, short indexForClinit, short indexForMain, byte initModifiers, boolean mustClinit) {
+    void initForObjectGraphLoader(MethodBody[] virtualMethods, MethodBody[] staticMethods, Klass superType, Klass[] interfaces, Object[] objects, UWord[] oopMap, UWord oopMapWord, UWord[] dataMap, UWord dataMapWord, short dataMapLength, int modifiers, byte state, short instanceSizeBytes, short staticFieldsSize, short refStaticFieldsSize, byte initModifiers) {
     	this.virtualMethods = virtualMethods;
     	this.staticMethods = staticMethods;
         this.superType = superType;
@@ -396,11 +372,7 @@ public class Klass<T> {
         this.instanceSizeBytes = instanceSizeBytes;
         this.staticFieldsSize = staticFieldsSize;
         this.refStaticFieldsSize = refStaticFieldsSize;
-        this.indexForInit = indexForInit;
-        this.indexForClinit = indexForClinit;
-        this.indexForMain = indexForMain;
         this.initModifiers = initModifiers;
-        this.mustClinit = mustClinit;
     }
     
     /**
@@ -422,7 +394,7 @@ T
 //        Object res = GC.newInstance(this);
 /*end[JAVA5SYNTAX]*/
         try {
-            VM.callStaticOneParm(this, indexForInit & 0xFF, res);
+            VM.callStaticOneParm(this, getDefaultConstructorIndex(), res);
         } catch (NoClassDefFoundError e) {
             if (e.getMessage() != null && e.getMessage().equals("static method missing")) {
                 throw new NoClassDefFoundError("Error calling default constructor in newInstance() for class " + getName() + "\n error: " + e.toString());
@@ -491,28 +463,62 @@ T
 /*end[FINALIZATION]*/
 
     /**
+     * The index where the first "special" static method goes. "Special" methods are allocated in order:
+     * "<init>", "<clinit>", "main".
+     */
+    private final static int CANONICAL_SPECIAL_METHOD_INDEX = 0;
+
+    /**
      * Determines if this class has a <code>void main(String[])</code> method.
      *
      * @return true if it does
      */
     public final boolean hasMain() {
-        return indexForMain >= 0;
+        return (modifiers & Modifier.KLASS_HAS_MAIN) != 0;
     }
 
    /**
      * Returns the index to the main method in the static method table.
      * Will return -1 if there is no main method.
      */
-    final short getMainIndex() {
-        return indexForMain;
+    final int getMainIndex() {
+        if (hasMain()) {
+            int index = CANONICAL_SPECIAL_METHOD_INDEX;
+            if (hasDefaultConstructor()) {
+                index++;
+            }
+            if (hasClinit()) {
+                index++;
+            }
+            return index;
+        } else {
+            return -1;
+        }
     }
-    
+
+    /**
+     * Determines if this class has a static initializer.
+     *
+     * @return true if it does
+     */
+    public final boolean hasClinit() {
+        return (modifiers & Modifier.KLASS_HAS_CLINIT) != 0;
+    }
+
     /**
      * Returns the index to the static initializer method in the static method table.
      * Will return -1 if there is no static initializer method.
      */
-    final short getClinitIndex() {
-        return indexForClinit;
+    final int getClinitIndex() {
+        if (hasClinit()) {
+            if (hasDefaultConstructor()) {
+                return CANONICAL_SPECIAL_METHOD_INDEX + 1;
+            } else {
+                return CANONICAL_SPECIAL_METHOD_INDEX;
+            }
+        } else {
+            return -1;
+        }
     }
     
     /**
@@ -521,15 +527,19 @@ T
      * @return true if it does
      */
     public final boolean hasDefaultConstructor() {
-        return indexForInit >= 0;
+        return (modifiers & Modifier.KLASS_HAS_DEFAULT_INIT) != 0;
     }
 
     /**
      * Returns the index to the default constructor in the static method table.
      * Will return -1 if there is no default constructor.
      */
-    final short getDefaultConstructorIndex() {
-        return indexForInit;
+    final int getDefaultConstructorIndex() {
+        if (hasDefaultConstructor()) {
+            return CANONICAL_SPECIAL_METHOD_INDEX;
+        } else {
+            return -1;
+        }
     }
 
     /**
@@ -2402,25 +2412,55 @@ T
      */
     private void initializeSTable(ClassFileMethod[] methods) {
         short offset = 0;
+        ClassFileMethod defaultConstructor = null;
+        ClassFileMethod clinit = null;
+        ClassFileMethod main = null;
+
+        // look for special methods
         for (short i = 0; i != methods.length; ++i) {
             ClassFileMethod method = methods[i];
             if (PragmaException.isHosted(method.getPragmas())) {
                 method.setOffset(ILLEGAL_METHOD_OFFSET);
             } else {
-                method.setOffset(offset);
                 if (method.isDefaultConstructor()) {
-                    indexForInit = offset;
+                    defaultConstructor = method;
                     initModifiers = (byte) method.getModifiers();
+                    updateModifiers(Modifier.KLASS_HAS_DEFAULT_INIT);
                 } else if (method.isClinit()) {
-                    indexForClinit = offset;
+                    clinit = method;
+                    updateModifiers(Modifier.KLASS_HAS_CLINIT);
                     Assert.always(!hasGlobalStatics(), "No static initializer can be used on GlobalStaticFields"); // <clinit> found for class with global variables.
                 } else if (method.isMain()) {
-                    indexForMain = offset;
+                    updateModifiers(Modifier.KLASS_HAS_MAIN);
+                    main = method;
                 }
-                offset++;
             }
         }
-        mustClinit = setMustClinit();
+
+        // get special methods in canonical order
+        if (defaultConstructor != null) {
+            defaultConstructor.setOffset(offset++);
+        }
+        if (clinit != null) {
+            clinit.setOffset(offset++);
+        }
+        if (main != null) {
+            main.setOffset(offset++);
+        }
+
+        // do rest of methods...
+        for (short i = 0; i != methods.length; ++i) {
+            ClassFileMethod method = methods[i];
+            if (!PragmaException.isHosted(method.getPragmas())
+                    && !method.isDefaultConstructor()
+                    && !method.isClinit()
+                    && !method.isMain()) {
+                method.setOffset(offset++);
+            }
+        }
+        if (setMustClinit()) {
+            updateModifiers(Modifier.KLASS_MUSTCLINIT);
+        }
         staticMethods = createMethodTable(offset);
     }
 
@@ -2999,7 +3039,7 @@ T
      * @throws NotInlinedPragma as this method saves the current frame pointer
      */
     public final void main(String[] args) throws NotInlinedPragma {
-        int index = indexForMain;
+        int index = getMainIndex();
         if (index >= 0) {
             Assert.that(GC.getKlass(staticMethods[index]) == Klass.BYTECODE_ARRAY);
             VMThread thread = VMThread.currentThread();
@@ -3355,14 +3395,16 @@ T
      *           for this class; false otherwise
      */
     public final boolean mustClinit() {
-        return mustClinit || (modifiers & Modifier.COMPLETE_RUNTIME_STATICS) != 0;
+        return Modifier.mustClinit(modifiers);
     }
 
     /**
-     * Used to set up the mustClinit field.
+     * Used to set up the mustClinit modifier.
      */
     private boolean setMustClinit() {
-        if (indexForClinit >= 0) {
+        if (hasClinit()) {
+            return true;
+        } else if ((modifiers & Modifier.COMPLETE_RUNTIME_STATICS) != 0) {
             return true;
         } else if (superType == null) {
             return false;
@@ -3375,7 +3417,7 @@ T
      * Call this class's <code>&lt;clinit&gt;</code> method if it is defined.
      */
     final void clinit() {
-        int index = indexForClinit;
+        int index = getClinitIndex();
         if (index >= 0) {
             // Verbose trace.
             if (VM.isVeryVerbose()) {

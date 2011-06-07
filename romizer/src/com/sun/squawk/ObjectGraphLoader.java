@@ -111,12 +111,8 @@ public class ObjectGraphLoader {
         short instanceSizeBytes = (short) NativeUnsafe.getShort(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$instanceSizeBytes));
         short staticFieldsSize = (short) NativeUnsafe.getShort(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$staticFieldsSize));
         short refStaticFieldsSize = (short) NativeUnsafe.getShort(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$refStaticFieldsSize));
-        short indexForInit = (short) NativeUnsafe.getShort(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$indexForInit));
-        short indexForClinit = (short) NativeUnsafe.getShort(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$indexForClinit));
-        short indexForMain = (short) NativeUnsafe.getShort(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$indexForMain));
         byte initModifiers = (byte) NativeUnsafe.getByte(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$initModifiers));
-        boolean mustClinit = NativeUnsafe.getByte(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Klass$mustClinit)) != 0;
-        klass.initForObjectGraphLoader(virtualMethodBodies, staticMethodBodies, superType, interfaces, null, oopMap, oopMapWord, dataMap, dataMapWord, dataMapLength, modifiers, state, instanceSizeBytes, staticFieldsSize, refStaticFieldsSize, indexForInit, indexForClinit, indexForMain, initModifiers, mustClinit);
+        klass.initForObjectGraphLoader(virtualMethodBodies, staticMethodBodies, superType, interfaces, null, oopMap, oopMapWord, dataMap, dataMapWord, dataMapLength, modifiers, state, instanceSizeBytes, staticFieldsSize, refStaticFieldsSize, initModifiers);
     }
     
     protected Klass[] getKlassesAt(Address address) {
