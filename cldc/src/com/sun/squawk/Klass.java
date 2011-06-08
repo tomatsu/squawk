@@ -1433,7 +1433,7 @@ T
      * @param   showType show the type of the field, or return type of the method
      * @return  a string representation of <code>member</code>
      */
-    public static String toString(Member member, boolean showType) {
+    public static String toString(Member member, boolean showType) throws HostedPragma {
         String s = member.getFullyQualifiedName();
         if (member instanceof Method) {
             Method method = (Method)member;
@@ -3441,214 +3441,214 @@ T
      *
      * @see  Klass
      */
-    public static Klass TOP;
+    public static final Klass TOP;
 
     /**
      * The root of all single word types.
      */
-    public static Klass ONE_WORD;
+    public static final Klass ONE_WORD;
 
     /**
      * The root of all two word types.
      */
-    public static Klass TWO_WORD;
+    public static final Klass TWO_WORD;
 
     /**
      * The type for <code>boolean</code>.
      */
-    public static Klass BOOLEAN;
+    public static final Klass BOOLEAN;
 
     /**
      * The type for <code>byte</code>.
      */
-    public static Klass BYTE;
+    public static final Klass BYTE;
 
     /**
      * The type for <code>char</code>.
      */
-    public static Klass CHAR;
+    public static final Klass CHAR;
 
     /**
      * The type for <code>short</code>.
      */
-    public static Klass SHORT;
+    public static final Klass SHORT;
 
     /**
      * The type for <code>int</code>.
      */
-    public static Klass INT;
+    public static final Klass INT;
 
     /**
      * The type for <code>float</code>.
      */
-    public static Klass FLOAT;
+    public static final Klass FLOAT;
 
     /**
      * The type for <code>long</code>.
      */
-    public static Klass LONG;
+    public static final Klass LONG;
 
     /**
      * The type for the second word of a <code>long</code> value.
      */
-    public static Klass LONG2;
+    public static final Klass LONG2;
 
     /**
      * The type for <code>double</code>.
      */
-    public static Klass DOUBLE;
+    public static final Klass DOUBLE;
 
     /**
      * The type for the second word of a <code>double</code> value.
      */
-    public static Klass DOUBLE2;
+    public static final Klass DOUBLE2;
 
     /**
      * The type for <code>void</code>.
      */
-    public static Klass VOID;
+    public static final Klass VOID;
 
     /**
      * The root type for all reference types.
      */
-    public static Klass REFERENCE;
+    public static final Klass REFERENCE;
 
     /**
      * The root type for all uninitialized reference types.
      */
-    public static Klass UNINITIALIZED;
+    public static final Klass UNINITIALIZED;
 
     /**
      * The type for <code>this</code> in a constructor before the call to
      * the super constructor.
      */
-    public static Klass UNINITIALIZED_THIS;
+    public static final Klass UNINITIALIZED_THIS;
 
     /**
      * The root of the types representing the result of the <i>new</i>
      * bytecode before it has been passed to a constructor.
      */
-    public static Klass UNINITIALIZED_NEW;
+    public static final Klass UNINITIALIZED_NEW;
 
     /**
      * The type for <code>null</code>.
      */
-    public static Klass NULL;
+    public static final Klass NULL;
 
     /**
      * The type for <code>java.lang.Object</code>.
      */
-    public static Klass OBJECT;
+    public static final Klass OBJECT;
 
     /**
      * The type for <code>java.lang.String</code>.
      */
-    public static Klass STRING;
+    public static final Klass STRING;
 
     /**
      * The type for <code>java.lang.Class</code>.
      */
-    public static Klass THROWABLE;
+    public static final Klass THROWABLE;
 
     /**
      * The type for <code>com.sun.squawk.Klass</code>.
      */
-    public static Klass KLASS;
+    public static final Klass KLASS;
 
     /**
      * The type for <code>java.lang.Object[]</code>.
      */
-    public static Klass OBJECT_ARRAY;
+    public static final Klass OBJECT_ARRAY;
 
     /**
      * The type for <code>java.lang.String[]</code>.
      */
-    public static Klass STRING_ARRAY;
+    public static final Klass STRING_ARRAY;
 
     /**
      * The type for <code>boolean[]</code>.
      */
-    public static Klass BOOLEAN_ARRAY;
+    public static final Klass BOOLEAN_ARRAY;
 
     /**
      * The type for <code>byte[]</code>.
      */
-    public static Klass BYTE_ARRAY;
+    public static final Klass BYTE_ARRAY;
 
     /**
      * The type for <code>char[]</code>.
      */
-    public static Klass CHAR_ARRAY;
+    public static final Klass CHAR_ARRAY;
 
     /**
      * The type for <code>short[]</code>.
      */
-    public static Klass SHORT_ARRAY;
+    public static final Klass SHORT_ARRAY;
 
     /**
      * The type for <code>int[]</code>.
      */
-    public static Klass INT_ARRAY;
+    public static final Klass INT_ARRAY;
 
     /**
      * The type for <code>float[]</code>.
      */
-    public static Klass FLOAT_ARRAY;
+    public static final Klass FLOAT_ARRAY;
 
     /**
      * The type for <code>long[]</code>.
      */
-    public static Klass LONG_ARRAY;
+    public static final Klass LONG_ARRAY;
 
     /**
      * The type for <code>double[]</code>.
      */
-    public static Klass DOUBLE_ARRAY;
+    public static final Klass DOUBLE_ARRAY;
 
     /**
      * The type for <code>com.sun.squawk.StringOfBytes</code>.
      */
-    public static Klass STRING_OF_BYTES;
+    public static final Klass STRING_OF_BYTES;
 
     /**
      * The type for a stack chunk.
      */
-    public static Klass LOCAL_ARRAY;
+    public static final Klass LOCAL_ARRAY;
 
     /**
      * The type for a class state structure.
      */
-    public static Klass GLOBAL_ARRAY;
+    public static final Klass GLOBAL_ARRAY;
 
     /**
      * The type for an array of bytes that is a method.
      */
-    public static Klass BYTECODE_ARRAY;
+    public static final Klass BYTECODE_ARRAY;
 
     /**
      * The type for representing machine addresses.
      */
-    public static Klass ADDRESS;
+    public static final Klass ADDRESS;
 
     /**
      * The type for representing an array of machine addresses.
      */
-    public static Klass ADDRESS_ARRAY;
+    public static final Klass ADDRESS_ARRAY;
 
     /**
      * The type for representing unsigned machine words.
      */
-    public static Klass UWORD;
+    public static final Klass UWORD;
 
     /**
      * The type for representing an array of unsigned word addresses.
      */
-    public static Klass UWORD_ARRAY;
+    public static final Klass UWORD_ARRAY;
 
     /**
      * The type for representing the directed distance between two machine addresses.
      */
-    public static Klass OFFSET;
+    public static final Klass OFFSET;
 
     /**
      * Finds one of the bootstrap classes, creating it if necessary.
@@ -3694,13 +3694,6 @@ T
         return klass;
     }
 
-    /**
-     * Initializes the constants for the bootstrap classes.
-     */
-    static {
-        initBootstrapClasses();
-    }
-
     private final static int none = 0;
     private final static int publik = Modifier.PUBLIC;
     private final static int synthetic = publik | Modifier.SYNTHETIC;
@@ -3709,9 +3702,12 @@ T
     private final static int primitive2 = primitive | Modifier.DOUBLEWORD;
     private final static int squawkarray = publik | Modifier.SQUAWKARRAY;
     private final static int squawkprimitive = Modifier.SQUAWKPRIMITIVE;
-    
-    static void initBootstrapClasses() {
-        TOP                = boot(null,          "-T-",                     -1,                    synthetic);
+
+    /**
+     * Initializes the constants for the bootstrap classes.
+     */
+    static {
+       TOP                = boot(null,          "-T-",                     -1,                    synthetic);
         ONE_WORD           = boot(TOP,           "-1-",                     -1,                    synthetic); // only used by translator
         TWO_WORD           = boot(TOP,           "-2-",                     -1,                    synthetic2);// only used by translator
 

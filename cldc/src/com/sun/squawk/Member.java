@@ -232,7 +232,11 @@ public abstract class Member {
      * Gets a String representation of this field or method.
      */
     public final String toString() {
-        return Klass.toString(this, true);
+        if (VM.isHosted()) {
+            return Klass.toString(this, true);
+        } else {
+            return super.toString();
+        }
     }
 
     /*---------------------------------------------------------------------------*\

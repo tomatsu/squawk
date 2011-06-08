@@ -1,4 +1,3 @@
-//if[!FLASH_MEMORY]
 /*
  * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
  * Copyright 2011 Oracle Corporation. All Rights Reserved.
@@ -24,12 +23,16 @@
  * information or have any questions.
  */
 
-package com.sun.squawk;
+package tests;
 
 import java.lang.ref.*;
-
+import com.sun.squawk.*;
 import com.sun.squawk.vm.*;
 
+/**
+ * This is a version of com.sun.squawk.Test that is suitable for running as a MIDlet,
+ * not in the squawk package/bootstrap suite.
+ */
 public class Test {
 
 /*---------------------------------------------------------------------------*\
@@ -100,7 +103,7 @@ public class Test {
         x44();
         x45();
 //        x46();
-        x47();
+//        x47();
         x48();
         x49();
         x50();
@@ -110,9 +113,9 @@ public class Test {
 	sleepTest();
 
         // Give the finalizers (if any) a chance to run
-        VMThread.yield();
+        Thread.yield();
 
-        VM.print("Finished tests\n");
+        System.out.print("Finished tests\n");
         System.exit(12345);
     }
 
@@ -226,7 +229,7 @@ public class Test {
     static void x15() {
         boolean res = true;
         try {
-            Klass c = (Klass)null;
+            Class c = (Class)null;
         } catch (Throwable t) {
             res = false;
         }
@@ -477,6 +480,7 @@ public class Test {
 
     static int threadcounter = 0;
     static VMThread x45Thread(int stackSize) {
+
         try {
             Thread r = new Thread("x45Thread-" + (threadcounter++)) {
                 public void run() {
@@ -489,7 +493,7 @@ public class Test {
                 }
             };
             VMThread t = VMThread.asVMThread(r);
-            NativeUnsafe.setInt(t, (int)FieldOffsets.com_sun_squawk_VMThread$stackSize, Math.max(stackSize, VMThread.MIN_STACK_SIZE));
+            //NativeUnsafe.setInt(t, (int)FieldOffsets.com_sun_squawk_VMThread$stackSize, Math.max(stackSize, VMThread.MIN_STACK_SIZE));
             r.start();
             return t;
         }
@@ -506,7 +510,7 @@ public class Test {
             }
         };
         VMThread t = VMThread.asVMThread(r);
-        NativeUnsafe.setInt(t, (int)FieldOffsets.com_sun_squawk_VMThread$stackSize, Math.max(stackSize, VMThread.MIN_STACK_SIZE));
+        //NativeUnsafe.setInt(t, (int)FieldOffsets.com_sun_squawk_VMThread$stackSize, Math.max(stackSize, VMThread.MIN_STACK_SIZE));
         t.start();
         try {
             t.join();
@@ -567,15 +571,17 @@ public class Test {
     static WeakReference[] permRefs;
 
     static int x47countRefs() {
-        Ref ref = GC.getCollector().references;
-//System.out.println("referents:");
-        int count = 0;
-        while (ref != null) {
-//System.out.println("  " + ref.get());
-            ref = ref.next;
-            count ++;
-        }
-        return count;
+//        Ref ref = GC.getCollector().references;
+////System.out.println("referents:");
+//        int count = 0;
+//        while (ref != null) {
+////System.out.println("  " + ref.get());
+//            ref = ref.next;
+//            count ++;
+//        }
+//        return count;
+
+        return -1; // can't do this outside of squawk package?
     }
 
     static boolean x47Prim() {
@@ -744,13 +750,15 @@ public class Test {
     }
 
     static void sleepTest() {
-
-        System.out.println("Current time is: " + new java.util.Date());
-        VM.waitForEvent(1000);
-        System.out.println("After sleep 1 second, time is: " + new java.util.Date());
-        VM.waitForEvent(3000);
-        System.out.println("After sleep 3 seconds, time is: " + new java.util.Date());
-
+        try {
+            System.out.println("Current time is: " + new java.util.Date());
+            VMThread.sleep(1000);
+            System.out.println("After sleep 1 second, time is: " + new java.util.Date());
+            VMThread.sleep(3000);
+            System.out.println("After sleep 3 seconds, time is: " + new java.util.Date());
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        }
     }
 
     private Test() {
