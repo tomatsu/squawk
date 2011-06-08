@@ -1,34 +1,32 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
- * information or have any questions.
+ *
+ * Please contact Oracle, 16 Network Circle, Menlo Park, CA 94025 or
+ * visit www.oracle.com if you need additional information or have
+ * any questions.
  */
 
 package com.sun.squawk;
 
 import com.sun.squawk.util.*;
 import com.sun.squawk.vm.*;
-import com.sun.squawk.pragma.NotInlinedPragma;
-import com.sun.squawk.pragma.AllowInlinedPragma;
-
 
 /**
  * An instance of <code>MethodBody</code> represents the Squawk bytecode for
@@ -36,7 +34,7 @@ import com.sun.squawk.pragma.AllowInlinedPragma;
  * such as exception handler tables, oop map for the activation frame etc.
  *
  */
-public final class MethodBody extends MethodHeader {
+public final class MethodBody {
 
     /**
      * The enclosing method.
@@ -260,6 +258,7 @@ public final class MethodBody extends MethodHeader {
     
     /**
      * True IFF this is a constructor that inlined java.lang.Object.<init>. Used by squawk verifier.
+     * @return
      */
     public boolean getInlinedSuperConstructor() {
         return inlinedSuperConstructor;
@@ -282,7 +281,7 @@ public final class MethodBody extends MethodHeader {
          * Encode the type table.
          */
         start = enc.getSize();
-        if (ENABLE_SPECIFIC_TYPE_TABLES) {
+        if (MethodHeader.ENABLE_SPECIFIC_TYPE_TABLES) {
             for (int i = 0 ; i < localTypes.length ; i++) {
                 Klass k = localTypes[i];
                 switch (k.getSystemID()) {
@@ -354,7 +353,7 @@ public final class MethodBody extends MethodHeader {
          * parameters, and stack are all less than 32 words, and there is a large format where the only
          * limits are that none of these values may exceed 32767.
          */
-        if (!FORCE_LARGE_FORMAT     &&
+        if (!MethodHeader.FORCE_LARGE_FORMAT     &&
             localsCount        < 32 &&
             parametersCount    < 32 &&
             maxStack           < 32 &&
@@ -371,17 +370,17 @@ public final class MethodBody extends MethodHeader {
             /*
              * Large Minfo
              */
-            int fmt = FMT_LARGE;
+            int fmt = MethodHeader.FMT_LARGE;
             if (typeTableSize > 0) {
                 writeMinfoSize(enc, typeTableSize);
-                fmt |= FMT_T;
+                fmt |= MethodHeader.FMT_T;
             }
             if (exceptionTableSize > 0) {
                 writeMinfoSize(enc, exceptionTableSize);
-                fmt |= FMT_E;
+                fmt |= MethodHeader.FMT_E;
             }
             if (definingMethod.isInterpreterInvoked()) {
-                fmt |= FMT_I;
+                fmt |= MethodHeader.FMT_I;
             }
             writeMinfoSize(enc, parametersCount);
             writeMinfoSize(enc, localsCount);
@@ -460,15 +459,15 @@ public final class MethodBody extends MethodHeader {
          * Check the basic parameters.
          */
         int localCount = localTypes.length - parametersCount;
-        Assert.that(decodeLocalCount(oop)     == localCount);
-        Assert.that(decodeParameterCount(oop) == parametersCount);
-        Assert.that(decodeStackCount(oop)     == maxStack);
+        Assert.that(MethodHeader.decodeLocalCount(oop)     == localCount);
+        Assert.that(MethodHeader.decodeParameterCount(oop) == parametersCount);
+        Assert.that(MethodHeader.decodeStackCount(oop)     == maxStack);
 
         /*
          * Check the oopmap.
          */
         if (localTypes.length > 0) {
-            int offset = decodeOopmapOffset(oop);
+            int offset = MethodHeader.decodeOopmapOffset(oop);
             for (int i = 0 ; i < localTypes.length ; i++) {
                 Klass k = localTypes[i];
                 int pos = i / 8;
@@ -486,12 +485,12 @@ public final class MethodBody extends MethodHeader {
         /*
          * Check the exception table.
          */
-        if (decodeExceptionTableSize(oop) == 0) {
+        if (MethodHeader.decodeExceptionTableSize(oop) == 0) {
             Assert.that(exceptionTable == null || exceptionTable.length == 0);
         } else {
             Assert.that(exceptionTable != null && exceptionTable.length > 0);
-            int size   = decodeExceptionTableSize(oop);
-            int offset = decodeExceptionTableOffset(oop);
+            int size   = MethodHeader.decodeExceptionTableSize(oop);
+            int offset = MethodHeader.decodeExceptionTableOffset(oop);
             VMBufferDecoder dec = new VMBufferDecoder(oop, offset);
             for (int i = 0 ; i < exceptionTable.length ; i++) {
                 ExceptionHandler handler = exceptionTable[i];
@@ -506,14 +505,14 @@ public final class MethodBody extends MethodHeader {
         /*
          * Check the type table.
          */
-        if (decodeTypeTableSize(oop) == 0) {
+        if (MethodHeader.decodeTypeTableSize(oop) == 0) {
             for (int i = 0 ; i < localTypes.length ; i++) {
                 Klass k = localTypes[i];
                 Assert.that(k != Klass.FLOAT && k != Klass.DOUBLE && k != Klass.LONG && !k.isSquawkPrimitive());
             }
         } else {
-            int size   = decodeTypeTableSize(oop);
-            int offset = decodeTypeTableOffset(oop);
+            int size   = MethodHeader.decodeTypeTableSize(oop);
+            int offset = MethodHeader.decodeTypeTableOffset(oop);
             VMBufferDecoder dec = new VMBufferDecoder(oop, offset);
             for (int i = 0 ; i < localTypes.length ; i++) {
                 Klass k = localTypes[i];

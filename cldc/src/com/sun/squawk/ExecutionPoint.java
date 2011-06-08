@@ -1,24 +1,25 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -192,25 +193,30 @@ public final class ExecutionPoint {
     void printToVM() {
         try {
             Klass klass = getKlass();
+            int index;
+/*if[ENABLE_RUNTIME_METADATA]*/
             Method method = klass.findMethod(mp);
             if (method == null) {
-                int index = klass.getMethodIndex(mp, true);
-                if (index >= 0) {
+                if ((index = klass.getMethodIndex(mp, true)) >= 0) {
                     String methodName = calcStaticMethodName(klass, index);
                     if (methodName != null) {
                         printToVM(klass, methodName, null);
                     } else {
                         printToVM(klass, "static", index);
                     }
-                } else {
-                    index = klass.getMethodIndex(mp, false);
-                    if (index >= 0) {
-                        printToVM(klass, "virtual", index);
-                    }
+                } else if ((index = klass.getMethodIndex(mp, false)) >= 0) {
+                    printToVM(klass, "virtual", index);
                 }
             } else {
                 printToVM(klass, method.getName(), method.getLineNumberTable());
             }
+/*else[ENABLE_RUNTIME_METADATA]*/
+//            if ((index = klass.getMethodIndex(mp, true)) >= 0) {
+//                printToVM(klass, "static", index);
+//            } else if ((index = klass.getMethodIndex(mp, false)) >= 0) {
+//                printToVM(klass, "virtual", index);
+//            }
+/*end[ENABLE_RUNTIME_METADATA]*/
         } catch (Throwable e) {
             VM.println("Exception thrown in StackTraceElement.printToVM()");
         }
@@ -228,30 +234,35 @@ public final class ExecutionPoint {
     public void print(PrintStream out) {
         try {
             Klass klass = getKlass();
+            int index;
+/*if[ENABLE_RUNTIME_METADATA]*/
             Method method = klass.findMethod(mp);
             if (method == null) {
-                int index = klass.getMethodIndex(mp, true);
-                if (index >= 0) {
+                if ((index = klass.getMethodIndex(mp, true)) >= 0) {
                     String methodName = calcStaticMethodName(klass, index);
                     if (methodName != null) {
                         printKnownMethod(out, klass, methodName, null);
                     } else {
                         printUnknownMethod(out, klass, "static", index);
                     }
-                } else {
-                    index = klass.getMethodIndex(mp, false);
-                    if (index >= 0) {
-                        String methodName = calcVirtualMethodName(klass, index, new Object[1]);
-                        if (methodName != null) {
-                            printKnownMethod(out, klass, methodName, null);
-                        } else {
-                            printUnknownMethod(out, klass, "virtual", index);
-                        }
+                } else if ((index = klass.getMethodIndex(mp, false)) >= 0) {
+                    String methodName = calcVirtualMethodName(klass, index, new Object[1]);
+                    if (methodName != null) {
+                        printKnownMethod(out, klass, methodName, null);
+                    } else {
+                        printUnknownMethod(out, klass, "virtual", index);
                     }
                 }
             } else {
                 printKnownMethod(out, klass, method.getName(), method.getLineNumberTable());
             }
+/*else[ENABLE_RUNTIME_METADATA]*/
+//            if ((index = klass.getMethodIndex(mp, true)) >= 0) {
+//                printUnknownMethod(out, klass, "static", index);
+//            } else if ((index = klass.getMethodIndex(mp, false)) >= 0) {
+//                printUnknownMethod(out, klass, "virtual", index);
+//            }
+/*end[ENABLE_RUNTIME_METADATA]*/
         } catch (Throwable e) {
             if (VM.isVerbose()) {
                 VM.printVMStackTrace(e, "***", "Exception thrown in StackTraceElement.print():");

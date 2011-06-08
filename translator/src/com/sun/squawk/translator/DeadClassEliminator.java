@@ -85,6 +85,7 @@ public class DeadClassEliminator {
         "com.sun.squawk.ResourceFile",
         "com.sun.squawk.ManifestProperty",
         "com.sun.squawk.Suite",
+        "com.sun.squawk.Klass",
         "com.sun.squawk.KlassMetadata",
         "com.sun.squawk.KlassMetadata$1", // used by metadata suites
         "com.sun.squawk.KlassMetadata$Full",
@@ -92,8 +93,6 @@ public class DeadClassEliminator {
         "com.sun.squawk.FullMethodMetadata",
         "com.sun.squawk.vm.FieldOffsets",
         "com.sun.squawk.vm.MethodOffsets",
-        "com.sun.squawk.Klass",
-        "com.sun.squawk.Klass",
         "com.sun.squawk.util.ArrayHashtable",// used by metadata suites
         "com.sun.squawk.ObjectMemorySerializer$ControlBlock",// used by metadata suites
         "com.sun.squawk.StringOfBytes"
@@ -136,9 +135,9 @@ public class DeadClassEliminator {
             return true;
         }
 
-        if (klass.isSynthetic()) {
-            return true;
-        }
+//        if (klass.isSynthetic()) {
+//            return true;
+//        }
 
         if (klass.hasMain()) {
             return true;

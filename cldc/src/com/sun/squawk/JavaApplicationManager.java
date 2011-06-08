@@ -312,12 +312,9 @@ public class JavaApplicationManager {
      * @param arg the argument
      */
     private static void processVMOption(String arg) {
-        if (arg.startsWith("-suite:")) {
-            parentSuiteURI = "file://" + arg.substring(7) + Suite.FILE_EXTENSION;
-/*if[FLASH_MEMORY]*/
-        } else if (arg.startsWith("-spotsuite:")) {
-            parentSuiteURI = arg.substring(1);
-/*end[FLASH_MEMORY]*/
+        if (arg.equals("-h")) {
+            usage("");
+            VM.stopVM(0);
 /*if[ENABLE_DYNAMIC_CLASSLOADING]*/
         } else if (arg.startsWith("-cp:")) {
             // Fix up the class path with respect to the system dependant separator characters
@@ -403,12 +400,17 @@ public class JavaApplicationManager {
             String val = propAndValue.substring(seperator+1);
             VM.getCommandLineProperties().put(prop, val);
             // System properties are not "global global"
+/*if[ENABLE_SUITE_LOADING]*/
+        } else if(arg.startsWith("-suite:")) {
+            parentSuiteURI = "file://" + arg.substring(7) + Suite.FILE_EXTENSION;
+/*if[FLASH_MEMORY]*/
+        } else if (arg.startsWith("-spotsuite:")) {
+            parentSuiteURI = arg.substring(1);
+/*end[FLASH_MEMORY]*/
         } else if (arg.startsWith("-suitepath:")) {
             String path = arg.substring("-suitepath:".length());
             ObjectMemoryLoader.setFilePath(path);
-        } else if (arg.equals("-h")) {
-            usage("");
-            VM.stopVM(0);
+/*end[ENABLE_SUITE_LOADING]*/
         } else if (!GC.getCollector().processCommandLineOption(arg)) {
             usage("Unrecognised option: "+arg);
             VM.stopVM(0);
@@ -435,11 +437,13 @@ public class JavaApplicationManager {
                 "    -cp:<directories and jar/zip files separated by ':' (Unix) or ';' (Windows)>\n" +
                 "                          paths where classes and resources can be found\n" +
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
+/*if[ENABLE_SUITE_LOADING]*/
                 "    -suite:<name>         suite name (without \"" + Suite.FILE_EXTENSION + "\") to load\n" +
                 "    -suitepath:<path>     host path to look for suites in\n" +
 /*if[FLASH_MEMORY]*/
                 "    -spotsuite:<name>     suite name (without \"" + Suite.FILE_EXTENSION + "\") to load\n" +
 /*end[FLASH_MEMORY]*/
+/*end[ENABLE_SUITE_LOADING]*/
 /*if[EXCLUDE]*/
                 "    -imageclasses         show the classes in the boot image and exit\n" +
                 "    -imagepackages        show the packages in the boot image and exit\n" +

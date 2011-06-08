@@ -1,5 +1,6 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This code is free software; you can redistribute it and/or modify
@@ -17,8 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  *
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -110,7 +111,7 @@ public class MethodHeader {
                                FMT_T       = 0x02,   // specifies that there is a type table
                                FMT_I       = 0x04;   // specifies that the method is only invoked by the interpreter
  
-    protected MethodHeader() {    }
+    private MethodHeader() {    }
 
 
     /*-----------------------------------------------------------------------*\
@@ -121,7 +122,7 @@ public class MethodHeader {
      * Determines if a given method is only invoked from the interpreter
      *
      * @param oop the pointer to the method
-     * @return true if oop is an intrepreter invoked only method
+     * @return true if oop is an interpreter invoked only method
      */
     public static boolean isInterpreterInvoked(Object oop) {
         int b0 = NativeUnsafe.getUByte(oop, HDR.methodInfoStart);

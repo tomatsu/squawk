@@ -2766,6 +2766,28 @@ T
      * @return the metadata for this class
      */
     private KlassMetadata getMetadata() {
+/*if[ENABLE_RUNTIME_METADATA]*/
+        return getMetadata0();
+/*else[ENABLE_RUNTIME_METADATA]*/
+//        if (VM.isHosted()) {
+//            return getMetadata0();
+//        }
+//        return null;
+/*end[ENABLE_RUNTIME_METADATA]*/
+    }
+    
+    /**
+     * Gets the metadata for this class that contains the symbolic information
+     * for its fields and methods. This can only be called on a non-synthetic
+     * class that has been loaded.
+     *
+     * @return the metadata for this class
+     */
+    private KlassMetadata getMetadata0()
+/*if[!ENABLE_RUNTIME_METADATA]*/
+        throws HostedPragma
+/*end[ENABLE_RUNTIME_METADATA]*/
+    {
         if (isSynthetic() || isArray()) {
             return null;
         }
@@ -3326,6 +3348,7 @@ T
          */
         try {
 
+/*if[ENABLE_RUNTIME_METADATA]*/
             if ((modifiers & Modifier.COMPLETE_RUNTIME_STATICS) != 0) {
                 int count = getFieldCount(true);
                 for (int i = 0; i != count; ++i) {
@@ -3353,7 +3376,8 @@ T
                     }
                 }
             }
-
+/*end[ENABLE_RUNTIME_METADATA]*/
+            
             clinit();
             /*
              * Step 9
@@ -3655,17 +3679,17 @@ T
      *
      * @param   superType  the super type of the bootstrap class
      * @param   name       the name of the class
-     * @param   systemID   the predefined system ID for the class or -1 if it doesn't have one
+     * @param   systemID   the predefined system ID for the class
      * @param   modifiers  the modifiers of the class
      * @return             the created class
      */
     private static Klass boot(Klass superType, String name, int systemID, int modifiers) {
         Isolate isolate = VM.getCurrentIsolate();
         Suite bootstrapSuite = isolate.getBootstrapSuite();
-        Klass klass = systemID == -1 ? bootstrapSuite.lookup(name) : bootstrapSuite.getKlass(systemID);
+        Klass klass = bootstrapSuite.getKlass(systemID);
         if (klass != null) {
             Assert.that(klass.getSuperType() == superType);
-            Assert.that(systemID == -1 || klass.getSystemID() == systemID);
+            Assert.that(klass.getSystemID() == systemID);
             Assert.that((klass.getModifiers() & modifiers) == modifiers);
             return klass;
         }
@@ -3681,14 +3705,14 @@ T
      *
      * @param   superType  the super type of the bootstrap class
      * @param   name       the name of the class
-     * @param   systemID   the predefined system ID for the class or -1 if it doesn't have one
+     * @param   systemID   the predefined system ID for the class
      * @param   modifiers  the modifiers of the class
      * @param   bootstrapSuite  the bootstrap suite
      * @return             the created class
      */
     private static Klass bootHosted(Klass superType, String name, int systemID, int modifiers, Suite bootstrapSuite) throws HostedPragma {
         Klass klass = getClass(name, systemID);
-        Assert.that(systemID == -1 || bootstrapSuite.getKlass(systemID) == klass);
+        Assert.that(bootstrapSuite.getKlass(systemID) == klass);
         klass.setSuperType(superType);
         klass.updateModifiers(modifiers | klass.getModifiers());
         return klass;
@@ -3707,9 +3731,9 @@ T
      * Initializes the constants for the bootstrap classes.
      */
     static {
-       TOP                = boot(null,          "-T-",                     -1,                    synthetic);
-        ONE_WORD           = boot(TOP,           "-1-",                     -1,                    synthetic); // only used by translator
-        TWO_WORD           = boot(TOP,           "-2-",                     -1,                    synthetic2);// only used by translator
+        TOP                = boot(null,          "-T-",                     CID.TOP,               synthetic);
+        ONE_WORD           = boot(TOP,           "-1-",                     CID.ONE_WORD,          synthetic); // only used by translator
+        TWO_WORD           = boot(TOP,           "-2-",                     CID.TWO_WORD,          synthetic2);// only used by translator
 
         INT                = boot(ONE_WORD,      "int",                     CID.INT,               primitive);
         BOOLEAN            = boot(INT,           "boolean",                 CID.BOOLEAN,           primitive);
@@ -3723,10 +3747,10 @@ T
         DOUBLE2            = boot(ONE_WORD,      "-double2-",               CID.DOUBLE2,           primitive2);
         VOID               = boot(TOP,           "void",                    CID.VOID,              synthetic);
 
-        REFERENCE          = boot(ONE_WORD,      "-ref-",                   -1,                    synthetic); // only used by translator
-        UNINITIALIZED      = boot(REFERENCE,     "-uninit-",                -1,                    synthetic); // only used by translator
-        UNINITIALIZED_THIS = boot(UNINITIALIZED, "-uninit_this-",           -1,                    synthetic); // only used by translator
-        UNINITIALIZED_NEW  = boot(UNINITIALIZED, "-uninit_new-",            -1,                    synthetic); // only used by translator
+        REFERENCE          = boot(ONE_WORD,      "-ref-",                   CID.REFERENCE,         synthetic); // only used by translator
+        UNINITIALIZED      = boot(REFERENCE,     "-uninit-",                CID.UNINITIALIZED,     synthetic); // only used by translator
+        UNINITIALIZED_THIS = boot(UNINITIALIZED, "-uninit_this-",           CID.UNINITIALIZED_THIS,synthetic); // only used by translator
+        UNINITIALIZED_NEW  = boot(UNINITIALIZED, "-uninit_new-",            CID.UNINITIALIZED_NEW, synthetic); // only used by translator
 
         OBJECT             = boot(REFERENCE,     "java.lang.Object",        CID.OBJECT,            none);
         STRING             = boot(OBJECT,        "java.lang.String",        CID.STRING,            squawkarray);

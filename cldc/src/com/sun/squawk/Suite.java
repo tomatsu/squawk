@@ -1,25 +1,26 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
- * information or have any questions.
+ *
+ * Please contact Oracle, 16 Network Circle, Menlo Park, CA 94025 or
+ * visit www.oracle.com if you need additional information or have
+ * any questions.
  */
 
 package com.sun.squawk;
@@ -489,9 +490,11 @@ public final class Suite {
 
     private void removeMetadata(Klass klass) {
         int suiteID = klass.getSuiteID();
-        Assert.always(metadatas[suiteID] == null || metadatas[suiteID].getDefinedClass() == klass);
-        checkWrite();
-        metadatas[suiteID] = null;
+        if (suiteID < metadatas.length) {
+            Assert.always(metadatas[suiteID] == null || metadatas[suiteID].getDefinedClass() == klass);
+            checkWrite();
+            metadatas[suiteID] = null;
+        }
     }
 
     public void setUnusedClasses(Klass[] klasses) {
@@ -827,6 +830,7 @@ public final class Suite {
 
     /**
      * Gets the Suite corresponding to a given URI, loading it if necessary.
+     * NOTE: Suite loading is enabled by the ENABLE_SUITE_LOADING build property.
      *
      * @param uri   the URI identifying the object memory
      * @param errorOnIOException if true, throw an Error if an IOException occurs, otherwise return null.
@@ -837,6 +841,7 @@ public final class Suite {
     static Suite getSuite(String uri, boolean errorOnIOException) throws Error {
         ObjectMemory om = GC.lookupReadOnlyObjectMemoryBySourceURI(uri);
         if (om == null) {
+/*if[ENABLE_SUITE_LOADING]*/
             try {
                 om = ObjectMemoryLoader.load(uri, true).objectMemory;
             } catch (IOException e) {
@@ -847,7 +852,15 @@ public final class Suite {
                     return null;
                 }
             }
+/*else[ENABLE_SUITE_LOADING]*/
+//            if (errorOnIOException) {
+//                throw new Error("IO error while loading suite from '" + uri);
+//            } else {
+//                return null;
+//            }
+/*end[ENABLE_SUITE_LOADING]*/
         }
+
         Object root = om.getRoot();
         if (!(root instanceof Suite)) {
             throw new Error("object memory in '" + om.getURI() + "' does not contain a suite");
