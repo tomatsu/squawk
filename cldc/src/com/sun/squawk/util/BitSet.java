@@ -95,7 +95,7 @@ public final class BitSet {
      */
     protected void validateIndex(int bitIndex) {
         if (bitIndex < 0) {
-            throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
+            throw new IndexOutOfBoundsException();
         }
     }
 
@@ -199,7 +199,7 @@ public final class BitSet {
     private void grow(int bitIndex, int bytesRequired) throws IndexOutOfBoundsException {
         // Cannot grow a bit set whose bits are external
         if (bitsAreExternal) {
-            throw new IndexOutOfBoundsException("bitIndex >= this.size(): " + bitIndex);
+            throw new IndexOutOfBoundsException();
         }
 
         // Allocate larger of doubled size or required size

@@ -59,12 +59,12 @@ public class MethodMetadata {
      *
      * @see  #getLineNumberTable()
      */
-    private final int [] lnt;
+    final int [] lnt;
     
     /**
      * The offset of the method in the static/virtual method table.
      */
-    private int offset;
+    final int offset;
 
     /**
      * Creates a new <code>MethodMetadata</code> instance.

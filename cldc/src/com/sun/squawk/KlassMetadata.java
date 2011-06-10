@@ -101,7 +101,7 @@ public class KlassMetadata {
                 String sourceFile,
                 int vtableSize,
                 int stableSize) {
-            super(definedClass);
+            super(definedClass, null, null);
             SquawkVector types = new SquawkVector();
             this.symbols = SymbolParser.createSymbols(virtualMethods, staticMethods, instanceFields, staticFields, types);
             this.sourceFile = sourceFile;
@@ -169,10 +169,6 @@ public class KlassMetadata {
                 }
             }
         }
-    }
-    
-    private KlassMetadata(Klass definedClass) {
-        this.definedClass = definedClass;
     }
     
     KlassMetadata(Klass definedClass, byte[] symbols, Klass[] classTable) {
