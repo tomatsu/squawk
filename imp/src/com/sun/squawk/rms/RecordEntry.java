@@ -58,7 +58,7 @@ public class RecordEntry extends RmsEntry implements IRecordEntry {
         if (length == 0) {
             return 0;
         }
-        if (length > bytesLength || length < 0) {
+        if (length > bytesLength) {
             throw new IndexOutOfBoundsException();
         }
         System.arraycopy(bytes, bytesOffset, buffer, offset, length);

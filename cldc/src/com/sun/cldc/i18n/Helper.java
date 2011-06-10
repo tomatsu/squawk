@@ -27,6 +27,7 @@ package com.sun.cldc.i18n;
 import com.sun.cldc.i18n.j2me.ISO8859_1_Reader;
 import com.sun.cldc.i18n.j2me.ISO8859_1_Writer;
 import java.io.*;
+import com.sun.squawk.util.Arrays;
 
 /**
  * This class provides general helper functions for the J2ME environment.
@@ -70,15 +71,15 @@ public class Helper {
      * @return                 A new reader for the stream
      */
     public static Reader getStreamReader(InputStream is) {
-        try {
-            return getStreamReader(is, defaultEncoding);
-        } catch(UnsupportedEncodingException x) {
-                throw new RuntimeException(
-/*if[VERBOSE_EXCEPTIONS]*/
-                                             "Missing default encoding "+defaultEncoding
-/*end[VERBOSE_EXCEPTIONS]*/
-                );
+        /* Test for null arguments */
+        if (is == null) {
+            throw new NullPointerException();
         }
+
+        StreamReader fr = new ISO8859_1_Reader();
+
+        /* Open the connection and return*/
+        return fr.open(is);
     }
 
     /**
@@ -90,17 +91,24 @@ public class Helper {
      * @exception UnsupportedEncodingException  If the encoding is not known
      */
     public static Reader getStreamReader(InputStream is, String name) throws UnsupportedEncodingException {
+        if (ISO8859_1_ONLY_SUPPORTED) {
+            if (isISO8859_1(name)) {
+                return getStreamReader(is);
+            } else {
+                throw new UnsupportedEncodingException();
+            }
+        } else {
+            /* Test for null arguments */
+            if (is == null) {
+                throw new NullPointerException();
+            }
 
-        /* Test for null arguments */
-        if (is == null || name == null) {
-            throw new NullPointerException();
+            /* Get the reader from the encoding */
+            StreamReader fr = (StreamReader) getStreamReaderOrWriter(name, true);
+
+            /* Open the connection and return*/
+            return fr.open(is);
         }
-
-        /* Get the reader from the encoding */
-        StreamReader fr = (StreamReader)getStreamReaderOrWriter(name, true);
-
-        /* Open the connection and return*/
-        return fr.open(is, name);
     }
 
     private static Object getStreamReaderOrWriter(String name, boolean reader)
@@ -108,17 +116,6 @@ public class Helper {
         if (name == null) {
             throw new NullPointerException();
         }
-        if (ISO8859_1_ONLY_SUPPORTED) {
-            if (isISO8859_1(name)) {
-                if (reader) {
-                    return new ISO8859_1_Reader();
-                } else {
-                    return new ISO8859_1_Writer();
-                }
-            } else {
-                throw new UnsupportedEncodingException();
-            }
-        } else {
         name = internalNameForEncoding(name);
 
         try {
@@ -153,7 +150,6 @@ public class Helper {
             );
         }
     }
-    }
 
     /**
      * Get a writer for an OutputStream
@@ -162,16 +158,16 @@ public class Helper {
      * @return                 A new writer for the stream
      */
     public static Writer getStreamWriter(OutputStream os) {
-        try {
-            return getStreamWriter(os, defaultEncoding);
-        } catch(UnsupportedEncodingException x) {
-            throw new RuntimeException(
-/*if[VERBOSE_EXCEPTIONS]*/
-                                             "Missing default encoding " + 
-                                             defaultEncoding
-/*end[VERBOSE_EXCEPTIONS]*/
-                );
+        /* Test for null arguments */
+        if (os == null) {
+            throw new NullPointerException();
         }
+
+        /* Get the writer from the encoding */
+        StreamWriter sw = new ISO8859_1_Writer();
+
+        /* Open it on the output stream and return */
+        return sw.open(os);
     }
 
 
@@ -184,17 +180,24 @@ public class Helper {
      * @exception UnsupportedEncodingException  If the encoding is not known
      */
     public static Writer getStreamWriter(OutputStream os, String name) throws UnsupportedEncodingException {
+        if (ISO8859_1_ONLY_SUPPORTED) {
+            if (isISO8859_1(name)) {
+                return getStreamWriter(os);
+            } else {
+                throw new UnsupportedEncodingException();
+            }
+        } else {
+            /* Test for null arguments */
+            if (os == null) {
+                throw new NullPointerException();
+            }
 
-        /* Test for null arguments */
-        if (os == null || name == null) {
-            throw new NullPointerException();
+            /* Get the writer from the encoding */
+            StreamWriter sw = (StreamWriter) getStreamReaderOrWriter(name, false);
+
+            /* Open it on the output stream and return */
+            return sw.open(os);
         }
-
-        /* Get the writer from the encoding */
-        StreamWriter sw = (StreamWriter)getStreamReaderOrWriter(name, false);
-
-        /* Open it on the output stream and return */
-        return sw.open(os, name);
     }
 
     /**
@@ -243,6 +246,7 @@ public class Helper {
     private static String lastReaderEncoding;
     private static StreamReader  lastReader;
 
+
     /**
      * Convert a byte array to a char array
      *
@@ -254,31 +258,6 @@ public class Helper {
      * @exception UnsupportedEncodingException  If the encoding is not known
      */
     public static char[] byteToCharArray(byte[] buffer, int offset, int length, String enc) throws UnsupportedEncodingException {
-        if (offset < 0) {
-            throw new IndexOutOfBoundsException(
-/*if[VERBOSE_EXCEPTIONS]*/
-                                         Integer.toString(offset)
-/*end[VERBOSE_EXCEPTIONS]*/
-            );
-        }
-
-        if (length < 0) {
-            throw new IndexOutOfBoundsException(
-/*if[VERBOSE_EXCEPTIONS]*/
-                                         Integer.toString(length)
-/*end[VERBOSE_EXCEPTIONS]*/
-            );
-        }
-
-        /* Note: offset or length might be near -1>>>1 */
-        if (offset > buffer.length - length) {
-            throw new IndexOutOfBoundsException(
-/*if[VERBOSE_EXCEPTIONS]*/                                           
-                                         Integer.toString(offset + length)
-/*end[VERBOSE_EXCEPTIONS]*/
-            );
-        }
-
         //Because most cases use ISO8859_1 encoding, we can optimize this case.
         if(isISO8859_1(enc)) {
             char[] value = new char[length];
@@ -310,7 +289,7 @@ public class Helper {
         char[] outbuf = new char[size];
 
         /* Open the reader on a ByteArrayInputStream */
-        lastReader.open(new ByteArrayInputStream(buffer, offset, length), enc);
+        lastReader.open(new ByteArrayInputStream(buffer, offset, length));
 
         try {
             /* Read the input */
@@ -358,7 +337,7 @@ public class Helper {
         ByteArrayOutputStream os = new ByteArrayOutputStream(size);
 
         /* Open the writer */
-        lastWriter.open(os, enc);
+        lastWriter.open(os);
 
         try {
             /* Convert */
@@ -395,7 +374,7 @@ public class Helper {
      * @exception UnsupportedEncodingException  If the encoding is not known
      */
     public static byte[] charToByteArray(char[] buffer, int offset, int length, String enc) throws UnsupportedEncodingException {
-
+        Arrays.boundsCheck(buffer.length, offset, length);
         //Because most cases use ISO8859_1 encoding, we can optimize this case.
         if (isISO8859_1(enc)) {
             char c;
@@ -418,6 +397,7 @@ public class Helper {
      * 
      * @param encodingName
      * @return true if encodingName is some variation of "ISO8859_1".
+     * @throws NullPointerException if encodingName is null.
      */
     public static boolean isISO8859_1(String encodingName) {
         if (encodingName.equals("ISO8859_1") || internalNameForEncoding(encodingName).equals("ISO8859_1")) {

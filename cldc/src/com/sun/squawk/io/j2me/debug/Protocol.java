@@ -28,6 +28,7 @@ import java.io.*;
 import javax.microedition.io.*;
 import com.sun.squawk.io.*;
 import com.sun.squawk.*;
+import com.sun.squawk.util.Arrays;
 
 /**
  * Connection to the J2ME debug stream
@@ -92,7 +93,7 @@ class PrivateOutputStream extends OutputStream {
      *
      * @param  p  pointer to the parent connection
      */
-    public PrivateOutputStream(Protocol p) {
+    PrivateOutputStream(Protocol p) {
         parent = p;
     }
 
@@ -138,12 +139,8 @@ class PrivateOutputStream extends OutputStream {
      *             stream is closed.
      */
     public void write(byte b[], int off, int len) throws IOException {
-        if (b == null) {
-            throw new NullPointerException();
-        } else if ((off < 0) || (off > b.length) || (len < 0) ||
-                   ((off + len) > b.length) || ((off + len) < 0)) {
-            throw new IndexOutOfBoundsException();
-        } else if (len == 0) {
+        Arrays.boundsCheck(b.length, off, len);
+        if (len == 0) {
             return;
         }
         int old;

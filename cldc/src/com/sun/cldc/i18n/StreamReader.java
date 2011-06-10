@@ -39,10 +39,10 @@ public abstract class StreamReader extends Reader {
 
     /**
      * Open the reader
+     * @param in
+     * @return
      */
-    public Reader open(InputStream in, String enc)
-        throws UnsupportedEncodingException {
-
+    public Reader open(InputStream in) {
         this.in = in;
         return this;
     }
@@ -105,6 +105,10 @@ public abstract class StreamReader extends Reader {
 
     /**
      * Get the size in chars of an array of bytes
+     * @param array
+     * @param offset
+     * @param length
+     * @return 
      */
     public abstract int sizeOf(byte[] array, int offset, int length);
 

@@ -102,10 +102,8 @@
 //     * @param   len   the number of bytes to write.
 //     */
 //    public synchronized void write(byte b[], int off, int len) {
-//        if ((off < 0) || (off > b.length) || (len < 0) ||
-//            ((off + len) > b.length) || ((off + len) < 0)) {
-//            throw new IndexOutOfBoundsException();
-//        } else if (len == 0) {
+//        Arrays.boundsCheck(b.length, off, len);
+//        if (len == 0) {
 //            return;
 //        }
 //        // TEMP implementation.
@@ -153,12 +151,7 @@
 //     *          the stream has been reached.
 //     */
 //    public int read(byte b[], int off, int len) throws IOException {
-//        if (b == null) {
-//            throw new NullPointerException();
-//        } else if ((off < 0) || (off > b.length) || (len < 0) ||
-//                   ((off + len) > b.length) || ((off + len) < 0)) {
-//            throw new IndexOutOfBoundsException();
-//        }
+//        Arrays.boundsCheck(b.length, off, len);
 //        // TEMP implementation.
 //        for (int i = 0; i < len; i++) {
 //            int ch = read();

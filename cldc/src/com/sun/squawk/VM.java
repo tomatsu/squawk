@@ -57,6 +57,7 @@ import com.sun.squawk.vm.HDR;
 import com.sun.squawk.vm.Native;
 import com.sun.squawk.vm.SC;
 import com.sun.squawk.vm.FieldOffsets;
+import com.sun.squawk.util.Arrays;
 
 /**
  * This is a Squawk VM specific class that is used to communicate between
@@ -1829,10 +1830,9 @@ hbp.dumpState();
     public static void printBytes(byte b[], int off, int len) {
         if (b == null) {
             throw new NullPointerException();
-        } else if ((off < 0) || (off > b.length) || (len < 0)
-                || ((off + len) > b.length) || ((off + len) < 0)) {
-            throw new IndexOutOfBoundsException();
-        } else if (len == 0) {
+        }
+        Arrays.boundsCheck(b.length, off, len);
+        if (len == 0) {
             return;
         }
         executeCIO(-1, ChannelConstants.INTERNAL_PRINTBYTES, -1, off, len, 0, 0, 0, 0, b, null);

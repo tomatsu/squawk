@@ -24,6 +24,7 @@
 
 package com.sun.squawk.io;
 
+import com.sun.squawk.util.Arrays;
 import java.io.*;
 
 /**
@@ -269,12 +270,10 @@ public class BufferedReader extends Reader {
     public int read(char cbuf[], int off, int len) throws IOException {
         synchronized (lock) {
         ensureOpen();
-            if ((off < 0) || (off > cbuf.length) || (len < 0) ||
-                ((off + len) > cbuf.length) || ((off + len) < 0)) {
-                throw new IndexOutOfBoundsException();
-            } else if (len == 0) {
-                return 0;
-            }
+        Arrays.boundsCheck(cbuf.length, off, len);
+        if (len == 0) {
+            return 0;
+        }
 
         int n = read1(cbuf, off, len);
         if (n <= 0) return n;

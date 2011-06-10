@@ -38,10 +38,10 @@ public abstract class StreamWriter extends Writer {
 
     /**
      * Open the writer
+     * @param out
+     * @return
      */
-    public Writer open(OutputStream out, String enc)
-        throws UnsupportedEncodingException {
-
+    public Writer open(OutputStream out) {
         this.out = out;
         return this;
     }
@@ -66,6 +66,10 @@ public abstract class StreamWriter extends Writer {
 
     /**
      * Get the size in bytes of an array of chars
+     * @param array
+     * @param offset
+     * @param length
+     * @return bytes needed to store given part of array
      */
     public abstract int sizeOf(char[] array, int offset, int length);
 

@@ -1298,6 +1298,35 @@ public class Arrays {
             throw new ArrayIndexOutOfBoundsException(toIndex);
     }
 
+    /**
+     * Do a standard check that elements(offset..offset+length] are valid
+     * @param arrayLen the length of an array. Assumed to be >= 0
+     * @param offset
+     * @param length
+     * @throws IndexOutOfBoundsException
+     */
+    public static void boundsCheck(int arrayLen, int offset, int length) throws IndexOutOfBoundsException {
+        Assert.that(arrayLen >= 0);
+/*if[VERBOSE_EXCEPTIONS]*/
+        if (offset < 0) {
+            throw new IndexOutOfBoundsException(Integer.toString(offset));
+        }
+
+        if (length < 0) {
+            throw new IndexOutOfBoundsException(Integer.toString(length));
+        }
+
+        /* Note: offset or length might be near -1>>>1 */
+        if (offset > arrayLen - length) {
+            throw new IndexOutOfBoundsException(Integer.toString(offset + length));
+        }
+/*else[VERBOSE_EXCEPTIONS]*/
+//        if (offset < 0 || length < 0 || offset > arrayLen - length) {
+//            throw new IndexOutOfBoundsException();
+//        }
+/*end[VERBOSE_EXCEPTIONS]*/
+    }
+
     // Searching
 
     /**

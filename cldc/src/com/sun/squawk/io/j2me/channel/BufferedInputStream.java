@@ -290,9 +290,8 @@ class BufferedInputStream extends InputStream {
         throws IOException
     {
         ensureOpen();
-        if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
-            throw new IndexOutOfBoundsException();
-        } else if (len == 0) {
+        Arrays.boundsCheck(b.length, off, len);
+        if (len == 0) {
             return 0;
         }
 
