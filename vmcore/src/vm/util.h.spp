@@ -39,6 +39,7 @@
 #if SDA_DEBUGGER
 #define DB_MAX_BPS 100
 extern int sda_bp_set_or_stepping; // TRUE if we have any breakpoints set or are in a stepping mode
+#define set_sda_bp_set_or_stepping(_isolate_) sda_bp_set_or_stepping = sda_updateBreakpointCache(_isolate_)
 
 /* Null terminated array of instruction pointers for the breakpoints set in the current isolate. */
 extern ByteAddress sda_breakpoints[DB_MAX_BPS + 1];
@@ -49,11 +50,11 @@ void sda_clearStepState(Address thread);
 Address getInterpreterInvokedFrame(UWordAddress beginFP, UWordAddress endFP);
 void dumpSteppingInfo(Offset ipOffset, Offset fpOffset, Address stepInfo);
 #else
-#define sda_updateBreakpointCache(isolate) false
+#define set_sda_bp_set_or_stepping(_isolate_) FALSE
 /*if[!MACROIZE]*/
-int sda_bp_set_or_stepping; // TRUE if we have any breakpoints set or are in a stepping mode [optimisation]
+#define sda_bp_set_or_stepping FALSE
 /*end[MACROIZE]*/
-#endif
+#endif /* SDA_DEBUGGER */
 
 #ifdef __GNUC__
 #define likely(x) __builtin_expect ((x), 1)
@@ -61,7 +62,7 @@ int sda_bp_set_or_stepping; // TRUE if we have any breakpoints set or are in a s
 #else
 #define likely(x) (x)
 #define unlikely(x) (x)
-#endif
+#endif /* __GNUC__ */
 
 /*---------------------------------------------------------------------------*\
  *                               mprotect                                    *

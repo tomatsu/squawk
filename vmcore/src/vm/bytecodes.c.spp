@@ -1182,6 +1182,28 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
             callNoReset($mth);
         }
 
+       /*
+        * Call exception reporting method - and leave stack as if thrower called.
+        * This call returns by rethrowing the original exception. VM.throwException notices the re-throw,
+        * clears these magic flags, and sets up SC_lastFP (etc) to the catch block (see below).
+        *
+        * Using code fragment macro becuase of interaction of #ifdef and MACRO processing
+        */
+#if SDA_DEBUGGER
+#define SDA_HANDLE_BREAKPOINT_CODE_FRAG                                                                      \
+                if (!runningOnServiceThread &&                                                               \
+                    (hbp = com_sun_squawk_VMThread_hitBreakpoint(newThread)) != null &&                      \
+                    com_sun_squawk_HitBreakpoint_state(hbp) == com_sun_squawk_HitBreakpoint_EXC_HIT) {       \
+                    set_com_sun_squawk_HitBreakpoint_state(hbp, com_sun_squawk_HitBreakpoint_EXC_REPORTING); \
+                    /* fprintf(stderr, format("Calling do_reportException. newMP: %A, ipOffset: %O, ip: %A, fp: %A.\n", newMP, ipOffset, ip, fp); */ \
+                    call(com_sun_squawk_VM_reportException);                                                 \
+                } else {                                                                                     \
+                    /*fprintf(stderr, format("fp = %d newMP = %d ipoffset = %d ip=%d tid=%d returnFP=%A\n"), fp, newMP, ipOffset, ip, com_sun_squawk_VMThread_threadNumber(newThread), getObject(fp, FP_returnFP));*/ \
+                }
+#else
+#define SDA_HANDLE_BREAKPOINT_CODE_FRAG FALSE
+#endif /*SDA_DEBUGGER */
+
         /**
          * Switch to the 'other' thread.
          */
@@ -1195,7 +1217,7 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
             assumeInterp(newStack != null);
             assumeInterp(!com_sun_squawk_GC_collecting);
 
-/*fprintf(stderr, format("%%%%%%%%%%%%%% fp = %A oldMP = %A ipoffset = %d ip=%A tid=%d oldThread=%A oldStack=%A newThread=%A newStack=%A\n"), fp, oldMP, ipOffset, ip, com_sun_squawk_VMThread_threadNumber(oldThread), oldThread, oldStack, newThread, newStack);*/
+            /*fprintf(stderr, format("%%%%%%%%%%%%%% fp = %A oldMP = %A ipoffset = %d ip=%A tid=%d oldThread=%A oldStack=%A newThread=%A newStack=%A\n"), fp, oldMP, ipOffset, ip, com_sun_squawk_VMThread_threadNumber(oldThread), oldThread, oldStack, newThread, newStack);*/
 
             /*
              * Save current VM state in the current thread.
@@ -1232,9 +1254,9 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
                 if (com_sun_squawk_VM_currentIsolate != newIsolate) {
                     com_sun_squawk_VM_currentIsolate = newIsolate;
                     invalidateClassStateCache();
-                    sda_bp_set_or_stepping = sda_updateBreakpointCache(newIsolate); /* changed isolate */
+                    set_sda_bp_set_or_stepping(newIsolate); /* changed isolate */
                 } else if (oldRunningOnServiceThread) {
-                    sda_bp_set_or_stepping = sda_updateBreakpointCache(newIsolate); /* coming off of service thread */
+                    set_sda_bp_set_or_stepping(newIsolate); /* coming off of service thread */
                 }
 
                 /*
@@ -1245,7 +1267,7 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
 
             } else {
                 runningOnServiceThread = true;
-                sda_bp_set_or_stepping = sda_updateBreakpointCache(null); /* coming on to service thread */
+                set_sda_bp_set_or_stepping(null); /* coming on to service thread */
             }
 
             /*
@@ -1272,23 +1294,8 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
                 resetStackPointer();
                 ip = (ByteAddress)getMP() + ipOffset;
                 assumeInterp(inCode(ip));
-
-                if (!runningOnServiceThread &&
-                    (hbp = com_sun_squawk_VMThread_hitBreakpoint(newThread)) != null &&
-                    com_sun_squawk_HitBreakpoint_state(hbp) == com_sun_squawk_HitBreakpoint_EXC_HIT) {
-
-                   /*
-                    * Call exception reporting method - and leave stack as if thrower called.
-                    * This call returns by rethrowing the original exception. VM.throwException notices the re-throw,
-                    * clears these magic flags, and sets up SC_lastFP (etc) to the catch block (see below).
-                    */
-                    set_com_sun_squawk_HitBreakpoint_state(hbp, com_sun_squawk_HitBreakpoint_EXC_REPORTING);
-
-/* fprintf(stderr, format("Calling do_reportException. newMP: %A, ipOffset: %O, ip: %A, fp: %A.\n", newMP, ipOffset, ip, fp); */
-                    call(com_sun_squawk_VM_reportException);
-                } else {
-/*fprintf(stderr, format("fp = %d newMP = %d ipoffset = %d ip=%d tid=%d returnFP=%A\n"), fp, newMP, ipOffset, ip, com_sun_squawk_VMThread_threadNumber(newThread), getObject(fp, FP_returnFP));*/
-                }
+                
+                SDA_HANDLE_BREAKPOINT_CODE_FRAG;
             }
         }
 
@@ -1405,7 +1412,7 @@ static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, i
                         /* Report the step event */
                         if (stepped) {
                             Offset currentBCI = Address_diff($actual_ip, mp);
-/*fprintf(stderr, format("Signaling STEP event hit @ currentFO: %A, currentBCI: %A\n"), currentFO, currentBCI);*/
+                            /*fprintf(stderr, format("Signaling STEP event hit @ currentFO: %A, currentBCI: %A\n"), currentFO, currentBCI);*/
                             /* We set the state here - otherwise the this method will check for step events when the handler is running */
                             set_com_sun_squawk_Debugger_SingleStep_state(step, com_sun_squawk_Debugger_SingleStep_HIT);
                             set_com_sun_squawk_Debugger_SingleStep_reportedFO(step, currentFO);
@@ -1607,7 +1614,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                                 Address mp      = getObject($actual_fp, FP_method);
                                 Offset currentBCI = Address_diff($actual_ip, mp);
                                 Offset currentFO = framePointerAsOffset(ss, $actual_fp);
-/*fprintf(stderr, format("Hit breakpoint #%d: in method: %A, currentBCI: %O ip: %A currentFO: %O fp: %A\n"),  i, mp, currentBCI, $actual_ip, currentFO, $actual_fp);*/
+                                /*fprintf(stderr, format("Hit breakpoint #%d: in method: %A, currentBCI: %O ip: %A currentFO: %O fp: %A\n"),  i, mp, currentBCI, $actual_ip, currentFO, $actual_fp);*/
 
                                 if (!sda_isOperandStackEmpty($actual_fp, $actual_sp)) {
                                     fatalInterpreterError("Tried to report a breakpoint when operand stack was not empty.\n");
@@ -1635,13 +1642,13 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                         Offset currentBCI = Address_diff($actual_ip, mp);
                         if (currentBCI == com_sun_squawk_HitBreakpoint_hitOrThrowBCI(hbp)) {
                             set_com_sun_squawk_VMThread_hitBreakpoint(thread, null);
-/*fprintf(stderr, format("Done reporting breakpoint in method: %A, offset: %O\n"), mp, currentBCI);*/
+                            /*fprintf(stderr, format("Done reporting breakpoint in method: %A, offset: %O\n"), mp, currentBCI);*/
                         }
                     }
                 }
             }
         }
-#endif
+#endif /* SDA_DEBUGGER */
 
         /*-----------------------------------------------------------------------*\
          *                               Constants                               *

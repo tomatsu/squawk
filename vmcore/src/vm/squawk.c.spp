@@ -1656,7 +1656,9 @@ void Squawk_continue(Globals *gp) {
     ByteAddress  ip;                /* The instruction pointer. */
     UWordAddress fp;                /* The frame pointer. */
     UWordAddress sp;                /* The stack pointer. */
+#if SDA_DEBUGGER
     int sda_bp_set_or_stepping = false;     /* TRUE if we have any breakpoints set or are in a stepping mode [optimisation] */
+#endif /* SDA_DEBUGGER */
 #endif /* MACROIZE */
 
     ip = saved_ip;                  /* Restore the instruction pointer. */

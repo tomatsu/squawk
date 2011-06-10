@@ -150,10 +150,12 @@ public final class Isolate implements Runnable {
 //    private Object savedStackChunks;
 /*end[ENABLE_ISOLATE_MIGRATION]*/
 
+/*if[ENABLE_SDA_DEBUGGER]*/
     /**
      * The debugger agent under which this isolate is being debugged by (if any).
      */
     private Debugger debugger;
+/*end[ENABLE_SDA_DEBUGGER]*/
 
     /**
      * The system wide unique identifier for this isolate.
@@ -1813,9 +1815,12 @@ public final class Isolate implements Runnable {
         if (state >= HIBERNATED) {
             throw new IllegalStateException("cannot hibernate a hibernated or exited isolate");
         }
+        
+/*if[ENABLE_SDA_DEBUGGER]*/
         if (debugger != null) {
             throw new IllegalStateException("cannot hibernate an isolate with an attached debugger");
         }
+/*end[ENABLE_SDA_DEBUGGER]*/
 
         if (VM.isVeryVerbose()) {
             System.out.println("[Hibernating " + isolateInfoStr() + "]");
@@ -2019,7 +2024,11 @@ public final class Isolate implements Runnable {
      * @return true if it is
      */
     public boolean isBeingDebugged() {
+/*if[ENABLE_SDA_DEBUGGER]*/
     	return debugger != null;
+/*else[ENABLE_SDA_DEBUGGER]*/
+//    	return false;
+/*end[ENABLE_SDA_DEBUGGER]*/
     }
 
     /**
@@ -2605,6 +2614,7 @@ public final class Isolate implements Runnable {
         }
     }
 
+/*if[ENABLE_SDA_DEBUGGER]*/
     /**
      * Sets or removes the debugger under which this isolate is executing.
      *
@@ -2636,6 +2646,16 @@ public final class Isolate implements Runnable {
     public Debugger getDebugger() {
         return debugger;
     }
+/*else[ENABLE_SDA_DEBUGGER]*/
+//    /**
+//     * Gets the debugger under which this isolate is executing.
+//     *
+//     * @return  the debugger under which this isolate is executing (if any)
+//     */
+//    public Debugger getDebugger() {
+//        return null;
+//    }
+/*end[ENABLE_SDA_DEBUGGER]*/
 
     /**
      * Gets the child threads of this isolate.
@@ -2662,7 +2682,8 @@ public final class Isolate implements Runnable {
     public int getId() {
     	return id;
     }
-
+    
+/*if[ENABLE_SDA_DEBUGGER]*/
     public void updateBreakpoints(Breakpoint[] breakpoints) {
         this.breakpoints = breakpoints;
     }
@@ -2673,4 +2694,5 @@ public final class Isolate implements Runnable {
      * Read by the interpreter loop.
      */
     private Breakpoint[] breakpoints;
+/*end[ENABLE_SDA_DEBUGGER]*/
 }

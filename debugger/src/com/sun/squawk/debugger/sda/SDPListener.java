@@ -852,6 +852,7 @@ public final class SDPListener extends JDWPListener {
          * {@inheritDoc}
          */
         protected boolean dispatch() throws IOException, SDWPException {
+/*if[ENABLE_SDA_DEBUGGER]*/
             ObjectID threadID = in.readObjectID("thread");
             thread = sda.getObjectManager().getThreadForID(threadID);
             from = thread.getEventExecutionPoint();
@@ -879,6 +880,7 @@ public final class SDPListener extends JDWPListener {
             } finally {
                 thread.resumeForDebugger(false);
             }
+/*end[ENABLE_SDA_DEBUGGER]*/
             return true;
         }
 
@@ -1300,6 +1302,7 @@ public final class SDPListener extends JDWPListener {
          * {@inheritDoc}
          */
         protected boolean dispatch() throws IOException, SDWPException {
+/*if[ENABLE_SDA_DEBUGGER]*/
             ObjectID threadID = in.readObjectID("thread");
             thread = sda.getObjectManager().getThreadForID(threadID);
             nullCheck(thread);
@@ -1326,6 +1329,7 @@ public final class SDPListener extends JDWPListener {
                 
                 default: return false;
             }
+/*end[ENABLE_SDA_DEBUGGER]*/
             return true;
         }
 

@@ -817,6 +817,7 @@ public final class VMThread implements GlobalStaticFields {
      */
     private String name;
 
+/*if[ENABLE_SDA_DEBUGGER]*/
     /**
      * The breakpoint hit by this currently being reported to an attached debugger.
      */
@@ -827,7 +828,7 @@ public final class VMThread implements GlobalStaticFields {
      * It will be null if this thread is not stepping.
      */
     private SingleStep step;
-
+/*end[ENABLE_SDA_DEBUGGER]*/
     /**
      * The monitor when the thread is in the condvar queue.
      */
@@ -881,7 +882,8 @@ public final class VMThread implements GlobalStaticFields {
         }
 /*end[DEBUG_CODE_ENABLED]*/ 
     }
-    
+
+/*if[ENABLE_SDA_DEBUGGER]*/
     /*-----------------------------------------------------------------------*\
      *                           Debugger support                            *
     \*-----------------------------------------------------------------------*/
@@ -1133,6 +1135,36 @@ VM.println();
     public void clearBreakpoint() {
         hitBreakpoint = null;
     }
+/*else[ENABLE_SDA_DEBUGGER]*/
+//    /**
+//     * Increases the suspension count of this thread.
+//     *
+//     * @return the new suspension count for this thread
+//     */
+//    public final int suspendForDebugger() {
+//        Assert.shouldNotReachHere();
+//        return 0;
+//    }
+//
+//    /**
+//     * Decreases the suspension count of this thread.
+//     *
+//     * @param forDetach  if true, the count is set to 0
+//     * @return the new suspension count for this thread
+//     */
+//    public final int resumeForDebugger(boolean forDetach) {
+//        Assert.shouldNotReachHere();
+//        return 0;
+//    }
+//    /**
+//     * Gets the value of the debugger suspension counter for this thread.
+//     *
+//     * @return the suspension count for this thread
+//     */
+//    public final int getDebuggerSuspendCount() {
+//        return 0;
+//    }
+/*end[ENABLE_SDA_DEBUGGER]*/
 
     void setAppThreadTop(Offset fp) {
         appThreadTop = fp;
@@ -2747,13 +2779,18 @@ final class ThreadQueue {
      */
     VMThread next() {
         VMThread thread = first;
-        VMThread skipped = null;
 
+/*if[ENABLE_SDA_DEBUGGER]*/
+        VMThread skipped = null;
+        
         // Skip over threads suspended by the debugger
         while (thread != null && thread.getDebuggerSuspendCount() != 0) {
             skipped = thread;
             thread = thread.nextThread;
         }
+/*else[ENABLE_SDA_DEBUGGER]*/
+//      final VMThread skipped = null;
+/*end[ENABLE_SDA_DEBUGGER]*/
 
         if (thread != null) {
             thread.setNotInQueue(VMThread.Q_RUN);

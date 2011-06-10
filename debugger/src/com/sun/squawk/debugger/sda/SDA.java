@@ -204,11 +204,13 @@ public final class SDA extends Debugger {
      * Stop debugging the debuggee isolate
      */
     private void cleanupForDetach() {
+/*if[ENABLE_SDA_DEBUGGER]*/
         // Clear all breakpoints
         debuggeeIsolate.updateBreakpoints(null);
         eventManager.clear(0, 0);
         eventManager.quit();
         DebuggerSupport.setDebugger(debuggeeIsolate, this, false);
+/*end[ENABLE_SDA_DEBUGGER]*/
     }
 
     /**
@@ -741,13 +743,15 @@ public final class SDA extends Debugger {
         /**
          * @see EventRequest#EventRequest(PacketInputStream, EventManager.VMAgent, int)
          */
-        public SingleStep(int id, PacketInputStream in) throws SDWPException, IOException {
+        SingleStep(int id, PacketInputStream in) throws SDWPException, IOException {
             super(id, in, JDWP.EventKind_SINGLE_STEP);
 
             if (Log.DEBUG_ENABLED && Log.debug()) {
                 Log.log("[SingleStep] Creating SingleStep...");
             }
             step = getStep();
+            
+/*if[ENABLE_SDA_DEBUGGER]*/
             VMThread steppingThread = objectManager.getThreadForID(step.threadID);
 
             // Cannot issue a single step for a thread until a previous single step has completed.
@@ -789,6 +793,7 @@ public final class SDA extends Debugger {
             int afterDupBCI = (int)sdpIn.readLong("afterDupBCI");
 
             steppingThread.setStep(new Debugger.SingleStep(start.frame, start.bci, targeBCI, dupBCI, afterDupBCI, step.size, step.depth));
+/*end[ENABLE_SDA_DEBUGGER]*/
         }
 
         /**
@@ -802,6 +807,7 @@ public final class SDA extends Debugger {
          * {@inheritDoc}
          */
         public void cleared() {
+/*if[ENABLE_SDA_DEBUGGER]*/
             try {
                 VMThread steppingThread = objectManager.getThreadForID(step.threadID);
                 steppingThread.clearStep();
@@ -811,6 +817,7 @@ public final class SDA extends Debugger {
                     Log.log("cannot find thread while clearing single step");
                 }
             }
+/*end[ENABLE_SDA_DEBUGGER]*/
         }
 
         /**
@@ -1049,6 +1056,7 @@ public final class SDA extends Debugger {
      * Updates the list of set breakpoints in the debuggee isolate.
      */
     public void updateBreakpoints() {
+/*if[ENABLE_SDA_DEBUGGER]*/
         Enumeration e = eventManager.getEventsOfKind(JDWP.EventKind_BREAKPOINT);
         if (!e.hasMoreElements()) {
             debuggeeIsolate.updateBreakpoints(null);
@@ -1096,7 +1104,7 @@ public final class SDA extends Debugger {
             VM.println(bps[i].ip);
         }
 /*end[DEBUG_CODE_ENABLED]*/
-
+/*end[ENABLE_SDA_DEBUGGER]*/
     }
 
     /*-----------------------------------------------------------------------*\

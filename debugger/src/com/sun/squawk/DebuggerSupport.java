@@ -42,6 +42,7 @@ public class DebuggerSupport {
      * @return the JDWP.ThreadStatus value
      */
     public static int getThreadJDWPState(VMThread vmThread) {
+/*if[ENABLE_SDA_DEBUGGER]*/
         int combinedState = vmThread.getInternalStatus();
         int inqueue = (combinedState) & 0xFF;
 
@@ -61,6 +62,10 @@ public class DebuggerSupport {
         } else {
             return JDWP.ThreadStatus_ZOMBIE;
         }
+/*else[ENABLE_SDA_DEBUGGER]*/
+//        return JDWP.ThreadStatus_ZOMBIE;
+/*end[ENABLE_SDA_DEBUGGER]*/
+
     }
 
     /**
@@ -342,7 +347,11 @@ public class DebuggerSupport {
      */
     public static boolean isAtExceptionBreakpoint(VMThread vmThread) {
         Assert.that(vmThread != null);
+/*if[ENABLE_SDA_DEBUGGER]*/
         return vmThread.getHitBreakpoint() != null && vmThread.getHitBreakpoint().getException() != null;
+/*else[ENABLE_SDA_DEBUGGER]*/
+//      return false;
+/*end[ENABLE_SDA_DEBUGGER]*/
     }
 
     /*-----------------------------------------------------------------------*\
@@ -600,6 +609,7 @@ public class DebuggerSupport {
      * @param attach    specifies if this in an attach or detach operation
      */
     public static void setDebugger(Isolate isolate, Debugger debugger, boolean attach) {
+/*if[ENABLE_SDA_DEBUGGER]*/
         Assert.that(debugger != null);
         if (attach) {
             if (isolate.getDebugger() != null) {
@@ -612,6 +622,7 @@ public class DebuggerSupport {
             }
             isolate.setDebugger(null);
         }
+/*end[ENABLE_SDA_DEBUGGER]*/
     }
 
     /**
