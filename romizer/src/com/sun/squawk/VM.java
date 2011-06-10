@@ -172,11 +172,47 @@ public class VM {
      *                              Symbols stripping                        *
     \*=======================================================================*/
 
+    /**
+     * Given a fully-qualified name, return the package part.
+     * @param fqn such as "java.lang.String"
+     * @return package part, such as "java.lang"
+     */
+    public static String getFQNPackage(String fqn) {
+        int cindex = fqn.lastIndexOf('.');
+        return fqn.substring(0, cindex);
+    }
+
+    /**
+     * Given a fully-qualified name, return the class part.
+     * @param fqn such as "java.lang.String#length"
+     * @return package part, such as "String"
+     */
+    public static String getFQNClass(String fqn) {
+        int pindex = fqn.lastIndexOf('.');
+        int mindex = fqn.lastIndexOf('#');
+        if (mindex >= 0) {
+            return fqn.substring(pindex + 1, mindex);
+        } else {
+            return fqn.substring(pindex + 1, fqn.length());
+        }
+    }
+    
+    /**
+     * Given a fully-qualified name, return the member part.
+     * @param fqn such as "java.lang.String#length"
+     * @return package part, such as "length"
+     */
+    public static String getFQNMember(String fqn) {
+        int mindex = fqn.lastIndexOf('#');
+        return fqn.substring(mindex + 1, fqn.length());
+    }
+
     static abstract class Matcher {
 
         public static final int PRECEDENCE_PACKAGE = 0;
-        public static final int PRECEDENCE_CLASS = 1;
-        public static final int PRECEDENCE_MEMBER = 2;
+        public static final int PRECEDENCE_CLASS_WILDPACKAGE = 1;
+        public static final int PRECEDENCE_CLASS = 2;
+        public static final int PRECEDENCE_MEMBER = 3;
         
         public static final int EXPORT = 0;
         public static final int INTERNAL = 1;
@@ -203,10 +239,11 @@ public class VM {
     }
 
     static class PackageMatcher extends Matcher {
-        private final String pkg;
-        private final boolean recursive;
-        PackageMatcher(String pattern, int action) {
-            super(action, PRECEDENCE_PACKAGE);
+        protected final String pkg;
+        protected final boolean recursive;
+
+        PackageMatcher(String pattern, int action, int precedence) {
+            super(action, precedence);
             if (pattern.endsWith(".**")) {
                 pkg = pattern.substring(0, pattern.length() - 3);
                 recursive = true;
@@ -219,8 +256,12 @@ public class VM {
             }
         }
 
+        PackageMatcher(String pattern, int action) {
+            this(pattern, action, PRECEDENCE_PACKAGE);
+        }
+
         boolean moreSpecificThan(Matcher m) {
-            if (m instanceof PackageMatcher) {
+            if (precedence == m.precedence) {
                 if (!recursive) {
                     return true;
                 }
@@ -256,6 +297,47 @@ public class VM {
             return "PackageMatcher [" + pkg + (recursive ? ".*" : "") + ']';
         }
     }
+
+    /**
+     * Handles class with wildcard in the package name. For example:
+     *     com.sun.squawk.io.j2me.*.Protocol
+     * or
+     *     com.sun.squawk.io.j2me.**.Protocol
+     */
+    static class ClassWithWildPackageMatcher extends PackageMatcher {
+        final String classPattern;
+
+        ClassWithWildPackageMatcher(String packagePatter, String classPattern, int action) {
+            super(packagePatter, action, PRECEDENCE_CLASS_WILDPACKAGE);
+            this.classPattern = classPattern;
+        }
+
+        public boolean matches(String s) {
+            if (!s.startsWith(pkg)) {
+                return false;
+            }
+            if (!s.endsWith(classPattern)) {
+                return false;
+            }
+            if (s.length() < pkg.length() + classPattern.length() + 3) {
+                return false;
+            }
+            String wildPackage = s.substring(pkg.length(), s.length() - classPattern.length());
+            if (wildPackage.length() < 3 || wildPackage.charAt(0) != '.' || wildPackage.charAt(wildPackage.length() - 1) != '.') {
+                return false;
+            }
+            if (recursive) {
+                return true; // should be ".FOO." or ".FOO.BAR.BAZ."
+            } else {
+               return wildPackage.indexOf('.', 1) == wildPackage.length() - 1; // should be ".FOO." so no interior '.' allowed
+            }
+        }
+
+        public String toString() {
+            return "ClassWithWildPackageMatcher [" + pkg + "." + classPattern + ": " + action + ']';
+        }
+    }
+
 
     static class ClassMatcher extends Matcher {
         protected final String pattern;
@@ -342,30 +424,32 @@ public class VM {
      * Resets the settings used to determine what symbols are to be retained/stripped
      * when stripping a suite in library mode (i.e. -strip:l) or extendable library
      * mode (i.e. -strip:e). An element that is <code>private</code> will always be stripped
-     * in these modes and an element that is package <code>private</code> will always be
+     * in these modes and an element that is package-<code>private</code> will always be
      * stripped in library mode.
      * <p>
      * The key of each property in the file specifies a pattern that will be used to match
      * a class, field or method that may be stripped.
+     * 
+     * The value of each property in the file specifies how to handle symbols that match the pattern:
      *
-     * NOTE: Symbol exports are ignored when a suite is built as an application.
-     *
-     *  export: Keep the symbols that match the pattern. If symbol is a class, then export members (methods and fields) also.
+     *  export: Keep the symbols that match the pattern. If pattern is a class pattern, then export members (methods and fields) also.
+     *           Exports are ignored when a suite is built as an application.
      *
      *  export_class: export the specified class, but not necessarily the enclosing methods and fields.
+     *           Exports are ignored when a suite is built as an application.
      *
      *  dynamic: Will keep the symbol, even if the suite is built as an application. Use for classes loaded by Class.findClass().
      *
      *  internal: Remove the symbols that match the pattern.
-     *            If the underlying method is not called within the suite, it may be removed.
+     *            If the matching method or class is not used within the suite, it may be removed by optimization.
      *
-     *  cross_suite_private: Remove the symbols that match the pattern, but keep the matching methods
+     *  cross_suite_private: This mode is only enabled when ENABLE_DYNAMIC_CLASSLOADING is true, otherwise this is treated as internal.
+     *            Remove the symbols that match the pattern, but keep the matching methods
      *            even if not called within the suite. This is used when multiple suites are compiled together.
      *            The child suites can call methods even though symbols were stripped.
-     *            This mode is only enabled when ENABLE_DYNAMIC_CLASSLOADING is true.
      *
      * 
-     * There are 3 different types of patterns that can be specified:
+     * There are 4 different types of patterns that can be specified:
      *
      * 1. A package pattern ends with ".*" or ".**". The former is used to match an
      *    element in a package and the latter extends the match to include any sub-package.
@@ -384,19 +468,27 @@ public class VM {
      *    precedence over a more general pattern. If two patterns matching some given input
      *    are identical, then the one occurring lower in the properties file has higher precedence.
      *
-     *  2. A class pattern is a fully qualified class name. For example:
+     *  2. A class pattern with a wildcard package specification contains a ".*" or ".**". between a package prefix and a class name.
+     *     For example:
+     *
+     *        com.sun.squawk.io.j2me.*.Protocol
+     *    or
+     *        com.sun.squawk.io.j2me.**.Protocol
+     *
+     *  3. A class pattern is a fully qualified class name. For example:
      *
      *    com.sun.squawk.Isolate=export
      *
-     *  3. A field or method pattern is a fully qualified class name joined to a field or method
+     *  4. A field or method pattern is a fully qualified class name joined to a field or method
      *     name by a '#' and (optionally) suffixed by parameter types for a method. For example:
      *
      *    com.sun.squawk.Isolate#isTckTest=internal
      *    com.sun.squawk.Isolate#clearErr(java.lang.String)=export
      *    com.sun.squawk.Isolate#removeThread(com.sun.squawk.VMThread,boolean)=internal
      *
-     * A member pattern takes precedence over a class pattern which in turn takes precedence
-     * over a package pattern.
+     * The different pattern types have precedence levels 1-4, with 4 being the highest precedence.
+     * If a particular symbol is matched by more than one specified pattern, then the pattern with the
+     * highest precedence is used.
      *
      * @param path  the properties file with the settings
      */
@@ -438,6 +530,20 @@ public class VM {
                 Matcher matcher = null;
                 if (k.endsWith("*")) {
                     matcher = new PackageMatcher(k, action);
+                } else if (k.indexOf('*') != -1) {
+                    // k = A.B.*.Foo or A.B.**.Foo
+                    int wildCard;
+                    if ((wildCard = k.indexOf(".*.")) >= 0) {
+                        String packagePattern = k.substring(0, wildCard + 2);
+                        String classPattern = k.substring(wildCard + 3, k.length());
+                        matcher = new ClassWithWildPackageMatcher(packagePattern, classPattern, action);
+                    } else if ((wildCard = k.indexOf(".**.")) >= 0) {
+                        String packagePattern = k.substring(0, wildCard + 3);
+                        String classPattern = k.substring(wildCard + 4, k.length());
+                        matcher = new ClassWithWildPackageMatcher(packagePattern, classPattern, action);
+                    } else {
+                        throw new IllegalArgumentException("wildcards must end a pattern, or be part of a package wildcard: " + k);
+                    }
                 } else if (k.indexOf('#') != -1) {
                     matcher = new MemberMatcher(k, action);
                 } else {
@@ -448,7 +554,7 @@ public class VM {
                     }
                 }
 //                if (isVerbose()) {
-//                   System.out.println("Match rule: " + matcher.toString());
+//System.out.println("Match rule: " + matcher.toString());
 //                }
                 stripMatchers.add(matcher);
             }

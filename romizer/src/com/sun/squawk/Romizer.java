@@ -625,6 +625,11 @@ public class Romizer {
         File file = new File(suiteName + "." + (suiteType == Suite.EXTENDABLE_LIBRARY ? "extendable.library" : "library") + ".properties");
         if (file.exists()) {
             VM.resetSymbolsStripping(file);
+        } else {
+            if (VM.isVerbose()) {
+                System.out.println("Suite export properties file \"" + file.getPath() + "\" not found. Dead-class elimination option disabled.");
+            }
+            VM.setProperty("translator.deadClassElimination", "false");
         }
 
         // Parse class name args (if any)
