@@ -1,25 +1,26 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 1999-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
- * information or have any questions.
+ *
+ * Please contact Oracle, 16 Network Circle, Menlo Park, CA 94025 or
+ * visit www.oracle.com if you need additional information or have
+ * any questions.
  */
 
 package com.sun.cldc.util.j2me;
@@ -27,7 +28,6 @@ package com.sun.cldc.util.j2me;
 import java.util.TimeZone;
 import java.util.Calendar;
 import java.util.Vector;
-import com.sun.cldc.util.TimeZoneImplementation;
 
 /**
  * This class provides the time zone implementations
@@ -94,7 +94,7 @@ import com.sun.cldc.util.TimeZoneImplementation;
  *
  * @see java.util.TimeZone
  */
-public class TimeZoneImpl extends TimeZoneImplementation {
+public class TimeZoneImpl extends GMTImpl {
 
     static String HOME_ID = null;
     private static final String DEFAULT_ID = "PST";
@@ -197,10 +197,7 @@ public class TimeZoneImpl extends TimeZoneImplementation {
      */
     public int getOffset(int era, int year, int month, int day,
                          int dayOfWeek, int millis) {
-        if (month < Calendar.JANUARY
-                || month > Calendar.DECEMBER) {
-            throw new IllegalArgumentException("Illegal month");
-        }
+        checkParams(era, year, month, day,dayOfWeek, millis);
         return getOffset(era, year, month, day, dayOfWeek, millis,
                 staticMonthLength[month]);
     }
@@ -225,51 +222,6 @@ public class TimeZoneImpl extends TimeZoneImplementation {
      */
     private int getOffset(int era, int year, int month, int day, int dayOfWeek,
                           int millis, int monthLength) {
-        if (true) {
-            // Use this parameter checking code for normal operation.  Only one
-            // of these two blocks should actually get compiled into the class
-            // file.
-            if ((era != 0 && era != 1)
-            || month < Calendar.JANUARY
-                    || month > Calendar.DECEMBER
-                    || day < 1
-                    || day > monthLength
-                    || dayOfWeek < Calendar.SUNDAY
-                    || dayOfWeek > Calendar.SATURDAY
-                    || millis < 0
-                    || millis >= millisPerDay
-                    || monthLength < 28
-                    || monthLength > 31) {
-                throw new IllegalArgumentException("Illegal date");
-            }
-        } else {
-            // This parameter checking code is better for debugging, but
-            // overkill for normal operation.  Only one of these two blocks
-            // should actually get compiled into the class file.
-            if (era != 0 && era != 1) {
-                throw new IllegalArgumentException("Illegal era " + era);
-            }
-            if (month < Calendar.JANUARY
-                    || month > Calendar.DECEMBER) {
-                throw new IllegalArgumentException("Illegal month " + month);
-            }
-            if (day < 1
-                    || day > monthLength) {
-                throw new IllegalArgumentException("Illegal day " + day);
-            }
-            if (dayOfWeek < Calendar.SUNDAY
-                    || dayOfWeek > Calendar.SATURDAY) {
-                throw new IllegalArgumentException("Illegal day of week " + dayOfWeek);
-            }
-            if (millis < 0
-                    || millis >= millisPerDay) {
-                throw new IllegalArgumentException("Illegal millis " + millis);
-            }
-            if (monthLength < 28
-                    || monthLength > 31) {
-                throw new IllegalArgumentException("Illegal month length " + monthLength);
-            }
-        }
 
         int result = rawOffset;
 
@@ -440,7 +392,7 @@ public class TimeZoneImpl extends TimeZoneImplementation {
         return result.toString();
     }
 
-    private static final void appendTwoDigits(StringBuffer sb, int number) {
+    private static void appendTwoDigits(StringBuffer sb, int number) {
         if (number < 10) {
             sb.append('0');
         }
@@ -599,7 +551,6 @@ public class TimeZoneImpl extends TimeZoneImplementation {
         return parseCustomTimeZone(ID);
     }
 
-    private static final String GMT_ID        = "GMT";
     private static final int    GMT_ID_LENGTH = 3;
 
     /**
@@ -610,7 +561,7 @@ public class TimeZoneImpl extends TimeZoneImplementation {
      * @return a newly created TimeZone with the given offset and
      * no daylight saving time, or null if the id cannot be parsed.
      */
-    private static final TimeZoneImpl parseCustomTimeZone(String id) {
+    private static TimeZoneImpl parseCustomTimeZone(String id) {
         // Error if the length of id isn't long enough or id doesn't
         // start with "GMT".
         if (id.length() < (GMT_ID_LENGTH + 2) || id.indexOf(GMT_ID) != 0) {
@@ -866,19 +817,6 @@ public class TimeZoneImpl extends TimeZoneImplementation {
      * @serial
      */
     private boolean useDaylight = false; // indicate if this time zone uses DST
-
-    private static final int millisPerHour = 60*60*1000;
-    private static final int millisPerDay  = 24*millisPerHour;
-
-    /**
-     * This field was serialized in JDK 1.1, so we have to keep it that way
-     * to maintain serialization compatibility. However, there's no need to
-     * recreate the array each time we create a new time zone.
-     * @serial An array of bytes containing the values {31, 28, 31, 30, 31, 30,
-     * 31, 31, 30, 31, 30, 31}.  This is ignored as of JDK 1.2, however, it must
-     * be streamed out for compatibility with JDK 1.1.
-     */
-    private final static byte staticMonthLength[] = {31,29,31,30,31,30,31,31,30,31,30,31}; //**NS**
 
     /**
      * Variables specifying the mode of the start rule.  Takes the following

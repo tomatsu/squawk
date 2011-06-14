@@ -418,7 +418,7 @@ class FloatingDecimal{
     /*
      * FIRST IMPORTANT CONSTRUCTOR: DOUBLE
      */
-    public FloatingDecimal( double d )
+    FloatingDecimal( double d )
     {
 	long	dBits = Double.doubleToLongBits( d );
 	long	fractBits;
@@ -1829,7 +1829,7 @@ class FloatingDecimal{
  * A really, really simple bigint package
  * tailored to the needs of floating base conversion.
  */
-class FDBigInt {
+final class FDBigInt {
     int	nWords; // number of words used
     int data[]; // value: data[0] is least significant
 
@@ -2330,13 +2330,14 @@ class FDBigInt {
 	}
     }
 
+/*if[DEBUG_CODE_ENABLED]*/
     public String
     toString() {
 	StringBuffer r = new StringBuffer(30);
 	r.append('[');
 	int i = Math.min( nWords-1, data.length-1) ;
 	if ( nWords > data.length ){
-	    r.append( "("+data.length+"<"+nWords+"!)" );
+	    r.append("(").append(data.length).append("<").append(nWords).append("!)");
 	}
 	for( ; i> 0 ; i-- ){
 	    r.append( Integer.toHexString( data[i] ) );
@@ -2346,4 +2347,5 @@ class FDBigInt {
 	r.append( (char) ']' );
 	return new String( r );
     }
+/*end[DEBUG_CODE_ENABLED]*/
 }

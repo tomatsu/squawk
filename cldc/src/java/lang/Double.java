@@ -362,7 +362,7 @@ public final class Double {
      * @return  a <code>hash code</code> value for this object.
      */
     public int hashCode() {
-        long bits = doubleToLongBits(value);
+        long bits = VM.doubleToLongBits(value);
         return (int)(bits ^ (bits >>> 32));
     }
 
@@ -405,8 +405,8 @@ public final class Double {
      */
     public boolean equals(Object obj) {
         return (obj instanceof Double)
-               && (doubleToLongBits(((Double)obj).value) ==
-                   doubleToLongBits(value));
+               && (VM.doubleToLongBits(((Double)obj).value) ==
+                   VM.doubleToLongBits(value));
     }
 
     /**
