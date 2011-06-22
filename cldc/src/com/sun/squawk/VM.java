@@ -534,24 +534,25 @@ public class VM implements GlobalStaticFields {
     static Object checkcast(Object obj, Klass klass) throws InterpreterInvokedPragma {
         Assert.that(obj != null);
         if (!klass.isAssignableFrom(GC.getKlass(obj))) {
-
-            println("=== temp extra debugging info ===");
-            print("target class: ");
-            printAddress(klass);
-            println();
-            Klass srcKlass = GC.getKlass(obj);
-            print("source class: ");
-            printAddress(srcKlass);
-            println();
-            Klass[] interfaces = srcKlass.getInterfaces();
-            if (interfaces != null) {
-                println("implements interfaces:");
-                for (int i = 0; i < interfaces.length; i++) {
-                    print("    ");
-                    print(interfaces[i].toString());
-                    print("    ");
-                    printAddress(interfaces[i]);
-                    println();
+            if (Klass.DEBUG_CODE_ENABLED) {
+                println("=== temp extra debugging info ===");
+                print("target class: ");
+                printAddress(klass);
+                println();
+                Klass srcKlass = GC.getKlass(obj);
+                print("source class: ");
+                printAddress(srcKlass);
+                println();
+                Klass[] interfaces = srcKlass.getInterfaces();
+                if (interfaces != null) {
+                    println("implements interfaces:");
+                    for (int i = 0; i < interfaces.length; i++) {
+                        print("    ");
+                        print(interfaces[i].toString());
+                        print("    ");
+                        printAddress(interfaces[i]);
+                        println();
+                    }
                 }
             }
 
@@ -1838,6 +1839,7 @@ hbp.dumpState();
         executeCIO(-1, ChannelConstants.INTERNAL_PRINTBYTES, -1, off, len, 0, 0, 0, 0, b, null);
     }
 
+/*if[DEBUG_CODE_ENABLED]*/
     /**
      * Prints the name of a global oop to the VM stream.
      *
@@ -1856,6 +1858,7 @@ hbp.dumpState();
     static void printGlobals() {
         execSyncIO(ChannelConstants.INTERNAL_PRINTGLOBALS, 0);
     }
+/*end[DEBUG_CODE_ENABLED]*/
 
     /**
      * Prints a line detailing the build-time configuration of the VM.
@@ -2062,15 +2065,6 @@ hbp.dumpState();
 
     public static native void finalize(Object o);
 
-
-    /**
-     * A call to this method is inserted by the translator when a call to an undefined
-     * native method if found.
-     */
-    static void undefinedNativeMethod() {
-        throw new Error("Undefined native method");
-    }
-
     /**
      * Gets the address of the start of the object memory in ROM.
      *
@@ -2275,7 +2269,9 @@ hbp.dumpState();
      * @param context the channel I/O context
      */
     static void deleteChannelContext(int context) {
-        execSyncIO(context, ChannelConstants.CONTEXT_DELETE, 0, 0);
+        if (Platform.IS_DELEGATING || Platform.IS_SOCKET) {
+            execSyncIO(context, ChannelConstants.CONTEXT_DELETE, 0, 0);
+        }
     }
 
     /**
@@ -2585,7 +2581,7 @@ hbp.dumpState();
     public static void addShutdownHook(Isolate iso, Runnable hook) {
         // thread-safe in Squawk only! This is a system class.
         if (executingHooks) {
-            throw new IllegalStateException("Shutdown in progress");
+            throw new IllegalStateException();
         }
         
         shutdownHooks.add(iso, hook);
@@ -2612,7 +2608,7 @@ hbp.dumpState();
      */
     public static boolean removeShutdownHook(Isolate iso, Runnable hook) {
         if (executingHooks) {
-            throw new IllegalStateException("Shutdown in progress");
+            throw new IllegalStateException();
         }
         
         return shutdownHooks.remove(iso, hook);
@@ -2700,7 +2696,7 @@ hbp.dumpState();
     public static void addShutdownHook(Thread hook) {
         // thread-safe in Squawk only! This is a system class.
         if (executingHooks) {
-            throw new IllegalStateException("Shutdown in progress");
+            throw new IllegalStateException();
         }
         
         shutdownHooks.add(VMThread.asVMThread(hook).getIsolate(), hook);
@@ -2724,7 +2720,7 @@ hbp.dumpState();
      */
     public static boolean removeShutdownHook(Thread hook) {
         if (executingHooks) {
-            throw new IllegalStateException("Shutdown in progress");
+            throw new IllegalStateException();
         }
         
         return shutdownHooks.remove(VMThread.asVMThread(hook).getIsolate(), hook);
@@ -3587,7 +3583,7 @@ hbp.dumpState();
      * Executes a I/O operation that may block. This requires at least 2 calls to the IO sub-system: the first to execute the operation
      * and the second to get the status of the operation (success = 0, failure < 0 or blocked > 0). If the status is success, then a
      * third call to the IO sub-system is made to retrieve the result of the operation. If the status indicates that an exception
-     * occcurred in the IO sub-system, then an IOException is thrown. If the status indicates that the IO sub-system is blocked,
+     * occurred in the IO sub-system, then an IOException is thrown. If the status indicates that the IO sub-system is blocked,
      * then the status value is used as an event number to block the current thread and put it on a queue of threads waiting for an event.
      *
      * @param op        the opcode
@@ -3605,7 +3601,7 @@ hbp.dumpState();
      */
     public static int execIO(int op, int channel, int i1, int i2, int i3, int i4, int i5, int i6, Object send, Object receive) throws IOException {
         int context = currentIsolate.getChannelContext();
-        if (context == 0) {
+        if ((Platform.IS_DELEGATING || Platform.IS_SOCKET) && context == 0) {
             throw new IOException("No native I/O peer for isolate");
         }
         checkOpcode(op);
@@ -3618,10 +3614,12 @@ hbp.dumpState();
                 if (result == ChannelConstants.RESULT_EXCEPTION) {
                     raiseChannelException(context);
                 }
-                throw new IOException("Bad result from cioExecute "+ result);
+                throw new IOException("Bad result from execIO on op " + op + " result "+ result);
             } else {
                 VMThread.waitForEvent(result);
+/*if[ENABLE_ISOLATE_MIGRATION]*/
                 context = currentIsolate.getChannelContext(); // Must reload in case of hibernation.
+/*end[ENABLE_ISOLATE_MIGRATION]*/
             }
         }
     }
@@ -3813,7 +3811,7 @@ hbp.dumpState();
      */
     public static int getChannel(int type) throws IOException {
         int context = currentIsolate.getChannelContext();
-        if (context == 0) {
+        if ((Platform.IS_DELEGATING || Platform.IS_SOCKET) && context == 0) {
             throw new IOException("no native I/O peer for isolate");
         }
         return execSyncIO(context, ChannelConstants.CONTEXT_GETCHANNEL, type, 0);
@@ -3829,7 +3827,7 @@ hbp.dumpState();
      */
     public static void freeChannel(int channel) throws IOException {
         int context = currentIsolate.getChannelContext();
-        if (context == 0) {
+        if ((Platform.IS_DELEGATING || Platform.IS_SOCKET) && context == 0) {
             throw new IOException("no native I/O peer for isolate");
         }
         executeCIO(context, ChannelConstants.CONTEXT_FREECHANNEL, channel, 0, 0, 0, 0, 0, 0, null, null);

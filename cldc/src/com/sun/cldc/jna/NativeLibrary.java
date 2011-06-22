@@ -27,7 +27,6 @@ package com.sun.cldc.jna;
 
 import com.sun.squawk.Address;
 import com.sun.squawk.VM;
-import com.sun.squawk.VMThread;
 import com.sun.squawk.vm.ChannelConstants;
 
 /**

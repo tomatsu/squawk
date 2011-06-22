@@ -1,24 +1,25 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -120,7 +121,7 @@ void cioExecute(void) {
             break;
         }
 
-/* use this as a proxy for /*if[FLOATS], which can't be used becuase this file isn't an .spp file */
+/* use this as a proxy for /*if[FLOATS], which can't be used because this file isn't an .spp file */
 #ifdef F_POS_INFINITY
         case ChannelConstants_INTERNAL_PRINTDOUBLE: {
             fprintf(vmOut, format("%D"), lb2d(makeLong(i1, i2)));
@@ -131,12 +132,6 @@ void cioExecute(void) {
         case ChannelConstants_INTERNAL_PRINTFLOAT: {
             fprintf(vmOut, "%f", ib2f(i1));
             fflush(vmOut);
-            break;
-        }
-#else
-        case ChannelConstants_INTERNAL_PRINTDOUBLE:
-        case ChannelConstants_INTERNAL_PRINTFLOAT: {
-            fatalVMError("floats not supported");
             break;
         }
 #endif
@@ -193,6 +188,7 @@ void cioExecute(void) {
             break;
         }
 
+#if DEBUG_CODE_ENABLED
         case ChannelConstants_INTERNAL_PRINTGLOBALS: {
             printGlobals();
             fflush(vmOut);
@@ -204,10 +200,11 @@ void cioExecute(void) {
             fprintf(vmOut, "%s", getGlobalOopName(i1));
 #else
             fprintf(vmOut, "Global oop:%d", i1);
-#endif
+#endif /* TRACE */
             fflush(vmOut);
             break;
         }
+#endif /* DEBUG_CODE_ENABLED */
 
         case ChannelConstants_INTERNAL_GETPATHSEPARATORCHAR: {
             com_sun_squawk_ServiceOperation_result = pathSeparatorChar;
@@ -302,11 +299,6 @@ void cioExecute(void) {
             }
             break;
         }
-#else /* OLD_IIC_MESSAGES */
-	 /* case ChannelConstants_GLOBAL_WAITFOREVENT:
-        case ChannelConstants_GLOBAL_GETEVENT:
-		 ... handled by default case below
-	 */
 #endif /* OLD_IIC_MESSAGES */
 
         /* WARNING! NOT 64-bit safe! */
@@ -321,12 +313,6 @@ void cioExecute(void) {
             int numberOfBytes=i2;
             unsigned char* buffer_to_write_sha_hash_into = o1;
             sha_for_memory_region(buffer_to_write_sha_hash_into,address,numberOfBytes);
-            break;
-        }
-#else
-        case ChannelConstants_INTERNAL_COMPUTE_SHA1_FOR_MEMORY_REGION:{
-            fprintf(vmOut,"Error: COMPUTE_SHA1_FOR_MEMORY_REGION called, but NATIVE_VERIFICATION=false.");
-            fflush(vmOut);
             break;
         }
 #endif

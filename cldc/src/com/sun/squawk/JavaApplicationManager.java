@@ -1,24 +1,25 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -70,8 +71,11 @@ public class JavaApplicationManager {
      * stops by hibernating itself.
      */
     private static boolean testoms;
-/*else[DEBUG_CODE_ENABLED]*/
-//    private static final boolean testoms = false;
+
+    /**
+     * Specify the Midlet class name directly.
+     */
+     private static String testMIDletClass;
 /*end[DEBUG_CODE_ENABLED]*/
     
     /**
@@ -79,10 +83,6 @@ public class JavaApplicationManager {
      */
     private static int midletPropertyNum;
 
-    /**
-     * Specify the Midlet class name directly.
-     */
-     private static String testMIDletClass;
      
     /**
      * Main routine.
@@ -106,10 +106,13 @@ public class JavaApplicationManager {
             args = processVMOptions(args);
         }
 
+/*if[DEBUG_CODE_ENABLED]*/
         if (testMIDletClass != null) {
             mainClassName = Isolate.MIDLET_WRAPPER_CLASS;
             javaArgs = new String[] {"-name", testMIDletClass};
-        } else if (args.length > 0) {
+        } else
+/*end[DEBUG_CODE_ENABLED]*/
+            if (args.length > 0) {
             /*
              * Split out the class name from the other arguments.
              */
@@ -201,14 +204,8 @@ public class JavaApplicationManager {
             System.out.println();
             System.out.println("=============================");
             System.out.println("Squawk VM exiting with code "+exitCode);
-            if (GC.getPartialCount() > 0) {
-                System.out.println(""+GC.getPartialCount()+" partial collections");
-            }
-            if (GC.getFullCount() > 0) {
-                System.out.println(""+GC.getFullCount()+" full collections");
-            }
             GC.getCollector().dumpTimings(System.out);
-            System.out.println("Execution time was "+(endTime-startTime)+" ms");
+            System.out.println("Execution time " + (endTime-startTime) + " ms");
             System.out.println("=============================");
             System.out.println();
         }
@@ -235,12 +232,10 @@ public class JavaApplicationManager {
             } else {
                 break;
             }
-             offset++;
+            offset++;
         }
         String[] javaArgs = new String[args.length - offset];
-        for (int i = 0 ; i < javaArgs.length ; i++) {
-            javaArgs[i] = args[offset++];
-        }
+        System.arraycopy(args, offset, javaArgs, 0, javaArgs.length);
         return javaArgs;
     }
 
@@ -254,17 +249,15 @@ public class JavaApplicationManager {
         out.println("    debug code " + (Klass.DEBUG_CODE_ENABLED ? "enabled" : "disabled"));
         out.println("    assertions " + (Klass.ASSERTIONS_ENABLED ? "enabled" : "disabled"));
         out.println("    tracing " + (Klass.TRACING_ENABLED ? "enabled" : "disabled"));
-        boolean floatSupported = "${build.properties:FLOATS}".equals("true");
-        if (floatSupported) {
-            out.println("    floating point supported");
-        } else {
-            out.println("    no floating point support");
-        }
+/*if[FLOATS]*/
+        out.println("    floating point supported");
+/*else[FLOATS]*/
+//      out.println("    no floating point support");
+/*end[FLOATS]*/
+
         out.println("    bootstrap suite: ");
-        StringTokenizer st = new StringTokenizer(VM.getCurrentIsolate().getBootstrapSuite().getConfiguration(), ",");
-        while (st.hasMoreTokens()) {
-            out.println("        " + st.nextToken().trim());
-        }
+        out.print("    ");
+        out.println(VM.getCurrentIsolate().getBootstrapSuite().getConfiguration());
         VM.printConfiguration();
     }
 
@@ -313,7 +306,7 @@ public class JavaApplicationManager {
      */
     private static void processVMOption(String arg) {
         if (arg.equals("-h")) {
-            usage("");
+            usage(null);
             VM.stopVM(0);
 /*if[ENABLE_DYNAMIC_CLASSLOADING]*/
         } else if (arg.startsWith("-cp:")) {
@@ -342,8 +335,6 @@ public class JavaApplicationManager {
                 usage("Bad value for -MIDlet- "+arg);
                 VM.stopVM(0);
             }
-        } else if (arg.startsWith("-testMIDlet:")) {
-            testMIDletClass = arg.substring(12);
         } else if (arg.equals("-version")) {
             showVersion(System.err);
             VM.stopVM(0);
@@ -356,6 +347,8 @@ public class JavaApplicationManager {
                 VM.setVerboseLevel(2);
             }
 /*if[DEBUG_CODE_ENABLED]*/
+        } else if (arg.startsWith("-testMIDlet:")) {
+            testMIDletClass = arg.substring(12);
         } else if (arg.equals("-testoms")) {
             testoms = true;
 /*end[DEBUG_CODE_ENABLED]*/
@@ -425,7 +418,7 @@ public class JavaApplicationManager {
     private static void usage(String msg) {
         PrintStream out = System.out;
         out.println();
-        if (msg.length() > 0) {
+        if (msg != null) {
             out.println("** " + msg + " **\n");
         }
         out.print(
@@ -450,14 +443,13 @@ public class JavaApplicationManager {
 /*end[EXCLUDE]*/
                 "    -isolateinit:<class>  class whose main will be invoked on Isolate start, single arg \"true\" if first Isolate being initialized\n" +
                 "    -MIDlet-x             which MIDlet-x property to use from " + Suite.PROPERTIES_MANIFEST_RESOURCE_NAME + "\n" +
-                "    -testMIDlet:<class>   specify MIDlet class name directly\n" +
                 "    -sampleStatData:url   poll VM.Stats every 500ms and send samples to url\n" +
                 "    -version              print product version and exit\n" +
                 "    -verbose              report when a class is loaded\n" +
-                "    -veryverbose          report when a class is initialized or looked up and\n" +
-                "                          various other output\n"
+                "    -veryverbose          report when a class is initialized and various other output\n"
 /*if[DEBUG_CODE_ENABLED]*/
-              + "    -testoms              continually serialize, deserialize and restart the application if it hibernates itself\n"
+              + "    -testMIDlet:<class>   specify MIDlet class name directly\n" +
+                "    -testoms              continually serialize, deserialize and restart the application if it hibernates itself\n"
 /*end[DEBUG_CODE_ENABLED]*/
             );
 

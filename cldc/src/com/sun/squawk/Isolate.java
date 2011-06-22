@@ -34,6 +34,8 @@ import com.sun.squawk.io.MulticastOutputStream;
 import com.sun.squawk.io.mailboxes.Mailbox;
 import com.sun.squawk.io.mailboxes.MailboxAddress;
 /*end[NEW_IIC_MESSAGES]*/
+import com.sun.squawk.platform.Platform;
+
 import com.sun.squawk.pragma.*;
 import com.sun.squawk.util.*;
 import com.sun.squawk.vm.*;
@@ -113,6 +115,8 @@ import com.sun.squawk.vm.*;
  *
  */
 public final class Isolate implements Runnable {
+
+    private final static boolean DEBUG_CODE_ENABLED = /*VAL*/false/*DEBUG_CODE_ENABLED*/;
 
     /**
      * Constant denoting that an isolate has been created but not yet {@link #start() started}.
@@ -437,7 +441,7 @@ public final class Isolate implements Runnable {
            updateLeafSuite(true); // TO DO: Also updated in run, but that is too late to find the main class
         } catch (Error e) {
             // note errors releated to loading the suites
-            System.err.println("Error constructing Isolate based on suite: " + parentSuiteSourceURI + " and classpath: " + classPath);
+            System.err.println("Error constructing " + isolateInfoStr());
             throw e;
         }
 
@@ -879,7 +883,7 @@ public final class Isolate implements Runnable {
                 return resumeHooks;
             }
             default:
-                throw new IllegalArgumentException("Illegal isolate event kind " + eventKind);
+                throw new IllegalArgumentException();
         }
     }
 
@@ -1008,7 +1012,7 @@ public final class Isolate implements Runnable {
      */
     public void addLifecycleListener(LifecycleListener listener, int eventSet) {
         if ((eventSet & SUPPORTED_EVENTS) == 0) {
-            throw new IllegalArgumentException("Illegal isolate event set " + eventSet);
+            throw new IllegalArgumentException();
         }
 
         if ((eventSet & SHUTDOWN_EVENT_MASK) != 0) {
@@ -1061,7 +1065,7 @@ public final class Isolate implements Runnable {
      */
     public boolean removeLifecycleListener(LifecycleListener listener, int eventSet) {
         if ((eventSet & SUPPORTED_EVENTS) == 0) {
-            throw new IllegalArgumentException("Illegal isolate event set " + eventSet);
+            throw new IllegalArgumentException();
         }
 
         boolean result = true;
@@ -1339,7 +1343,11 @@ public final class Isolate implements Runnable {
     int getChannelContext() {
         if (channelContext == 0) {
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
-            channelContext = VM.createChannelContext(null);
+            if (Platform.IS_DELEGATING || Platform.IS_SOCKET) {
+                channelContext = VM.createChannelContext(null);
+            } else {
+                channelContext = ChannelConstants.CHANNEL_GENERIC;
+            }
 /*else[ENABLE_ISOLATE_MIGRATION]*/
 //          channelContext = VM.createChannelContext(hibernatedChannelContext);
 //          hibernatedChannelContext = null;
@@ -1385,6 +1393,7 @@ public final class Isolate implements Runnable {
             Assert.that(VM.getCurrentIsolate() == this);
         }
 /*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
+/*if[ENABLE_SUITE_LOADING]*/
         if (parentSuiteSourceURI != null) {
             Suite parent = Suite.getSuite(parentSuiteSourceURI);
             Assert.that(parent != null);
@@ -1392,6 +1401,10 @@ public final class Isolate implements Runnable {
         } else {
             leafSuite = bootstrapSuite;
         }
+/*else[ENABLE_SUITE_LOADING]*/
+//      leafSuite = bootstrapSuite; // only bootrsap suite is supported
+/*end[ENABLE_SUITE_LOADING]*/
+
 /*else[ENABLE_DYNAMIC_CLASSLOADING]*/
 //        if (parentSuiteSourceURI != null || classPath != null) {
 //
@@ -1448,10 +1461,10 @@ public final class Isolate implements Runnable {
 
         // Check and set the class state.
         if (state != NEW) {
-            throw new IllegalStateException("cannot restart isolate");
+            throw new IllegalStateException();
         }
         if (VMThread.currentThread().getIsolate() != this) {
-            throw new IllegalStateException("cannot run isolate from external thread");
+            throw new IllegalStateException();
         }
 
         changeState(ALIVE);
@@ -1470,7 +1483,7 @@ public final class Isolate implements Runnable {
         String initializerClassName = VM.getIsolateInitializerClassName();
 
         // Verbose trace.
-        if (VM.isVeryVerbose()) {
+        if (DEBUG_CODE_ENABLED && VM.isVeryVerbose()) {
             System.out.print("[Starting " + isolateInfoStr() + " with args");
             if (args != null) {
                 for (int i = 0; i != args.length; ++i) {
@@ -1493,7 +1506,7 @@ public final class Isolate implements Runnable {
             try {
                 klass = Klass.forName(initializerClassName);
             } catch (ClassNotFoundException e) {
-                System.err.println("No such class " + initializerClassName + ": " + e);
+                System.err.println("initializerClassName " + initializerClassName + ": " + e);
                 exit(998);
             }
             boolean wasFirstInitialized = VM.isFirstIsolateInitialized();
@@ -1523,7 +1536,7 @@ public final class Isolate implements Runnable {
             System.out.flush();
             System.err.flush();
         } catch (ClassNotFoundException ex) {
-            System.err.println("No such class " + mainClassName + ": " + ex);
+            System.err.println("No main class " + mainClassName + ": " + ex);
             exit(999);
         }
     }
@@ -1631,14 +1644,14 @@ public final class Isolate implements Runnable {
     }
 
     private void runHooks(CallbackManager cbm, String label) {
-        if (VM.isVerbose()) {
+        if (DEBUG_CODE_ENABLED && VM.isVerbose()) {
             System.out.print("Running isolate");
             System.out.print(label);
             System.out.print(" hooks for ");
             System.out.println(this);
         }
         cbm.runHooks();
-        if (VM.isVerbose()) {
+        if (DEBUG_CODE_ENABLED && VM.isVerbose()) {
             System.out.print("Done with isolate");
             System.out.print(label);
             System.out.print(" hooks for ");
@@ -1655,7 +1668,7 @@ public final class Isolate implements Runnable {
             shutdownHooks.removeAll();
             shutdownHooks = null;
         } else {
-            if (VM.isVerbose()) {
+            if (DEBUG_CODE_ENABLED && VM.isVerbose()) {
                 System.out.println("No isolate SHUTDOWN_EVENT hooks for " + this);
             }
         }
@@ -1670,7 +1683,7 @@ public final class Isolate implements Runnable {
      */
     public void exit(int code) {
         if (state != ALIVE) {
-            throw new IllegalStateException("cannot exit an isolate that is not alive: state=" + state);
+            throw new IllegalStateException();
         }
         shutdown(code, true);
     }
@@ -1809,11 +1822,8 @@ public final class Isolate implements Runnable {
      * @throws IllegalStateException if this isolate is not <code>ALIVE</code> or if it has a debugger attached to it
      */
     public void hibernate() throws java.io.IOException, IllegalStateException {
-        if (state == NEW) {
-            throw new IllegalStateException("cannot hiberate an unstarted isolate");
-        }
-        if (state >= HIBERNATED) {
-            throw new IllegalStateException("cannot hibernate a hibernated or exited isolate");
+        if (state != ALIVE) {
+            throw new IllegalStateException();
         }
         
 /*if[ENABLE_SDA_DEBUGGER]*/
@@ -1822,7 +1832,7 @@ public final class Isolate implements Runnable {
         }
 /*end[ENABLE_SDA_DEBUGGER]*/
 
-        if (VM.isVeryVerbose()) {
+        if (DEBUG_CODE_ENABLED && VM.isVeryVerbose()) {
             System.out.println("[Hibernating " + isolateInfoStr() + "]");
         }
 
@@ -1864,7 +1874,7 @@ public final class Isolate implements Runnable {
                         break;
                     }
                     default:
-                        throw new IllegalArgumentException("Illegal isolate state " + newState);
+                        throw new IllegalArgumentException();
                 }
             }
             removeVMShutdownHook();
@@ -1891,7 +1901,9 @@ public final class Isolate implements Runnable {
              * Close the channel I/O
              */
             if (channelContextToSave > 0) {
-                VM.deleteChannelContext(channelContextToSave);
+                if (Platform.IS_DELEGATING || Platform.IS_SOCKET) {
+                    VM.deleteChannelContext(channelContextToSave);
+                }
                 this.channelContext = 0;
             }
 
@@ -1941,7 +1953,7 @@ public final class Isolate implements Runnable {
      */
     public void unhibernate() {
         if (state != HIBERNATED) {
-            throw new RuntimeException("Cannot unhibernate isolate that is not in hibernation state");
+            throw new RuntimeException();
         }
         changeState(ALIVE);
         // don't need to mess with transitioningState becuase we immediately switch to ALIVE state in above.
@@ -2104,17 +2116,17 @@ public final class Isolate implements Runnable {
      * @return the string
      */
     public String toString() {
-        String res = "isolate " + id + " \"" + name + "\"";
+        StringBuffer res = new StringBuffer("isolate ").append(id).append(" \"").append(name).append("\" ");
         if (isAlive()) {
-            res = res.concat(" (ALIVE)");
+            res = res.append("ALIVE");
         } else if (isExited()) {
-            res = res.concat(" (EXITED)");
+            res = res.append("EXITED");
         } else if (isHibernated()) {
-            res = res.concat(" (HIBERNATED)");
+            res = res.append("HIBERNATED");
         } else {
-            res = res.concat(" (NEW)");
+            res = res.append("NEW");
         }
-        return res;
+        return res.toString();
     }
 
     private String isolateInfoStr() {
@@ -2123,15 +2135,17 @@ public final class Isolate implements Runnable {
 /*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
 /*else[ENABLE_DYNAMIC_CLASSLOADING]*/
 //        if (classPath != null) {
-//            sb.append(" with class path set to '").append(classPath).append("'");
+//            sb.append(" with class path '").append(classPath).append("'");
 //        }
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         if (parentSuiteSourceURI != null) {
-            sb.append(" with parent suite URI set to '").append(parentSuiteSourceURI).append("'");
+            sb.append(" with parent suite URI '").append(parentSuiteSourceURI).append("'");
         }
+/*if[ENABLE_SUITE_LOADING]*/
         if (!leafSuite.isClosed()) {
             sb.append(" and leaf suite '").append(leafSuite).append("'");
         }
+/*end[ENABLE_SUITE_LOADING]*/
         return sb.toString();
     }
 
@@ -2287,7 +2301,7 @@ public final class Isolate implements Runnable {
     public void removeOut(String url) {
         OutputStream oldstrm = stdout.remove(url);
         if (oldstrm == null) {
-            throw new IllegalArgumentException("no stream named: " + url);
+            throw new IllegalArgumentException(url);
         }
         try {
             oldstrm.flush();
@@ -2312,7 +2326,7 @@ public final class Isolate implements Runnable {
     public void removeErr(String url) {
         OutputStream oldstrm = stderr.remove(url);
         if (oldstrm == null) {
-            throw new IllegalArgumentException("no stream named: " + url);
+            throw new IllegalArgumentException(url);
         }
         try {
             oldstrm.flush();
