@@ -130,7 +130,7 @@ public class ObjectGraphLoader {
         for (int i=0; i < klasses.length; i++) {
         	klasses[i] = getKlassAt(NativeUnsafe.getAddress(address, i));
             if (klasses[i] == null) {
-                suite.installFillerClassAndMetadata();
+                suite.installFillerClass();
             }
         }
         addressToObjectMap.put(address, klasses);
@@ -364,9 +364,8 @@ public class ObjectGraphLoader {
         KlassMetadata[] metadatas = getKlassMetadatasAt(NativeUnsafe.getAddress(address, FieldOffsets.decodeOffset(FieldOffsets.com_sun_squawk_Suite$metadatas)));
         if (metadatas != null) {
             for (KlassMetadata metadata : metadatas) {
-                if (metadata != null) {
-                    suite.installMetadata(metadata);
-                }
+                Assert.that(metadata != null);
+                suite.installMetadata(metadata);
             }
         }
 

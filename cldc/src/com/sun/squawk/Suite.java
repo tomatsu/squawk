@@ -37,6 +37,7 @@ import com.sun.squawk.pragma.HostedPragma;
 import com.sun.squawk.util.Arrays;
 import com.sun.squawk.util.Assert;
 import com.sun.squawk.util.LineReader;
+import com.sun.squawk.util.SquawkHashtable;
 import com.sun.squawk.vm.CID;
 
 /**
@@ -60,9 +61,8 @@ public final class Suite {
 
     /**
      * The array of metadata objects for the classes in this suite. The
-     * metadata object for the class at index <i>idx</i> in the
-     * <code>classes</code> array is at index <i>idx</i> in the
-     * <code>metadata</code> array.
+     * metadata is sorted by the associated klass' suiteID, so looking up the metadata for a class involves a
+     * binary search. The metadatas array may NOT contain null elements.
      */
     private KlassMetadata[] metadatas;
 
@@ -119,13 +119,14 @@ public final class Suite {
         this.parent = parent;
         int count = (isBootstrap() ? CID.LAST_SYSTEM_ID + 1 : 0);
         classes = new Klass[count];
-        metadatas = new KlassMetadata[count];
+        metadatas = new KlassMetadata[0];
         resourceFiles = new ResourceFile[0];
 		manifestProperties = new ManifestProperty [0];
         if (type < 0 || type > METADATA) {
             throw new IllegalArgumentException("type: " + type);
         }
         this.type = type;
+        this.configuration = "complete symbolic information available";
     }
 
     /*---------------------------------------------------------------------------*\
@@ -286,7 +287,7 @@ public final class Suite {
             // The following should automatically install the properties if there is a manifest
             InputStream input = getResourceAsStream(PROPERTIES_MANIFEST_RESOURCE_NAME, null);
             if (input != null) {
-                try {input.close();} catch (IOException e) {};
+                try {input.close();} catch (IOException e) {/*nothing*/};
             }
             isPropertiesManifestResourceInstalled = true;
             index = Arrays.binarySearch(manifestProperties, name, ManifestProperty.comparer);
@@ -357,19 +358,13 @@ public final class Suite {
         System.out.println(this);
 
         int classcount = 0;
-        int metadatacount = 0;
         for (int i = 0; i < classes.length; i++) {
             if (classes[i] != null) {
                 classcount++;
             }
         }
-        for (int i = 0; i < metadatas.length; i++) {
-            if (metadatas[i] != null) {
-                metadatacount++;
-            }
-        }
         System.out.println("    classes length: " + classes.length + " classes count: " + classcount);
-        System.out.println("    metadata length: " + metadatas.length + " metadatas count: " + metadatacount);
+        System.out.println("    metadata length: " + ((metadatas != null) ? metadatas.length : 0));
         if (getParent() != null) {
             getParent().printSuiteInfo();
         }
@@ -435,13 +430,10 @@ public final class Suite {
     /**
      * DCE can remove classes, but we want to keep IDs constant, so install
      * dummy entries...
-     *
-     * @param klass  the class to install
      */
-    public void installFillerClassAndMetadata() {
+    public void installFillerClass() {
         int suiteID = getNextAvailableClassNumber();
         installClass0(null, suiteID);
-        installMetadata0(null, null, suiteID);
     }
 
     /**
@@ -451,17 +443,38 @@ public final class Suite {
      *
      * @param metadata  the metadata to install
      */
-    private void installMetadata0(KlassMetadata metadata, Klass klass, int suiteID) {
+    private void installMetadata0(KlassMetadata metadata, Klass klass, boolean replace) {
         checkWrite();
-//        Assert.that(suiteID < classes.length && classes[suiteID] == metadata.getDefinedClass(), klass + " not yet installed? suiteID: " + suiteID + ", classes.length: " + classes.length);
-        if (suiteID < metadatas.length) {
-            Assert.that(metadatas[suiteID] == null, "metadata for " + klass + "already installed");
+        checkSuite();
+        int metaindex = getMetadataIndex(klass);
+        Assert.that(metadata != null);
+
+        if (metaindex >= 0) {
+            if (replace) {
+                metadatas[metaindex] = metadata; // replace existing
+            } else {
+                Assert.that(false, "metadata for " + klass + "already installed");
+            }
         } else {
+            int newIndex = -metaindex - 1;
             KlassMetadata[] old = metadatas;
-            metadatas = new KlassMetadata[suiteID + 1];
-            System.arraycopy(old, 0, metadatas, 0, old.length);
+            metadatas = new KlassMetadata[metadatas.length + 1];
+            System.arraycopy(old, 0, metadatas, 0, newIndex);
+            System.arraycopy(old, newIndex,
+                    metadatas, newIndex + 1,
+                    old.length - newIndex);
+            metadatas[newIndex] = metadata;
+
+            // still sorted?
+            if (newIndex != 0) {
+                Assert.that((klass.getSuiteID() > metadatas[newIndex - 1].getDefinedClass().getSuiteID()));
+            }
+            if (newIndex < metadatas.length - 1) {
+                Assert.that((klass.getSuiteID() < metadatas[newIndex + 1].getDefinedClass().getSuiteID()));
+            }
         }
-        metadatas[suiteID] = metadata;
+        Assert.that(getMetadata0(klass) == metadata, "replacing: " + replace + ", metadata: " + metadata + ", getMetadata0(klass): " + getMetadata0(klass));
+        checkSuite();
     }
 
     /**
@@ -472,29 +485,7 @@ public final class Suite {
      * @param metadata  the metadata to install
      */
     void installMetadata(KlassMetadata metadata) {
-        Klass klass = metadata.getDefinedClass();
-        int suiteID = klass.getSuiteID();
-        installMetadata0(metadata, klass, suiteID);
-    }
- 
-    private void removeClass(Klass klass) {
-        int suiteID = klass.getSuiteID();
-        Assert.always(classes[suiteID] == klass);
-        Assert.always(metadatas == null || metadatas[suiteID] == null || metadatas[suiteID].getDefinedClass() == klass);
-        checkWrite();
-        classes[suiteID] = null;
-        if (metadatas != null) {
-            metadatas[suiteID] = null;
-        }
-    }
-
-    private void removeMetadata(Klass klass) {
-        int suiteID = klass.getSuiteID();
-        if (suiteID < metadatas.length) {
-            Assert.always(metadatas[suiteID] == null || metadatas[suiteID].getDefinedClass() == klass);
-            checkWrite();
-            metadatas[suiteID] = null;
-        }
+        installMetadata0(metadata, metadata.getDefinedClass(), false);
     }
 
     public void setUnusedClasses(Klass[] klasses) {
@@ -513,22 +504,25 @@ public final class Suite {
         checkSuite();
         parent.checkSuite();
 
+        boolean oldclosed = parent.closed;
+        parent.closed = false; // temp re-open
+
         for (int i = 0; i < metadatas.length; i++) {
             KlassMetadata km = metadatas[i];
-            if (km != null) {
-                Klass klass = km.getDefinedClass();
-                int id = klass.getSuiteID();
-                if (id != i) {
-                    System.out.println("Metadata index " + i + " going into index " + id);
-                }
+            Assert.that(km != null);
+            Klass klass = km.getDefinedClass();
+            int id = klass.getSuiteID();
+            if (id != i) {
+                System.out.println("Metadata index " + i + " going into index " + id);
+            }
 
-                if (parent.contains(klass)) {
-                    parent.metadatas[id] = km;
-                } else {
-                    System.out.println("!!! Metadata " + km + " has no klass in parent. klass =" + klass);
-                }
+            if (parent.contains(klass)) {
+                parent.installMetadata0(km, km.getDefinedClass(), true);
+            } else {
+                System.out.println("!!! Metadata " + km + " has no klass in parent. klass =" + klass);
             }
         }
+        parent.closed = oldclosed;
         parent.checkSuite();
     }
     
@@ -705,6 +699,28 @@ public final class Suite {
     \*---------------------------------------------------------------------------*/
 
     /**
+     * Gets the <code>KlassMetadata</code> instance from this suite
+     * corresponding to a specified class.
+     *
+     * @param    klass  a class
+     * @return   the <code>KlassMetadata</code> instance corresponding to
+     *                <code>klass</code> or <code>null</code> if there isn't one
+     */
+    KlassMetadata getMetadata0(Klass klass) {
+        if (metadatas != null /*&& contains(klass)*/) {
+            int metaindex = Arrays.binarySearch(metadatas, klass, KlassMetadata.comparer);
+            if (metaindex >= 0) {
+                KlassMetadata metadata = metadatas[metaindex];
+                Assert.that(metadata != null);
+                Assert.that(metadata.getDefinedClass() == klass, "metadata.getDefinedClass(): " + metadata.getDefinedClass() + " klass: " + klass);
+                return metadata;
+            }
+        }
+        Assert.that(searchForMetadata(klass) == null);
+        return null;
+    }
+
+    /**
      * Gets the <code>KlassMetadata</code> instance from this suite and its parents
      * corresponding to a specified class.
      *
@@ -721,16 +737,38 @@ public final class Suite {
             }
         }
 
+        return getMetadata0(klass);
+    }
+
+    KlassMetadata searchForMetadata(Klass klass) {
+        // Look in parents first
+        if (!isBootstrap()) {
+            KlassMetadata metadata = parent.searchForMetadata(klass);
+            if (metadata != null) {
+                return metadata;
+            }
+        }
+
         if (metadatas != null && contains(klass)) {
-            int suiteID = klass.getSuiteID();
-            if (suiteID < metadatas.length) {
-                KlassMetadata metadata = metadatas[suiteID];
-                if (metadata != null && metadata.getDefinedClass() == klass) {
-                    return metadata;
+            for (int i = 0; i < metadatas.length; i++) {
+                if (metadatas[i].getDefinedClass() == klass) {
+                    return metadatas[i];
                 }
             }
         }
         return null;
+    }
+
+    /**
+     * Gets the index of the metadata for this class in this suite.
+     *
+     * @param    klass  a class
+     * @return   the index or a negative number
+     */
+    int getMetadataIndex(Klass klass) {
+        Assert.that(metadatas != null);
+        Assert.that(contains(klass) || (type == METADATA && parent.contains(klass)), this + " doesn't contain " + klass);
+        return Arrays.binarySearch(metadatas, klass, KlassMetadata.comparer);
     }
 
     /**
@@ -854,7 +892,7 @@ public final class Suite {
             }
 /*else[ENABLE_SUITE_LOADING]*/
 //            if (errorOnIOException) {
-//                throw new Error("IO error while loading suite from '" + uri);
+//                throw new Error("Suite loading not supported: " + uri);
 //            } else {
 //                return null;
 //            }
@@ -891,9 +929,6 @@ public final class Suite {
      * @return the configuration of the suite
      */
     public String getConfiguration() {
-        if (configuration == null) {
-            return "complete symbolic information available";
-        }
         return configuration;
     }
 
@@ -1017,29 +1052,71 @@ public final class Suite {
     public static final String FILE_EXTENSION_METADATA = ".metadata";
     
     /**
-     * Given one of the defined suite types, return an English string describing the 
+     * Denotes the name of the resource that represents the resource name from which I extract
+     * properties from when an {@link #installResource(ResourceFile)} is done.
+     */
+    public static final String PROPERTIES_MANIFEST_RESOURCE_NAME = "META-INF/MANIFEST.MF";
+
+    /**
+     * Given one of the defined suite types, return an English string describing the
      * suite type.
      *
      * @param suiteType One of APPLICATION, LIBRARY, EXTENDABLE_LIBRARY, or DEBUG.
      * @return a string describing the suite type.
      */
     public static String typeToString(int suiteType) {
-        final String[] names = {"application", "library", "extendable library", "debug", "metadata"};
-        return names[suiteType];
+        switch (suiteType) {
+            case APPLICATION:
+                return "application";
+            case LIBRARY:
+                return "library";
+            case EXTENDABLE_LIBRARY:
+                return "extendable library";
+            case DEBUG:
+                return "debug";
+            case METADATA:
+                return "metadata";
+            default:
+                return "?";
+        }
     }
 
-    /**
-     * Denotes the name of the resource that represents the resource name from which I extract
-     * properties from when an {@link #installResource(ResourceFile)} is done.
-     */
-    public static final String PROPERTIES_MANIFEST_RESOURCE_NAME = "META-INF/MANIFEST.MF";
-    
     /**
      * Closes this suite. Once closed, a suite is immutable (and may well reside in
      * read-only memory) and cannot have any more classes installed in it
      */
     public void close() {
         closed = true;
+    }
+
+    /**
+     * Create a new KlassMetadata array that has all of the elements of originalMetadatas except
+     * metadata for classes in the strippedClasses set. 
+     * @param originalmetadatas, sorted by suiteID, with no nulls
+     * @param strippedClasses set of classes to be stripped
+     * @return new array, sorted by suiteID, with no nulls
+     */
+    private static KlassMetadata[] removeStrippedKlassesFromMetadata(KlassMetadata[] originalMetadatas, SquawkHashtable deadClasses) {
+        if (originalMetadatas == null) {
+            return null;
+        }
+        
+        Vector metadatasV = new Vector(originalMetadatas.length);
+        for (int i = 0; i < originalMetadatas.length; i++) {
+            KlassMetadata metadata = originalMetadatas[i];
+            if (metadata != null) {
+                if (deadClasses.contains(metadata.getDefinedClass())) {
+//                    if (VM.isVerbose()) {
+//                        System.out.println("Removing metadata from suite for : " + metadata.getDefinedClass());
+//                    }
+                } else {
+                    metadatasV.addElement(metadata);
+                }
+            }
+        }
+        KlassMetadata[] newmetadatas = new KlassMetadata[metadatasV.size()];
+        metadatasV.copyInto(newmetadatas);
+        return newmetadatas;
     }
 
     /**
@@ -1056,28 +1133,36 @@ public final class Suite {
         if (type < APPLICATION || type > METADATA) {
             throw new IllegalArgumentException();
         }
-
+        checkSuite();
+        
         Suite copy = new Suite(name, parent, type);
+        SquawkHashtable deadClasses = null; // set of stripped classes
+
+        if (stripClassesLater != null) {
+            if (VM.isVerbose()) {
+                System.out.println("Removing " + stripClassesLater.length + " classes from " + copy);
+            }
+
+            // make set of classes to be removed
+            deadClasses = new SquawkHashtable(stripClassesLater.length);
+            for (int i = 0; i < stripClassesLater.length; i++) {
+                Klass deadClass = stripClassesLater[i];
+                deadClasses.put(deadClass, deadClass);
+            }
+        }
 
         if (type == METADATA) {
         	copy.classes = new Klass[0];
-            copy.metadatas = new KlassMetadata[metadatas.length];
-            System.arraycopy(metadatas, 0, copy.metadatas, 0, metadatas.length);
             // it's finally "later":
-            if (stripClassesLater != null) {
-                 if (VM.isVerbose()) {
-                 	System.out.println("Removing " + stripClassesLater.length + " classes from " + copy);
-                 }
-                for (int i = 0; i < stripClassesLater.length; i++) {
-                	if (VM.isVerbose()) {
-                        System.out.println("Removing from metadata suite: " + stripClassesLater[i]);
-                    }
-                    copy.removeMetadata(stripClassesLater[i]);
-                }
+            if (stripClassesLater == null) {
+                copy.metadatas = new KlassMetadata[metadatas.length];
+                System.arraycopy(metadatas, 0, copy.metadatas, 0, metadatas.length);
+            } else {
+                // it's finally "later"- strip metadata for dead classes:
+                copy.metadatas = removeStrippedKlassesFromMetadata(metadatas, deadClasses);
             }
         } else {
             copy.classes = new Klass[classes.length];
-            System.arraycopy(classes, 0, copy.classes, 0, classes.length);
 
             if (noClassDefFoundErrorClassNames != null) {
 	            copy.noClassDefFoundErrorClassNames = new String[noClassDefFoundErrorClassNames.length];
@@ -1090,19 +1175,60 @@ public final class Suite {
     		copy.manifestProperties = new ManifestProperty [manifestProperties.length];
     		System.arraycopy(manifestProperties, 0, copy.manifestProperties, 0, manifestProperties.length);
 
-    		copy.metadatas = KlassMetadata.strip(this, metadatas, type);
+            KlassMetadata[] tempMetadatas = KlassMetadata.strip(this, metadatas, type); // tempMetadatas is still sorted by suiteID, but may contain nulls.
 
-            // it's finally "later":
-            if (stripClassesLater != null) {
-                 if (VM.isVerbose()) {
-                 	System.out.println("Removing " + stripClassesLater.length + " classes from " + copy);
-                 }
-                for (int i = 0; i < stripClassesLater.length; i++) {
-                	if (VM.isVerbose()) {
-                        System.out.println("Removing from suite: " + stripClassesLater[i]);
+            if (stripClassesLater == null) {
+                System.arraycopy(classes, 0, copy.classes, 0, classes.length);
+                copy.metadatas = removeStrippedKlassesFromMetadata(tempMetadatas, new SquawkHashtable(0)); // remove nulls, but not dead classes.
+            } else {
+                // it's finally "later":
+
+//                // this version strips out the null entries in the classes array, and renumbers the classes. System gets too confused by this though...
+//                int newlength = classes.length - stripClassesLater.length;
+//                Vector classesV = new Vector(newlength);
+//                for (int i = 0; i < classes.length; i++) {
+//                    Klass klass = classes[i];
+//                    if (deadClasses.contains(klass)) {
+//                        if (VM.isVerbose()) {
+//                            System.out.println("Removing from suite: " + klass);
+//                        }
+//                    } else {
+//                        int count = classesV.size();
+//                        Assert.that(count <= klass.getSuiteID());
+//                        Klass.setSuiteID(klass, count);
+//                        classesV.addElement(klass);
+//
+//                    }
+//                }
+//                copy.classes = new Klass[classesV.size()];
+//                classesV.copyInto(copy.classes);
+
+                // strip dead classes
+                for (int i = 0; i < copy.classes.length; i++) {
+                    Klass klass = classes[i];
+                    if (klass != null && deadClasses.contains(klass)) {
+                        if (Klass.DEBUG_CODE_ENABLED && VM.isVerbose()) {
+                            System.out.println("Removing from suite: " + klass);
+                        }
+                        copy.classes[i] = null;
+                    } else {
+                        copy.classes[i] = klass;
                     }
-                    copy.removeClass(stripClassesLater[i]);
                 }
+
+                // strip metadata for dead classes:
+               copy.metadatas = removeStrippedKlassesFromMetadata(tempMetadatas, deadClasses);
+
+//                for (int i = 0; i < copy.classes.length; i++) {
+//                    Klass klass = copy.classes[i];
+//                    if (klass != null) {
+//                        int metadataindex = (copy.metadatas == null) ? -1 : copy.getMetadataIndex(klass);
+//                        System.out.println("classes[" + i + "] = " + klass + ", id = " + klass.getSuiteID());
+//                        if (metadataindex >= 0) {
+//                           System.out.println("metadata[" + metadataindex + "] = metadata for " + copy.metadatas[metadataindex].getDefinedClass());
+//                      }
+//                    }
+//                }
             }
         }
 
@@ -1124,30 +1250,41 @@ public final class Suite {
     }
 
     void checkSuite() {
-        if (metadatas == null) {
-            //System.out.println("<><><><><><><><> metadatas for " + this + " is null");
-            return;
-        }
-
         for (int i = 0; i < classes.length; i++) {
             Klass klass = classes[i];
             if (klass != null) {
-                if (i < metadatas.length) {
-                    KlassMetadata km = metadatas[i];
-                    if (km != null) {
-                        if (km.getDefinedClass() != klass) {
-                            System.out.println("<><><><><><><><> klass is " + klass + " metadata is for " + km.getDefinedClass());
-                            System.out.println("<><><><><><><><> klass ID is " + klass.getSuiteID() + " metadata is for ID " + km.getDefinedClass().getSuiteID());
-                            System.out.println("<><><><><><><><> i is " + i);
-                            System.out.println("<><><><><><><><> suite is " + this);
-                        }
-                        Assert.always(km.getDefinedClass() == klass);
+                Assert.always(klass.getSuiteID() == i);
+                KlassMetadata km = getMetadata(klass);
+                if (km != null) {
+                    if (km.getDefinedClass() != klass) {
+                        System.out.println("<><><><><><><><> klass is " + klass + " metadata is for " + km.getDefinedClass());
+                        System.out.println("<><><><><><><><> klass ID is " + klass.getSuiteID() + " metadata is for ID " + km.getDefinedClass().getSuiteID());
+                        System.out.println("<><><><><><><><> i is " + i);
+                        System.out.println("<><><><><><><><> suite is " + this);
                     }
-                } else {
-                    Assert.always(klass.isSynthetic() || klass.isArray());
+                    Assert.always(km.getDefinedClass() == klass);
                 }
-            } else {
-                Assert.always(metadatas[i] == null);
+            }
+        }
+
+        if (metadatas != null) {
+            int orderCheck = -1;
+            for (int i = 0; i < metadatas.length; i++) {
+                KlassMetadata km = metadatas[i];
+                Assert.that(km!= null);
+                Klass klass = km.getDefinedClass();
+                //Assert.that(contains(klass));
+                Assert.that(klass.getSuiteID() > orderCheck, " metadatas not sorted by klass suite ID");
+                orderCheck = klass.getSuiteID();
+            }
+        }
+    }
+
+    void printMetadatainfo() {
+        if (metadatas != null) {
+            for (int i = 0; i < metadatas.length; i++) {
+                KlassMetadata km = metadatas[i];
+                System.out.println("metadata[" + i + "] = metadata for " + metadatas[i].getDefinedClass());
             }
         }
     }

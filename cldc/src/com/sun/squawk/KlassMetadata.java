@@ -319,10 +319,42 @@ public class KlassMetadata {
         SymbolParser.flush();
     }
 
+    static class KlassMetadataComparer implements Comparer {
+
+        static int getValue(Object o) {
+            int value = -1;
+            if (o != null) {
+                if (o instanceof KlassMetadata) {
+                    value = ((KlassMetadata) o).getDefinedClass().getSuiteID();
+                } else if (o instanceof Klass) {
+                    value = ((Klass) o).getSuiteID();
+                } else {
+                    throw new RuntimeException("what type are we comparing: " + o);
+                }
+            } else {
+                throw new RuntimeException("why are we comparing against null???? ");
+            }
+            return value;
+        }
+
+        public int compare(Object o1, Object o2) {
+            return getValue(o1) - getValue(o2);
+        }
+    }
+
+    static final Comparer comparer = new KlassMetadataComparer();
+
+/*if[DEBUG_CODE_ENABLED]*/
+    public String toString() {
+        return "KlassMetadata for " + getDefinedClass().getName();
+    }
+/*end[DEBUG_CODE_ENABLED]*/
+
     /*---------------------------------------------------------------------------*\
      *                                Stripping                                  *
     \*---------------------------------------------------------------------------*/
-       /**
+
+    /**
      * factory for stripping.
      *
      * @param symbols   the symbols (stripped or otherwise) (may be null)
@@ -366,21 +398,17 @@ public class KlassMetadata {
         KlassMetadata[] newMetadatas = new KlassMetadata[metadatas.length];
         for (int i = 0; i != metadatas.length; ++i) {
             KlassMetadata metadata = metadatas[i];
-            if (metadata != null) {
-                switch (type) {
-                    case Suite.DEBUG:
-                        newMetadatas[i] = create(metadata.symbols, metadata.classTable, metadata, type);
-                        break;
-                    case Suite.APPLICATION:
-                        newMetadatas[i] = create(null, null, metadata, type);
-                        break;
-                    case Suite.LIBRARY:
-                    case Suite.EXTENDABLE_LIBRARY:
-                        newMetadatas[i] = metadata.strip(type);
-                        break;
-                    default:
-                        VM.fatalVMError();
-                }
+            Assert.that(metadata != null);
+            switch (type) {
+                case Suite.DEBUG:
+                    newMetadatas[i] = create(metadata.symbols, metadata.classTable, metadata, type);
+                    break;
+                case Suite.LIBRARY:
+                case Suite.EXTENDABLE_LIBRARY:
+                    newMetadatas[i] = metadata.strip(type);
+                    break;
+                default:
+                    VM.fatalVMError();
             }
         }
         return newMetadatas;
