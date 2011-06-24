@@ -532,9 +532,9 @@ public class GC implements GlobalStaticFields {
     static int newCount;
 
     /**
-     * Count of all allocations that were fulfilled by interpreter loop
+     * Count of all allocations that were fulfilled by interpreter loop. Not updated in all build configurations.
      */
-    static int newHit;
+    static int newHits;
 
     /**
      * Initialize the memory system when hosted

@@ -1016,6 +1016,25 @@ T
         return klass.id >= 0 ? klass.id : -(klass.id + 1);
     }
 
+//    Used in experiment to compress out null entries in a suite's class table:
+//    /**
+//     * Reset a klass' iD after classes are removed from a suite.
+//     */
+//    static void setSuiteID(Klass klass, int newSuiteID) {
+//        Assert.always(newSuiteID >= 0);
+//        if (klass.id >= 0) {                    // can't reset system classes:
+//            Assert.always(newSuiteID == klass.id, "setSuiteID(" + klass + ", " + newSuiteID + ") old ID: " + klass.id);
+//        } else {
+//            int oldSuiteID = getSuiteID(klass);
+//            klass.id = (short) -(newSuiteID + 1);
+//            if (newSuiteID == oldSuiteID) {
+//                Assert.always(getSuiteID(klass) == oldSuiteID);
+//            } else {
+//                Assert.always(getSuiteID(klass) < oldSuiteID);
+//            }
+//        }
+//    }
+
     /**
      * Static version of {@link #getSystemID()} so that garbage collector can
      * invoke this method on a possibly forwarded Klass object.

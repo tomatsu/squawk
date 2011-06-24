@@ -1130,12 +1130,14 @@ public final class Isolate implements Runnable {
         VM.extendsEnabled = false; //------------------------ NO CALL ZONE ---------------------------
 
         Object first = classStateQueue;
-        Object res = null;
 
         if (first == null) {
-            VM.extendsEnabled = true;
             Assert.always(!classKlassInitialized);
+            VM.extendsEnabled = true; //----------------------------------------------------------------------
+            return null;
         } else {
+            Object res = null;
+            
             /*
              * Do quick test for class state at the head of the queue.
              */
@@ -1173,16 +1175,16 @@ public final class Isolate implements Runnable {
                     ks = NativeUnsafe.getObject(ks, CS.next);
                 }
             }
-        }
-        VM.extendsEnabled = true; //----------------------------------------------------------------------
+            VM.extendsEnabled = true; //----------------------------------------------------------------------
 
-        if (res != null) {
-            CS.check(res);
-            CS.check(classStateQueue);
-            VM.addToClassStateCache(klass, res);
-        }
+            if (res != null) {
+                CS.check(res);
+                CS.check(classStateQueue);
+                VM.addToClassStateCache(klass, res);
+            }
 
-        return res;
+            return res;
+        }
     }
 
     /**

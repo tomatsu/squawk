@@ -752,7 +752,7 @@ static void printCacheStats() {
         fprintf(stderr, " Class: %d",   cachedClassAccesses);
         fprintf(stderr, " Monitor: %d", pendingMonitorAccesses);
         fprintf(stderr, " Exit: %d",    com_sun_squawk_GC_monitorExitCount);
-        fprintf(stderr, " New: %d",     pendingMonitorAccesses);
+        fprintf(stderr, " New: %d",     com_sun_squawk_GC_newCount);
     }
 
     fprintf(stderr, "\nHits   - ");

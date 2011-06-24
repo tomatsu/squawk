@@ -578,7 +578,6 @@ public class Converter {
         m.put(asName("streams"), asName("_streams"));
         m.put(asName("currentStream"), asName("_currentStream"));
         m.put(asName("STREAM_COUNT"), asName("_STREAM_COUNT"));
-        m.put(asName("notrap"), asName("_notrap"));
         return m;
     }
 

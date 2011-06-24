@@ -1693,44 +1693,6 @@ hbp.dumpState();
     }
 
     /**
-     * Prints a character to the VM stream.
-     *
-     * @param ch      the character to print
-     */
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(code="fprintf(streams[currentStream], \"%c\", ch); fflush(streams[currentStream]);")
-/*end[JAVA5SYNTAX]*/
-    static void printChar(char ch) {
-        execSyncIO(ChannelConstants.INTERNAL_PRINTCHAR, ch);
-    }
-
-    /**
-     * Prints an integer to the VM stream.
-     *
-     * @param val     the integer to print
-     */
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(code="fprintf(streams[currentStream], \"%i\", val); fflush(streams[currentStream]);")
-/*end[JAVA5SYNTAX]*/
-    static void printInt(int val) {
-        execSyncIO(ChannelConstants.INTERNAL_PRINTINT, val);
-    }
-
-    /**
-     * Prints a long to the VM stream.
-     *
-     * @param val     the long to print
-     */
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(code="fprintf(streams[currentStream], format(\"%L\"), val); fflush(streams[currentStream]);")
-/*end[JAVA5SYNTAX]*/
-    static void printLong(long val) {
-        int i1 = (int)(val >>> 32);
-        int i2 = (int)val;
-        execSyncIO(ChannelConstants.INTERNAL_PRINTLONG, i1, i2);
-    }
-
-    /**
      * Prints an unsigned word to the VM stream. This will be formatted as an unsigned 32 bit or 64 bit
      * value depending on the underlying platform.
      *
@@ -1740,8 +1702,12 @@ hbp.dumpState();
     @Vm2c(code="fprintf(streams[currentStream], format(\"%A\"), val); fflush(streams[currentStream]);")
 /*end[JAVA5SYNTAX]*/
     public static void printUWord(UWord val) {
-        int i1 = (int)(val.toPrimitive() >> 32);
-        int i2 = (int)val.toPrimitive();
+/*if[!SQUAWK_64]*/
+        final int i1 = 0;
+/*else[SQUAWK_64]*/
+//      final int i1 = (int)(val.toPrimitive() >> 32);
+/*end[SQUAWK_64]*/
+        final int i2 = (int)val.toPrimitive();
         execSyncIO(ChannelConstants.INTERNAL_PRINTUWORD, i1, i2);
     }
 
@@ -1755,45 +1721,14 @@ hbp.dumpState();
     @Vm2c(code="fprintf(streams[currentStream], format(\"%O\"), val); fflush(streams[currentStream]);")
 /*end[JAVA5SYNTAX]*/
     public static void printOffset(Offset val) {
-        int i1 = (int)(val.toPrimitive() >> 32);
-        int i2 = (int)val.toPrimitive();
+/*if[!SQUAWK_64]*/
+        final int i1 = 0;
+/*else[SQUAWK_64]*/
+//      final int i1 = (int)(val.toPrimitive() >> 32);
+/*end[SQUAWK_64]*/
+        final int i2 = (int)val.toPrimitive();
         execSyncIO(ChannelConstants.INTERNAL_PRINTOFFSET, i1, i2);
     }
-
-    /**
-     * Prints a string to the VM stream.
-     *
-     * @param str     the string to print
-     */
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(code="printJavaString(str, streams[currentStream]);")
-/*end[JAVA5SYNTAX]*/
-    static void printString(String str) {
-        executeCIO(-1, ChannelConstants.INTERNAL_PRINTSTRING, -1, 0, 0, 0, 0, 0, 0, str, null);
-    }
-
-/*if[FLOATS]*/
-    /**
-     * Prints a float to the VM stream.
-     *
-     * @param val     the float to print
-     */
-    static void printFloat(float val) {
-        execSyncIO(ChannelConstants.INTERNAL_PRINTFLOAT, (int)val);
-    }
-
-    /**
-     * Prints a double to the VM stream.
-     *
-     * @param val     the double to print
-     */
-    static void printDouble(double dval) {
-        long val = (long)dval;
-        int i1 = (int)(val >>> 32);
-        int i2 = (int)val;
-        execSyncIO(ChannelConstants.INTERNAL_PRINTDOUBLE, i1, i2);
-    }
-/*end[FLOATS]*/
 
     /**
      * Prints an address to the VM stream. This will be formatted as an unsigned 32 bit or 64 bit
@@ -1869,10 +1804,12 @@ hbp.dumpState();
 
     /**
      * Prints the string representation of an object to the VM stream.
+     * Do NOT pass a SquawkPrimitive type (Address, Offset, UWord).
      *
      * @param obj   the object whose toString() result is to be printed
      */
     public static void printObject(Object obj) {
+        Assert.that(!GC.getKlass(obj).isSquawkPrimitive());
         print(String.valueOf(obj));
     }
 
@@ -1881,8 +1818,11 @@ hbp.dumpState();
      *
      * @param x the value
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="fprintf(streams[currentStream], \"%c\", x); fflush(streams[currentStream]);")
+/*end[JAVA5SYNTAX]*/
     public static void print(char x) {
-        printChar(x);
+        execSyncIO(ChannelConstants.INTERNAL_PRINTCHAR, x);
     }
 
     /**
@@ -1890,8 +1830,11 @@ hbp.dumpState();
      *
      * @param x the string
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="printJavaString(x, streams[currentStream]);")
+/*end[JAVA5SYNTAX]*/
     public static void print(String x) {
-        printString(x);
+        executeCIO(-1, ChannelConstants.INTERNAL_PRINTSTRING, -1, 0, 0, 0, 0, 0, 0, x, null);
     }
 
     /**
@@ -1899,8 +1842,11 @@ hbp.dumpState();
      *
      * @param x the value
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="fprintf(streams[currentStream], \"%i\", x); fflush(streams[currentStream]);")
+/*end[JAVA5SYNTAX]*/
     public static void print(int x) {
-        printInt(x);
+        execSyncIO(ChannelConstants.INTERNAL_PRINTINT, x);
     }
 
     /**
@@ -1908,8 +1854,13 @@ hbp.dumpState();
      *
      * @param x the value
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(code="fprintf(streams[currentStream], format(\"%L\"), x); fflush(streams[currentStream]);")
+/*end[JAVA5SYNTAX]*/
     public static void print(long x) {
-        printLong(x);
+        int i1 = (int)(x >>> 32);
+        int i2 = (int)x;
+        execSyncIO(ChannelConstants.INTERNAL_PRINTLONG, i1, i2);
     }
 
 /*if[FLOATS]*/
@@ -1919,7 +1870,7 @@ hbp.dumpState();
      * @param x the value
      */
     public static void print(float x) {
-        printFloat(x);
+        execSyncIO(ChannelConstants.INTERNAL_PRINTFLOAT, VM.floatToIntBits(x));
     }
 
     /**
@@ -1928,7 +1879,10 @@ hbp.dumpState();
      * @param x the value
      */
     public static void print(double x) {
-        printDouble(x);
+        long val = VM.doubleToLongBits(x);
+        int i1 = (int)(val >>> 32);
+        int i2 = (int)val;
+        execSyncIO(ChannelConstants.INTERNAL_PRINTDOUBLE, i1, i2);
     }
 /*end[FLOATS]*/
 
@@ -1947,7 +1901,7 @@ hbp.dumpState();
      * @param x the value
      */
     public static void println(char x) {
-        printChar(x);
+        print(x);
         println();
     }
 
@@ -1957,7 +1911,7 @@ hbp.dumpState();
      * @param x the string
      */
     public static void println(String x) throws NotInlinedPragma {
-        printString(x);
+        print(x);
         println();
     }
 
@@ -1967,7 +1921,7 @@ hbp.dumpState();
      * @param x the value
      */
     public static void println(int x) throws NotInlinedPragma {
-        printInt(x);
+        print(x);
         println();
     }
 
@@ -1987,7 +1941,7 @@ hbp.dumpState();
      * @param x the value
      */
     public static void println(long x) throws NotInlinedPragma {
-        printLong(x);
+        print(x);
         println();
     }
 
@@ -1998,7 +1952,7 @@ hbp.dumpState();
      * @param x the value
      */
     public static void println(float x) throws NotInlinedPragma {
-        printFloat(x);
+        print(x);
         println();
     }
 
@@ -2008,7 +1962,7 @@ hbp.dumpState();
      * @param x the value
      */
     public static void println(double x) throws NotInlinedPragma {
-        printDouble(x);
+        print(x);
         println();
     }
 /*end[FLOATS]*/

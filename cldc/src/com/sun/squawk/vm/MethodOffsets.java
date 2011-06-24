@@ -63,9 +63,9 @@ public interface MethodOffsets {
     public final static int com_sun_squawk_VM$monitorexit                     = 18;
     public final static int com_sun_squawk_VM$_instanceof                     = 19;
     public final static int com_sun_squawk_VM$checkcast                       = 20;
-    public final static int com_sun_squawk_VM$lookup_b                        = 21;
-    public final static int com_sun_squawk_VM$lookup_s                        = 22;
-    public final static int com_sun_squawk_VM$lookup_i                        = 23;
+//    public final static int com_sun_squawk_VM$lookup_b                        = 21;
+//    public final static int com_sun_squawk_VM$lookup_s                        = 22;
+//    public final static int com_sun_squawk_VM$lookup_i                        = 23;
     public final static int com_sun_squawk_VM$class_clinit                    = 24;
     public final static int com_sun_squawk_VM$_new                            = 25;
     public final static int com_sun_squawk_VM$newarray                        = 26;

@@ -5930,6 +5930,12 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
             pushInt(getArrayLength(oop));
         }
 
+#ifdef INTERPRETER_STATS
+#define updateNewHits() com_sun_squawk_GC_newHits++
+#else
+#define updateNewHits()
+#endif /* INTERPRETER_STATS */
+
         /**
          * Allocate an object.
          *
@@ -5951,7 +5957,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
                         Address oop      = allocateFast(allocSize, klass, -1);
                         if (oop != null) {
                             pushAddress(oop);
-                            com_sun_squawk_GC_newHits++;
+                            updateNewHits();
                             nextbytecode();
                         }
                     }
@@ -5982,7 +5988,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
                         Address oop   = allocateFast(allocSize, klass, length);
                         if (oop != null) {
                             pushAddress(oop);
-                            com_sun_squawk_GC_newHits++;
+                            updateNewHits();
                             nextbytecode();
                         }
                     }
