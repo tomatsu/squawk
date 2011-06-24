@@ -846,7 +846,8 @@ public class InstructionEmitter implements InstructionVisitor {
             emitOpcode(OPC.CONST_NULL);
         } else {
             try {
-                int index = classFile.getConstantObjectIndex(object, state == EMIT);
+                int index = classFile.getObjectTable().getConstantObjectIndex(object, state == EMIT);
+                Assert.always(object.equals(classFile.getDefinedClass().getObject(index)));
                 emitCompact(OPC.OBJECT, OPC.OBJECT_0, 16, index);
             } catch (java.util.NoSuchElementException ex) {
                 throw new NoClassDefFoundError("no copy of object in class's object table: " + object);
@@ -1179,10 +1180,10 @@ public class InstructionEmitter implements InstructionVisitor {
      * {@inheritDoc}
      */
     public void doFindSlot (FindSlot instruction) {
-        Method method = instruction.getMethod();
-        Assert.that(!method.isNative(), "Invalid native findslot to "+method);
-        emitConstantObject(method.getDefiningClass());
-        emitUnsigned(OPC.FINDSLOT, method.getOffset());
+        Method callee = instruction.getMethod();
+        Assert.that(!callee.isNative(), "Invalid native findslot to "+callee);
+        emitConstantObject(callee.getDefiningClass());
+        emitUnsigned(OPC.FINDSLOT, callee.getOffset());
     }
 
     /**
@@ -1214,9 +1215,9 @@ public class InstructionEmitter implements InstructionVisitor {
      */
     public void doInvokeSlot(InvokeSlot instruction) {
         int opcode;
-        Method method = instruction.getMethod();
-        checkMethodCallable(method);
-        switch (method.getReturnType().getSystemID()) {
+        Method callee = instruction.getMethod();
+        checkMethodCallable(callee);
+        switch (callee.getReturnType().getSystemID()) {
             case CID.VOID:    opcode = OPC.INVOKESLOT_V; break;
             case CID.BOOLEAN: // fall through ...
             case CID.BYTE:    // fall through ...
@@ -1238,7 +1239,7 @@ public class InstructionEmitter implements InstructionVisitor {
                                        OPC.INVOKESLOT_I; break;
             default:          opcode = OPC.INVOKESLOT_O; break;
         }
-        Assert.that(!method.isNative(), "Invalid native invokeslot to "+method);
+        Assert.that(!callee.isNative(), "Invalid native invokeslot to "+callee);
         emitOpcode(opcode);
     }
 
@@ -1349,14 +1350,14 @@ public class InstructionEmitter implements InstructionVisitor {
      */
     public void doInvokeSuper(InvokeSuper instruction) {
         int opcode;
-        Method method = instruction.getMethod();
-        Klass returnType = method.getReturnType();
-        if (method.isNative()) {
-            Assert.that(method.isFinal() || method.getDefiningClass().isFinal() , "cannot invoke non-final native method "+method);
-            String name = method.getFullyQualifiedName();
+        Method callee = instruction.getMethod();
+        Klass returnType = callee.getReturnType();
+        if (callee.isNative()) {
+            Assert.that(callee.isFinal() || callee.getDefiningClass().isFinal() , "cannot invoke non-final native method "+callee);
+            String name = callee.getFullyQualifiedName();
             invokeNative(name, returnType);
         } else {
-            checkMethodCallable(method);
+            checkMethodCallable(callee);
             switch (returnType.getSystemID()) {
                 case CID.VOID:    opcode = OPC.INVOKESUPER_V; break;
                 case CID.BOOLEAN: // fall through ...
@@ -1379,9 +1380,9 @@ public class InstructionEmitter implements InstructionVisitor {
                                            OPC.INVOKESUPER_I; break;
                 default:          opcode = OPC.INVOKESUPER_O; break;
             }
-            Assert.that(method.isPrivate() || !method.isNative(), this.method.toString() + ": invalid native invokesuper to "+method);
-            emitConstantObject(method.getDefiningClass());
-            emitUnsigned(opcode, method.getOffset());
+            Assert.that(callee.isPrivate() || !callee.isNative(), this.method.toString() + ": invalid native invokesuper to "+callee);
+            emitConstantObject(callee.getDefiningClass());
+            emitUnsigned(opcode, callee.getOffset());
         }
     }
 
@@ -1389,15 +1390,15 @@ public class InstructionEmitter implements InstructionVisitor {
      * {@inheritDoc}
      */
     public void doInvokeVirtual(InvokeVirtual instruction) {
-        Method method = instruction.getMethod();
-        Klass returnType = method.getReturnType();
-        if (method.isNative()) {
-            Assert.that(method.isFinal() || method.getDefiningClass().isFinal() , "cannot invoke non-final native method "+method);
-            String name = method.getFullyQualifiedName();
+        Method callee = instruction.getMethod();
+        Klass returnType = callee.getReturnType();
+        if (callee.isNative()) {
+            Assert.that(callee.isFinal() || callee.getDefiningClass().isFinal() , "cannot invoke non-final native method "+callee);
+            String name = callee.getFullyQualifiedName();
             invokeNative(name, returnType);
         } else {
             int opcode;
-            checkMethodCallable(method);
+            checkMethodCallable(callee);
             switch (returnType.getSystemID()) {
                 case CID.VOID:    opcode = OPC.INVOKEVIRTUAL_V; break;
                 case CID.BOOLEAN: // fall through ...
@@ -1420,7 +1421,7 @@ public class InstructionEmitter implements InstructionVisitor {
                                            OPC.INVOKEVIRTUAL_I; break;
                 default:          opcode = OPC.INVOKEVIRTUAL_O; break;
             }
-            emitUnsigned(opcode, method.getOffset());
+            emitUnsigned(opcode, callee.getOffset());
         }
     }
 
@@ -1459,9 +1460,6 @@ public class InstructionEmitter implements InstructionVisitor {
      * {@inheritDoc}
      */
     public void doCatch(Catch instruction) {
-        if (state == EMIT) {
-            classFile.referenceConstantObject(instruction.getType());
-        }
         emitOpcode(OPC.CATCH);
     }
 
@@ -1599,7 +1597,7 @@ public class InstructionEmitter implements InstructionVisitor {
             case CID.LONG: {
                 Assert.shouldNotReachHere("Only single word global varibles are supported");
             }
-            case CID.OFFSET:
+            case CID.OFFSET:  // fall through ...
             case CID.UWORD: {
                 Assert.shouldNotReachHere(field.getType().getName() + " typed global varibles are not (yet) supported");
             }

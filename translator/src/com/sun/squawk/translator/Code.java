@@ -34,6 +34,7 @@ import java.util.Vector;
 import com.sun.squawk.Klass;
 import com.sun.squawk.Method;
 import com.sun.squawk.MethodBody;
+import com.sun.squawk.translator.ir.instr.FieldAccessor;
 
 
 /**
@@ -191,6 +192,8 @@ public final class Code {
      */
     private IRBuilder irBuilder;
 
+    private ObjectTable objectTable;
+
     /**
      * Convert the code of this method from its Java bytecode form to its
      * Squawk bytecode form. This must only be called once and cannot be called
@@ -243,10 +246,19 @@ public final class Code {
             /*
              * Add the object references into the table of constants.
              */
+            objectTable = new ObjectTable(declaringClass);
             for (Instruction instruction = ir.getHead() ; instruction != null ; instruction = instruction.getNext()) {
                 Object object = instruction.getConstantObject();
                 if (object != null) {
-                    cf.addConstantObject(object);
+                    if (instruction instanceof FieldAccessor) {         // ignore special cases:
+                        Klass fieldDefiningClass = ((FieldAccessor)instruction).getField().getDefiningClass();
+                        if (fieldDefiningClass.hasGlobalStatics() || fieldDefiningClass == declaringClass) {
+                            // getstatic/putstatic on global globals doesn't really use the class object table
+                            // getstatic/putstatic on "this class" doesn't really use the class object table
+                            continue;
+                        }
+                    }
+                    objectTable.addConstantObject(object);
                 }
             }
             
@@ -272,8 +284,12 @@ public final class Code {
         return codeParser;
     }
 
+    public ObjectTable getObjectTable() {
+        return objectTable;
+    }
+
     /**
-     * Second phase of the convertion.
+     * Second phase of the conversion.
      *
      * @param  translator   the translation context
      * @param  method       the method owning this code

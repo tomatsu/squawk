@@ -83,35 +83,6 @@ public final class ClassFile {
      */
     private ConstantPool constantPool;
     
-    /**
-     * If true, try to do dead string elimination
-     */
-    private boolean safeToDoDeadStringElim;
-    
-    private final static String DEAD_STRING_ELIMINATION_MSG = "DEAD STRING ELIMINATION";
-
-    /**
-     * If true, try to do dead class elimination
-     */
-    private boolean safeToDoDeadClassElim;
-
-    private final static String DEAD_CLASS_ELIMINATION_MSG = "DEAD CLASS ELIMINATION";
-
-    
-    private static Hashtable vm2cClasses;
-    
-    static {
-        // @todo: FIX VM2C so it doesn't depend on constant table for strings.
-        // We shouldn't do dead string elimination on vm2c classes as long as vm2c relies on 
-        // the constant table for string constants.
-        vm2cClasses = new Hashtable();
-        vm2cClasses.put("com.sun.squawk.VM", "VM2C Class");
-        vm2cClasses.put("com.sun.squawk.GarbageCollector", "VM2C Class");
-        vm2cClasses.put("com.sun.squawk.Lisp2GenerationalCollector", "VM2C Class");
-        vm2cClasses.put("com.sun.squawk.Lisp2GenerationalCollector$MarkingStack", "VM2C Class");
-    }
-    
-
 
     /*---------------------------------------------------------------------------*\
      *                               Constructor                                 *
@@ -126,12 +97,7 @@ public final class ClassFile {
         this.definedClass = klass;
         this.staticMethods  = NO_METHODS;
         this.virtualMethods = NO_METHODS;
-        if (vm2cClasses.get(klass.getInternalName()) == null) {
-            safeToDoDeadStringElim = Arg.get(Arg.DEAD_STRING_ELIMINATION).getBool();
-        }
-        safeToDoDeadClassElim = Arg.get(Arg.DEAD_CLASS_ELIMINATION).getBool();
     }
-
 
     /*---------------------------------------------------------------------------*\
      *                                Setters                                    *
@@ -218,248 +184,24 @@ public final class ClassFile {
      *                    Table of constant and class references                 *
     \*---------------------------------------------------------------------------*/
 
-    /**
-     * Hashtable of constant objects.
-     */
-    private ArrayHashtable objectTable = new ArrayHashtable();
+    private ObjectTable objectTable;
 
     /**
-     * Index to the next available object table entry.
+     * Create an ObjectTable for this class based on the ObjectTables of all of the used methods in the class.
+     * @param translator
      */
-    private int nextIndex;
+    void createMergedObjectTable(Translator translator) {
+        objectTable = new ObjectTable(definedClass);
 
-    /**
-     * Add an object to the object table.
-     *
-     * @param object the object to add
-     */
-    public void addConstantObject(Object object) {
-        ObjectCounter counter = (ObjectCounter)objectTable.get(object);
-        if (counter == null) {
-            counter = new ObjectCounter(object, nextIndex++);
-            objectTable.put(object, counter);
-        } else {
-            counter.inc();
+        objectTable.mergeMethodsObjectTable(translator, staticMethods, true);
+        objectTable.mergeMethodsObjectTable(translator, virtualMethods, false);
+        if (Arg.get(Arg.OPTIMIZE_CONSTANT_OBJECTS).getBool() && translator.dce.isMarked(definedClass)) {
+            objectTable.sortObjectTable();
         }
     }
-
-    private static int[] INT_ARRAY_DUMMY = new int[0];
-    private static short[] SHORT_ARRAY_DUMMY = new short[0];
-    private static byte[] BYTE_ARRAY_DUMMY = new byte[0];
-
-    /**
-     * Sorts the object table according to the access count. Elements with the same
-     * access count are sorted by class name and then by value. This guarantees a
-     * deterministic sort order for object tables in the bootstrap suite.
-     */
-    private void sortObjectTable() {
-        ObjectCounter[] list = new ObjectCounter[objectTable.size()];
-        Enumeration e = objectTable.elements();
-        for (int i = 0 ; i < list.length ; i++) {
-            list[i] = (ObjectCounter)e.nextElement();
-        }
-        Arrays.sort(list, new Comparer() {
-            public int compare(Object o1, Object o2) {
-                if (o1 == o2) {
-                    return 0;
-                }
-                ObjectCounter t1 = (ObjectCounter)o1;
-                ObjectCounter t2 = (ObjectCounter)o2;
-                if (t1.getCounter() < t2.getCounter()) {
-                    return 1;
-                } else if (t1.getCounter() > t2.getCounter()) {
-                    return -1;
-                } else {
-                    o1 = t1.getObject();
-                    o2 = t2.getObject();
-
-                    // Now do ordering based on class
-                    Class class1 = o1.getClass();
-                    Class class2 = o2.getClass();
-                    if (class1 != class2) {
-                        return class1.getName().compareTo(class2.getName());
-                    }
-
-                    // Now order based on value
-                    if (class1 == Klass.class) {
-                        return ((Klass)o1).getName().compareTo(((Klass)o2).getName());
-                    } else if (class1 == String.class) {
-                        return ((String)o1).compareTo((String)o2);
-                    } else if (class1 == INT_ARRAY_DUMMY.getClass()) {
-                        int[] arr1 = (int[])o1;
-                        int[] arr2 = (int[])o2;
-                        for (int i = 0; ; ++i) {
-                            if (i == arr1.length) {
-                                Assert.that(arr2.length != i);
-                                return -1;
-                            }
-                            if (i == arr2.length) {
-                                return 1;
-                            }
-                            int diff = arr1[i] - arr2[i];
-                            if (diff != 0) {
-                                return diff;
-                            }
-                        }
-                    } else if (class1 == SHORT_ARRAY_DUMMY.getClass()) {
-                        short[] arr1 = (short[]) o1;
-                        short[] arr2 = (short[]) o2;
-                        for (int i = 0;; ++i) {
-                            if (i == arr1.length) {
-                                Assert.that(arr2.length != i);
-                                return -1;
-                            }
-                            if (i == arr2.length) {
-                                return 1;
-                            }
-                            int diff = arr1[i] - arr2[i];
-                            if (diff != 0) {
-                                return diff;
-                            }
-                        }
-                    } else if (class1 == BYTE_ARRAY_DUMMY.getClass()) {
-                        byte[] arr1 = (byte[]) o1;
-                        byte[] arr2 = (byte[])o2;
-                        for (int i = 0; ; ++i) {
-                            if (i == arr1.length) {
-                                Assert.that(arr2.length != i);
-                                return -1;
-                            }
-                            if (i == arr2.length) {
-                                return 1;
-                            }
-                            int diff = arr1[i] - arr2[i];
-                            if (diff != 0) {
-                                return diff;
-                            }
-                        }
-                    } else {
-                        // Need to add another 'else' clause if this ever occurs
-                        throw Assert.shouldNotReachHere("unknown object table type: " + class1);
-                    }
-                }
-            }
-        });
-//System.err.println("object table for " + definedClass.getInternalName());
-        for (int i = 0 ; i < list.length ; i++) {
-            ObjectCounter oc = list[i];
-//System.err.println("  " + i + "\t" + oc.getCounter() + "\t" + oc.getClass() + "\t" + oc.getObject());
-            oc.setIndex(i);
-        }
-    }
-
-    /**
-     * Get the index of an object in the object table.
-     *
-     * @param object the object to index
-     * @param recordUse if true, count this as an "emmitted use"
-     * @return the index
-     * @throws java.util.NoSuchElementException if the object table does not contain <code>object</code>
-     */
-    public int getConstantObjectIndex(Object object, boolean recordUse) {
-        ObjectCounter counter = (ObjectCounter)objectTable.get(object);
-        if (counter == null) {
-            throw new java.util.NoSuchElementException();
-        }
-
-        if (recordUse) {
-            counter.incEmittedCounter();
-		}
-        return counter.getIndex();
-    }
-
-    /**
-     * Force a reference to an object in the object table
-     *
-     * @param object the object to reference
-     * @throws java.util.NoSuchElementException if the object table does not contain <code>object</code>
-     */
-    public void referenceConstantObject(Object object) {
-        ObjectCounter counter = (ObjectCounter)objectTable.get(object);
-        if (counter == null) {
-            throw new java.util.NoSuchElementException();
-        }
-
-        counter.incEmittedCounter();
-    }
-
-    public void reportActualUsage() {
-        boolean firstTime = true;
-        Enumeration e = objectTable.elements();
-        while (e.hasMoreElements()) {
-            ObjectCounter counter = (ObjectCounter)e.nextElement();
-            if (counter.getEmittedCounter() == 0 && !(counter.getObject() instanceof Klass)) {
-                if (firstTime) {
-                    System.out.println("====== Object usage in class " + definedClass);
-                    firstTime = false;
-                }
-                System.out.println("Actual object usage different for " + counter.getObject());
-                System.out.println("    expected use: " + counter.getCounter() + ", actual use: " + counter.getEmittedCounter());
-            }
-        }
-    }
-
-
-    /**
-     * Gets the object table as an array of objects that have been sorted by frequency of access.
-     *
-     * @return the sorted object array
-     */
-    private Object[] getConstantObjectArray() {
-        Object[] list = new Object[objectTable.size()];
-        Enumeration e = objectTable.elements();
-        for (int i = 0 ; i < list.length ; i++) {
-            list[i] = e.nextElement();
-        }
-        Arrays.sort(list, new Comparer() {
-            public int compare(Object o1, Object o2) {
-                if (o1 == o2) {
-                    return 0;
-                }
-                ObjectCounter t1 = (ObjectCounter)o1;
-                ObjectCounter t2 = (ObjectCounter)o2;
-                if (t1.getIndex() < t2.getIndex()) {
-                    return -1;
-                } else if (t1.getIndex() > t2.getIndex()) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            }
-        });
-//System.err.println(""+definedClass+" list = "+list.length);
-        boolean firstTime = true;
-        for (int i = 0 ; i < list.length ; i++) {
-//System.err.println("    "+list[i]);
-            ObjectCounter oc = ((ObjectCounter) list[i]);
-            if (oc.getEmittedCounter() > 0) {
-                list[i] = oc.getObject();
-            } else {
-                if (oc.getObject() instanceof String && safeToDoDeadStringElim) {
-                    list[i] = DEAD_STRING_ELIMINATION_MSG;
-                    if (Translator.TRACING_ENABLED && Tracer.isTracing("DSE", definedClass.getName())) {
-                        if (firstTime) {
-                            Tracer.traceln("Stripping objects from " + definedClass);
-                            firstTime = false;
-                        }
-                        Tracer.traceln("    " + oc.getObject());
-                    }
-                } else if (oc.getObject() instanceof Klass && safeToDoDeadClassElim && safeToDoDeadStringElim) {
-                    list[i] = DEAD_CLASS_ELIMINATION_MSG;
-                    if (Translator.TRACING_ENABLED && Tracer.isTracing("DSE", definedClass.getName())) {
-                        if (firstTime) {
-                            Tracer.traceln("Stripping class from " + definedClass);
-                            firstTime = false;
-                        }
-                        Tracer.traceln("    " + oc.getObject());
-                    }
-                } else {
-                    //Tracer.traceln("Unused object " + oc.getObject() + " of type " + oc.getObject().getClass() + " in object table of " + definedClass);
-                    list[i] = oc.getObject();
-                }
-            }
-        }
-        return list;
+    
+    public ObjectTable getObjectTable() {
+        return objectTable;
     }
 
     /*---------------------------------------------------------------------------*\
@@ -579,24 +321,23 @@ public final class ClassFile {
                 // generate IR and squawk code in one pass:
                 convertMethods(translator, true, 0, bodies);
                 convertMethods(translator, false, 0, bodies);
+                createMergedObjectTable(translator);
+                Object[] objects = objectTable.getConstantObjectArray();
+                definedClass.setObjectTable(objects);
             } else {
-                if (Arg.get(Arg.OPTIMIZE_CONSTANT_OBJECTS).getBool()) {
-                    sortObjectTable();
-                }
+                // create and optimize the objecttable:
+                createMergedObjectTable(translator);
+                Object[] objects = objectTable.getConstantObjectArray();
+                definedClass.setObjectTable(objects);
                 
                 // Now generate squawk code from IR.
                 convertMethods(translator, true, 2, bodies);
                 convertMethods(translator, false, 2, bodies);
-//                if (Arg.get(Arg.VERBOSE).getBool()) {
-//                    reportActualUsage();
-//                }
             }
         } catch (NoClassDefFoundError e) {
             definedClass.changeState(Klass.STATE_ERROR);
             throw e;
         }
-        Object[] objectTable = getConstantObjectArray();
-        definedClass.setObjectTable(objectTable);
 
 /*if[SUITE_VERIFIER]*/
         for (int i = 0; i < bodies.size(); i++) {
@@ -619,108 +360,3 @@ public final class ClassFile {
 
 }
 
-/**
- * Class used to keep track of the number of times a constant object is referenced in a class.
- */
-final class ObjectCounter {
-
-    /**
-     * The object being counted.
-     */
-    private Object object;
-
-    /**
-     * The index of the object in the object table.
-     */
-    private int index;
-
-    /**
-     * Use counter.
-     */
-    private int counter;
-
-    /**
-     * Use in emmitted code counter.
-     */
-    private int emittedUseCounter;
-
-    /**
-     * Constructor.
-     *
-     * @param index the initial index
-     */
-    public ObjectCounter(Object object, int index) {
-        this.object = object;
-        this.index  = index;
-		this.counter = 1;
-		this.emittedUseCounter = 0;
-    }
-
-    /**
-     * Get the object being counted.
-     *
-     * @return the object
-     */
-    public Object getObject() {
-        return object;
-    }
-
-    /**
-     * Get the index.
-     *
-     * @return the index
-     */
-    public int getIndex() {
-        return index;
-    }
-
-    /**
-     * Set the index.
-     *
-     * @param index the index
-     */
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
-    /**
-     * Add 1 to the counter.
-     */
-    public void inc() {
-        counter++;
-    }
-
-    /**
-     * Get the counter value.
-     *
-     * @return the value
-     */
-    public int getCounter() {
-        return counter;
-    }
-    
-     /**
-     * Add 1 to the counter.
-     */
-    public void incEmittedCounter() {
-        emittedUseCounter++;
-    }
-
-    /**
-     * Get the counter value.
-     *
-     * @return the value
-     */
-    public int getEmittedCounter() {
-        return emittedUseCounter;
-    }
-
-    /**
-     * Gets a String representation.
-     *
-     * @return the string
-     */
-    public final String toString() {
-        return "index = "+index+" counter = "+counter+" object = "+object;
-    }
-}
