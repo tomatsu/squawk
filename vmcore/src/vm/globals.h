@@ -25,6 +25,9 @@
 
 #define MAX_STREAMS 4
 
+#if (defined(ASSUME) && ASSUME != 0) | TRACE
+#define INTERPRETER_STATS 1
+#endif /* ASSUME */
 
 /**
  * This struct encapsulates all the globals in the Squawk VM. This allows
