@@ -749,14 +749,13 @@ static void printCacheStats() {
 #ifdef INTERPRETER_STATS
     if (count > 0) {
         fprintf(stderr, "\nTotals - ");
-        printCacheStat(" Class",   cachedClassAccesses,           count);
-        printCacheStat(" Monitor", pendingMonitorAccesses,        count);
-        printCacheStat(" Exit",    com_sun_squawk_GC_monitorExitCount, count);
-        printCacheStat(" New",     pendingMonitorAccesses,        count);
+        fprintf(stderr, " Class: %d",   cachedClassAccesses);
+        fprintf(stderr, " Monitor: %d", pendingMonitorAccesses);
+        fprintf(stderr, " Exit": %d,    com_sun_squawk_GC_monitorExitCount);
+        fprintf(stderr, " New": %d,     pendingMonitorAccesses);
     }
 
     fprintf(stderr, "\nHits   - ");
-
     printCacheStat(" Class",   cachedClassHits,                  cachedClassAccesses);
     printCacheStat(" Monitor", pendingMonitorHits,               pendingMonitorAccesses);
     printCacheStat(" Exit",    com_sun_squawk_GC_monitorReleaseCount, com_sun_squawk_GC_monitorExitCount);
