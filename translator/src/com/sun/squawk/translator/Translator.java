@@ -37,6 +37,7 @@ import com.sun.squawk.translator.ci.*;
 import com.sun.squawk.util.ComputationTimer;
 import com.sun.squawk.util.Tracer;
 import com.sun.squawk.*;
+import com.sun.squawk.translator.ir.InstructionEmitter;
 
 /**
  * The Translator class presents functionality for loading and linking
@@ -472,6 +473,10 @@ public final class Translator implements TranslatorInterface {
         if (verbose()) {
             time = System.currentTimeMillis() - time;
             Tracer.traceln(time + "ms.]");
+
+            if (VM.isVeryVerbose()) {
+                InstructionEmitter.printUncalledNativeMethods();
+            }
         }
         Assert.always(lastClassNameStack.empty());
     }

@@ -1269,6 +1269,8 @@ public class InstructionEmitter implements InstructionVisitor {
         invokeNative(identifier, type);
     }
 
+    static int[] nativeMethodsUseCount = new int[Native.ENTRY_COUNT];
+
     /**
      * Emit an invoke to a native method.
      *
@@ -1305,7 +1307,16 @@ public class InstructionEmitter implements InstructionVisitor {
                                            OPC.INVOKENATIVE_I; break;
                 default:          opcode = OPC.INVOKENATIVE_O; break;
             }
+            nativeMethodsUseCount[identifier]++;
             emitUnsigned(opcode, identifier);
+        }
+    }
+
+    public static void printUncalledNativeMethods() {
+        for (int i = 0; i < nativeMethodsUseCount.length; i++) {
+            if (nativeMethodsUseCount[i] == 0) {
+                System.out.println("Native method index " + i + " is not called in this suite");
+            }
         }
     }
 

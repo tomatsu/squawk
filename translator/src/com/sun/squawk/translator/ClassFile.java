@@ -195,7 +195,7 @@ public final class ClassFile {
 
         objectTable.mergeMethodsObjectTable(translator, staticMethods, true);
         objectTable.mergeMethodsObjectTable(translator, virtualMethods, false);
-        if (Arg.get(Arg.OPTIMIZE_CONSTANT_OBJECTS).getBool() && translator.dce.isMarked(definedClass)) {
+        if (Arg.get(Arg.OPTIMIZE_CONSTANT_OBJECTS).getBool() && (translator.dce == null) || translator.dce.isMarked(definedClass)) {
             objectTable.sortObjectTable();
         }
     }

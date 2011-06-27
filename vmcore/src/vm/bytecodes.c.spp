@@ -4618,15 +4618,13 @@ foundSlot:
                     break;
                 }
 
-                case Native_com_sun_squawk_VM_finalize: {
 /*if[FINALIZATION]*/
+               case Native_com_sun_squawk_VM_finalize: {
                     iparm = MethodOffsets_virtual_java_lang_Object_finalize;
                     do_invokevirtual();
-/*else[FINALIZATION]*/
-//                  fatalInterpreterError("no finalization support");
-/*end[FINALIZATION]*/
                     break;
                 }
+/*end[FINALIZATION]*/
 
 /*if[KERNEL_SQUAWK]*/
                 case Native_com_sun_squawk_VM_isInKernel: {

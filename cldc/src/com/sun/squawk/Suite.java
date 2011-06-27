@@ -511,11 +511,6 @@ public final class Suite {
             KlassMetadata km = metadatas[i];
             Assert.that(km != null);
             Klass klass = km.getDefinedClass();
-            int id = klass.getSuiteID();
-            if (id != i) {
-                System.out.println("Metadata index " + i + " going into index " + id);
-            }
-
             if (parent.contains(klass)) {
                 parent.installMetadata0(km, km.getDefinedClass(), true);
             } else {
