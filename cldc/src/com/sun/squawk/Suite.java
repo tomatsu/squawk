@@ -732,7 +732,10 @@ public final class Suite {
             }
         }
 
-        return getMetadata0(klass);
+        if (contains(klass)) {
+            return getMetadata0(klass);
+        }
+        return null;
     }
 
     KlassMetadata searchForMetadata(Klass klass) {
