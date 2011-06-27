@@ -38,6 +38,7 @@ import com.sun.squawk.vm.*;
 import java.util.Hashtable;
 
 import com.sun.squawk.*;
+import com.sun.squawk.translator.ObjectTable;
 
 /**
  * This in an instruction visitor implementation that will emit Squawk bytecodes.
@@ -847,7 +848,17 @@ public class InstructionEmitter implements InstructionVisitor {
         } else {
             try {
                 int index = classFile.getObjectTable().getConstantObjectIndex(object, state == EMIT);
-                Assert.always(object.equals(classFile.getDefinedClass().getObject(index)));
+                Object o2 = classFile.getDefinedClass().getObject(index);
+//                if (!object.equals(o2)) {
+//                    byte[] a = (byte[])object;
+//                    byte[] b = (byte[])o2;
+//                    for (int i = 0; i < a.length; i++) {
+//                        System.out.println("a: " + a[i] + " b: " + b[i]);
+//                    }
+//                }
+
+                Assert.always((object.equals(o2) || ObjectTable.compareIgnoringCount(object, o2) == 0),
+                        classFile.getDefinedClass() + " object = '" + object + "' index = " + index  + " object2 = " + o2);
                 emitCompact(OPC.OBJECT, OPC.OBJECT_0, 16, index);
             } catch (java.util.NoSuchElementException ex) {
                 throw new NoClassDefFoundError("no copy of object in class's object table: " + object);

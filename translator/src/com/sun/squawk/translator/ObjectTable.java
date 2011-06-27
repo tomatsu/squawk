@@ -131,7 +131,7 @@ public class ObjectTable {
     private static short[] SHORT_ARRAY_DUMMY = new short[0];
     private static byte[] BYTE_ARRAY_DUMMY = new byte[0];
 
-    private static int compareIgnoringCount(Object o1, Object o2) {
+    public static int compareIgnoringCount(Object o1, Object o2) {
         // Now do ordering based on class
         Class class1 = o1.getClass();
         Class class2 = o2.getClass();
@@ -140,6 +140,7 @@ public class ObjectTable {
         }
 
         // Now order based on value
+        int diff;
         if (class1 == Klass.class) {
             return ((Klass) o1).getName().compareTo(((Klass) o2).getName());
         } else if (class1 == String.class) {
@@ -147,48 +148,33 @@ public class ObjectTable {
         } else if (class1 == INT_ARRAY_DUMMY.getClass()) {
             int[] arr1 = (int[]) o1;
             int[] arr2 = (int[]) o2;
-            for (int i = 0;; ++i) {
-                if (i == arr1.length) {
-                    Assert.that(arr2.length != i);
-                    return -1;
-                }
-                if (i == arr2.length) {
-                    return 1;
-                }
-                int diff = arr1[i] - arr2[i];
-                if (diff != 0) {
+            if ((diff = arr1.length - arr2.length) != 0) {
+                return diff;
+            }
+            for (int i = 0; i < arr1.length; ++i) {
+                if ((diff = arr1[i] - arr2[i]) != 0) {
                     return diff;
                 }
             }
         } else if (class1 == SHORT_ARRAY_DUMMY.getClass()) {
             short[] arr1 = (short[]) o1;
             short[] arr2 = (short[]) o2;
-            for (int i = 0;; ++i) {
-                if (i == arr1.length) {
-                    Assert.that(arr2.length != i);
-                    return -1;
-                }
-                if (i == arr2.length) {
-                    return 1;
-                }
-                int diff = arr1[i] - arr2[i];
-                if (diff != 0) {
+            if ((diff = arr1.length - arr2.length) != 0) {
+                return diff;
+            }
+            for (int i = 0; i < arr1.length; ++i) {
+                if ((diff = arr1[i] - arr2[i]) != 0) {
                     return diff;
                 }
             }
         } else if (class1 == BYTE_ARRAY_DUMMY.getClass()) {
             byte[] arr1 = (byte[]) o1;
             byte[] arr2 = (byte[]) o2;
-            for (int i = 0;; ++i) {
-                if (i == arr1.length) {
-                    Assert.that(arr2.length != i);
-                    return -1;
-                }
-                if (i == arr2.length) {
-                    return 1;
-                }
-                int diff = arr1[i] - arr2[i];
-                if (diff != 0) {
+            if ((diff = arr1.length - arr2.length) != 0) {
+                return diff;
+            }
+            for (int i = 0; i < arr1.length; ++i) {
+                if ((diff = arr1[i] - arr2[i]) != 0) {
                     return diff;
                 }
             }
@@ -196,6 +182,7 @@ public class ObjectTable {
             // Need to add another 'else' clause if this ever occurs
             throw Assert.shouldNotReachHere("unknown object table type: " + class1);
         }
+        return 0;
     }
     
     /**
