@@ -275,8 +275,9 @@ public final class ChannelConstants {
     public static final int GET_HARDWARE_REVISION                       = PLATFORM_OPCODE + 1;
     public static final int GET_LAST_DEVICE_INTERRUPT_TIME_ADDR         = PLATFORM_OPCODE + 2;
     public static final int GET_CURRENT_TIME_ADDR                       = PLATFORM_OPCODE + 3;
+    public static final int IRQ_GPIO_STATUS                             = PLATFORM_OPCODE + 4;
 
-    public static final int SPI_OPCODES                                 = PLATFORM_OPCODE + 4;
+    public static final int SPI_OPCODES                                 = PLATFORM_OPCODE + 5;
     public static final int SPI_SEND_RECEIVE_8                          = SPI_OPCODES + 0;
     public static final int SPI_SEND_RECEIVE_8_PLUS_SEND_16             = SPI_OPCODES + 1;
     public static final int SPI_SEND_RECEIVE_8_PLUS_SEND_N              = SPI_OPCODES + 2;
