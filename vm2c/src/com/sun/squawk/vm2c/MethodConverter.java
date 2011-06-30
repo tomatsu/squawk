@@ -285,8 +285,13 @@ public class MethodConverter extends JCTree.Visitor {
         }
         ccode.print("(");
 
-        ccode.print(conv.getReceiverDecl(tree.sym, false));
         if (macro != null) {
+            if (!methodSym.isStatic()) {
+                 ccode.print("this");
+                 if (methodSym.params().size() > 0) {
+                     ccode.print(", ");
+                 }
+            }
             int params = methodSym.params().size();
             for (VarSymbol param : methodSym.params()) {
                 ccode.print(" " + conv.subVarName(param.name));
@@ -295,6 +300,7 @@ public class MethodConverter extends JCTree.Visitor {
                 }
             }
         } else {
+            ccode.print(conv.getReceiverDecl(tree.sym, false));
             doExprs(tree.params);
         }
         ccode.print(") ");

@@ -1392,7 +1392,7 @@ public class InstructionEmitter implements InstructionVisitor {
                 case CID.DOUBLE:  opcode = OPC.INVOKESUPER_D; break;
 /*else[FLOATS]*/
 //              case CID.FLOAT:
-//              case CID.DOUBLE:  Assert.shouldNotReachHere();
+//              case CID.DOUBLE:  Assert.shouldNotReachHere("NO FLOATS");
 /*end[FLOATS]*/
                 case CID.LONG:    opcode = OPC.INVOKESUPER_L; break;
                 case CID.OFFSET:  // fall through
@@ -1433,7 +1433,7 @@ public class InstructionEmitter implements InstructionVisitor {
                 case CID.DOUBLE:  opcode = OPC.INVOKEVIRTUAL_D; break;
 /*else[FLOATS]*/
 //              case CID.FLOAT:
-//              case CID.DOUBLE:  Assert.shouldNotReachHere();
+//              case CID.DOUBLE:  Assert.shouldNotReachHere("NO FLOATS");
 /*end[FLOATS]*/
                 case CID.LONG:    opcode = OPC.INVOKEVIRTUAL_L; break;
                 case CID.OFFSET:  // fall through
@@ -1502,7 +1502,7 @@ public class InstructionEmitter implements InstructionVisitor {
             case CID.DOUBLE:  opcode = OPC.GETFIELD_D; break;
 /*else[FLOATS]*/
 //          case CID.FLOAT:
-//          case CID.DOUBLE:  Assert.shouldNotReachHere();
+//          case CID.DOUBLE:  Assert.shouldNotReachHere("NO FLOATS");
 /*end[FLOATS]*/
             case CID.LONG:    opcode = OPC.GETFIELD_L; break;
             case CID.OFFSET:  // fall through
@@ -1566,7 +1566,7 @@ public class InstructionEmitter implements InstructionVisitor {
                 case CID.DOUBLE:  opcode = OPC.GETSTATIC_D; break;
 /*else[FLOATS]*/
 //              case CID.FLOAT:
-//              case CID.DOUBLE:  Assert.shouldNotReachHere();
+//              case CID.DOUBLE:  Assert.shouldNotReachHere("NO FLOATS");
 /*end[FLOATS]*/
                 case CID.LONG:    opcode = OPC.GETSTATIC_L; break;
                 case CID.OFFSET:  // fall through
@@ -1837,7 +1837,7 @@ public class InstructionEmitter implements InstructionVisitor {
                 case CID.DOUBLE:  opcode = OPC.RETURN_D; break;
 /*else[FLOATS]*/
 //              case CID.FLOAT:
-//              case CID.DOUBLE: Assert.shouldNotReachHere();
+//              case CID.DOUBLE: Assert.shouldNotReachHere("NO FLOATS");
 /*end[FLOATS]*/
                 case CID.LONG:    opcode = OPC.RETURN_L; break;
                 case CID.OFFSET:  // fall through
@@ -1868,7 +1868,7 @@ public class InstructionEmitter implements InstructionVisitor {
             case CID.DOUBLE:  opcode = OPC.PUTFIELD_D; break;
 /*else[FLOATS]*/
 //          case CID.FLOAT:
-//          case CID.DOUBLE: Assert.shouldNotReachHere();
+//          case CID.DOUBLE: Assert.shouldNotReachHere("NO FLOATS");
 /*end[FLOATS]*/
             case CID.LONG:    opcode = OPC.PUTFIELD_L; break;
             case CID.OFFSET:  // fall through
@@ -1931,7 +1931,7 @@ public class InstructionEmitter implements InstructionVisitor {
                 case CID.DOUBLE:  opcode = OPC.PUTSTATIC_D; break;
 /*else[FLOATS]*/
 //              case CID.FLOAT:
-//              case CID.DOUBLE: Assert.shouldNotReachHere();
+//              case CID.DOUBLE: Assert.shouldNotReachHere("NO FLOATS");
 /*end[FLOATS]*/
                 case CID.LONG:    opcode = OPC.PUTSTATIC_L; break;
                 case CID.OFFSET:  // fall through

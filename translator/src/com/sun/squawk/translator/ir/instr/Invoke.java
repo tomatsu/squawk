@@ -56,7 +56,7 @@ public abstract class Invoke extends StackProducer {
         super(method.getReturnType());
         this.method = method;
         this.parameters = parameters;
-        Assert.always(!method.isInterpreterInvoked(), "the symbols for this method should have been stripped");
+        Assert.always(!method.isInterpreterInvoked(), "the symbols for " + method + " should have been stripped");
     }
 
     /**

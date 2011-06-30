@@ -440,8 +440,13 @@ public final class Code {
     void convert(final Translator translator, final Method method, final int index, final int phase, final Vector bodies) {
         ComputationTimer.time("converting phase "+phase, new ComputationTimer.Computation() {
             public Object run() {
-                convert0(translator, method, index, phase, bodies);
-                return null;
+                try {
+                    convert0(translator, method, index, phase, bodies);
+                    return null;
+                } catch (RuntimeException e) {
+                    System.err.println("\n\nError converting method " + method + "\n");
+                    throw e;
+                }
             }
         });
     }

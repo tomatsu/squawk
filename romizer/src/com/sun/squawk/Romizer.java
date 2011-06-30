@@ -360,6 +360,7 @@ public class Romizer {
                     System.out.println("   " + e.getClass().getSimpleName() + ": " + romizer.getLastClassName());
                     System.out.println("   message: " + e.getLocalizedMessage());
                     System.out.println("   possibly in class: " + romizer.getLastClassName());
+                    buildProperties = null; // reset properties for next run...
                     // TODO Deal with fact that for TCK this must continue
 	                continue;
                 }

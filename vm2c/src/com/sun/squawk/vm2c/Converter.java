@@ -1,24 +1,25 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 package com.sun.squawk.vm2c;
@@ -219,7 +220,7 @@ public class Converter {
 
     /**
      * Emits the file of C declarations after all compilation units have been {@link #parse parsed}.
-     * It's only during emtting that error messages are logged to the diagnostic listener.
+     * It's only during emitting that error messages are logged to the diagnostic listener.
      */
     public void emit(PrintWriter out) {
 
@@ -229,7 +230,8 @@ public class Converter {
         }
 
         out.println("/*");
-        out.println(" * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.");
+        out.println(" * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.");
+        out.println(" * Copyright 2011 Oracle Corporation. All Rights Reserved.");
         out.println(" * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");
         out.println(" * ");
         out.println(" * This code is free software; you can redistribute it and/or modify");
@@ -247,8 +249,8 @@ public class Converter {
         out.println(" * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA");
         out.println(" * 02110-1301 USA");
         out.println(" * ");
-        out.println(" * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo");
-        out.println(" * Park, CA 94025 or visit www.sun.com if you need additional");
+        out.println(" * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood");
+        out.println(" * Shores, CA 94065 or visit www.oracle.com if you need additional");
         out.println(" * information or have any questions.");
         out.println(" */");
         out.println("");
@@ -270,6 +272,20 @@ public class Converter {
     }
 
     /**
+     * Not sure why roots.contains is not reliably return all of the root methods, but that's the case...
+     * @param method
+     * @return true
+     */
+    boolean isRootMethod(MethodSymbol method) {
+        for (MethodSymbol ms: roots) {
+            if (ms == method) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Emits a C function declaration.
      *
      * @param out     where to emit
@@ -283,7 +299,18 @@ public class Converter {
             out.print(' ');
         }
         out.print(' ');
-        out.print(asString(method) + "(");
+        if (isRootMethod(method)) {
+            ProcessedMethod pm = methods.get(method);
+            Map<String, String> annotations = new AnnotationParser().parse(pm);
+            String cRoot = annotations.get("root");
+            if (cRoot != null) {
+                out.print(cRoot + "("); // use name from "root" annotation
+            } else {
+                out.print(asString(method) + "(");
+            }
+        } else {
+            out.print(asString(method) + "(");
+        }
 
         out.print(getReceiverDecl(method, true));
         int params = method.params().size();
