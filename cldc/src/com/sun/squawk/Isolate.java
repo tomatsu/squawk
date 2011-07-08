@@ -2144,7 +2144,7 @@ public final class Isolate implements Runnable {
             sb.append(" with parent suite URI '").append(parentSuiteSourceURI).append("'");
         }
 /*if[ENABLE_SUITE_LOADING]*/
-        if (!leafSuite.isClosed()) {
+        if (leafSuite != null && !leafSuite.isClosed()) {
             sb.append(" and leaf suite '").append(leafSuite).append("'");
         }
 /*end[ENABLE_SUITE_LOADING]*/
