@@ -571,13 +571,16 @@ void checkOneAddress(Address ea, int size, Address addr);
          * @param type   the type of the value about to be written to the effective address
          * @param value  the value
          */
+#if SQUAWK_64
 /*MAC*/ void setUWordTyped(Address $base, Offset $offset, char $type, UWord $value) {
-            if (sizeof(UWord) == sizeof(int)) {
-                setIntTyped($base, $offset, $type, (UWord)$value);
-            } else {
-                setLongTyped($base, $offset, $type, (UWord)$value);
-            }
+            setLongTyped($base, $offset, $type, (UWord)$value);
         }
+#else
+/*MAC*/ void setUWordTyped(Address $base, Offset $offset, char $type, UWord $value) {
+            setIntTyped($base, $offset, $type, (UWord)$value);
+        }
+#endif
+
 
         /*-----------------------------------------------------------------------*\
          *                           Memory access interface                     *
@@ -659,12 +662,11 @@ void checkOneAddress(Address ea, int size, Address addr);
 //              void setBitFor(Address);
 /*end[MACROIZE]*/
                 Address ea;
-
-                if (sizeof(UWord) == sizeof(int)) {
-                    ea = (&((int *)$base)[$offset]);
-                } else {
-                    ea = (&((long *)$base)[$offset]);
-                }
+/*if[SQUAWK_64]*/
+                ea = (&((long *)$base)[$offset]);
+/*else[SQUAWK_64]*/
+//              ea = (&((int *)$base)[$offset]);
+/*end[SQUAWK_64]*/
 
                 assume(!com_sun_squawk_GC_collecting || loeq(ea, com_sun_squawk_GC_heapStart) || hi(ea, com_sun_squawk_GC_heapEnd));
                 setBitFor(ea);

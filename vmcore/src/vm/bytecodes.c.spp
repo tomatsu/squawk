@@ -771,103 +771,22 @@
             return com_sun_squawk_Klass_self(getClassOrAssociation($oop));
         }
 
-        /**
+        /*
          * Decodes a counter from the minfo area.
          *
-         * The routines actually used now are translated from Java to C, and are definedin in vm2c.c.spp
-         *
-         * @param mp     the pointer to the method
-         * @return the value
+         * The routines are translated from Java to C, and are definedin in vm2c.c.spp
          */
-/*if[VM2C]*/
 static int             MethodHeader_minfoValue1_L(Address);
 static int             MethodHeader_minfoValue2_L(Address);
 static int             MethodHeader_minfoValue3_L(Address);
 static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, int p, int b0);
-/*else[VM2C]*/
-//static int NativeUnsafe_getByte_LI(Address base, int offset) {
-//    return getByte(base, offset);
-//}
-//
-//static int NativeUnsafe_getUByte_LI(Address base, int offset) {
-//    return getUByte(base, offset);
-//}
-//
-//static int MethodHeader_minfoValue1_L(Address oop) {
-//    int p;
-//    int val;
-//    p = -13 - 1;
-//   
-//    
-//    val = NativeUnsafe_getByte_LI(oop, p--) & 255;
-//    if (val > 127) {
-//        val = val & 127;
-//        val = sll(val, 8);
-//        val = val | (NativeUnsafe_getByte_LI(oop, p) & 255);
-//    }
-//    
-//    return val;
-//}
-//
-//static int MethodHeader_minfoValue2_L(Address oop) {
-//    int p;
-//    int val;
-//    p = -13 - 1;
-//    
-//    
-//    if (NativeUnsafe_getByte_LI(oop, p--) < 0) {
-//        p--;
-//    }
-//    val = NativeUnsafe_getByte_LI(oop, p--) & 255;
-//    if (val > 127) {
-//        val = val & 127;
-//        val = sll(val, 8);
-//        val = val | (NativeUnsafe_getByte_LI(oop, p) & 255);
-//    }
-//    
-//    return val;
-//}
-//
-//static int MethodHeader_minfoValue3_L(Address oop) {
-//    int p;
-//    int val;
-//    p = -13 - 1;
-//    
-//    
-//    if (NativeUnsafe_getByte_LI(oop, p--) < 0) {
-//        p--;
-//    }
-//    if (NativeUnsafe_getByte_LI(oop, p--) < 0) {
-//        p--;
-//    }
-//    val = NativeUnsafe_getByte_LI(oop, p--) & 255;
-//    if (val > 127) {
-//        val = val & 127;
-//        val = sll(val, 8);
-//        val = val | (NativeUnsafe_getByte_LI(oop, p) & 255);
-//    }
-//    
-//    return val;
-//}
-//static int MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, int p, int b0) {
-//    int offset;
-//    offset = 3;
-//    if ((b0 & 1) != 0) {
-//        offset++;
-//    }
-//    if ((b0 & 2) != 0) {
-//        offset++;
-//    }
-//    while (offset-- > 0) {
-//        int val;
-//        val = NativeUnsafe_getUByte_LI(oop, p--);
-//        if (val > 127) {
-//            p--;
-//        }
-//    }
-//    return p + 1;
-//}
-/*end[VM2C]*/
+
+static int             VM_lookup_b(int, Address);
+static int             VM_lookup_i(int, Address);
+static int             VM_lookup_s(int, Address);
+static int             VM_arrayOopStoreCheck(Address, int, Address);
+static int             VM_findSlot(Address, Address, int);
+static boolean         VM_instanceof(Address, Address);
 
         /**
          * Gets the b0 byte of the method header.
@@ -3122,18 +3041,12 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
             int index   = popInt();
             Address oop = popAddress();
             boundsCheck(oop, index);
-            if (value != 0) {
-                if (com_sun_squawk_Klass_id(getClass(oop)) != CID_OBJECT_ARRAY) {
-                    pushAddress(oop);
-                    pushInt(index);
-                    pushAddress(value);
-                    call(com_sun_squawk_VM_arrayOopStore);
-                } else {
-                    setObjectAndUpdateWriteBarrier(oop, index, value);
+            if (value != 0 && com_sun_squawk_Klass_id(getClass(oop)) != CID_OBJECT_ARRAY) {
+                if (VM_arrayOopStoreCheck(oop, index, value)) {
+                    call(com_sun_squawk_VM_arrayStoreException);
                 }
-            } else {
-                setObjectAndUpdateWriteBarrier(oop, index, 0);
             }
+            setObjectAndUpdateWriteBarrier(oop, index, value);
         }
 
 /*if[FLOATS]*/
@@ -3214,20 +3127,20 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
             callNoReset(getVirtualMethod(cls, iparm));
         }
 
-/*if[FAST_INVOKEINTERFACE]*/
+#if FALSE
 /*outlin*/ int do_findslot0(Address oop, Address interfaceKlass, int iindex) {
             Address klass;
             int slot;
 
             klass = getClass(oop);
             while (true) {
-                Address interfaces = com_sun_squawk_Klass_interfaces(klass); // never null
+                Address interfaces = com_sun_squawk_Klass_interfaces(klass);
                 int interfacesCount = getArrayLength(interfaces);
                 int i;
 
                 for (i = 0; i < interfacesCount; i++) {
                     if (getObject(interfaces, i) == interfaceKlass) {
-                        Address vtableMaps = com_sun_squawk_Klass_interfaceVTableMaps(klass);  // never null
+                        Address vtableMaps = com_sun_squawk_Klass_interfaceVTableMaps(klass);
                         Address vtableMap = getObject(vtableMaps, i);
                         boundsAssume(vtableMap, iindex);
                         slot = getShort(vtableMap, iindex);
@@ -3254,8 +3167,8 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
 foundSlot:
            return slot;
         }
-/*end[FAST_INVOKEINTERFACE]*/
-
+#endif
+        
         /**
          * findslot.
          *
@@ -3264,30 +3177,17 @@ foundSlot:
          * <p>
          */
 /*MAC*/ void do_findslot() {
-/*if[FAST_INVOKEINTERFACE]*/
             Address interfaceKlass = popAddress();
             Address oop = popAddress();
             int slot;
 
             nullCheck(oop);
-            slot = do_findslot0(oop, interfaceKlass, iparm);
+            slot = VM_findSlot(oop, interfaceKlass, iparm);
             if (likely(slot >= 0)) {
                 pushInt(slot);
             } else {
-                pushAddress(oop);
-                pushAddress(interfaceKlass);
-                pushInt(iparm);
-                call(com_sun_squawk_VM_findSlot); /* will throw error for us */
+                call(com_sun_squawk_VM_abstractMethodError);
             }
-/*else[FAST_INVOKEINTERFACE]*/
-//          Address interfaceKlass = popAddress();
-//          Address oop = popAddress();
-//          nullCheck(oop);
-//          pushAddress(oop);
-//          pushAddress(interfaceKlass);
-//          pushInt(iparm);
-//          call(com_sun_squawk_VM_findSlot);
-/*end[FAST_INVOKEINTERFACE]*/
         }
 
         /**
@@ -3383,6 +3283,7 @@ foundSlot:
          * Check that there are no 0xDEAFBEEF words in the local variables.
          */
 /*MAC*/ void checkReferenceSlots() {
+/*if[CHECK_SLOT_CLEARING]*/
             if (CHECK_SLOT_CLEARING && fp != null) {
                 int i;
                 Address mp     = getMP();
@@ -3411,6 +3312,7 @@ foundSlot:
                     }
                 }
             }
+/*end[CHECK_SLOT_CLEARING]*/
         }
 
         /**
@@ -3584,7 +3486,7 @@ foundSlot:
          *                           Native methods                              *
         \*-----------------------------------------------------------------------*/
 
-/*if[VM2C]*/
+/*if[GC2C]*/
         /**
          * These forward declarations have to be here to deal with the
          * different behaviour of GCC on the Mac with respect to forward
@@ -3592,7 +3494,7 @@ foundSlot:
          */
         static Address copyObjectGraph(Address, Address, Address, Address);
         static int collectGarbage(Address, Address, int);
-/*end[VM2C]*/
+/*end[GC2C]*/
 
         /**
          * invokenativemain.
@@ -4505,18 +4407,6 @@ foundSlot:
                     break;
                 }
 
-/*
-                case Native_com_sun_squawk_VM_getGlobalIntCount: {
-                    pushInt(GLOBAL_INT_COUNT);
-                    break;
-                }
-
-                case Native_com_sun_squawk_VM_getGlobalAddrCount: {
-                    pushInt(GLOBAL_ADDR_COUNT);
-                    break;
-                }
-*/
-
                 case Native_com_sun_squawk_VM_getGlobalOopCount: {
                     pushInt(GLOBAL_OOP_COUNT);
                     break;
@@ -4769,7 +4659,7 @@ foundSlot:
                 }
 /*end[FLOATS]*/
 
-/*if[VM2C]*/
+/*if[GC2C]*/
                 case Native_com_sun_squawk_GarbageCollector_hasNativeImplementation: {
                     pushInt(true);
                     break;
@@ -4783,14 +4673,14 @@ foundSlot:
                     break;
                 }
 
-/*else[VM2C]*/
+/*else[GC2C]*/
 //              case Native_com_sun_squawk_GarbageCollector_hasNativeImplementation: {
 //                  pushInt(false);
 //                  break;
 //              }
-/*end[VM2C]*/
+/*end[GC2C]*/
 
-/*if[VM2C]*/
+/*if[GC2C]*/
 /*if[ENABLE_ISOLATE_MIGRATION]*/
                 case Native_com_sun_squawk_GarbageCollector_copyObjectGraphInC: {
                     Address allocTop = popAddress();
@@ -4801,7 +4691,7 @@ foundSlot:
                     break;
                 }
 /*end[ENABLE_ISOLATE_MIGRATION]*/
-/*end[VM2C]*/
+/*end[GC2C]*/
 
 /*if[LISP2_BITMAP]*/
                 case Native_com_sun_squawk_Lisp2Bitmap_clearBitFor: {
@@ -6009,25 +5899,6 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
         }
 
         /**
-         * Test to see if the object us a subclass of the class.
-         *
-         * @param obj the object
-         * @param klass the class
-         */
-/*MAC*/ boolean isSubClass(Address $obj, Address $klass) {
-            Address objklass = getClass($obj);
-            for (;;) {
-                if ($klass == objklass) {
-                    return true;
-                }
-                objklass = com_sun_squawk_Klass_superType(objklass);
-                if (objklass == null) {
-                    return false;
-                }
-            }
-        }
-
-        /**
          * Instanceof.
          *
          * <p>
@@ -6040,12 +5911,8 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
             checkReferenceSlots();
             if (obj == null || klass == null) {
                 pushInt(false);
-            } else if (isSubClass(obj, klass)) {
-                pushInt(true);
             } else {
-                pushAddress(obj);
-                pushAddress(klass);
-                call(com_sun_squawk_VM__instanceof);
+                pushInt(VM_instanceof(obj, klass));
             }
         }
 
@@ -6060,10 +5927,10 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
             Address klass = popAddress();
             Address obj   = popAddress();
             checkReferenceSlots();
-            if (obj != null && !isSubClass(obj, klass)) {
+            if (obj != null && !VM_instanceof(obj, klass)) {
                 pushAddress(obj);
                 pushAddress(klass);
-                call(com_sun_squawk_VM_checkcast);
+                call(com_sun_squawk_VM_checkcastException);
             } else {
                 pushAddress(obj);
             }
@@ -6076,28 +5943,21 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
          * Java Stack: KEY, ARRAY -> VALUE
          * <p>
          */
-/*if[VM2C]*/
 /*MAC*/ void do_lookup_b() {
             Address barray = popAddress();
             int  key = popInt();
-            pushInt(lookup_b(key, barray));
+            pushInt(VM_lookup_b(key, barray));
         }
 /*MAC*/ void do_lookup_s() {
             Address sarray = popAddress();
             int  key = popInt();
-            pushInt(lookup_s(key, sarray));
+            pushInt(VM_lookup_s(key, sarray));
         }
 /*MAC*/ void do_lookup_i() {
             Address iarray = popAddress();
             int  key = popInt();
-            pushInt(lookup_i(key, iarray));
+            pushInt(VM_lookup_i(key, iarray));
         }
-/*end[VM2C]*/
-/*if[!VM2C]*/
-/*MAC*/ void do_lookup_b() { call(com_sun_squawk_VM_lookup_b); }
-/*MAC*/ void do_lookup_s() { call(com_sun_squawk_VM_lookup_s); }
-/*MAC*/ void do_lookup_i() { call(com_sun_squawk_VM_lookup_i); }
-/*end[VM2C]*/
 
         /**
          * Reserved.

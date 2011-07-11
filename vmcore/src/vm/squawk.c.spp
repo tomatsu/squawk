@@ -557,9 +557,11 @@ void freeBuffers() {
  */
 #include "bytecodes.c"
 
-/*if[VM2C]*/
+/*
+ * Include java code translated into C code.
+ */
 #include "vm2c.c"
-/*end[VM2C]*/
+
 
 #if KERNEL_SQUAWK
 /*

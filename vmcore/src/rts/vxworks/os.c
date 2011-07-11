@@ -637,7 +637,7 @@ static int deleteTaskExecutor(TaskExecutor* te) {
 
 #define SELECT_PIPE_NAME "/pipe/squawk-select-pipe"
 
-static selectPipeFD = 0;
+static int selectPipeFD = 0;
 
 int initSelectPipe() {
     int rc = pipeDevCreate (SELECT_PIPE_NAME, 100, 10);

@@ -511,6 +511,7 @@ void teLoopingHandler(TaskExecutor* te) {
         if (ntask) {
             if (DEBUG_EVENTS_LEVEL > 1) { fprintf(stderr, "in teLoopingHandler() calling handler %p\n", ntask->handler); }
             ntask->result = (*ntask->handler)(ntask->arg1, ntask->arg2, ntask->arg3, ntask->arg4, ntask->arg5, ntask->arg6, ntask->arg7, ntask->arg8, ntask->arg9, ntask->arg10);
+            ntask->nt_errno = errno;
             signalEvent(toEventRequest(ntask)); /* tell squawk thread that native function result is ready */
         } else {
             assumeAlways(te->status != TASK_EXECUTOR_STATUS_RUNNING); /* we've been cancelled! */

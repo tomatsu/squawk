@@ -423,7 +423,7 @@ public class VM implements GlobalStaticFields {
         if (reportedArray != null) {
             Object array = reportedArray;
             reportedArray = null;
-            throw new ArrayIndexOutOfBoundsException("on " + GC.getKlass(array).getInternalName() + " of length " + GC.getArrayLength(array) + " with index " + reportedIndex);
+            throw new ArrayIndexOutOfBoundsException(makeArrayExceptionMessage(array));
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }
@@ -444,49 +444,16 @@ public class VM implements GlobalStaticFields {
     }
 
     /**
-     * Set write barrier bit for the store of a reference to an array.
-     *
-     * @param array the array
-     * @param index the array index
-     * @param value the value to be stored into the array
+     * Throws an ArrayStoreException.
      */
-    static void arrayOopStore(Object array, int index, Object value) throws InterpreterInvokedPragma {
-        Klass arrayKlass = GC.getKlass(array);
-        Assert.that(arrayKlass.isArray());
-        Assert.that(value != null);
-        Klass componentType = arrayKlass.getComponentType();
-
-        /*
-         * Klass.isAssignableFrom() will not work before class Klass is initialized. Use the
-         * synchronizationEnabled flag to show that the system is ready for this.
-         */
-        if (synchronizationEnabled == false || componentType.isAssignableFrom(GC.getKlass(value))) {
-            NativeUnsafe.setObject(array, index, value);
+    static void arrayStoreException() throws InterpreterInvokedPragma {
+        if (reportedArray != null) {
+            Object array = reportedArray;
+            reportedArray = null;
+            throw new ArrayStoreException(makeArrayExceptionMessage(array));
         } else {
             throw new ArrayStoreException();
         }
-    }
-
-    /**
-     * Find the virtual slot number for an object that corresponds to the slot in an interface.
-     *
-     * @param obj     the receiver
-     * @param iklass  the interface class
-     * @param islot   the virtual slot of the interface method
-     * @return the virtual slot of the receiver
-     */
-    static int findSlot(Object obj, Klass iklass, int islot) throws InterpreterInvokedPragma {
-/*if[FAST_INVOKEINTERFACE]*/
-        // in this case only called to throw the exception
-       throw new Error("AbstractMethodError");
-/*else[FAST_INVOKEINTERFACE]*/
-//        Klass klass = GC.getKlass(obj);
-//        int result = klass.findSlot(iklass, islot);
-//        if (result < 0) {
-//            throw new Error("AbstractMethodError");
-//        }
-//        return result;
-/*end[FAST_INVOKEINTERFACE]*/
     }
 
     /**
@@ -512,152 +479,37 @@ public class VM implements GlobalStaticFields {
     }
 
     /**
-     * Test to see if an object is an instance of a class.
+     * throw a class cast exceptionCheck when an object can't be cast to a class.
      *
      * @param obj the object (not null)
-     * @param klass the class (not null)
-     * @return true if is can
-     */
-    static boolean _instanceof(Object obj, Klass klass) throws InterpreterInvokedPragma {
-        Assert.that(obj != null && klass != null);
-        return klass.isAssignableFrom(GC.getKlass(obj));
-    }
-
-    /**
-     * Check that an object can be cast to a class.
-     *
-     * @param obj the object (not null)
-     * @param klass the class
-     * @return the same object
+     * @param klass the expected class
      * @exception ClassCastException if the case is illegal
      */
-    static Object checkcast(Object obj, Klass klass) throws InterpreterInvokedPragma {
+    static void checkcastException(Object obj, Klass klass) throws InterpreterInvokedPragma {
         Assert.that(obj != null);
-        if (!klass.isAssignableFrom(GC.getKlass(obj))) {
-            if (Klass.DEBUG_CODE_ENABLED) {
-                println("=== temp extra debugging info ===");
-                print("target class: ");
-                printAddress(klass);
-                println();
-                Klass srcKlass = GC.getKlass(obj);
-                print("source class: ");
-                printAddress(srcKlass);
-                println();
-                Klass[] interfaces = srcKlass.getInterfaces();
-                if (interfaces != null) {
-                    println("implements interfaces:");
-                    for (int i = 0; i < interfaces.length; i++) {
-                        print("    ");
-                        print(interfaces[i].toString());
-                        print("    ");
-                        printAddress(interfaces[i]);
-                        println();
-                    }
+        if (Klass.DEBUG_CODE_ENABLED) {
+            println("=== temp extra debugging info ===");
+            print("target class: ");
+            printAddress(klass);
+            println();
+            Klass srcKlass = GC.getKlass(obj);
+            print("source class: ");
+            printAddress(srcKlass);
+            println();
+            Klass[] interfaces = srcKlass.getInterfaces();
+            if (interfaces != null) {
+                println("implements interfaces:");
+                for (int i = 0; i < interfaces.length; i++) {
+                    print("    ");
+                    print(interfaces[i].toString());
+                    print("    ");
+                    printAddress(interfaces[i]);
+                    println();
                 }
             }
-
-            throw new ClassCastException("Expected object of type " + klass + " but got object of type " + GC.getKlass(obj));
         }
-        return obj;
-    }
 
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(root="lookup_b")
-/*end[JAVA5SYNTAX]*/
-    /**
-     * Lookup the position of a value in a sorted array of numbers.
-     *
-     * @param key the value to look for
-     * @param array the array
-     * @return the index or -1 if the lookup fails
-     */
-    static int lookup_b(int key, byte[] array)
-/*if[VM2C]*/
-                    throws NotInlinedPragma
-/*else[VM2C]*/
-//                  throws InterpreterInvokedPragma
-/*end[VM2C]*/
-                    {
-        int low = 0;
-        int high = array.length - 1;
-        while (low <= high) {
-            int mid = (low + high) / 2;
-            int val = array[mid];
-            if (key < val) {
-                high = mid - 1;
-            } else if (key > val) {
-                low = mid + 1;
-            } else {
-                return mid;
-            }
-        }
-        return -1;
-    }
-
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(root="lookup_s")
-/*end[JAVA5SYNTAX]*/
-    /**
-     * Lookup the position of a value in a sorted array of numbers.
-     *
-     * @param key the value to look for
-     * @param array the array
-     * @return the index or -1 if the lookup fails
-     */
-    static int lookup_s(int key, short[] array)
-/*if[VM2C]*/
-                    throws NotInlinedPragma
-/*else[VM2C]*/
-//                  throws InterpreterInvokedPragma
-/*end[VM2C]*/
-                    {
-        int low = 0;
-        int high = array.length - 1;
-        while (low <= high) {
-            int mid = (low + high) / 2;
-            int val = array[mid];
-            if (key < val) {
-                high = mid - 1;
-            } else if (key > val) {
-                low = mid + 1;
-            } else {
-                return mid;
-            }
-        }
-        return -1;
-    }
-
-/*if[JAVA5SYNTAX]*/
-    @Vm2c(root="lookup_i")
-/*end[JAVA5SYNTAX]*/
-    /**
-     * Lookup the position of a value in a sorted array of numbers.
-     *
-     * @param key the value to look for
-     * @param array the array
-     * @return the index or -1 if the lookup fails
-     */
-    static int lookup_i(int key, int[] array)
-/*if[VM2C]*/
-                    throws NotInlinedPragma
-/*else[VM2C]*/
-//                  throws InterpreterInvokedPragma
-/*end[VM2C]*/
-                    {
-        int low = 0;
-        int high = array.length - 1;
-        while (low <= high) {
-            int mid = (low + high) / 2;
-            int val = array[mid];
-            if (key < val) {
-                high = mid - 1;
-            } else if (key > val) {
-                low = mid + 1;
-            } else {
-                return mid;
-            }
-        }
-        return -1;
+        throw new ClassCastException("Expected object of type " + klass + " but got object of type " + GC.getKlass(obj));
     }
 
     /**
@@ -803,6 +655,165 @@ public class VM implements GlobalStaticFields {
             }
         }
         return array;
+    }
+
+    /** Pass in value of "reportedArray", and use value of "reportedIndex" to generate a more detailed exception message.
+     *
+     * @param array the value of "reportedArray"
+     * @return message string
+     */
+    private static String makeArrayExceptionMessage(Object array) {
+        return "on " + GC.getKlass(array).getInternalName() + " of length " + GC.getArrayLength(array) + " with index " + reportedIndex;
+    }
+
+    /*=======================================================================*\
+     *                Converted VM callback routines                         *
+     *                                                                       *
+     * These methods are always converted to C code, and are                 *
+     * only to be called by the interpreter loop, not by user code.          *
+     *                                                                       *
+    \*=======================================================================*/
+
+    /**
+     * Test to see if an object is an instance of a class.
+     *
+     * @param obj the object (not null)
+     * @param klass the class (not null)
+     * @return true if is can
+     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="VM_instanceof")  // ONLY C-VERSION IS CALLED - NOT CALLED BY JAVA CODE
+/*end[JAVA5SYNTAX]*/
+    static boolean _instanceof(Object obj, Klass klass) throws AllowInlinedPragma, HostedPragma  {
+        Assert.that(obj != null && klass != null);
+        return klass.isAssignableFrom(GC.getKlass(obj));
+    }
+
+    /**
+     * Find the virtual slot number for an object that corresponds to the slot in an interface.
+     *
+     * @param obj     the receiver
+     * @param iklass  the interface class
+     * @param islot   the virtual slot of the interface method
+     * @return the virtual slot of the receiver
+     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="VM_findSlot")  // ONLY C-VERSION IS CALLED - NOT CALLED BY JAVA CODE
+/*end[JAVA5SYNTAX]*/
+    static int findSlot(Object obj, Klass iklass, int islot) throws AllowInlinedPragma, HostedPragma {
+        Klass klass = GC.getKlass(obj);
+        int result = klass.findSlot(iklass, islot);
+        return result;
+    }
+
+    /**
+     * Check that value can be assigned to array
+     *
+     * @param array the array
+     * @param value the value to be stored into the array
+     * @return 1 if error occurred. Caller will arrange to throw exception
+     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="VM_arrayOopStoreCheck")  // ONLY C-VERSION IS CALLED - NOT CALLED BY JAVA CODE
+/*end[JAVA5SYNTAX]*/
+    static int arrayOopStoreCheck(Object array, int index, Object value) throws AllowInlinedPragma, HostedPragma {
+        Klass arrayKlass = GC.getKlass(array);
+        Assert.that(arrayKlass.isArray());
+        Assert.that(value != null);
+        Klass componentType = arrayKlass.getComponentType();
+
+        /*
+         * Klass.isAssignableFrom() will not work before class Klass is initialized. Use the
+         * synchronizationEnabled flag to show that the system is ready for this.
+         */
+        if (synchronizationEnabled == false || componentType.isAssignableFrom(GC.getKlass(value))) {
+            return 0;
+        } else {
+            reportedArray = array;
+            reportedIndex = index;
+            return 1;
+        }
+    }
+
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="VM_lookup_b")  // ONLY C-VERSION IS CALLED - NOT CALLED BY JAVA CODE
+/*end[JAVA5SYNTAX]*/
+    /**
+     * Lookup the position of a value in a sorted array of numbers.
+     *
+     * @param key the value to look for
+     * @param array the array
+     * @return the index or -1 if the lookup fails
+     */
+    static int lookup_b(int key, byte[] array) throws NotInlinedPragma, HostedPragma {
+        int low = 0;
+        int high = array.length - 1;
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            int val = array[mid];
+            if (key < val) {
+                high = mid - 1;
+            } else if (key > val) {
+                low = mid + 1;
+            } else {
+                return mid;
+            }
+        }
+        return -1;
+    }
+
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="VM_lookup_s")  // ONLY C-VERSION IS CALLED - NOT CALLED BY JAVA CODE
+/*end[JAVA5SYNTAX]*/
+    /**
+     * Lookup the position of a value in a sorted array of numbers.
+     *
+     * @param key the value to look for
+     * @param array the array
+     * @return the index or -1 if the lookup fails
+     */
+    static int lookup_s(int key, short[] array) throws NotInlinedPragma, HostedPragma {
+        int low = 0;
+        int high = array.length - 1;
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            int val = array[mid];
+            if (key < val) {
+                high = mid - 1;
+            } else if (key > val) {
+                low = mid + 1;
+            } else {
+                return mid;
+            }
+        }
+        return -1;
+    }
+
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="VM_lookup_i")  // ONLY C-VERSION IS CALLED - NOT CALLED BY JAVA CODE
+/*end[JAVA5SYNTAX]*/
+    /**
+     * Lookup the position of a value in a sorted array of numbers.
+     *
+     * @param key the value to look for
+     * @param array the array
+     * @return the index or -1 if the lookup fails
+     */
+    static int lookup_i(int key, int[] array) throws NotInlinedPragma, HostedPragma {
+        int low = 0;
+        int high = array.length - 1;
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            int val = array[mid];
+            if (key < val) {
+                high = mid - 1;
+            } else if (key > val) {
+                low = mid + 1;
+            } else {
+                return mid;
+            }
+        }
+        return -1;
     }
 
     /*-----------------------------------------------------------------------*\

@@ -67,9 +67,14 @@ public class SystemEventsImpl extends SystemEvents implements Runnable {
     protected long max_wait = Long.MAX_VALUE;
 
     /*----------------- FD SETS ----------------- */
-    
+
+    /**
+     * Copy ints in the IntSet into the native FD_SET bit set
+     * @param src Set of ints to copy from
+     * @param fd_set Native pointer to bit set
+     * @return the largest int in the IntSet
+     */
     private int copyIntoFDSet(IntSet src, Pointer fd_set) {
-//System.err.println("Copying from " + src + " to " + fd_set);
         int num = src.size();
         int[] data = src.getElements();
         int localMax = 0;
@@ -86,7 +91,7 @@ public class SystemEventsImpl extends SystemEvents implements Runnable {
     }
 
     /**
-     * initializes a descriptor set fdset to the null set
+     * Initializes a descriptor set fd_set to the null set.
      * @param fd_set
      */
     public static void FD_ZERO(Pointer fd_set) {
@@ -94,13 +99,12 @@ public class SystemEventsImpl extends SystemEvents implements Runnable {
     }
 
     /**
-     * replaces an already allocated fdset_copy file descriptor set with a copy of fdset_orig.
+     * Replaces an already allocated fdset_copy file descriptor set with a copy of fdset_orig.
      *
      * @param fdset_orig
      * @param fdset_copy
      */
     public static void FD_COPY(Pointer fdset_orig, Pointer fdset_copy) {
-//        System.err.println("FD_COPY from: " + fdset_orig + " to: " + fdset_copy + " (size = " + FD_SIZE + ")");
         Pointer.copyBytes(fdset_orig, 0, fdset_copy, 0, Select.fd_set_SIZEOF);
     }
 
@@ -128,7 +132,7 @@ public class SystemEventsImpl extends SystemEvents implements Runnable {
     }
 
     /**
-     * Print the FDs taht are set in fd_set
+     * Print the FDs that are set in fd_set
      *
      * @param fd_set the set of file descriptors in native format.
      */
@@ -335,20 +339,15 @@ public class SystemEventsImpl extends SystemEvents implements Runnable {
      * IOHandler run loop. Wait on select until IO occurs.
      */
     public void run() {
-        //VM.println("in SystemEvents.run()");
         while (!cancelRunLoop) {
             waitForEvents(Long.MAX_VALUE);
             VMThread.yield();
             //VM.println("in SystemEvents.run() - woke up and try again");
         }
         //VM.println("in SystemEvents.run() - cancelling");
-        //VM.println("in SystemEvents.run() - cancelling");
         selectRunner.cancelTaskExecutor(); /* cancel the native thread that we use for blocking calls...*/
     }
 
-    /**
-     * Call to end the run() method.
-     */
     /**
      * Call to end the run() method.
      */

@@ -429,7 +429,7 @@ T
      * @return  <code>true</code> if this object represents an interface;
      *          <code>false</code> otherwise.
      */
-    public final boolean isInterface() {
+    public final boolean isInterface() throws ForceInlinedPragma {
         return Modifier.isInterface(getModifiers());
     }
 
@@ -583,7 +583,7 @@ T
      * @return  <code>true</code> if this object represents an array class;
      *          <code>false</code> otherwise.
      */
-    public final boolean isArray() {
+    public final boolean isArray() throws ForceInlinedPragma {
         return Modifier.isArray(getModifiers());
     }
 
@@ -677,10 +677,40 @@ T
      * @return the superclass of the class represented by this object.
      */
     public final Klass getSuperclass() {
-        if (isInterface() || isPrimitive() || isInternalType() || this == VOID || this == OBJECT) {
+        if (isInterface() || isPrimitive() || isInternalType()) {
+            return null;
+        }
+        int cid = this.id;
+        if (cid == CID.OBJECT || cid == CID.VOID) {
             return null;
         }
         return superType;
+    }
+
+    /** Handle extra cases that only happen during translation.
+     * 
+     * @param klass
+     * @return
+     * @throws HostedPragma
+     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(macro="(false)")
+/*end[JAVA5SYNTAX]*/
+     public final boolean isAssignableFrom0(Klass klass) {
+        /*
+         * Quick check for assigning to -T-.
+         */
+        if (this == Klass.TOP) {
+            return true;
+        }
+
+        /*
+         * Any subclass of java.lang.Object or interface class is assignable from 'null'.
+         */
+        if (klass == Klass.NULL) {
+            return isInterface() || isSubtypeOf(OBJECT);
+        }
+        return false;
     }
 
     /**
@@ -711,9 +741,9 @@ T
         Assert.that(getState() != STATE_ERROR && klass.getState() != STATE_ERROR);
 
         /*
-         * Quick check for equality (the most common case) or assigning to -T-.
+         * Quick check for equality (the most common case) .
          */
-        if (this == klass || this == TOP) {
+        if (this == klass) {
             return true;
         }
 
@@ -725,10 +755,10 @@ T
         }
 
         /*
-         * Any subclass of java.lang.Object or interface class is assignable from 'null'.
+         * Check for uncommon cases that can only occur when translating
          */
-        if (klass == NULL) {
-            return isInterface() || isSubtypeOf(OBJECT);
+        if (isAssignableFrom0(klass)) {
+            return true;
         }
 
         /*
@@ -1051,7 +1081,7 @@ T
      * @return the class representing the component type of this
      *         class if this class is an array
      */
-    public final Klass getComponentType() {
+    public final Klass getComponentType() throws AllowInlinedPragma {
         return getComponentType(this);
     }
 
@@ -1247,7 +1277,9 @@ T
                 return true;
             }
         }
-        if (getSuperclass() != null) {
+
+//      if (getSuperclass() != null) { // correct, but slower except in very odd cases
+        if (superType != null) {
             return superType.isImplementorOf(anInterface);
         }
         return false;

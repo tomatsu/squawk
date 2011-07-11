@@ -118,6 +118,9 @@ public class RomCommand extends Command {
         SuiteMetadata parentSuiteMetadata = new SuiteMetadata();
         SuiteMetadata suiteMetadata = new SuiteMetadata();
 
+        if (env.getspecfifiedBuildDotOverrideFileName() != null) {
+             romizerArgs.add("-override:" + env.getspecfifiedBuildDotOverrideFileName());
+        }
         int argc = 0;
         while (argc != args.length) {
             String arg = args[argc];
@@ -153,10 +156,6 @@ public class RomCommand extends Command {
                 break;
             }
             argc++;
-        }
-        
-        if (env.getspecfifiedBuildDotOverrideFileName() != null) {
-             romizerArgs.add("-override:" + env.getspecfifiedBuildDotOverrideFileName()); 
         }
 
         // pass in properties builder was passed on command line:
@@ -351,9 +350,14 @@ public class RomCommand extends Command {
     private void updateVM2CGeneratedFile() {
         vm2cRootClasses = new ArrayList<String>();
 
+        // always translate these classes:
         vm2cRootClasses.add("com.sun.squawk.VM");
         vm2cRootClasses.add("com.sun.squawk.MethodHeader");
-        vm2cRootClasses.add(env.getProperty("GC"));
+
+        // may translate GC:
+        if (env.getBooleanProperty("GC2C")) {
+            vm2cRootClasses.add(env.getProperty("GC"));
+        }
 
         FileSet.Selector isOutOfDate = new FileSet.AndSelector(Build.JAVA_SOURCE_SELECTOR, new FileSet.DependSelector(new FileSet.Mapper() {
             public File map(File from) {
@@ -436,11 +440,7 @@ public class RomCommand extends Command {
         }
         createBuildFlagsHeaderFile(options);
 
-        if (env.getBooleanProperty("VM2C")) {
-            updateVM2CGeneratedFile();
-        } else {
-            Build.delete(VM2C_SRC_FILE);
-        }
+        updateVM2CGeneratedFile();
 
         // Preprocess any files with the ".spp" suffix
         List<File> generatedFiles = new ArrayList<File>();

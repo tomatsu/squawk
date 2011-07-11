@@ -35,7 +35,7 @@ public abstract class GarbageCollector implements GlobalStaticFields {
     
     /** If build.properties defines NATIVE_GC_ONLY= true, then define constant NATIVE_GC_ONLY = true.*/
     public final static boolean NATIVE_GC_ONLY = /*VAL*/false/*NATIVE_GC_ONLY*/;
-    public final static boolean INTERP_GC_ONLY = !/*VAL*/false/*VM2C*/;
+    public final static boolean INTERP_GC_ONLY = !/*VAL*/false/*GC2C*/;
     
     /* package-private**/ GarbageCollector() {}
 
