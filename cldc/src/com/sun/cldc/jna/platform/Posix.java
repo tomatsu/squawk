@@ -85,7 +85,7 @@ public class Posix extends Platform {
             commonMappings.put("resolv", "");
             commonMappings.put("net", "");
             commonMappings.put("nsl", "");
-        } else is (isLinux()) {
+        } else if (isLinux()) {
             commonMappings.put("socket", "");
             commonMappings.put("net", "");
         }
