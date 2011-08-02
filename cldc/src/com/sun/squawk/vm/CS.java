@@ -27,6 +27,7 @@ package com.sun.squawk.vm;
 
 import com.sun.squawk.GC;
 import com.sun.squawk.NativeUnsafe;
+import com.sun.squawk.pragma.AllowInlinedPragma;
 import com.sun.squawk.util.Assert;
 
 /**
@@ -57,7 +58,7 @@ public class CS {
     /**
      * Give error if cs is not really global array.
      */
-    public static void check(Object cs) {
+    public static void check(Object cs) throws AllowInlinedPragma {
         if (DEBUG) {
             Assert.always(cs != null);
             if (GC.isSafeToSwitchThreads()) {

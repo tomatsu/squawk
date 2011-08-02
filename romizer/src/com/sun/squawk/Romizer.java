@@ -191,6 +191,11 @@ public class Romizer {
     protected ObjectGraphLoader objectGraphLoader;
     
     /**
+     * If true, do not create the C header "rom.h"
+     */
+    private boolean noHeader;
+    
+    /**
      * Creates the romizer instance used to romize a suite.
      *
      * @param parent  the romizer that was used to romize the parent suite
@@ -231,6 +236,7 @@ public class Romizer {
         out.println("    -parent:<name>      name of suite to use as the parent of the suite being built");
         out.println("    -metadata           create matching metadata suite (default)");
         out.println("    -nometadata         do not create matching metadata suite");
+        out.println("    -header             do not create C header file rom.h");
         out.println("    -jars               create <suite_name>_classes.jar which contains the class files");
         out.println("                        from which the suite was built");
         out.println("    -exclude:<file>     excludes classes that match the class names or packages");
@@ -419,7 +425,7 @@ public class Romizer {
                 }
             });
 
-            if (suite.getParent() == null) {
+            if (suite.getParent() == null && !noHeader) {
                 // Create the header file for the C implementation of the Squawk interpreter
                 ComputationTimer.time("rom header creation", new ComputationTimer.ComputationException() {
                     public Object run() throws Exception {
@@ -560,9 +566,11 @@ public class Romizer {
                         Tracer.enableFeature("loading"); // -traceconverting subsumes -traceloading
                     }
                 }
+            } else if (arg.equals("-noheader")) {
+                noHeader = true;
             } else if (arg.equals("-verbose") | arg.equals("-v")) {
-                    System.setProperty("translator.verbose", "true");
-                    VM.setVerbose(true);
+                System.setProperty("translator.verbose", "true");
+                VM.setVerbose(true);
             } else if (arg.startsWith("-h")) {
                 usage(null);
                 return null;
@@ -866,6 +874,10 @@ public class Romizer {
         NativeUnsafe.setMemorySize(memoryStart);
         ObjectMemory memory = ObjectMemoryLoader.load(Connector.openDataInputStream(url), url, false).objectMemory;
 
+        printSymFile(memory, symbols);
+    }
+
+    private void printSymFile(ObjectMemory memory, PrintStream symbols) throws IOException {
         // Add a few symbols.
         VM.printNatives(symbols);
         symbols.println("PMR.ROM_SIZE=" + memory.getSize());

@@ -305,6 +305,196 @@ public final class CHeaderFileCreator {
         out.println("}");
     }
 
+    private final static String[] romizedPackagesInclude = {
+        "com.sun.squawk.",
+        "java.lang."
+    };
+
+    private final static String[] romizedPackagesExclude = {
+        "com.sun.squawk.io.j2me."
+    };
+
+    static class InterpreterMethodInfo {
+        Klass klass;
+        Method meth;
+
+        InterpreterMethodInfo(Klass klass, Method meth) {
+            this.klass = klass;
+            this.meth = meth;
+        }
+
+        String toCName() {
+            return fix(klass.getName() + '_' + meth.getName());
+        }
+    }
+
+    Vector<InterpreterMethodInfo> interpreterInvokedMethods = new Vector<InterpreterMethodInfo>();
+
+    /**
+     * Write C declarations for a klass
+     */
+    @SuppressWarnings("unchecked")
+    private void writeKlassDecls(Klass klass, int cid, Suite suite, PrintWriter out) throws IOException {
+        String internalName = klass.getInternalName();
+
+        if (klass == null || klass.isArray() || internalName.charAt(0) == '-') {
+            return; // ignore this class
+        }
+
+
+        if (klass.isSynthetic()) {
+            return; // ignore this class
+        }
+
+        boolean include = false;
+        for (String pkg : romizedPackagesInclude) {
+            if (internalName.startsWith(pkg)) {
+                include = true;
+                break;
+            }
+        }
+        if (!include) {
+            return; // ignore this class
+        }
+
+        for (String pkg : romizedPackagesExclude) {
+            if (internalName.startsWith(pkg)) {
+                return; // ignore this class
+            }
+        }
+
+        out.println("#define " + fix(klass.getName()) + " " + cid);
+
+        // Write the instance field getters.
+        int fieldCount = klass.getFieldCount(false);
+        for (int fid = 0; fid != fieldCount; fid++) {
+            Field field = klass.getField(fid, false);
+            String wholeName = fix(klass.getName() + '_' + field.getName());
+            out.print("#define " + wholeName + "(oop) ");
+            switch (field.getType().getSystemID()) {
+                case CID.BOOLEAN:
+                case CID.BYTE:
+                    out.print("getByte");
+                    break;
+                case CID.CHAR:
+                    out.print("getUShort");
+                    break;
+                case CID.SHORT:
+                    out.print("getShort");
+                    break;
+                case CID.FLOAT:
+                case CID.INT:
+                    out.print("getInt");
+                    break;
+                case CID.DOUBLE:
+                case CID.LONG:
+                    out.print(Klass.SQUAWK_64
+                            ? "getLong"
+                            : "getLongAtWord");
+                    break;
+                case CID.UWORD:
+                case CID.OFFSET:
+                    out.print("getUWord");
+                    break;
+                default:
+                    out.print("getObject");
+                    break;
+            }
+            out.println("((oop), " + field.getOffset() + ")");
+        }
+
+        // Write the instance field setters.
+        for (int fid = 0; fid != fieldCount; fid++) {
+            Field field = klass.getField(fid, false);
+            String wholeName = fix(klass.getName() + '_' + field.getName());
+            out.print("#define set_" + wholeName + "(oop, value) ");
+            switch (field.getType().getSystemID()) {
+                case CID.BOOLEAN:
+                case CID.BYTE:
+                    out.print("setByte");
+                    break;
+                case CID.CHAR:
+                case CID.SHORT:
+                    out.print("setShort");
+                    break;
+                case CID.FLOAT:
+                case CID.INT:
+                    out.print("setInt");
+                    break;
+                case CID.DOUBLE:
+                case CID.LONG:
+                    out.print(Klass.SQUAWK_64
+                            ? "setLong"
+                            : "setLongAtWord");
+                    break;
+                case CID.UWORD:
+                case CID.OFFSET:
+                    out.print("setUWord");
+                    break;
+                default:
+                    out.print("setObject");
+                    break;
+            }
+            out.println("((oop), " + field.getOffset() + ", value)");
+        }
+
+        // Write the constants.
+        fieldCount = klass.getFieldCount(true);
+        nextField:
+        for (int fid = 0; fid != fieldCount; fid++) {
+            Field field = klass.getField(fid, true);
+            if (field.hasConstant()) {
+                String value;
+                switch (field.getType().getSystemID()) {
+                    case CID.BOOLEAN:
+                        value = "" + (field.getPrimitiveConstantValue() != 0);
+                        break;
+                    case CID.BYTE:
+                        value = "" + (byte) field.getPrimitiveConstantValue();
+                        break;
+                    case CID.CHAR:
+                        value = "" + (int) (char) field.getPrimitiveConstantValue();
+                        break;
+                    case CID.SHORT:
+                        value = "" + (short) field.getPrimitiveConstantValue();
+                        break;
+                    case CID.INT:
+                        value = "" + (int) field.getPrimitiveConstantValue();
+                        break;
+                    case CID.LONG:
+                        value = "JLONG_CONSTANT(" + field.getPrimitiveConstantValue() + ")";
+                        break;
+                    case CID.DOUBLE:
+                        value = "" + Double.longBitsToDouble(field.getPrimitiveConstantValue());
+                        break;
+                    case CID.FLOAT:
+                        value = "" + Float.intBitsToFloat((int) field.getPrimitiveConstantValue());
+                        break;
+                    case CID.STRING:
+                        continue nextField;
+                    default:
+                        throw new RuntimeException("need another case statement for constants of type " + field.getType().getName());
+                }
+
+                String name = fix(klass.getName() + '_' + field.getName());
+                if (name.startsWith("com_sun_squawk_vm_")) {
+                    name = name.substring("com_sun_squawk_vm_".length());
+                }
+                out.println("#define " + name + " " + value);
+            }
+        }
+
+        // collect the InterpreterInvoked methods
+        int methodCount = klass.getMethodCount(true);
+        for (int mid = 0; mid != methodCount; mid++) {
+            Method meth = klass.getMethod(mid, true);
+            if (meth.isInterpreterInvoked()) {
+                interpreterInvokedMethods.addElement(new InterpreterMethodInfo(klass, meth));
+                //out.println("#define " + name + " " + value);
+            }
+        }
+    }
+
     /**
      * Create the "rom.h" for the slow VM.
      */
@@ -313,6 +503,7 @@ public final class CHeaderFileCreator {
 
         out.println("/*");
         out.println(" * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.");
+        out.println(" * Copyright 2010 Oracle. All Rights Reserved.");
         out.println(" * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");
         out.println(" * ");
         out.println(" * This code is free software; you can redistribute it and/or modify");
@@ -330,8 +521,8 @@ public final class CHeaderFileCreator {
         out.println(" * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA");
         out.println(" * 02110-1301 USA");
         out.println(" * ");
-        out.println(" * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo");
-        out.println(" * Park, CA 94025 or visit www.sun.com if you need additional");
+        out.println(" * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood");
+        out.println(" * Shores, CA 94065 or visit www.oracle.com if you need additional");
         out.println(" * information or have any questions.");
         out.println("*/");
 
@@ -339,99 +530,15 @@ public final class CHeaderFileCreator {
         int classCount = suite.getClassCount();
         for (int cid = 0; cid != classCount; cid++) {
             Klass klass = suite.getKlass(cid);
-
-            if (klass == null || klass.isArray() || klass.getInternalName().charAt(0) == '-') {
-                continue;
-            }
-     
-
-            if (klass.isSynthetic()) {
-                continue;
-            }
-
-            out.println("#define "+fix(klass.getName())+" "+cid);
-
-
-            // Write the instance field getters.
-            int fieldCount = klass.getFieldCount(false);
-            for (int fid = 0 ; fid != fieldCount; fid++) {
-                Field field = klass.getField(fid, false);
-                String wholeName = fix(klass.getName() + '_' + field.getName());
-                out.print("#define "+wholeName+"(oop) ");
-                switch (field.getType().getSystemID()) {
-                    case CID.BOOLEAN:
-                    case CID.BYTE:  out.print("getByte");       break;
-                    case CID.CHAR:  out.print("getUShort");     break;
-                    case CID.SHORT: out.print("getShort");      break;
-                    case CID.FLOAT:
-                    case CID.INT:   out.print("getInt");        break;
-                    case CID.DOUBLE:
-                    case CID.LONG:  out.print(Klass.SQUAWK_64 ?
-                                              "getLong" :
-                                              "getLongAtWord"); break;
-                    case CID.UWORD:
-                    case CID.OFFSET:out.print("getUWord");      break;
-                    default:        out.print("getObject");     break;
-                }
-                out.println("((oop), " + field.getOffset() + ")");
-            }
-
-            // Write the instance field setters.
-            for (int fid = 0 ; fid != fieldCount; fid++) {
-                Field field = klass.getField(fid, false);
-                String wholeName = fix(klass.getName() + '_' + field.getName());
-                out.print("#define set_"+wholeName+"(oop, value) ");
-                switch (field.getType().getSystemID()) {
-                    case CID.BOOLEAN:
-                    case CID.BYTE:  out.print("setByte");       break;
-                    case CID.CHAR:
-                    case CID.SHORT: out.print("setShort");      break;
-                    case CID.FLOAT:
-                    case CID.INT:   out.print("setInt");        break;
-                    case CID.DOUBLE:
-                    case CID.LONG:  out.print(Klass.SQUAWK_64 ?
-                                              "setLong" :
-                                              "setLongAtWord"); break;
-                    case CID.UWORD:
-                    case CID.OFFSET:out.print("setUWord");      break;
-                    default:        out.print("setObject");     break;
-                }
-                out.println("((oop), " + field.getOffset() + ", value)");
-            }
-
-            // Write the constants.
-            fieldCount = klass.getFieldCount(true);
-nextField:  for (int fid = 0; fid != fieldCount; fid++) {
-                Field field = klass.getField(fid, true);
-                if (field.hasConstant()) {
-                    String value;
-                    switch (field.getType().getSystemID()) {
-                        case CID.BOOLEAN: value = "" + (field.getPrimitiveConstantValue() != 0);     break;
-                        case CID.BYTE:    value = "" + (byte) field.getPrimitiveConstantValue();     break;
-                        case CID.CHAR:    value = "" + (int)(char)field.getPrimitiveConstantValue(); break;
-                        case CID.SHORT:   value = "" + (short)field.getPrimitiveConstantValue();     break;
-                        case CID.INT:     value = "" + (int)  field.getPrimitiveConstantValue();     break;
-                        case CID.LONG:    value = "JLONG_CONSTANT(" + field.getPrimitiveConstantValue()+ ")";break;
-                        case CID.DOUBLE:  value = "" + Double.longBitsToDouble(field.getPrimitiveConstantValue()); break;
-                        case CID.FLOAT:   value = "" + Float.intBitsToFloat((int)field.getPrimitiveConstantValue()); break;
-                        case CID.STRING:  continue nextField;
-                        default: throw new RuntimeException("need another case statement for constants of type " + field.getType().getName());
-                    }
-
-                    String name = fix(klass.getName() + '_' + field.getName());
-                    if (name.startsWith("com_sun_squawk_vm_")) {
-                        name = name.substring("com_sun_squawk_vm_".length());
-                    }
-                    out.println("#define " + name + " " + value);
-                }
-            }
+            writeKlassDecls(klass, cid, suite, out);
         }
 
         // Verify that the hard coded field and method offsets are correct
         verifyFieldOffsets();
         verifyMethodOffsets();
 
-        // Write the do_XXX entrypoints.
+        if (false) {
+        // Write the InterpreterInvoked entrypoints.
         for (int i = 0 ;; i++) {
             String name = getStringProperty("ENTRYPOINT."+i+".NAME");
             if (name == null) {
@@ -439,6 +546,7 @@ nextField:  for (int fid = 0; fid != fieldCount; fid++) {
             }
             int addr  = getIntProperty("ENTRYPOINT."+i+".ADDRESS");
             out.println("#define "+name+" Address_add(com_sun_squawk_VM_romStart, "+addr+")");
+        }
         }
 
         // Write the string constant that is the mnemonics for the types
@@ -518,6 +626,18 @@ nextField:  for (int fid = 0; fid != fieldCount; fid++) {
         out.println("#define ROM_GLOBAL_INT_COUNT  " + getIntProperty("ROM.GLOBAL.INT.COUNT"));
         out.println("#define ROM_GLOBAL_OOP_COUNT  " + getIntProperty("ROM.GLOBAL.OOP.COUNT"));
         out.println("#define ROM_GLOBAL_ADDR_COUNT " + getIntProperty("ROM.GLOBAL.ADDR.COUNT"));
+
+        // Write the var decls for invoked methods.
+        for (InterpreterMethodInfo minfo: interpreterInvokedMethods) {
+            out.println("static Address " + minfo.toCName() + ";");
+        }
+        
+        // Write the initializer for the interpreter invoked methods.
+        out.println("\nstatic void initMethods() {");
+        for (InterpreterMethodInfo minfo: interpreterInvokedMethods) {
+            out.println("    " + minfo.toCName() + " = lookupStaticMethod(" + minfo.klass.getSuiteID() + ", " + minfo.meth.getOffset() + ");");
+        }
+        out.println("}");
 
         out.close();
     }

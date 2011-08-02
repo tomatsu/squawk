@@ -109,6 +109,11 @@ public class VM implements GlobalStaticFields {
     private static Address bootstrapStart;
 
     /**
+     * Address of the bootstrap suite.
+     */
+    private static Address bootstrapSuite;
+
+    /**
      * Address of the first byte after the end of the object memory containing the bootstrap suite.
      */
     private static Address bootstrapEnd;
@@ -733,6 +738,20 @@ public class VM implements GlobalStaticFields {
             reportedIndex = index;
             return 1;
         }
+    }
+
+    /**
+     * Read a static reference variable.
+     *
+     * @param klass  the class of the variable
+     * @param offset the offset (in words) to the variable
+     * @return the value
+     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(root="VM_getClassState")  // ONLY C-VERSION IS CALLED - NOT CALLED BY JAVA CODE
+/*end[JAVA5SYNTAX]*/
+    static Object getClassState(Klass klass) throws AllowInlinedPragma, HostedPragma {
+        return currentIsolate.getClassStateForInterpreter(klass);
     }
 
 /*if[JAVA5SYNTAX]*/
@@ -1468,6 +1487,9 @@ hbp.dumpState();
      * @param   klass the class
      * @param   state the class state
      */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(proxy="addClassState")
+/*end[JAVA5SYNTAX]*/
     native static void addToClassStateCache(Klass klass, Object state);
 
     /**

@@ -1151,13 +1151,13 @@ public final class Isolate implements Runnable {
                 Object ks = NativeUnsafe.getObject(first, CS.next);
                 while (ks != null) {
                     if (NativeUnsafe.getObject(ks, CS.klass) == klass) {
+                        Assert.that(last != null);
                         /*
                          * Move to head of queue.
                          */
-                        if (last != null) {
-                            Object ksnext = NativeUnsafe.getObject(ks, CS.next);
-                            NativeUnsafe.setObject(last, CS.next, ksnext);
-                            NativeUnsafe.setObject(ks, CS.next, first);
+                        Object ksnext = NativeUnsafe.getObject(ks, CS.next);
+                        NativeUnsafe.setObject(last, CS.next, ksnext);
+                        NativeUnsafe.setObject(ks, CS.next, first);
 //VM.extendsEnabled = true;
 //VM.print("moved class state for ");
 //VM.print(Klass.getInternalName(klass));
@@ -1166,8 +1166,7 @@ public final class Isolate implements Runnable {
 //VM.print("    bcount=");
 //VM.println(VM.branchCount());
 //VM.extendsEnabled = false;
-                            classStateQueue = ks;
-                        }
+                        classStateQueue = ks;
                         res = ks;
                         break;
                     }
@@ -1185,6 +1184,52 @@ public final class Isolate implements Runnable {
 
             return res;
         }
+    }
+
+    /**
+     * Get a class state.
+     *
+     * @param klass the class of the variable
+     * @return the class state object or null if none exists
+     */
+    Object getClassStateForInterpreter(Klass klass) throws NotInlinedPragma, HostedPragma {
+        Object first = classStateQueue;
+
+        if (first == null) {
+            return null;
+        }
+
+        /*
+         * Do quick test for class state at the head of the queue.
+         */
+        if (NativeUnsafe.getObject(first, CS.klass) == klass) {
+            VM.addToClassStateCache(klass, first);
+            return first;
+        } else {
+            /*
+             * Start searching.
+             */
+            Object last = first;
+            Object ks = NativeUnsafe.getObject(first, CS.next);
+            while (ks != null) {
+                Object ksnext = NativeUnsafe.getObject(ks, CS.next);
+                if (NativeUnsafe.getObject(ks, CS.klass) == klass) {
+                    Assert.that(last != null);
+                    /*
+                     * Move to head of queue.
+                     */
+                    NativeUnsafe.setObject(last, CS.next, ksnext);
+                    NativeUnsafe.setObject(ks, CS.next, first);
+                    classStateQueue = ks;
+                    VM.addToClassStateCache(klass, ks);
+                    return ks;
+                }
+                last = ks;
+                ks = ksnext;
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -59,8 +59,25 @@
 //INLINE void    checkReferenceSlots();
 /*end[MACROIZE]*/
 
+static int             MethodHeader_minfoValue1_L(Address);
+static int             MethodHeader_minfoValue2_L(Address);
+static int             MethodHeader_minfoValue3_L(Address);
+static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, int p, int b0);
+
+static int             VM_lookup_b(int, Address);
+static int             VM_lookup_i(int, Address);
+static int             VM_lookup_s(int, Address);
+static int             VM_arrayOopStoreCheck(Address, int, Address);
+static int             VM_findSlot(Address, Address, int);
+static boolean         VM_instanceof(Address, Address);
+static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
+
         /*-----------------------------------------------------------------------*\
          *                      Class state cache managemant                     *
+         *                                                                       *
+         *   Even when compiling the class state lookup code into C, this cache  *
+         *   adds about 10% performance for static variable accesses in common   *
+         *   case.                                                               *
         \*-----------------------------------------------------------------------*/
 
 #ifdef INTERPRETER_STATS
@@ -107,6 +124,14 @@
             return null;
         }
 
+        INLINE Address VM_getClassStateREAL(Address klass) {
+            Address cs = getClassState(klass);
+            if (cs != null) {
+                return cs;
+            }
+            return Isolate_getClassStateForInterpreter_L(com_sun_squawk_VM_currentIsolate, klass);
+        }
+
         /**
          * Test to see if a class needs initializing.
          *
@@ -115,7 +140,7 @@
          */
 /*MAC*/ boolean needsInitializing(Address $klass) {
             if (com_sun_squawk_Klass_modifiers($klass) & com_sun_squawk_Modifier_KLASS_MUSTCLINIT) {
-                return getClassState($klass) == null;
+                return VM_getClassStateREAL($klass) == null;
             }
             return false;
         }
@@ -776,17 +801,6 @@
          *
          * The routines are translated from Java to C, and are definedin in vm2c.c.spp
          */
-static int             MethodHeader_minfoValue1_L(Address);
-static int             MethodHeader_minfoValue2_L(Address);
-static int             MethodHeader_minfoValue3_L(Address);
-static int             MethodHeader_getOffsetToLastMinfoByte0_LII(Address oop, int p, int b0);
-
-static int             VM_lookup_b(int, Address);
-static int             VM_lookup_i(int, Address);
-static int             VM_lookup_s(int, Address);
-static int             VM_arrayOopStoreCheck(Address, int, Address);
-static int             VM_findSlot(Address, Address, int);
-static boolean         VM_instanceof(Address, Address);
 
         /**
          * Gets the b0 byte of the method header.
@@ -2185,7 +2199,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
          */
 /*MAC*/ void do_getstatic_i(boolean $inCP) {
             Address klass = getStaticFieldClass($inCP);
-            Address state = getClassState(klass);
+            Address state = VM_getClassStateREAL(klass);
             if (state != null) {
                 checkReferenceSlots();
                 boundsAssume(state, iparm);
@@ -2209,7 +2223,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
          */
 /*MAC*/ void do_getstatic_l(boolean $inCP) {
             Address klass = getStaticFieldClass($inCP);
-            Address state = getClassState(klass);
+            Address state = VM_getClassStateREAL(klass);
             if (state != null) {
                 checkReferenceSlots();
                 boundsAssume(state, iparm);
@@ -2233,7 +2247,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
          */
 /*MAC*/ void do_getstatic_o(boolean $inCP) {
             Address klass = getStaticFieldClass($inCP);
-            Address state = getClassState(klass);
+            Address state = VM_getClassStateREAL(klass);
             if (state != null) {
                 checkReferenceSlots();
                 boundsAssume(state, iparm);
@@ -2291,7 +2305,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
          */
 /*MAC*/ void do_putstatic_i(boolean $inCP) {
             Address klass = getStaticFieldClass($inCP);
-            Address state = getClassState(klass);
+            Address state = VM_getClassStateREAL(klass);
             if (state != null) {
                 checkReferenceSlots();
                 boundsAssume(state, iparm);
@@ -2315,7 +2329,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
          */
 /*MAC*/ void do_putstatic_l(boolean $inCP) {
             Address klass = getStaticFieldClass($inCP);
-            Address state = getClassState(klass);
+            Address state = VM_getClassStateREAL(klass);
             if (state != null) {
                 checkReferenceSlots();
                 boundsAssume(state, iparm);
@@ -2339,7 +2353,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
          */
 /*MAC*/ void do_putstatic_o(boolean $inCP) {
             Address klass = getStaticFieldClass($inCP);
-            Address state = getClassState(klass);
+            Address state = VM_getClassStateREAL(klass);
             if (state != null) {
                 checkReferenceSlots();
                 boundsAssume(state, iparm);
@@ -5791,7 +5805,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
         }
 
         /**
-         * Execute a monitor exit.
+         * Initialize class if needed.
          *
          * <p>
          * Java Stack: _ -> _

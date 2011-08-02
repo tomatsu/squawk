@@ -128,6 +128,9 @@ void printStackTracePrim(int opcode, ByteAddress traceIP, UWordAddress traceFP, 
 #define printStackTracePrim(opcode, traceIP, traceFP, msg, mnemonic)
 #endif /* TRACE */
 
+static Address lookupKlass(int cid);
+static Address lookupStaticMethod(int cid, int methodOffset);
+
 /*
     This is the 'slow' Squawk VM that is implemented in C. The techniques used in
     this VM are such that it should be expected that it will be several times slower
@@ -1159,6 +1162,7 @@ val2 = getUnalignedInt(com_sun_squawk_GC_ramStart, 0);
 fprintf(stderr, "&&&& Special int val2 = %lx\n", val2);
 */
 
+    com_sun_squawk_VM_bootstrapSuite = suite;
 
     // The stack for the service thread starts on the next page after the end of RAM.
     // The length of the stack in logical slots is written into the first word of the
@@ -1609,6 +1613,8 @@ Address Squawk_setup(int argc, char *argv[]) {
     sysToggleMemoryProtection(com_sun_squawk_GC_nvmStart, com_sun_squawk_GC_nvmEnd, true);
     sysToggleMemoryProtection(com_sun_squawk_VM_romStart, com_sun_squawk_VM_romEnd, true);
 
+    initMethods();
+
     /*
      * Return the bootstrap suite.
      */
@@ -2033,3 +2039,34 @@ int main(int argc, char *argv[]) {
 #endif /* !__APPLE__ */
 }
 #endif /* VXWORKS */
+
+/**
+ * lookup a klass from the bootstrap suite
+ * @param cid
+ * @return klass
+ */
+static Address lookupKlass(int cid) {
+    Address classes;
+    Address class;
+    assume(com_sun_squawk_VM_bootstrapSuite != null);
+    assume(inROM(com_sun_squawk_VM_bootstrapSuite));
+    //diagnosticWithValue("bootstrapSuite: ", com_sun_squawk_VM_bootstrapSuite);
+    classes = com_sun_squawk_Suite_classes(com_sun_squawk_VM_bootstrapSuite);
+    //diagnosticWithValue("com_sun_squawk_Suite_classes: ", classes);
+    assume(inROM(classes));
+    boundsAssume(classes, cid);
+    class = getObject(classes, cid);
+    return class;
+}
+
+static Address lookupStaticMethod(int cid, int methodOffset) {
+    Address klass;
+    Address method;
+    //fprintf(stderr, "Lookup of %d in class %d = ", methodOffset, cid);
+    klass = lookupKlass(cid);
+    assume(inROM(klass));
+    method = getStaticMethod(klass, methodOffset);
+    assume(inCode(method));
+    //fprintf(stderr, "%x\n", method);
+    return method;
+}
