@@ -1804,6 +1804,10 @@ extern  void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddre
 #endif
     fprintf(stderr, "    iparm: 0x%x\n", _iparm);
 
+    if (com_sun_squawk_GC_collecting) {
+        fprintf(stderr, "    in GC\n");
+    }
+
 #if com_sun_squawk_Klass_ENABLE_DYNAMIC_CLASSLOADING
     printValueInRange(_ip, "ip", com_sun_squawk_VM_romStart, com_sun_squawk_GC_ramEnd, "code");
 #else
@@ -1835,9 +1839,7 @@ extern  void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddre
             Address isolate = com_sun_squawk_VMThread_isolate(thread);
             if (printValueInRange(isolate, "isolate", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM")) {
                 printStrSafely(com_sun_squawk_Isolate_mainClassName(isolate), "isolate main class",
-                        com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
-                printStrSafely(com_sun_squawk_Isolate_args(isolate), "isolate args",
-                        com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
+                               com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM");
             }
         }
 #endif

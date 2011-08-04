@@ -1132,8 +1132,8 @@ public final class Isolate implements Runnable {
         Object first = classStateQueue;
 
         if (first == null) {
-            Assert.always(!classKlassInitialized);
             VM.extendsEnabled = true; //----------------------------------------------------------------------
+            Assert.always(!classKlassInitialized); // assert goes AFTER extendsEnabled = true
             return null;
         } else {
             Object res = null;
@@ -1151,7 +1151,7 @@ public final class Isolate implements Runnable {
                 Object ks = NativeUnsafe.getObject(first, CS.next);
                 while (ks != null) {
                     if (NativeUnsafe.getObject(ks, CS.klass) == klass) {
-                        Assert.that(last != null);
+                        // Assert.that(last != null); can't call assert in NO CALL ZONE
                         /*
                          * Move to head of queue.
                          */
