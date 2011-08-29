@@ -41,7 +41,7 @@ public class SocketImpl extends com.sun.squawk.platform.posix.natives.SocketImpl
         /* public final static int SOCK_RAW =  */ 3,
         /* public final static int INADDR_ANY =  */ 0,
         /* public final static int INET_ADDRSTRLEN =  */ 16,
-        /* public final static int SOL_SOCKET =  */ 65535,
+        /* public final static int SOL_SOCKET =  */ 1,
         /* public final static int SO_DEBUG =  */ 1,
         /* public final static int SO_ACCEPTCONN =  */ 30,
         /* public final static int SO_REUSEADDR =  */ 2,
