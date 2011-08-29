@@ -48,11 +48,11 @@ public interface Socket extends Library {
     
     /* Socket types. */
     public final static int SOCK_STREAM = INSTANCE.initConstInt(1); /* stream (connection) socket	*/
-    public final static int SOCK_DGRAM = INSTANCE.initConstInt(2);  /* datagram (conn.less) socket	*/
-    public final static int SOCK_RAW = INSTANCE.initConstInt(3);    /* raw socket			*/
+    public final static int SOCK_DGRAM  = INSTANCE.initConstInt(2); /* datagram (conn.less) socket	*/
+    public final static int SOCK_RAW    = INSTANCE.initConstInt(3); /* raw socket			*/
     
     /* Definitions of bits in internet address integers. */
-    public final static int INADDR_ANY = INSTANCE.initConstInt(4);
+    public final static int INADDR_ANY      = INSTANCE.initConstInt(4);
     
     public final static int INET_ADDRSTRLEN = INSTANCE.initConstInt(5);
     
@@ -79,16 +79,14 @@ public interface Socket extends Library {
     /*
      * Additional options, not kept in so_options.
      */
-    public final static int SO_SNDBUF   = 0x1001;       /* send buffer size */
-    public final static int SO_RCVBUF   = 0x1002;       /* receive buffer size */
-    public final static int SO_SNDLOWAT = 0x1003;       /* send low-water mark */
-    public final static int SO_RCVLOWAT = 0x1004;       /* receive low-water mark */
-    public final static int SO_SNDTIMEO = 0x1005;       /* send timeout */
-    public final static int SO_RCVTIMEO = 0x1006;       /* receive timeout */
-    public final static int SO_ERROR    = 0x1007;       /* get error status and clear */
-    public final static int SO_TYPE     = 0x1008;       /* get socket type */
-
-
+    public final static int SO_SNDBUF   = INSTANCE.initConstInt(16);       /* send buffer size */
+    public final static int SO_RCVBUF   = INSTANCE.initConstInt(17);       /* receive buffer size */
+    public final static int SO_SNDLOWAT = INSTANCE.initConstInt(18);       /* send low-water mark */
+    public final static int SO_RCVLOWAT = INSTANCE.initConstInt(19);       /* receive low-water mark */
+    public final static int SO_SNDTIMEO = INSTANCE.initConstInt(20);       /* send timeout */
+    public final static int SO_RCVTIMEO = INSTANCE.initConstInt(21);       /* receive timeout */
+    public final static int SO_ERROR    = INSTANCE.initConstInt(22);       /* get error status and clear */
+    public final static int SO_TYPE     = INSTANCE.initConstInt(23);       /* get socket type */
 
     /**
      * socket() creates an endpoint for communication and returns a descriptor.

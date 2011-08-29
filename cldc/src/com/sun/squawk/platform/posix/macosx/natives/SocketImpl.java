@@ -50,7 +50,16 @@ public class SocketImpl extends com.sun.squawk.platform.posix.natives.SocketImpl
         /* public final static int SO_BROADCAST =  */ 32,
         /* public final static int SO_OOBINLINE =  */ 256,
         /* public final static int IPPROTO_TCP = */ 6,
-        /* public final static int TCP_NODELAY = */ 1
+        /* public final static int TCP_NODELAY = */ 1,
+
+        /* public final static int SO_SNDBUF   = */ 0x1001,       /* send buffer size */
+        /* public final static int SO_RCVBUF   = */ 0x1002,       /* receive buffer size */
+        /* public final static int SO_SNDLOWAT = */ 0x1003,       /* send low-water mark */
+        /* public final static int SO_RCVLOWAT = */ 0x1004,       /* receive low-water mark */
+        /* public final static int SO_SNDTIMEO = */ 0x1005,       /* send timeout */
+        /* public final static int SO_RCVTIMEO = */ 0x1006,       /* receive timeout */
+        /* public final static int SO_ERROR    = */ 0x1007,       /* get error status and clear */
+        /* public final static int SO_TYPE     = */ 0x1008        /* get socket type */
     };
     
     private static boolean[] intConstantCheck;

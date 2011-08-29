@@ -43,14 +43,23 @@ public class SocketImpl extends com.sun.squawk.platform.posix.natives.SocketImpl
         /* public final static int INET_ADDRSTRLEN =  */ 16,
         /* public final static int SOL_SOCKET =  */ 65535,
         /* public final static int SO_DEBUG =  */ 1,
-        /* public final static int SO_ACCEPTCONN =  */ 2,
-        /* public final static int SO_REUSEADDR =  */ 4,
-        /* public final static int SO_KEEPALIVE =  */ 8,
-        /* public final static int SO_DONTROUTE =  */ 16,
-        /* public final static int SO_BROADCAST =  */ 32,
-        /* public final static int SO_OOBINLINE =  */ 256,
+        /* public final static int SO_ACCEPTCONN =  */ 30,
+        /* public final static int SO_REUSEADDR =  */ 2,
+        /* public final static int SO_KEEPALIVE =  */ 9,
+        /* public final static int SO_DONTROUTE =  */ 5,
+        /* public final static int SO_BROADCAST =  */ 6,
+        /* public final static int SO_OOBINLINE =  */ 10,
         /* public final static int IPPROTO_TCP = */ 6,
-        /* public final static int TCP_NODELAY = */ 1
+        /* public final static int TCP_NODELAY = */ 1,
+
+        /* public final static int SO_SNDBUF   = */ 7,       /* send buffer size */
+        /* public final static int SO_RCVBUF   = */ 8,       /* receive buffer size */
+        /* public final static int SO_SNDLOWAT = */ 19,       /* send low-water mark */
+        /* public final static int SO_RCVLOWAT = */ 18,       /* receive low-water mark */
+        /* public final static int SO_SNDTIMEO = */ 21,       /* send timeout */
+        /* public final static int SO_RCVTIMEO = */ 20,       /* receive timeout */
+        /* public final static int SO_ERROR    = */ 4,       /* get error status and clear */
+        /* public final static int SO_TYPE     = */ 3        /* get socket type */
     };
     
     private static boolean[] intConstantCheck;
