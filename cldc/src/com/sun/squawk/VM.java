@@ -2380,7 +2380,11 @@ hbp.dumpState();
      *                           As such, this method <b>must not</b> use any local variables.
      */
     public static void collectGarbage(boolean forceFullGC)  throws NotInlinedPragma {
-        executeGC(forceFullGC);
+        if (VMThread.currentThread().isServiceThread()) {
+            GC.collectGarbage(forceFullGC);
+        } else {
+            executeGC(forceFullGC);
+        }
     }
 
     /**

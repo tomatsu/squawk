@@ -178,6 +178,7 @@ public final class VMThread implements GlobalStaticFields {
      * The maximum priority that a system thread can have.
      */
     public final static int MAX_SYS_PRIORITY = 12;
+    public final static int REAL_MAX_SYS_PRIORITY = 14;
     
     /**
      * Return the number of Thread objects allocated during the lifetime of this JVM.
@@ -465,7 +466,7 @@ public final class VMThread implements GlobalStaticFields {
      * @see        java.lang.Thread#MIN_PRIORITY
      */
     public final void setSystemPriority(int newPriority) {
-        if (newPriority > MAX_SYS_PRIORITY || newPriority < MIN_PRIORITY) {
+        if (newPriority > REAL_MAX_SYS_PRIORITY || newPriority < MIN_PRIORITY) {
             throw new IllegalArgumentException();
         }
         priority = (byte)newPriority;
@@ -1472,6 +1473,14 @@ VM.println("creating stack:");
     }
     
     
+    private static void threadGC(boolean userThread, boolean fullGC) {
+        if (userThread) {
+            VM.collectGarbage(fullGC);
+        } else {
+            GC.collectGarbage(fullGC);
+        }
+    }
+    
     /**
      * Allocates a new stack.
      *
@@ -1483,12 +1492,12 @@ VM.println("creating stack:");
     private static Object newStack(int size, VMThread owner, boolean userThread) {
         Object stack = GC.getExcessiveGC() ? null : GC.newStack(size, owner);
         if (stack == null) {
-            if (userThread) {
-                VM.collectGarbage(false);
-            } else {
-                GC.collectGarbage(false);
-            }
+            threadGC(userThread, false);
             stack = GC.newStack(size, owner);
+            if (stack == null) {
+                threadGC(userThread, true);
+                stack = GC.newStack(size, owner);
+            }
         }
         stacksAllocatedCount++;
         if (size > maxStackSize) {

@@ -1236,7 +1236,7 @@ public class GC implements GlobalStaticFields {
     }
 
     /**
-     * Get a new stack. This method is guaranteed not to call the garbage collector.
+     * Get a new stack. This method may call the garbage collector.
      *
      * @param   length  the number of words that the new stack should contain.
      * @param   owner   the owner of the new stack
@@ -2073,7 +2073,7 @@ public class GC implements GlobalStaticFields {
                 int classCount = s.getClassCount();
                 for (int j = 0; j < classCount; j++) {
                     Klass k = s.getKlass(j);
-                    if (k.isInstantiable()) {
+                    if (k != null && k.isInstantiable()) {
                         Assert.always(table.get(s.getKlass(j)) == null);
                         table.put(s.getKlass(j), new ClassStat());
                     }
