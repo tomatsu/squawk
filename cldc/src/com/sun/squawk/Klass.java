@@ -2409,14 +2409,21 @@ T
                 }
 
                 /*
-                 * Look for overridden method in the super class
+                 * Look for overridden method in the super class (accessible from this class)
                  */
                 Method superMethod = superType.lookupMethod(method.getName(),
                                                             method.getParameterTypes(),
                                                             method.getReturnType(),
-                                                            null,
+                                                            this, // accessible from this class
                                                             false);
+                /*
+                 * If the method can override the one in the super class then use the same vtable offset.
+                 * Otherwise allocate a different one. This deals with the case where a sub-class that
+                 * is in a different package overrides a package-private member.
+                 */
                 if (superMethod != null && !superMethod.getDefiningClass().isInterface()) {
+                    Assert.that(superMethod.isAccessibleFrom(this)); // lookupMethod() ensures this is true
+                    
                     if (superMethod.isFinal()) {
                         throw new NoClassDefFoundError("cannot override final method: " + superMethod);
                     }
@@ -2424,17 +2431,6 @@ T
                     // This is a restriction imposed by the way Squawk treats native methods
                     if (superMethod.isNative()) {
                         throw new NoClassDefFoundError("cannot override native method ");
-                    }
-
-                    /*
-                     * If the method can override the one in the super class then use the same vtable offset.
-                     * Otherwise allocate a different one. This deals with the case where a sub-class that
-                     * is in a different package overrides a package-private member.
-                     */
-                    if (superMethod.isAccessibleFrom(this)) {
-                         method.setOffset(superMethod.getOffset());
-                    } else {
-                         method.setOffset(offset++);
                     }
 
 /*if[FINALIZATION]*/
@@ -2445,7 +2441,8 @@ T
                         modifiers |= Modifier.HASFINALIZER;
                     }
 /*end[FINALIZATION]*/
-
+                    
+                    method.setOffset(superMethod.getOffset());
                 } else {
                     method.setOffset(offset++);
                 }
@@ -2673,6 +2670,17 @@ T
      *                        Method and field lookup                            *
     \*---------------------------------------------------------------------------*/
 
+    public static final boolean oldLookupMethodCheck(Klass definingClass, Method method, Klass accessingKlass) {
+        if (accessingKlass == null
+                || accessingKlass == definingClass
+                || method.isPublic()
+                || (method.isProtected() && (accessingKlass.isSubclassOf(definingClass) || definingClass.isInSamePackageAs(accessingKlass)))
+                || (!method.isPrivate() && definingClass.isInSamePackageAs(accessingKlass))) {
+            return true;
+        }
+        return false;
+    }
+         
     /**
      * Finds the <code>Method</code> object representing a method in
      * this class's hierarchy. This method returns null if the method does
@@ -2704,13 +2712,8 @@ T
         int mid = parser.lookupMember(category, name, parameterTypes, returnType);
         if (mid != -1) {
             Method method = new Method(metadata, mid);
-            if (
-                  currentClass == null ||
-                  currentClass == this ||
-                  method.isPublic()    ||
-                 (method.isProtected() && (currentClass.isSubclassOf(this) || this.isInSamePackageAs(currentClass))) ||
-                 (!method.isPrivate() && this.isInSamePackageAs(currentClass))
-               ) {
+            Assert.that(oldLookupMethodCheck(this, method, currentClass) == isAccessibleFrom(method, currentClass));
+            if (isAccessibleFrom(method, currentClass)) {
                 return method;
             }
         }

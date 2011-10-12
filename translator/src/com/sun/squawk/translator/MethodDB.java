@@ -210,7 +210,7 @@ public class MethodDB {
                 return;
             }
             
-            calcSuperMethods(mw, m);
+            calcSuperMethods(mw);
         }
     }
      
@@ -234,15 +234,14 @@ public class MethodDB {
      * via the interface class.
      * 
      * @param mw MMethodDB.Entry of an inherited method.
-     * @param m Method of the inherited method (matching mw).
      * @param interfaces array of interfaces that the subclass implements
      */
-    private void calcImplementsMerge(MethodDB.Entry mw, Method m, Klass[] interfaces) {
+    private void calcImplementsMerge(MethodDB.Entry mw, Klass[] interfaces) {
         for (int i = 0; i < interfaces.length; i++) {
-            Method superMethod = interfaces[i].lookupMethod(m.getName(),
-                                               m.getParameterTypes(),
-                                               m.getReturnType(),
-                                               null,
+            Method superMethod = interfaces[i].lookupMethod(mw.m.getName(),
+                                               mw.m.getParameterTypes(),
+                                               mw.m.getReturnType(),
+                                               null, // all interface methods are public, so no accessible check
                                                false);
             if (superMethod != null) {
                 mw.addSuperMethod(lookupMethodEntry(superMethod));
@@ -255,33 +254,25 @@ public class MethodDB {
      * a super class' method, plus implementing one or more interface's method declarations.
      *
      * @param mw the Entry of the method to check
-     * @param m the method to check
      */
-    private void calcSuperMethods(MethodDB.Entry mw, Method m) {
-        Assert.that(!m.isStatic());
-        Klass defClass = m.getDefiningClass();
+    private void calcSuperMethods(MethodDB.Entry mw) {
+        Assert.that(!mw.m.isStatic());
+        Klass defClass = mw.m.getDefiningClass();
         Klass superType = defClass.getSuperclass();
         if (superType == null) {
             return;
         }
         
-        Method superMethod = superType.lookupMethod(m.getName(),
-                                               m.getParameterTypes(),
-                                               m.getReturnType(),
-                                               null,
+        Method superMethod = superType.lookupMethod(mw.m.getName(),
+                                               mw.m.getParameterTypes(),
+                                               mw.m.getReturnType(),
+                                               defClass,
                                                false);
         if (superMethod != null) {
-            if (superMethod.getDefiningClass().isInterface() || superMethod.isAccessibleFrom(defClass)) {
-                /*
-                 * If the method can override the one in the super class then use the same vtable offset.
-                 * Otherwise allocate a different one. This deals with the case where a sub-class that
-                 * is in a different package "overrides" a package-private member.
-                 */
-                mw.addSuperMethod(lookupMethodEntry(superMethod));
-            }
+            mw.addSuperMethod(lookupMethodEntry(superMethod));
         }
         
-        calcImplementsMerge(mw, m, defClass.getInterfaces());
+        calcImplementsMerge(mw, defClass.getInterfaces());
     }
     
     /**
@@ -302,7 +293,7 @@ public class MethodDB {
                 Method m = superKlass.getMethod(i, false);
                 MethodDB.Entry mw = lookupMethodEntry(m);
                 // inherited method. check to see if callable via an interface implemented by this klass:
-                calcImplementsMerge(mw, m, klass.getInterfaces());
+                calcImplementsMerge(mw, klass.getInterfaces());
             }
             superKlass = superKlass.getSuperclass();
         }
