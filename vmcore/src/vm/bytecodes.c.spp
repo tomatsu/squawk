@@ -3055,12 +3055,13 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
             int index   = popInt();
             Address oop = popAddress();
             boundsCheck(oop, index);
-            if (value != 0 && com_sun_squawk_Klass_id(getClass(oop)) != CID_OBJECT_ARRAY) {
-                if (VM_arrayOopStoreCheck(oop, index, value)) {
+            if ((value != 0) 
+                 && (com_sun_squawk_Klass_id(getClass(oop)) != CID_OBJECT_ARRAY)
+                 && VM_arrayOopStoreCheck(oop, index, value)) {
                     call(com_sun_squawk_VM_arrayStoreException);
-                }
+            } else {
+                setObjectAndUpdateWriteBarrier(oop, index, value);
             }
-            setObjectAndUpdateWriteBarrier(oop, index, value);
         }
 
 /*if[FLOATS]*/
