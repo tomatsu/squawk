@@ -77,9 +77,9 @@ import com.sun.squawk.vm.*;
  *
  * <h5><i>Optional</i></h5>
  * Once an isolate is hibernated, it can be
- * serialized using the {@link Isolate#save(DataOutputStream, String)} method. The saved form of the isolate includes all reachable objects, the state of all static variables, and
+ * serialized using the <code>save()</code> method. The saved form of the isolate includes all reachable objects, the state of all static variables, and
  * the current execution context of all of the isolate's threads (the thread stacks, etc). The saved form can be stored in a file, sent over a network, etc.
- * {@link Isolate#load(DataInputStream, String)} can be used reconstruct the saved isolate. Isolate saving and restoring is controlled by the ENABLE_ISOLATE_MIGRATION build property.<p>
+ * <code>load()</code> can be used reconstruct the saved isolate. Isolate saving and restoring functionality is controlled by the ENABLE_ISOLATE_MIGRATION build property.<p>
  *
  * <h3>Isolate Lifecycle</h3>
  *

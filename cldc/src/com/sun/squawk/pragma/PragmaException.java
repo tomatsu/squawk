@@ -41,14 +41,14 @@ public class PragmaException extends RuntimeException {
     /**
      * Bit flag for replacement constructors.
      *
-     * @see ReplacementConstructorPragma
+     * @see com.sun.squawk.pragma.ReplacementConstructorPragma
      */
     public static final int REPLACEMENT_CONSTRUCTOR = 0x0002;
 
     /**
      * Bit flag for methods that should only be invoked from the interpreter.
      *
-     * @see InterpreterInvokedPragma
+     * @see com.sun.squawk.pragma.InterpreterInvokedPragma
      */
     public static final int INTERPRETER_INVOKED = 0x0004;
 
@@ -60,7 +60,7 @@ public class PragmaException extends RuntimeException {
     public static final int NATIVE = 0x0008;
 
     /**
-     * Bit flag for methods that have relaxed inlinning by the translator.
+     * Bit flag for methods that have relaxed inlining by the translator.
      *
      * @see AllowInlinedPragma
      */

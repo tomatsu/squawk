@@ -40,7 +40,7 @@ public abstract class StreamReader extends Reader {
     /**
      * Open the reader
      * @param in
-     * @return
+     * @return this Reader
      */
     public Reader open(InputStream in) {
         this.in = in;
@@ -108,7 +108,7 @@ public abstract class StreamReader extends Reader {
      * @param array
      * @param offset
      * @param length
-     * @return 
+     * @return number of characters encoded in this byte array
      */
     public abstract int sizeOf(byte[] array, int offset, int length);
 

@@ -73,9 +73,9 @@ import java.util.NoSuchElementException;
  * @version 1.42, 07/01/98 (CLDC 1.0, Spring 2000)
  * @see java.lang.Object#equals(java.lang.Object)
  * @see java.lang.Object#hashCode()
- * @see     java.util.Hashtable
- * @see     SquawkHashtable#rehash()
- * @since   JDK1.0, CLDC 1.0
+ * @see java.util.Hashtable
+ * @see #rehash()
+ * @since JDK1.0, CLDC 1.0
  */
 /*if[JAVA5SYNTAX]*/
 public class SquawkHashtable<K, V> {
@@ -134,7 +134,6 @@ public class SquawkHashtable<K, V> {
      * @param      initialCapacity   the initial capacity of the hashtable.
      * @exception  IllegalArgumentException  if the initial capacity is less
      *             than zero
-     * @since      JDK1.0
      */
 /*if[JAVA5SYNTAX]*/
     @SuppressWarnings("unchecked")
@@ -187,8 +186,6 @@ public class SquawkHashtable<K, V> {
     /**
      * Constructs a new, empty hashtable with a default capacity and load
      * factor.
-     *
-     * @since   JDK1.0
      */
     public SquawkHashtable() {
         this(11);
@@ -198,7 +195,6 @@ public class SquawkHashtable<K, V> {
      * Returns the number of keys in this hashtable.
      *
      * @return  the number of keys in this hashtable.
-     * @since   JDK1.0
      */
     public final int size() {
         return count;
@@ -209,7 +205,6 @@ public class SquawkHashtable<K, V> {
      *
      * @return  <code>true</code> if this hashtable maps no keys to values;
      *          <code>false</code> otherwise.
-     * @since   JDK1.0
      */
     public final boolean isEmpty() {
         return count == 0;
@@ -220,7 +215,7 @@ public class SquawkHashtable<K, V> {
      * 
      * @return an enumeration of the keys in this hashtable.
      * @see java.util.Enumeration
-     * @see java.util.Hashtable#elSquawkHashtable@since JDK1.0
+     * @see #elements()
      */
 /*if[JAVA5SYNTAX]*/
     public Enumeration<K> keys() {
@@ -238,7 +233,7 @@ public class SquawkHashtable<K, V> {
      * 
      * @return an enumeration of the values in this hashtable.
      * @see java.util.Enumeration
-     * @see java.util.Hashtable#keSquawkHashtablece JDK1.0
+     * @see #keys()
      */
 /*if[JAVA5SYNTAX]*/
     public Enumeration<V> elements() {
@@ -259,8 +254,7 @@ public class SquawkHashtable<K, V> {
      *             <code>value</code> argument in this hashtable;
      *             <code>false</code> otherwise.
      * @exception NullPointerException  if the value is <code>null</code>.
-     * @see java.util.Hashtable#containsKeySquawkHashtableg.Object)
-     * @since JDK1.0
+     * @see #containsKey(java.lang.Object)
      */
     public boolean contains(Object value) {
         if (value == null) {
@@ -292,8 +286,7 @@ public class SquawkHashtable<K, V> {
      * @param key   possible key.
      * @return <code>true</code> if the specified object is a key in this
      *          hashtable; <code>false</code> otherwise.
-     * @see java.util.Hashtable#SquawkHashtablejava.lang.Object)
-     * @since JDK1.0
+     * @see #contains(java.lang.Object)
      */
     public boolean containsKey(Object key) {
          if (get(key) != null) {
@@ -309,8 +302,7 @@ public class SquawkHashtable<K, V> {
      * @return the value to which the key is mapped in this hashtable;
      *          <code>null</code> if the key is not mapped to any value in
      *          this hashtable.
-     * @see java.util.Hashtable#SquawkHashtablelang.Object, java.lang.Object)
-     * @since JDK1.0
+     * @see #put(java.lang.Object, java.lang.Object)
      */
     public Object get(Object key) {
 /*if[JAVA5SYNTAX]*/
@@ -338,9 +330,8 @@ public class SquawkHashtable<K, V> {
      * number of keys in the hashtable exceeds this hashtable's capacity
      * and load factor.
      * 
-     * This is not a public method, made it public to enable the java.util.SquawkHashtable.rehash to delegate to this one.
+     * This is not a public method, made it public to enable the com.sun.squawk.util.SquawkHashtable.rehash to delegate to this one.
      * 
-     * @since JDK1.0
      */
     public void rehash() {
 /*if[JAVA5SYNTAX]*/
@@ -403,7 +394,7 @@ public class SquawkHashtable<K, V> {
      * @exception NullPointerException  if the key or value is
      *               <code>null</code>.
      * @see java.lang.Object#equals(java.lang.Object)
-     * @see java.util.Hashtable#get(java.lang.ObjecSquawkHashtable JDK1.0
+     * @see #get(java.lang.Object)
      */
 /*if[JAVA5SYNTAX]*/
     @SuppressWarnings("unchecked")
@@ -473,7 +464,6 @@ public class SquawkHashtable<K, V> {
      * @param   key   the key that needs to be removed.
      * @return  the value to which the key had been mapped in this hashtable,
      *          or <code>null</code> if the key did not have a mapping.
-     * @since   JDK1.0
      */
 /*if[JAVA5SYNTAX]*/
     public V remove(K key) {
@@ -504,8 +494,6 @@ public class SquawkHashtable<K, V> {
 
     /**
      * Clears this hashtable so that it contains no keys.
-     *
-     * @since   JDK1.0
      */
     public void clear() {
 /*if[JAVA5SYNTAX]*/
@@ -523,7 +511,6 @@ public class SquawkHashtable<K, V> {
      * Returns a rather long string representation of this hashtable.
      *
      * @return  a string representation of this hashtable.
-     * @since   JDK1.0
      */
     public String toString() {
         return SquawkHashtable.enumerationsToString(keys(), elements(), size());
@@ -559,7 +546,6 @@ public class SquawkHashtable<K, V> {
      * @param elements 
      * @param size 
      * @return  a string representation of this hashtable.
-     * @since   JDK1.0
      */
 /*if[JAVA5SYNTAX]*/
     public static String enumerationsToString(Enumeration<?> keys, Enumeration<?> elements, int size) {

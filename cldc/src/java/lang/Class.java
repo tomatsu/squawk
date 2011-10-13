@@ -310,6 +310,7 @@ public final class Class<T> {
         return klass.getResourceAsStream(name);
     }
     
+/*if[JAVA5SYNTAX]*/
     /**
      * Returns the <code>Class</code> representing the component type of an
      * array.  If this class does not represent an array class this method
@@ -317,17 +318,15 @@ public final class Class<T> {
      *
      * @return the <code>Class</code> representing the component type of this
      * class if this class is an array
-     * @see     java.lang.reflect.Array
      * @since JDK1.1
      */
-/*if[JAVA5SYNTAX]*/
     public Class<?> getComponentType() {
-/*else[JAVA5SYNTAX]*/
-//        public Class getComponentType() {
-/*end[JAVA5SYNTAX]*/
         return Klass.asClass(klass.getComponentType());
     }
+/*end[JAVA5SYNTAX]*/
 
+
+/*if[JAVA5SYNTAX]*/
     /**
      * Returns the assertion status that would be assigned to this
      * class if it were to be initialized at the time this method is invoked.
@@ -347,16 +346,12 @@ public final class Class<T> {
      * it was (or will be) initialized.
      *
      * @return the desired assertion status of the specified class.
-     * @see    setClassAssertionStatus
-     * @see    setPackageAssertionStatus
-     * @see    setDefaultAssertionStatus
      */
-/*if[JAVA5SYNTAX]*/
     @Java5Marker
-/*end[JAVA5SYNTAX]*/
     public boolean desiredAssertionStatus() {
         return false;
     }
+/*end[JAVA5SYNTAX]*/
     
 }
 

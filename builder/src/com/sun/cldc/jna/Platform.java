@@ -29,8 +29,6 @@ package com.sun.cldc.jna;
  */
 public final class Platform {
 
-    public static boolean deleteNativeLibraryAfterVMExit() { return false;  }
-
     public static boolean hasRuntimeExec() { return false;  }
 
     public static boolean isFreeBSD() { return false;  }

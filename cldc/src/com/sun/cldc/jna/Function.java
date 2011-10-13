@@ -78,7 +78,7 @@ public class Function {
 
     /**
      * Return the system errno value from the last native function call made by this Java thread.
-     * @return
+     * @return errno
      */
     public static int errno() {
         return VMThread.currentThread().getErrno();

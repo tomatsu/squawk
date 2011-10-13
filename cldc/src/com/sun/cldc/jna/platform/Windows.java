@@ -31,9 +31,6 @@ import java.util.Hashtable;
  * @author dw29446
  */
 public class Windows extends Platform {
-    public boolean deleteNativeLibraryAfterVMExit() {
-        return false; // TODO: implement for real
-    }
 
     public boolean isWindows() {
         return true;

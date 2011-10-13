@@ -2719,7 +2719,7 @@ hbp.dumpState();
 
     /**
      * Return a system global Stack of cached TaskExecutors. Only for use by the JNA implementation.
-     * @return
+     * @return Stack of TaskExecutors
      */
     public static Stack getTaskCache() {
         return taskCache;
@@ -4218,7 +4218,7 @@ hbp.dumpState();
     }
 
     /**
-     * Gets the value of an {@link Suite#PROPERTIES_MANIFEST_RESOURCE_NAME} property embedded in the suite.
+     * Gets the value of a manifest property embedded in the suite (from META-INF/MANIFEST.MF).
      *
      * @param name the name of the property whose value is to be retrieved
      * @return the property value

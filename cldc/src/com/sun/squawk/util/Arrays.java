@@ -1918,7 +1918,7 @@ public class Arrays {
     /**
      * Make a new Object array and initialize its contents from the contents
      * of a specified Object array.
-     * @param      src      the source array.
+     * @param      array      the source array.
      * @exception  NullPointerException if either <code>src</code> or
      *               <code>dest</code> is <code>null</code>.
      * @return     the initialized copy of <code>src</code>.

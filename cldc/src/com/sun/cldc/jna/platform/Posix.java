@@ -32,14 +32,6 @@ import com.sun.cldc.jna.Platform;
  */
 public class Posix extends Platform {
 
-    public boolean deleteNativeLibraryAfterVMExit() {
-        return false; // TODO: implement for real
-    }
-
-    public boolean hasRuntimeExec() {
-        return true; // TODO: implement for real
-    }
-
     public boolean isFreeBSD() {
         return platformName().equals("freebsd");
     }
@@ -58,10 +50,6 @@ public class Posix extends Platform {
 
     public boolean isSolaris() {
         return platformName().equals("solaris");
-    }
-
-    public boolean isX11() {
-        return false; // TODO: implement for real
     }
 
     /**

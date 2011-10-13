@@ -343,7 +343,7 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
      *
      * Sets currentSectorState to the sector with the space.
      *
-     * @TODO: Can we get rid of scanner?
+     * @todo: Can we get rid of scanner?
      *
      *
      * @param entrySize number of free bytes to look for

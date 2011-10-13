@@ -25,7 +25,7 @@
 package com.sun.squawk.pragma;
 
 /**
- * This marker interface denotes a class whose static fields are {@link Global VM global}.
+ * This marker interface denotes a class whose static fields are {@link com.sun.squawk.vm.Global VM Global}.
  *
  */
 public interface GlobalStaticFields {

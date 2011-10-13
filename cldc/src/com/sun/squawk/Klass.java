@@ -2038,9 +2038,7 @@ T
                 case CID.LONG:
                 case CID.OFFSET:
                 case CID.UWORD:
-                    Assert.shouldNotReachHere();
-                    table = null;
-                    break;
+                    throw Assert.shouldNotReachHere();
                     
                 case CID.BYTE:    // fall through ...
                 case CID.BOOLEAN: // fall through ...

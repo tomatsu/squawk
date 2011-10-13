@@ -85,7 +85,7 @@ public class RecordStoreManager implements IRecordStoreManager {
             return "Erasing RMS, since installed MIDlet-Vendor: " + vendorInstalled + " does not match prior -Vendor: " + vendorFound;
         }
         if (versionInstalled == null) {
-            if (versionInstalled == versionFound) {
+            if (versionFound == null) {
                 return null;
             }
         } else if (versionInstalled.compareTo(versionFound) >= 0) {

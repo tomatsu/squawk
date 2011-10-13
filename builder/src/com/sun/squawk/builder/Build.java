@@ -2937,7 +2937,7 @@ public class Build {
 
         javaCompiler.javadoc((" -d "+javadocDir+
              (classPath == null ? "" : " -classpath " + classPath) +
-             " -taglet com.sun.squawk.builder.ToDoTaglet -tagletpath build.jar:build-commands.jar " +
+             " -taglet com.sun.squawk.builder.ToDoTaglet -tagletpath build-commands.jar " +
              linkOptions +
              (runJavadocAPI ? "" : " -private") +
              " -quiet" +

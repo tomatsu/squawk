@@ -263,7 +263,7 @@ public class TestApp extends Base {
 
         /**
          * Sets the current position
-         * @param x The desired new position in units of LEDs
+         * @param x2 The desired new position in units of LEDs
          */
         public void setX(double x2) {
             oldX = x;

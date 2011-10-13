@@ -42,8 +42,6 @@ public abstract class Platform {
         return INSTANCE;
     }
     
-    public abstract boolean deleteNativeLibraryAfterVMExit();
-
     public boolean hasRuntimeExec() {
         return false;
     }
@@ -94,7 +92,7 @@ public abstract class Platform {
 
     /**
      * Some platforms have wildly different names for standard libraries. Try to catch them here.
-     * @TODO Make extensible so other platforms don't have to modify shared class.
+     * @todo Make extensible so other platforms don't have to modify shared class.
      * @param genericName
      * @return the base name of the library for the current platform
      */
@@ -103,6 +101,7 @@ public abstract class Platform {
     }
 
     private final String platformName;
+    
    /**
      * Get the name of the package that contains the native implementation for this platform:
      */
@@ -124,7 +123,7 @@ public abstract class Platform {
         return platformName;
     }
 
-    public Platform() {
+    protected Platform() {
         commonMappings = new Hashtable();
         platformName = getNativePlatformName().toLowerCase();
     }

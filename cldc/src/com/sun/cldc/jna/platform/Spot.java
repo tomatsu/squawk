@@ -30,9 +30,6 @@ import com.sun.cldc.jna.Platform;
  * @author dw29446
  */
 public class Spot extends Platform {
-    public boolean deleteNativeLibraryAfterVMExit() {
-        return false; // TODO: implement for real
-    }
 
     /**
      * Get the name of the package that contains the native implementation for this platform:

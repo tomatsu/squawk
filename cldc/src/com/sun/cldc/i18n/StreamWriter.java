@@ -39,7 +39,7 @@ public abstract class StreamWriter extends Writer {
     /**
      * Open the writer
      * @param out
-     * @return
+     * @return this Writer
      */
     public Writer open(OutputStream out) {
         this.out = out;
