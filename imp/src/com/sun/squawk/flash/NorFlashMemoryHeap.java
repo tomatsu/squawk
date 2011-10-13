@@ -46,8 +46,10 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
 
     public static final byte ERASED_VALUE = (byte) 0xFF;
     public static final byte ERASED_VALUE_XOR = (byte) 0x00;
-    // size (int) + allocated (byte, byte)
-    public static final int BLOCK_HEADER_SIZE = 4 + 2;
+    // allocated(FLASH_WORD_SIZE) + size (int)
+    public static final int FLASH_WORD_SIZE = ((VM.getCurrentIsolate().getProperty("FLASH_WORD_SIZE") != null)?
+        (Integer.valueOf(VM.getCurrentIsolate().getProperty("FLASH_WORD_SIZE")).intValue()):2);
+    public static final int BLOCK_HEADER_SIZE = FLASH_WORD_SIZE + 4;
     public static final byte[] BLOCK_FOOTER = new byte[] {ERASED_VALUE_XOR, ERASED_VALUE_XOR};
 
     protected final INorFlashSectorState[] sectorStates;
@@ -132,8 +134,8 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
      */
     public void freeBlockAt(Address address) throws RecordStoreException {
         INorFlashSectorState sectorState = getSectorContaining(address);
-        // add 4 for the size int at beginning of block header
-        int offset = address.diff(sectorState.getStartAddress()).toInt() + BLOCK_HEADER_SIZE - 2;
+        // The flag is located at the beginning of block header.
+        int offset = address.diff(sectorState.getStartAddress()).toInt();
         sectorState.writeBytes(offset, BLOCK_FOOTER, 0, 2);
         sectorState.decrementMallocedCount();
         sectorState.incrementFreedBlockCount();
@@ -175,21 +177,28 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
             block.setLength(BLOCK_HEADER_SIZE);
             byte[] bytes = block.getBytes();
             sectorState.readBytes(offset, bytes, 0, BLOCK_HEADER_SIZE);
-            // If the block header we are looking for starts with ERASED_VALUE, we know we did not write a header here
-            if (bytes[0] == ERASED_VALUE) {
+            /* 
+              If the block header we are looking for starts with ERASED_VALUE, we know we did not write a header here.
+              0    2                        FLASH_WORD_SIZE  FLASH_WORD_SIZE+4
+              |flag|reserved if (FLASH_WORD_SIZE>2)| blocklength | 
+            */
+
+            if (bytes[FLASH_WORD_SIZE] == ERASED_VALUE) {
                 block.setIsAllocated(false); // DRW: is this right?
                 return false;
             }
             DataInputStream input = block.getDataInputStream();
+            // The allocated flag is written as a word, so we only need to look at the second byte            
+            input.readByte();
+            byte flag = input.readByte();
+            input.skipBytes(FLASH_WORD_SIZE - 2);                
             int blockSize = input.readInt();
-            int blockSizeWithPadding = blockSize + (blockSize & 1) + 2;
+            int blockSizeWithPadding = alignToFlashWord(BLOCK_HEADER_SIZE + blockSize + 2) - BLOCK_HEADER_SIZE;
             if (blockSize < 0 || blockSizeWithPadding > (sectorState.getSize() - offset)) {
                 throw new RecordStoreException("read block size bigger than sectorState"); // Data seems corrupted?
             }
             block.setNextOffset(offset + BLOCK_HEADER_SIZE + blockSizeWithPadding);
-            // The allocated flag is written as a word, so we only need to look at the second byte
-            input.readByte();
-            if (input.readByte() == ERASED_VALUE) {
+            if (flag == ERASED_VALUE) {
                 block.setIsAllocated(true);
                 try {
                     block.setLength(blockSizeWithPadding);
@@ -473,15 +482,26 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
         hasScannedBlocks = true;
     }
     
+    private int alignToFlashWord(int len) {
+        return (len + (FLASH_WORD_SIZE) - 1) & ~((FLASH_WORD_SIZE) - 1);        
+    }
+        
     protected Address writeBlock(IMemoryHeapBlock block, INorFlashMemoryHeapScanner scanner, Address oldAddress) throws RecordStoreException {
-        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream(BLOCK_HEADER_SIZE);
-        DataOutputStream output = new DataOutputStream(bytesOut);
         int blockLength = block.getLength();
+        int realLength = BLOCK_HEADER_SIZE + blockLength + 2;
+        int needLength = alignToFlashWord(realLength);        
+        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream(needLength);
+        DataOutputStream output = new DataOutputStream(bytesOut);
+		// Put header/data/foot into bytesOut, then write to flash in 1 batch.        
         try {
+            /*                  0    2        FLASH_WORD_SIZE FLASH_WORD_SIZE+4
+               block header:    |flag|pending space...|blocklength|
+               flag: 0xFFFF - allocated, 0x0000 - free
+            */
+            for (int i = 0; i < FLASH_WORD_SIZE; i++) {
+                output.writeByte(ERASED_VALUE);
+            }
             output.writeInt(blockLength);
-            output.writeByte(ERASED_VALUE);
-            output.writeByte(ERASED_VALUE);
-            output.close();
         } catch (IOException e) {
             throw new UnexpectedException(e);
         }
@@ -489,16 +509,22 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
             if (!hasScannedBlocks) {
                 scanBlocks(null);
             }
-            makeRoomToWrite(bytesOut.size() + blockLength + (blockLength & 1) + 2, scanner);
+            makeRoomToWrite(needLength, scanner);
         }
         block.setAddress(currentSectorState.getWriteHeadAddress());
-        currentSectorState.writeBytes(bytesOut.toByteArray(), 0, bytesOut.size());
-        if ((blockLength & 1) == 1) {
-            // MemoryBlock guarantees me an extra byte if I need it
-            block.getBytes()[block.getOffset() + blockLength] = ERASED_VALUE_XOR;
+        try {
+            output.write(block.getBytes(), block.getOffset(), blockLength);
+            if (realLength < needLength) {
+                for (int i = 0; i < needLength - realLength; i++) {
+                    output.writeByte(ERASED_VALUE_XOR);
+                }
+            }
+            output.write(BLOCK_FOOTER, 0, 2);
+            output.close();
+        } catch (IOException e) {
+            throw new UnexpectedException(e);
         }
-        currentSectorState.writeBytes(block.getBytes(), block.getOffset(), blockLength + (blockLength & 1));
-        currentSectorState.writeBytes(BLOCK_FOOTER, 0, 2);
+        currentSectorState.writeBytes(bytesOut.toByteArray(), 0, needLength);
         currentSectorState.incrementAllocatedBlockCount();
         if (!oldAddress.isZero()) {
             freeBlockAt(oldAddress);

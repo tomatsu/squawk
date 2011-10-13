@@ -46,15 +46,15 @@ public class NorFlashSectorState implements INorFlashSectorState {
     public static final boolean DEBUG = false;
 
     public static final byte[] ERASED_HEADER = new byte[] {'S', 'Q', 'U', 'A', 'W', 'K'};
-    // erased value (byte) + header.length + sequence (long) + erased value (byte)
-    public static final int ERASED_HEADER_SIZE = 2 + ERASED_HEADER.length + 8 + 2;
+    // erased value (byte) + header.length + sequence (int) + erased value (byte)
+    public static final int ERASED_HEADER_SIZE = 2 + ERASED_HEADER.length + 4 + 4;
     public static final byte[] BUFFER = new byte[ERASED_HEADER_SIZE];
 
     protected Address startAddress;
     protected Address endAddress;
     protected int writeHead;
     protected INorFlashSector flashSector;
-    protected long sequence;
+    protected int sequence;
     protected INorFlashSectorState nextSector;
     protected INorFlashSectorStateList owningList;
     protected int mallocedBlockCount;
@@ -128,7 +128,10 @@ public class NorFlashSectorState implements INorFlashSectorState {
             dataOut.write(NorFlashMemoryHeap.ERASED_VALUE_XOR);
             dataOut.write(NorFlashMemoryHeap.ERASED_VALUE_XOR);
             dataOut.write(ERASED_HEADER);
-            dataOut.writeLong(sequence);
+            dataOut.writeInt((int)sequence);
+            dataOut.write(NorFlashMemoryHeap.ERASED_VALUE_XOR);
+            dataOut.write(NorFlashMemoryHeap.ERASED_VALUE_XOR);
+            //add 2 ERASED_VALUE_XOR
             dataOut.write(NorFlashMemoryHeap.ERASED_VALUE_XOR);
             dataOut.write(NorFlashMemoryHeap.ERASED_VALUE_XOR);
             Assert.that(bytesOut.size() == ERASED_HEADER_SIZE);
@@ -239,7 +242,13 @@ public class NorFlashSectorState implements INorFlashSectorState {
                     return;
                 }
             }
-            sequence = input.readLong();
+            sequence = input.readInt();
+            if (input.readByte() != NorFlashMemoryHeap.ERASED_VALUE_XOR) {
+                return;
+            }
+            if (input.readByte() != NorFlashMemoryHeap.ERASED_VALUE_XOR) {
+                return;
+            }
             if (input.readByte() != NorFlashMemoryHeap.ERASED_VALUE_XOR) {
                 return;
             }
