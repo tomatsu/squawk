@@ -1150,7 +1150,7 @@ public class Arrays {
 //    }
 //
 //        // Recursively sort halves of dest into src
-//        int mid = (low + high) >> 1;
+//        int mid = (low + high) >>> 1;
 //        mergeSort(dest, src, low, mid);
 //        mergeSort(dest, src, mid, high);
 //
@@ -1264,7 +1264,7 @@ public class Arrays {
     }
 
         // Recursively sort halves of dest into src
-        int mid = (low + high) >> 1;
+        int mid = (low + high) >>> 1;
         mergeSort(dest, src, low, mid, c);
         mergeSort(dest, src, mid, high, c);
 
@@ -1354,7 +1354,7 @@ public class Arrays {
     int high = a.length-1;
 
     while (low <= high) {
-        int mid = (low + high) >> 1;
+        int mid = (low + high) >>> 1;
         long midVal = a[mid];
 
         if (midVal < key)
@@ -1393,7 +1393,7 @@ public class Arrays {
     int high = a.length-1;
 
     while (low <= high) {
-        int mid = (low + high) >> 1;
+        int mid = (low + high) >>> 1;
         int midVal = a[mid];
 
         if (midVal < key)
@@ -1431,7 +1431,7 @@ public class Arrays {
     int high = a.length-1;
 
     while (low <= high) {
-        int mid = (low + high) >> 1;
+        int mid = (low + high) >>> 1;
         short midVal = a[mid];
 
         if (midVal < key)
@@ -1469,7 +1469,7 @@ public class Arrays {
     int high = a.length-1;
 
     while (low <= high) {
-        int mid = (low + high) >> 1;
+        int mid = (low + high) >>> 1;
         char midVal = a[mid];
 
         if (midVal < key)
@@ -1507,7 +1507,7 @@ public class Arrays {
     int high = a.length-1;
 
     while (low <= high) {
-        int mid = (low + high) >> 1;
+        int mid = (low + high) >>> 1;
         byte midVal = a[mid];
 
         if (midVal < key)
@@ -1549,7 +1549,7 @@ public class Arrays {
 
     private static int binarySearch(double[] a, double key, int low,int high) {
     while (low <= high) {
-        int mid = (low + high) >> 1;
+        int mid = (low + high) >>> 1;
         double midVal = a[mid];
 
             int cmp;
@@ -1602,7 +1602,7 @@ public class Arrays {
 
     private static int binarySearch(float[] a, float key, int low,int high) {
     while (low <= high) {
-        int mid = (low + high) >> 1;
+        int mid = (low + high) >>> 1;
         float midVal = a[mid];
 
             int cmp;
@@ -1664,7 +1664,7 @@ public class Arrays {
 //    int high = a.length-1;
 //
 //    while (low <= high) {
-//        int mid = (low + high) >> 1;
+//        int mid = (low + high) >>> 1;
 //        Object midVal = a[mid];
 //        int cmp = ((Comparable)midVal).compareTo(key);
 //
@@ -1716,7 +1716,7 @@ public class Arrays {
     int high = a.length-1;
 
     while (low <= high) {
-        int mid = (low + high) >> 1;
+        int mid = (low + high) >>> 1;
         Object midVal = a[mid];
         int cmp = c.compare(midVal, key);
 

@@ -198,4 +198,17 @@ public final class ClassFileMethod extends ClassFileMember {
                parameterTypes.length == 1 &&
                parameterTypes[0] == Klass.STRING_ARRAY;
     }
+    
+    public String toString(Klass klass) {
+        StringBuffer buf = new StringBuffer(klass.getName());
+        buf.append('.').append(getName()).append('(');
+        for (int i = 0; i < parameterTypes.length; i++) {
+            if (i != 0) {
+                buf.append(',');
+            }
+            buf.append(parameterTypes[i]);
+        }
+        buf.append(')');
+        return buf.toString();
+    }
 }

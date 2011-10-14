@@ -2667,17 +2667,6 @@ T
     /*---------------------------------------------------------------------------*\
      *                        Method and field lookup                            *
     \*---------------------------------------------------------------------------*/
-
-    public static final boolean oldLookupMethodCheck(Klass definingClass, Method method, Klass accessingKlass) {
-        if (accessingKlass == null
-                || accessingKlass == definingClass
-                || method.isPublic()
-                || (method.isProtected() && (accessingKlass.isSubclassOf(definingClass) || definingClass.isInSamePackageAs(accessingKlass)))
-                || (!method.isPrivate() && definingClass.isInSamePackageAs(accessingKlass))) {
-            return true;
-        }
-        return false;
-    }
          
     /**
      * Finds the <code>Method</code> object representing a method in
@@ -2710,7 +2699,6 @@ T
         int mid = parser.lookupMember(category, name, parameterTypes, returnType);
         if (mid != -1) {
             Method method = new Method(metadata, mid);
-            Assert.that(oldLookupMethodCheck(this, method, currentClass) == isAccessibleFrom(method, currentClass));
             if (isAccessibleFrom(method, currentClass)) {
                 return method;
             }

@@ -554,17 +554,17 @@ public class SquawkHashtable<K, V> {
 /*end[JAVA5SYNTAX]*/
         int max = size - 1;
         StringBuffer buf = new StringBuffer();
-        buf.append("{");
+        buf.append('{');
 
         for (int i = 0; i <= max; i++) {
             String s1 = keys.nextElement().toString();
             String s2 = elements.nextElement().toString();
-            buf.append(s1 + "=" + s2);
+            buf.append(s1).append('=').append(s2);
             if (i < max) {
                 buf.append(", ");
             }
         }
-        buf.append("}");
+        buf.append('}');
         return buf.toString();
     }
 
@@ -574,23 +574,21 @@ public class SquawkHashtable<K, V> {
      */
 /*if[JAVA5SYNTAX]*/
     class HashtableEnumerator<E> implements Enumeration<E> {
-/*else[JAVA5SYNTAX]*/
-//    class HashtableEnumerator implements Enumeration {
-/*end[JAVA5SYNTAX]*/
-        boolean keys;
-        int index;
-/*if[JAVA5SYNTAX]*/
         HashtableEntry<K, V>[] table;
         HashtableEntry<K, V> entry;
 /*else[JAVA5SYNTAX]*/
-//        HashtableEntry[] table;
-//        HashtableEntry entry;
+//  class HashtableEnumerator implements Enumeration {
+//      HashtableEntry[] table;
+//      HashtableEntry entry;
 /*end[JAVA5SYNTAX]*/
+        
+        boolean keys;
+        int index;
 
 /*if[JAVA5SYNTAX]*/
         HashtableEnumerator(HashtableEntry<K, V>[] table, boolean keys) {
 /*else[JAVA5SYNTAX]*/
-//        HashtableEnumerator(HashtableEntry[] table, boolean keys) {
+//      HashtableEnumerator(HashtableEntry[] table, boolean keys) {
 /*end[JAVA5SYNTAX]*/
             this.table = table;
             this.keys = keys;

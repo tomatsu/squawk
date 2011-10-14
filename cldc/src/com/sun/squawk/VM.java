@@ -768,7 +768,7 @@ public class VM implements GlobalStaticFields {
         int low = 0;
         int high = array.length - 1;
         while (low <= high) {
-            int mid = (low + high) / 2;
+            int mid = (low + high) >>> 1;
             int val = array[mid];
             if (key < val) {
                 high = mid - 1;
@@ -795,7 +795,7 @@ public class VM implements GlobalStaticFields {
         int low = 0;
         int high = array.length - 1;
         while (low <= high) {
-            int mid = (low + high) / 2;
+            int mid = (low + high) >>> 1;
             int val = array[mid];
             if (key < val) {
                 high = mid - 1;
@@ -822,7 +822,7 @@ public class VM implements GlobalStaticFields {
         int low = 0;
         int high = array.length - 1;
         while (low <= high) {
-            int mid = (low + high) / 2;
+            int mid = (low + high) >>> 1;
             int val = array[mid];
             if (key < val) {
                 high = mid - 1;

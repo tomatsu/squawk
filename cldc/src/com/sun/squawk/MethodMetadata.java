@@ -207,7 +207,7 @@ public class MethodMetadata {
         int high = a.length-1;
         
         while (low <= high) {
-            int mid = (low + high) >> 1;
+            int mid = (low + high) >>> 1;
             MethodMetadata midVal = a[mid];
             int cmp = midVal.offset - keyOffset;
             

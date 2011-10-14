@@ -287,10 +287,12 @@ public final class Lisp2Collector extends GarbageCollector {
      */
     private int markingRecursionLevel;
 
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
     /**
      * Count of the number of classes whose oop map moved during the last collection.
      */
     private int movedOopMaps;
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/    
 
     /**
      * Creates a Lisp2Collector.
@@ -677,6 +679,7 @@ public final class Lisp2Collector extends GarbageCollector {
         return true;
     }
 
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
     /**
      * Resets the 'oopMapWord' field of all the classes in the heap whose oop map was moved. This
      * field was used to record the old location of the oop map which is required so that instances
@@ -723,7 +726,8 @@ public final class Lisp2Collector extends GarbageCollector {
 //      (copyingObjectGraph ? copyTimings : collectionTimings).fixupOopMaps += now() - begin;
 /*end[ENABLE_ISOLATE_MIGRATION]*/
     }
-
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
+    
     /**
      * {@inheritDoc}
      */

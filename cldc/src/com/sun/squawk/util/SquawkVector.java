@@ -529,7 +529,7 @@ public class SquawkVector {
     public static String enumerationToString(Enumeration elements, int size) {
         int max = size - 1;
         StringBuffer buf = new StringBuffer();
-        buf.append("[");
+        buf.append('[');
 
         for (int i = 0 ; i <= max ; i++) {
             buf.append(elements.nextElement());
@@ -537,7 +537,7 @@ public class SquawkVector {
                 buf.append(", ");
             }
         }
-        buf.append("]");
+        buf.append(']');
         return buf.toString();
     }
 }

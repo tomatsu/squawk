@@ -336,9 +336,8 @@ public final class MethodBody {
             }
             enc.addUnsignedByte(bite);
         }
-        int oopMapSize = enc.getSize() - start;
 
-        Assert.that(oopMapSize == ((localsCount+parametersCount+7)/8));
+        Assert.that((enc.getSize() - start) == ((localsCount+parametersCount+7)/8));
         Assert.that(typeTableSize      < 32768);
         Assert.that(exceptionTableSize < 32768);
         Assert.that(localsCount        < 32768);

@@ -966,13 +966,15 @@ public final class StringBuffer {
         }
 
         // remove uncertainty
-        Assert.that((encoding & UNKNOWN_ENCODING) != 0);
-        if (String.isEightBitEnc(value, 0, count)) {
-            encoding = IS_EIGHT_BIT;
-            return true;
-        } else {
-            encoding = IS_NOT_EIGHT_BIT;
-            return false;
+        synchronized (this) {
+            Assert.that((encoding & UNKNOWN_ENCODING) != 0);
+            if (String.isEightBitEnc(value, 0, count)) {
+                encoding = IS_EIGHT_BIT;
+                return true;
+            } else {
+                encoding = IS_NOT_EIGHT_BIT;
+                return false;
+            }
         }
     }
     
