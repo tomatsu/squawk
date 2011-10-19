@@ -63,7 +63,7 @@ In this example we will create a wrapper for calling the standard C function "cl
 </pre>
 
 Yes, we've side-stepped the issue of getting a file descriptor by calling open, because that API is slightly (only slightly) more complicated. 
-Now we create a class, create a Function pointer, and create a wrapper method.<p>
+Now we create a class, create a Function pointer, and create a wrapper method.<br><br>
 
 <table class="console"><tr><td><pre><code>
 public class <b>LibC</b> {
@@ -89,7 +89,7 @@ public class <b>LibC</b> {
 <h4>Example 2: Importing C function taking a string</h4>
 Importing C function that take C strings as arguments is a little harder.
 Also note that this API uses a set of
-constants that we had to hand-translate from C to Java:<p>
+constants that we had to hand-translate from C to Java:<br><br>
 
 <table class="console"><tr><td><pre><code>
     /*
@@ -121,7 +121,7 @@ constants that we had to hand-translate from C to Java:<p>
     }</code></pre></td></tr></table>
     
 <h4>Example 3: Calling simple C functions</h4>
-After the C functions have been imported it's then simple to call them from other Java code:<p>
+After the C functions have been imported it's then simple to call them from other Java code:<br><br>
 
 <table class="console"><tr><td><pre><code>
     public void <b>test</b>() {

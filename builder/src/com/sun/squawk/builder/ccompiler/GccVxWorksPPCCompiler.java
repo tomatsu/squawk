@@ -144,8 +144,6 @@ public class GccVxWorksPPCCompiler extends GccCompiler {
         //exec = "--gc-sections -o " + output + " " + Build.join(newObjects);
         exec = "-o " + output + " " + Build.join(newObjects);
         
-        // TODO: /WindRiver/... is hardcoded..  fix this?
-        //  env.exec(ccName + " -r -Wl,-X -T /WindRiver/vxworks-6.3/target/h/tool/gnu/ldscripts/link.OUT " + exec);
         // TODO: Generate the ctdt.o from the object and link it into the .out file.
         //       Without this, static variables will not be initialized.
         env.exec(ccName + " -nostdlib -r -Wl,-X " + exec);

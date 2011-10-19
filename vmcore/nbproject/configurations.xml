@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="69">
-  <logicalFolder name="root" displayName="root" projectFiles="true">
+<configurationDescriptor version="79">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <logicalFolder name="src" displayName="src" projectFiles="true">
       <logicalFolder name="rts" displayName="rts" projectFiles="true">
         <logicalFolder name="cc" displayName="cc" projectFiles="true">
@@ -10,10 +10,7 @@
           <itemPath>src/rts/cc/os_math.h</itemPath>
         </logicalFolder>
         <logicalFolder name="cortex-m3" displayName="cortex-m3" projectFiles="true">
-          <logicalFolder name="Pictures"
-                         displayName="Pictures"
-                         projectFiles="true"
-                         kind="SOURCE_LOGICAL_FOLDER">
+          <logicalFolder name="Pictures" displayName="Pictures" projectFiles="true">
             <itemPath>src/rts/cortex-m3/Pictures/IMG_20100817_160607.jpg</itemPath>
             <itemPath>src/rts/cortex-m3/Pictures/IMG_20100817_160639.jpg</itemPath>
             <itemPath>src/rts/cortex-m3/Pictures/IMG_20100817_160643.jpg</itemPath>
@@ -21,18 +18,9 @@
             <itemPath>src/rts/cortex-m3/Pictures/IMG_20100817_160706.jpg</itemPath>
             <itemPath>src/rts/cortex-m3/Pictures/IMG_20100817_160712.jpg</itemPath>
           </logicalFolder>
-          <logicalFolder name="src"
-                         displayName="src"
-                         projectFiles="true"
-                         kind="SOURCE_LOGICAL_FOLDER">
-            <logicalFolder name="MbedTest"
-                           displayName="MbedTest"
-                           projectFiles="true"
-                           kind="SOURCE_LOGICAL_FOLDER">
-              <logicalFolder name="include"
-                             displayName="include"
-                             projectFiles="true"
-                             kind="SOURCE_LOGICAL_FOLDER">
+          <logicalFolder name="src" displayName="src" projectFiles="true">
+            <logicalFolder name="MbedTest" displayName="MbedTest" projectFiles="true">
+              <logicalFolder name="include" displayName="include" projectFiles="true">
                 <itemPath>src/rts/cortex-m3/src/MbedTest/include/AnalogIn.h</itemPath>
                 <itemPath>src/rts/cortex-m3/src/MbedTest/include/AnalogOut.h</itemPath>
                 <itemPath>src/rts/cortex-m3/src/MbedTest/include/Base.h</itemPath>
@@ -215,9 +203,8 @@
   <confs>
     <conf name="Default" type="0">
       <toolsSet>
-        <developmentServer>localhost</developmentServer>
+        <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
         <compilerSet>GNU|GNU</compilerSet>
-        <platform>4</platform>
       </toolsSet>
       <makefileType>
         <makeTool>
@@ -230,9 +217,9 @@
               <pElem>C:/WindRiver/vxworks-6.3/target/h</pElem>
             </incDir>
             <preprocessorList>
-              <Elem>SDA_DEBUGGER=1</Elem>
               <Elem>MACROIZE=1</Elem>
               <Elem>PLATFORM_TYPE_NATIVE=1</Elem>
+              <Elem>SDA_DEBUGGER=1</Elem>
               <Elem>offsetof=1</Elem>
             </preprocessorList>
           </cTool>

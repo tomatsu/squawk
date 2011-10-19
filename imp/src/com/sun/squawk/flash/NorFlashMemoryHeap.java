@@ -161,10 +161,11 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
     }
 
     /**
+     * Update <code>block</code> object to contain info on memory at <code>sectorState</code> + <code>offset</code>.
      * 
-     * @param block
-     * @param sectorState
-     * @param offset
+     * @param block the object to update
+     * @param sectorState description of flash sector
+     * @param offset offset from beginning of flash sector
      * @return boolean true if there was a block at that address, false if not
      * @throws RecordStoreException
      */

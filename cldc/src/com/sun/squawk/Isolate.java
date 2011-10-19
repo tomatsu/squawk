@@ -2749,7 +2749,6 @@ public final class Isolate implements Runnable {
         this.breakpoints = breakpoints;
     }
 
-    // TODO: See if this can be conditional on ENABLE_DEBUGGER
     /**
      * The breakpoints that have been set in this isolate.
      * Read by the interpreter loop.

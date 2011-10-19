@@ -1816,16 +1816,15 @@ extern  void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddre
 
     if (ss == com_sun_squawk_VMThread_serviceStack) {
         fprintf(stderr, "    stack: %p. current stack is service stack\n", ss);
-        stackHigh = Address_add(ss, getArrayLength(ss) * HDR_BYTES_PER_WORD);
     } else if (printValueInRange(ss, "stack", com_sun_squawk_GC_ramStart, com_sun_squawk_GC_ramEnd, "RAM")) {
         int cid = com_sun_squawk_Klass_id(getClass(ss));
-        stackHigh = Address_add(ss, getArrayLength(ss) * HDR_BYTES_PER_WORD);
         if (cid == CID_LOCAL_ARRAY) {
             userStack = TRUE;
         } else {
             fprintf(stderr, "stack has bad class id: %x\n", cid);
         }
     }
+    stackHigh = Address_add(ss, getArrayLength(ss) * HDR_BYTES_PER_WORD);
     printValueInRange(_sp, "sp", sl, stackHigh, "current stack");
     printValueInRange(_fp, "fp", sl, stackHigh, "current stack");
 
@@ -1843,6 +1842,14 @@ extern  void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddre
             }
         }
 #endif
+    } else {
+        if (com_sun_squawk_GC_collecting) {
+            fprintf(stderr, "    in garbage collection\n");
+        }
+    }
+    
+    if (!com_sun_squawk_VM_extendsEnabled) {
+        fprintf(stderr, "    stack extension disabled\n");
     }
 
     fatalVMError("");

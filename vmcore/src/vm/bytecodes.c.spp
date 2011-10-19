@@ -767,7 +767,7 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
 #if ASSUME
 /*MAC*/ Address getClassOrAssociation(Address $oop) {
             /* Catches an attempt to dereference a forwarding pointer */
-            assume(((UWord)getObject($oop, HDR_klass) & HDR_headerTagMask) == 0);
+            assume(com_sun_squawk_GC_collecting || ((UWord)getObject($oop, HDR_klass) & HDR_headerTagMask) == 0);
             return getObject($oop, HDR_klass);
         }
 #else
@@ -1015,6 +1015,7 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
             } else {
                 int length = getArrayLength(str);
 #ifdef UNICODE
+				assume(((UWord)getObject(str, HDR_klass) & HDR_headerTagMask) == 0);
                 Address cls = getClass(str);
                 if (com_sun_squawk_Klass_id(cls) == com_sun_squawk_StringOfBytes) {
 #endif
@@ -1060,6 +1061,7 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
             } else {
                 int length = getArrayLength(str);
 #ifdef UNICODE
+				assume(((UWord)getObject(str, HDR_klass) & HDR_headerTagMask) == 0);
                 Address cls = getClass(str);
                 if (com_sun_squawk_Klass_id(cls) == com_sun_squawk_StringOfBytes) {
 #endif
@@ -1098,6 +1100,7 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
          */
 /*MAC*/ void callNoReset(Address $mth) {
             assumeInterp($mth != 0);
+			assumeInterp(((UWord)getObject($mth, HDR_klass) & HDR_headerTagMask) == 0);
             assumeInterp(com_sun_squawk_Klass_id(getClass($mth)) == CID_BYTECODE_ARRAY);
             assumeInterp(inCode($mth));
             checkReferenceSlots();
@@ -1325,7 +1328,8 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
                             Address reportedFP = frameOffsetAsPointer(ss, reportedFO);
                             Address reportedMP = getObject(reportedFP, FP_method);
                             Address currentMP = getObject($actual_fp, FP_method);
-
+							assumeInterp(((UWord)getObject(reportedMP, HDR_klass) & HDR_headerTagMask) == 0);
+							assumeInterp(((UWord)getObject(currentMP, HDR_klass) & HDR_headerTagMask) == 0);
                             Address classOfReportedMP = getClass(reportedMP);
                             Address classOfCurrentMP = getClass(currentMP);
 
@@ -3138,6 +3142,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
             resetStackPointerIfNotRevParms();
             obj = (Address)peek();
             nullCheck(obj);
+            assumeInterp(((UWord)getObject(obj, HDR_klass) & HDR_headerTagMask) == 0);
             cls = getClassOrAssociation(obj);
             callNoReset(getVirtualMethod(cls, iparm));
         }
@@ -3146,7 +3151,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
 /*outlin*/ int do_findslot0(Address oop, Address interfaceKlass, int iindex) {
             Address klass;
             int slot;
-
+			assumeInterp(((UWord)getObject(oop, HDR_klass) & HDR_headerTagMask) == 0);
             klass = getClass(oop);
             while (true) {
                 Address interfaces = com_sun_squawk_Klass_interfaces(klass);
@@ -3235,6 +3240,7 @@ foundSlot:
             Address mp = $mp;
             int nlocals, nstack;
             assumeInterp(com_sun_squawk_VM_extendsEnabled);
+			assumeInterp(inCode(mp));
             downPushAddress(fp);                        /* Save caller's frame pointer. */
             downPushAddress(mp);                        /* Method address.              */
             fp = sp;                                    /* Setup new frame pointer.     */
@@ -3270,10 +3276,13 @@ foundSlot:
                 assumeInterp(getUWord(ss, SC_guard) == 0);
                 if (com_sun_squawk_GC_traceFlags > 1) {
                     fprintf(stderr, format(
-                                            "*** Extending stack *** (stack size=%d, remaining stack=%d, bcount=%L)\n"),
+                                            "*** Extending stack *** (stack size=%d, remaining stack=%d, nlocals=%d, nstack=%d, slotsToClear=%d, mp=0x%x)\n"),
                                             getArrayLength(ss),
                                             sp - sl,
-                                            getBranchCount()
+                                            nlocals,
+                                            nstack,
+                                            $slotsToClear,
+                                            (int)mp
                                           );
                 }
                 if (usingServiceStack()) {
@@ -3511,6 +3520,14 @@ foundSlot:
         static int collectGarbage(Address, Address, int);
 /*end[GC2C]*/
 
+#if PLATFORM_TYPE_BARE_METAL
+#define checkNativeCall(_ptr_) fatalInterpreterError("checkNativeCall")
+#define endCheckNativeCall()
+#else
+#define checkNativeCall(_ptr_) nativeFuncPtr = _ptr_
+#define endCheckNativeCall() nativeFuncPtr = NULL
+#endif
+
         /**
          * invokenativemain.
          */
@@ -3710,17 +3727,19 @@ foundSlot:
                     break;
                 }
 
+                case Native_com_sun_squawk_NativeUnsafe_getAsByte:
+                    if (TYPEMAP) {
+                        int     off = popInt();
+                        Address base = popAddress();
+                        pushInt(getByteTyped(base, off, AddressType_ANY));
+                        break;
+                    } else {
+                        /* fall-through... */
+                    }
                 case Native_com_sun_squawk_NativeUnsafe_getByte: {
                     int     off = popInt();
                     Address base = popAddress();
                     pushInt(getByte(base, off));
-                    break;
-                }
-
-                case Native_com_sun_squawk_NativeUnsafe_getAsByte: {
-                    int     off = popInt();
-                    Address base = popAddress();
-                    pushInt(getByteTyped(base, off, AddressType_ANY));
                     break;
                 }
 
@@ -3732,17 +3751,19 @@ foundSlot:
                     break;
                 }
 
+                case Native_com_sun_squawk_NativeUnsafe_getAsShort:
+                    if (TYPEMAP) {
+                        int     off = popInt();
+                        Address base = popAddress();
+                        pushInt(getShortTyped(base, off, AddressType_ANY));
+                        break;
+                    } else {
+                         /* fall-through... */
+                    }
                 case Native_com_sun_squawk_NativeUnsafe_getShort: {
                     int     off = popInt();
                     Address base = popAddress();
                     pushInt(getShort(base, off));
-                    break;
-                }
-
-                case Native_com_sun_squawk_NativeUnsafe_getAsShort: {
-                    int     off = popInt();
-                    Address base = popAddress();
-                    pushInt(getShortTyped(base, off, AddressType_ANY));
                     break;
                 }
 
@@ -3756,6 +3777,7 @@ foundSlot:
                 case Native_com_sun_squawk_NativeUnsafe_charAt: {
                     int     off = popInt();
                     Address str = popAddress();
+					assumeInterp(((UWord)getObject(str, HDR_klass) & HDR_headerTagMask) == 0);
                     Address cls = getClass(str);
                     boundsAssume(str, off);
                     if (com_sun_squawk_Klass_id(cls) == com_sun_squawk_StringOfBytes) {
@@ -3766,6 +3788,16 @@ foundSlot:
                     break;
                 }
 
+                case Native_com_sun_squawk_NativeUnsafe_setUnalignedShort:
+                    if (!PLATFORM_UNALIGNED_LOADS) {
+                        int     val = popInt();
+                        int     off = popInt();
+                        Address base = popAddress();
+                        setUnalignedShort(base,  off, val);
+                        break;
+                    } else {
+                         /* fall-through... */
+                    }
                 case Native_com_sun_squawk_NativeUnsafe_setShort:
                 case Native_com_sun_squawk_NativeUnsafe_setChar: {
                     int     val = popInt();
@@ -3783,20 +3815,31 @@ foundSlot:
                     break;
                 }
 
-                case Native_com_sun_squawk_NativeUnsafe_getAsUWord: {
-                    int     off = popInt();
-                    Address base = popAddress();
-                    pushWord(getUWordTyped(base, off, AddressType_ANY));
-                    break;
-                }
-
-                case Native_com_sun_squawk_NativeUnsafe_getUWord: {
+               case Native_com_sun_squawk_NativeUnsafe_getAsUWord:
+                    if (TYPEMAP) {
+                        int     off = popInt();
+                        Address base = popAddress();
+                        pushWord(getUWordTyped(base, off, AddressType_ANY));
+                        break;
+                    } else {
+                         /* fall-through... */
+                    }
+               case Native_com_sun_squawk_NativeUnsafe_getUWord: {
                     int     off = popInt();
                     Address base = popAddress();
                     pushWord(getUWord(base, off));
                     break;
                 }
 
+               case Native_com_sun_squawk_NativeUnsafe_getAsInt:
+                    if (TYPEMAP) {
+                        int     off = popInt();
+                        Address base = popAddress();
+                        pushInt(getIntTyped(base, off, AddressType_ANY));
+                        break;
+                    } else {
+                         /* fall-through... */
+                    }
                 case Native_com_sun_squawk_NativeUnsafe_getInt: {
                     int     off = popInt();
                     Address base = popAddress();
@@ -3837,13 +3880,6 @@ foundSlot:
                     break;
                 }
 
-                case Native_com_sun_squawk_NativeUnsafe_getAsInt: {
-                    int     off = popInt();
-                    Address base = popAddress();
-                    pushInt(getIntTyped(base, off, AddressType_ANY));
-                    break;
-                }
-
                 case Native_com_sun_squawk_NativeUnsafe_setAddress: {
                     Address val = popAddress();
                     int     off = popInt();
@@ -3860,6 +3896,16 @@ foundSlot:
                     break;
                 }
 
+                case Native_com_sun_squawk_NativeUnsafe_setUnalignedInt:
+                    if (PLATFORM_UNALIGNED_LOADS) {
+                        int     val = popInt();
+                        int     off = popInt();
+                        Address base = popAddress();
+                        setUnalignedInt(base,  off, val);
+                        break;
+                    } else {
+                         /* fall-through... */
+                    }
                 case Native_com_sun_squawk_NativeUnsafe_setInt: {
                     int     val = popInt();
                     int     off = popInt();
@@ -3883,6 +3929,16 @@ foundSlot:
                     break;
                 }
 
+               case Native_com_sun_squawk_NativeUnsafe_setUnalignedLong:
+                    if (PLATFORM_UNALIGNED_64_LOADS) {
+                        jlong   val = popLong();
+                        int     off = popInt();
+                        Address base = popAddress();
+                        setUnalignedLong(base,  off, val);
+                        break;
+                    } else {
+                         /* fall-through... */
+                    }
                 case Native_com_sun_squawk_NativeUnsafe_setLong: {
                     jlong   val = popLong();
                     int     off = popInt();
@@ -3903,30 +3959,6 @@ foundSlot:
                     int     off = popInt();
                     Address base = popAddress();
                     setLongAtWord(base,  off, val);
-                    break;
-                }
-
-                 case Native_com_sun_squawk_NativeUnsafe_setUnalignedInt: {
-                    int     val = popInt();
-                    int     off = popInt();
-                    Address base = popAddress();
-                    setUnalignedInt(base,  off, val);
-                    break;
-                }
-
-               case Native_com_sun_squawk_NativeUnsafe_setUnalignedLong: {
-                    jlong   val = popLong();
-                    int     off = popInt();
-                    Address base = popAddress();
-                    setUnalignedLong(base,  off, val);
-                    break;
-                }
-
-                case Native_com_sun_squawk_NativeUnsafe_setUnalignedShort: {
-                    int     val = popInt();
-                    int     off = popInt();
-                    Address base = popAddress();
-                    setUnalignedShort(base,  off, val);
                     break;
                 }
 
@@ -3955,14 +3987,15 @@ foundSlot:
                     break;
                 }
 
+/* DO WE WANT TO SUPPORT NATIVEUNSAFE_CALLS IN BARE_METAL SYSTEMS???? */
                 case Native_com_sun_squawk_NativeUnsafe_call0: {
                     Address address = popAddress();
                     funcPtr0 fptr = (funcPtr0)address;
                     int result;
-                    nativeFuncPtr = fptr;
+                    checkNativeCall(fptr);
                     result = (*fptr)();
                     set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
-                    nativeFuncPtr = NULL;
+                    endCheckNativeCall();
                     pushInt(result);
                     break;
                 }
@@ -3972,10 +4005,10 @@ foundSlot:
                     Address address = popAddress();
                     funcPtr1 fptr = (funcPtr1)address;
                     int result;
-                    nativeFuncPtr = fptr;
+                    checkNativeCall(fptr);
                     result = (*fptr)(i1);
                     set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
-                    nativeFuncPtr = NULL;
+                    endCheckNativeCall();
                     pushInt(result);
                     break;
                 }
@@ -3986,10 +4019,10 @@ foundSlot:
                     Address address = popAddress();
                     funcPtr2 fptr = (funcPtr2)address;
                     int result;
-                    nativeFuncPtr = fptr;
+                    checkNativeCall(fptr);
                     result = (*fptr)(i1, i2);
                     set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
-                    nativeFuncPtr = NULL;
+                    endCheckNativeCall();
                     pushInt(result);
                     break;
                 }
@@ -4001,10 +4034,10 @@ foundSlot:
                     Address address = popAddress();
                     funcPtr3 fptr = (funcPtr3)address;
                     int result;
-                    nativeFuncPtr = fptr;
+                    checkNativeCall(fptr);
                     result = (*fptr)(i1, i2, i3);
                     set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
-                    nativeFuncPtr = NULL;
+                    endCheckNativeCall();
                     pushInt(result);
                     break;
                 }
@@ -4017,10 +4050,10 @@ foundSlot:
                     Address address = popAddress();
                     funcPtr4 fptr = (funcPtr4)address;
                     int result;
-                    nativeFuncPtr = fptr;
+                    checkNativeCall(fptr);
                     result = (*fptr)(i1, i2, i3, i4);
                     set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
-                    nativeFuncPtr = NULL;
+                    endCheckNativeCall();
                     pushInt(result);
                     break;
                 }
@@ -4034,10 +4067,10 @@ foundSlot:
                     Address address = popAddress();
                     funcPtr5 fptr = (funcPtr5)address;
                     int result;
-                    nativeFuncPtr = fptr;
+                    checkNativeCall(fptr);
                     result = (*fptr)(i1, i2, i3, i4, i5);
                     set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
-                    nativeFuncPtr = NULL;
+                    endCheckNativeCall();
                     pushInt(result);
                     break;
                 }
@@ -4052,10 +4085,10 @@ foundSlot:
                     Address address = popAddress();
                     funcPtr6 fptr = (funcPtr6)address;
                     int result;
-                    nativeFuncPtr = fptr;
+                    checkNativeCall(fptr);
                     result = (*fptr)(i1, i2, i3, i4, i5, i6);
                     set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
-                    nativeFuncPtr = NULL;
+                    endCheckNativeCall();
                     pushInt(result);
                     break;
                 }
@@ -4075,10 +4108,10 @@ foundSlot:
                     Address address = popAddress();
                     funcPtr10 fptr = (funcPtr10)address;
                     int result;
-                    nativeFuncPtr = fptr;
+                    checkNativeCall(fptr);
                     result = (*fptr)(i1, i2, i3, i4, i5, i6, i7, i8, i9, i10);
                     set_com_sun_squawk_VMThread_errno(com_sun_squawk_VMThread_currentThread, errno);
-                    nativeFuncPtr = NULL;
+                    endCheckNativeCall();
                     pushInt(result);
                     break;
                 }
@@ -4562,6 +4595,7 @@ foundSlot:
                     break;
                 }
 
+/*if[ENABLE_ISOLATE_MIGRATION]*/
                 case Native_com_sun_squawk_VM_executeCOG: {
                     Address o2  = popAddress();
                     Address o1  = popAddress();
@@ -4573,6 +4607,7 @@ foundSlot:
                     threadSwitchFor(com_sun_squawk_ServiceOperation_COPY_OBJECT_GRAPH);
                     break;
                 }
+/*end[ENABLE_ISOLATE_MIGRATION]*/
 
                 case Native_com_sun_squawk_VM_executeGC: {
                     boolean forceFullGC = popInt();
@@ -5691,6 +5726,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
             if (usingServiceStack()) {
                 Address exception = popAddress();
                 fprintf(stderr, "do_throw on service stack. current code=%d:\n", com_sun_squawk_ServiceOperation_code);
+                assumeInterp(exception == null || ((UWord)getObject(exception, HDR_klass) & HDR_headerTagMask) == 0);
                 if (exception != NULL && getClass(exception) != NULL) {
                     printJavaStrSafely(com_sun_squawk_Klass_name(getClass(exception)), "class");
                     printJavaStrSafely(java_lang_Throwable_detailMessage(exception), "detail message");
@@ -5737,6 +5773,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
             Address assn;
 
             nullCheck(obj);
+            assumeInterp(((UWord)getObject(obj, HDR_klass) & HDR_headerTagMask) == 0);
             assn = getClassOrAssociation(obj);
             if (unlikely(MONITOR_CACHE_SIZE == 0 || associationToKlass(assn) != assn || pendingMonitorStackPointer == MONITOR_CACHE_SIZE ||
 						 !(hi(obj, com_sun_squawk_GC_ramStart) && loeq(obj, com_sun_squawk_GC_ramEnd)))) {
@@ -5767,6 +5804,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
             Address assn;
 
             nullCheck(obj);
+            assumeInterp(((UWord)getObject(obj, HDR_klass) & HDR_headerTagMask) == 0);
             assn = getClassOrAssociation(obj);
             updatePendingMonitorAccesses();
             if (unlikely(MONITOR_CACHE_SIZE == 0 || associationToKlass(assn) != assn || pendingMonitorStackPointer == 0 ||

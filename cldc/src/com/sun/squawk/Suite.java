@@ -222,7 +222,8 @@ public final class Suite {
     }
 
 	/**
-	 * Gets the contents of a resource file embedded in the suite.
+	 * Gets the contents of a resource file embedded in the suite. 
+     * Search parent suites for data before this suite.
 	 *
 	 * @param name the name of the resource file whose contents is to be retrieved
 	 * @return the resource data, or null if the resource file doesn't exist

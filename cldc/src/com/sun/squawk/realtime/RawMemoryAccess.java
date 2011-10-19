@@ -1122,7 +1122,6 @@ public class RawMemoryAccess {
     public void setLong(long offset, long value) {
         int off = (int)offset;
         checkWrite(off, 8);
-        // @todo handle misaligned data!
         NativeUnsafe.setUnalignedLong(vbase, off, value);
 
     }
@@ -1211,7 +1210,6 @@ public class RawMemoryAccess {
     public void setShort(long offset, short value) {
         int off = (int)offset;
         checkWrite(off, 2);
-        // @todo handle misaligned data!
         NativeUnsafe.setUnalignedShort(vbase, off, value);
     }
 
