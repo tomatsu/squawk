@@ -58,14 +58,9 @@ public class ObjectTable {
     private final Klass definedClass;
 
     /**
-     * If true, try to do dead string elimination
+     * If true, try to do dead string elimination on this class
      */
     private boolean safeToDoDeadStringElim;
-
-    /**
-     * If true, try to do dead class elimination
-     */
-    private static boolean safeToDoDeadClassElim;
 
     /**
      * If true, try to do dead class elimination
@@ -79,13 +74,18 @@ public class ObjectTable {
         // We shouldn't do dead string elimination on vm2c classes as long as vm2c relies on
         // the constant table for string constants.
         vm2cClasses = new Hashtable();
-        vm2cClasses.put("com.sun.squawk.VM", "VM2C Class");
-        vm2cClasses.put("com.sun.squawk.GarbageCollector", "VM2C Class");
-        vm2cClasses.put("com.sun.squawk.Lisp2GenerationalCollector", "VM2C Class");
+        vm2cClasses.put("com.sun.squawk.VM",                            "VM2C Class");
+        vm2cClasses.put("com.sun.squawk.GarbageCollector",              "VM2C Class");
+/*if[GC2C]*/
+/*if[GC_com.sun.squawk.Lisp2GenerationalCollector]*/
+        vm2cClasses.put("com.sun.squawk.Lisp2GenerationalCollector",    "VM2C Class");
         vm2cClasses.put("com.sun.squawk.Lisp2GenerationalCollector$MarkingStack", "VM2C Class");
-//        vm2cClasses.put("com.sun.squawk.Lisp2Collector", "VM2C Class");
-//        vm2cClasses.put("com.sun.squawk.Lisp2Collector$MarkingStack", "VM2C Class");
-        safeToDoDeadClassElim = Arg.get(Arg.DEAD_CLASS_ELIMINATION).getBool();
+/*end[GC_com.sun.squawk.Lisp2GenerationalCollector]*/
+/*if[GC_com.sun.squawk.Lisp2Collector]*/
+        vm2cClasses.put("com.sun.squawk.Lisp2Collector",                "VM2C Class");
+        vm2cClasses.put("com.sun.squawk.Lisp2Collector$MarkingStack",   "VM2C Class");
+/*end[GC_com.sun.squawk.Lisp2Collector]*/
+/*end[GC2C]*/
         safeToDoDeadMethodElim = Arg.get(Arg.DEAD_METHOD_ELIMINATION).getBool();
     }
 
@@ -249,43 +249,8 @@ public class ObjectTable {
         if (counter == null) {
             throw new java.util.NoSuchElementException();
         }
-
-//        if (recordUse) {
-//            counter.incEmittedCounter();
-//		}
         return counter.getIndex();
     }
-
-//    /**
-//     * Force a reference to an object in the object table
-//     *
-//     * @param object the object to reference
-//     * @throws java.util.NoSuchElementException if the object table does not contain <code>object</code>
-//     */
-//    public void referenceConstantObject(Object object) {
-//        ObjectCounter counter = (ObjectCounter)objectTable.get(object);
-//        if (counter == null) {
-//            throw new java.util.NoSuchElementException();
-//        }
-//
-//        counter.incEmittedCounter();
-//    }
-//
-//    public void reportActualUsage() {
-//        boolean firstTime = true;
-//        Enumeration e = objectTable.elements();
-//        while (e.hasMoreElements()) {
-//            ObjectCounter counter = (ObjectCounter)e.nextElement();
-//            if (counter.getEmittedCounter() == 0) {
-//                if (firstTime) {
-//                    System.out.println("====== Object usage in class " + definedClass);
-//                    firstTime = false;
-//                }
-//                System.out.println("Actual object usage different for " + counter.getObject());
-//                System.out.println("    expected use: " + counter.getCounter() + ", actual use: " + counter.getEmittedCounter());
-//            }
-//        }
-//    }
 
     /**
      * Merge the objects and usage counts from methodObjectTable into this object table
@@ -353,22 +318,11 @@ public class ObjectTable {
             }
         });
 
-//System.err.println(""+definedClass+" list = "+list.length);
         for (int i = 0 ; i < list.length ; i++) {
-//System.err.println("    "+list[i]);
             ObjectCounter oc = ((ObjectCounter) list[i]);
             list[i] = oc.getObject();
         }
         return list;
-    }
-  
-    static void printSmallConstantObjectArray(Translator translator, Klass klass, Object[] list) {
-        if (translator.dce.isMarked(klass) && (list.length > 0 && list.length < 16)) {
-            System.out.println("=================== Small object table for " + klass);
-            for (int i = 0; i < list.length; i++) {
-                System.out.println("    [" + i + "] = " + list[i]);
-            }
-        }
     }
 
 }
@@ -393,11 +347,6 @@ final class ObjectCounter {
      */
     private int counter;
 
-//    /**
-//     * Use in emitted code counter.
-//     */
-//    private int emittedUseCounter;
-
     /**
      * Constructor.
      *
@@ -407,7 +356,6 @@ final class ObjectCounter {
         this.object = object;
         this.index  = index;
 		this.counter = 1;
-//		this.emittedUseCounter = 0;
     }
 
     /**
@@ -452,22 +400,6 @@ final class ObjectCounter {
     public int getCounter() {
         return counter;
     }
-
-//     /**
-//     * Add 1 to the counter.
-//     */
-//    public void incEmittedCounter() {
-//        emittedUseCounter++;
-//    }
-//
-//    /**
-//     * Get the counter value.
-//     *
-//     * @return the value
-//     */
-//    public int getEmittedCounter() {
-//        return emittedUseCounter;
-//    }
 
     /**
      * Gets a String representation.

@@ -406,9 +406,6 @@ public class Romizer {
             // Install resources found
             for (int i=0, maxI=resources.size(); i < maxI; i++) {
                 ResourceFile resourceFile = (ResourceFile) resources.elementAt(i);
-//                if (VM.isVerbose()) {
-                    System.out.println("[Including resource: " + resourceFile.name + "]");
-//                }
                 suite.installResource(resourceFile);
             }
             // Install the jad properties passed on the command line

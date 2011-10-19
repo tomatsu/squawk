@@ -371,7 +371,6 @@ public class Jam extends Thread {
     	if (parent != null) {
     		args.add("-parent:" + parent);
     	}
-    	args.add("-metadata");
     	String cp = "-cp";
     	for (String string : classPath) {
 			cp += ":" + string;

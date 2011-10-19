@@ -228,24 +228,35 @@ public final class Suite {
 	 * @return the resource data, or null if the resource file doesn't exist
 	 */
 	public byte [] getResourceData(String name) {
+        int index = getResourceDataIndex(name);
+        if (index < 0) {
+            return null;
+        }
+		return resourceFiles[index].data;
+	}
+    
+    /**
+	 * Gets the index of the resource file embedded in the suite.
+	 *
+	 * @param name the name of the resource file whose contents is to be retrieved
+	 * @return the index of the resource data, or -1 if the resource file doesn't exist
+	 */
+	public int getResourceDataIndex(String name) {
+        int index = -1;
         // Look in parents first
         if (!isBootstrap()) {
-            byte[] bytes = parent.getResourceData(name);
-            if (bytes != null) {
-                return bytes;
+            index = parent.getResourceDataIndex(name);
+            if (index >= 0) {
+                return index;
             }
         }
-        int index = -1;
         for (int i=0; i < resourceFiles.length; i++) {
             if (resourceFiles[i].name.equals(name)) {
                 index = i;
                 break;
             }
         }
-        if (index < 0) {
-            return null;
-        }
-		return resourceFiles[index].data;
+        return index;
 	}
 
 	/**
@@ -578,12 +589,24 @@ public final class Suite {
 	 */
 	public void installResource(ResourceFile resourceFile) {
 		checkWrite();
-        System.arraycopy(resourceFiles, 0, resourceFiles = new ResourceFile[resourceFiles.length + 1], 0, resourceFiles.length - 1);
-        resourceFiles[resourceFiles.length - 1] = resourceFile;
         if (resourceFile.name.toUpperCase().equals(PROPERTIES_MANIFEST_RESOURCE_NAME)) {
+            if (resourceFile.length == 0) {
+                return; // ignore empty manifest files
+            }
             isPropertiesManifestResourceInstalled = true;
             // Add the properties defined in the manifest file
             loadProperties(resourceFile.data);
+        }
+        int index = getResourceDataIndex(resourceFile.name); 
+        if (index < 0) {
+//          if (VM.isVerbose()) {
+            System.out.println("[Including resource: " + resourceFile.name + "]");
+//          }
+            System.arraycopy(resourceFiles, 0, resourceFiles = new ResourceFile[resourceFiles.length + 1], 0, resourceFiles.length - 1);
+            resourceFiles[resourceFiles.length - 1] = resourceFile;
+        } else { // replace duplicates
+            System.out.println("[Replacing resource: " + resourceFile.name + "]");
+            resourceFiles[index] = resourceFile;
         }
 	}
 

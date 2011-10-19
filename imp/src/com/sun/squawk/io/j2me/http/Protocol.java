@@ -494,7 +494,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         private ByteArrayOutputStream output;
         private boolean opened;
 
-        public PrivateOutputStream() {
+        PrivateOutputStream() {
             output = new ByteArrayOutputStream();
             opened=true;
         }
@@ -957,7 +957,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             index += 2;
         }
 
-    int n = buf.indexOf(':');
+        int n = buf.indexOf(':');
 
         if (n < 0) n = buf.indexOf('/');
 

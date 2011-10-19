@@ -287,7 +287,10 @@ public class RomCommand extends Command {
 
             for (Target.FilePair fp: classesLocations) {
                 File file = fp.getFile();
-                romizerArgs.add(file.getPath());
+                String path = file.getPath();
+                if (!romizerArgs.contains(path)) {
+                    romizerArgs.add(path);
+                }
             }
 
             if (createMetadatas) {

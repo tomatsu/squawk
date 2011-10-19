@@ -199,7 +199,6 @@ public class JamCommand extends Command {
         command.add("-mac");
         command.add("-o2");
         command.add("rom");
-        command.add("-metadata");
         command.add("-strip:d");
         command.add("cldc");
         if (includeImp) {

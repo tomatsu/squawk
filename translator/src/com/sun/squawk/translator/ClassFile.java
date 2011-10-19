@@ -1,35 +1,34 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
 package com.sun.squawk.translator;
 
-import java.util.Enumeration;
 import java.util.Vector;
 import com.sun.squawk.util.*;
 import com.sun.squawk.translator.ci.*;
 import com.sun.squawk.*;
-import java.util.Hashtable;
 
 /**
  * This represents a class that has not yet been loaded and linked.
@@ -195,7 +194,7 @@ public final class ClassFile {
 
         objectTable.mergeMethodsObjectTable(translator, staticMethods, true);
         objectTable.mergeMethodsObjectTable(translator, virtualMethods, false);
-        if (Arg.get(Arg.OPTIMIZE_CONSTANT_OBJECTS).getBool() && (translator.dce == null) || translator.dce.isMarked(definedClass)) {
+        if (Arg.get(Arg.OPTIMIZE_CONSTANT_OBJECTS).getBool() && ((translator.dce == null) || translator.dce.isMarked(definedClass))) {
             objectTable.sortObjectTable();
         }
     }
@@ -214,7 +213,7 @@ public final class ClassFile {
      *
      * @param translator   the translation context
      * @param isStatic     specifies static or virtual methods
-     * @param phase        the convertion phase number to perform (1 or 2) or 0 for both
+     * @param phase        the conversion phase number to perform (1 or 2) or 0 for both
      * @param bodies       {@link Vector} to insert method bodies into
      */
     private void convertMethods(Translator translator, boolean isStatic, int phase, Vector bodies) {
