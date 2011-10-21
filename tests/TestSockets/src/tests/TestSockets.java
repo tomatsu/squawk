@@ -22,7 +22,12 @@ public class TestSockets extends MIDlet {
     }
     
     protected void startApp() throws MIDletStateChangeException {
-        System.out.println("Do not run as a midlet, run as a class with a main method...");
+        String[] args = {"labs.oracle.com"};
+		try {
+			main(args);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
         notifyDestroyed();
     }
 

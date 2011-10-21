@@ -3146,48 +3146,6 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
             cls = getClassOrAssociation(obj);
             callNoReset(getVirtualMethod(cls, iparm));
         }
-
-#if FALSE
-/*outlin*/ int do_findslot0(Address oop, Address interfaceKlass, int iindex) {
-            Address klass;
-            int slot;
-			assumeInterp(((UWord)getObject(oop, HDR_klass) & HDR_headerTagMask) == 0);
-            klass = getClass(oop);
-            while (true) {
-                Address interfaces = com_sun_squawk_Klass_interfaces(klass);
-                int interfacesCount = getArrayLength(interfaces);
-                int i;
-
-                for (i = 0; i < interfacesCount; i++) {
-                    if (getObject(interfaces, i) == interfaceKlass) {
-                        Address vtableMaps = com_sun_squawk_Klass_interfaceVTableMaps(klass);
-                        Address vtableMap = getObject(vtableMaps, i);
-                        boundsAssume(vtableMap, iindex);
-                        slot = getShort(vtableMap, iindex);
-                        goto foundSlot;
-                    }
-                }
-                klass = com_sun_squawk_Klass_superType(klass);
-                if (klass == null) {
-                    /* this can occur if malicious bytecode takes advantage of "interface type erasure" in the preverifier,
-                     * so the object doesn't actually implement the expected interface. The runtime has to check this case
-                     */
-                    return -1;
-                }
-
-                /* Abstract classes do not contain interfaceVTableMaps, so skip those.
-                 * Note that the initial class we check is a concrete class, as is the last class
-                 * (java.lang.Object)
-                 */
-                while ((com_sun_squawk_Klass_modifiers(klass) & com_sun_squawk_Modifier_ABSTRACT) != 0) {
-                    klass = com_sun_squawk_Klass_superType(klass);
-                }
-
-            }
-foundSlot:
-           return slot;
-        }
-#endif
         
         /**
          * findslot.
@@ -3787,17 +3745,7 @@ foundSlot:
                     }
                     break;
                 }
-
-                case Native_com_sun_squawk_NativeUnsafe_setUnalignedShort:
-                    if (!PLATFORM_UNALIGNED_LOADS) {
-                        int     val = popInt();
-                        int     off = popInt();
-                        Address base = popAddress();
-                        setUnalignedShort(base,  off, val);
-                        break;
-                    } else {
-                         /* fall-through... */
-                    }
+                
                 case Native_com_sun_squawk_NativeUnsafe_setShort:
                 case Native_com_sun_squawk_NativeUnsafe_setChar: {
                     int     val = popInt();
@@ -3848,23 +3796,23 @@ foundSlot:
                 }
 
                 case Native_com_sun_squawk_NativeUnsafe_getUnalignedInt: {
-                    int     off = popInt();
+                    int     byte_off = popInt();
                     Address base = popAddress();
-                    pushInt(getUnalignedInt(base, off));
+                    pushInt(getUnalignedInt(base, byte_off));
                     break;
                 }
 
                 case Native_com_sun_squawk_NativeUnsafe_getUnalignedLong: {
-                    int     off = popInt();
+                    int     byte_off = popInt();
                     Address base = popAddress();
-                    pushLong(getUnalignedLong(base, off));
+                    pushLong(getUnalignedLong(base, byte_off));
                     break;
                 }
 
                 case Native_com_sun_squawk_NativeUnsafe_getUnalignedShort: {
-                    int     off = popInt();
+                    int     byte_off = popInt();
                     Address base = popAddress();
-                    pushInt(getUnalignedShort(base, off));
+                    pushInt(getUnalignedShort(base, byte_off));
                     break;
                 }
 
@@ -3895,17 +3843,7 @@ foundSlot:
                     setObjectAndUpdateWriteBarrier(base,  off, val);
                     break;
                 }
-
-                case Native_com_sun_squawk_NativeUnsafe_setUnalignedInt:
-                    if (PLATFORM_UNALIGNED_LOADS) {
-                        int     val = popInt();
-                        int     off = popInt();
-                        Address base = popAddress();
-                        setUnalignedInt(base,  off, val);
-                        break;
-                    } else {
-                         /* fall-through... */
-                    }
+                
                 case Native_com_sun_squawk_NativeUnsafe_setInt: {
                     int     val = popInt();
                     int     off = popInt();
@@ -3928,17 +3866,7 @@ foundSlot:
                     pushLong(getLong(base, off));
                     break;
                 }
-
-               case Native_com_sun_squawk_NativeUnsafe_setUnalignedLong:
-                    if (PLATFORM_UNALIGNED_64_LOADS) {
-                        jlong   val = popLong();
-                        int     off = popInt();
-                        Address base = popAddress();
-                        setUnalignedLong(base,  off, val);
-                        break;
-                    } else {
-                         /* fall-through... */
-                    }
+               
                 case Native_com_sun_squawk_NativeUnsafe_setLong: {
                     jlong   val = popLong();
                     int     off = popInt();
@@ -3962,6 +3890,30 @@ foundSlot:
                     break;
                 }
 
+                case Native_com_sun_squawk_NativeUnsafe_setUnalignedShort: {
+                    int     val = popInt();
+                    int     byte_off = popInt();
+                    Address base = popAddress();
+                    setUnalignedShort(base, byte_off, val);
+                    break;
+                }
+                
+                case Native_com_sun_squawk_NativeUnsafe_setUnalignedInt: {
+                    int     val = popInt();
+                    int     byte_off = popInt();
+                    Address base = popAddress();
+                    setUnalignedInt(base, byte_off, val);
+                    break;
+                }
+
+                case Native_com_sun_squawk_NativeUnsafe_setUnalignedLong: {
+                    jlong   val = popLong();
+                    int     byte_off = popInt();
+                    Address base = popAddress();
+                    setUnalignedLong(base, byte_off, val);
+                    break;
+                }
+               
                 case Native_com_sun_squawk_NativeUnsafe_swap: {
                     int dataSize = popInt();
                     Address address = popAddress();

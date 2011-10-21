@@ -22,7 +22,8 @@ public class TestFiles extends MIDlet {
     }
     
     protected void startApp() throws MIDletStateChangeException {
-        System.out.println("Do not run as a midlet, run as a class with a main method...");
+        String[] args = {"file://build.properties"};
+		main(args);
         notifyDestroyed();
     }
 
@@ -48,6 +49,11 @@ public class TestFiles extends MIDlet {
             System.err.println("starting twiddler");
 
             twiddler.start();
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
 
             StreamConnection conn = null;
             InputStream is = null;
