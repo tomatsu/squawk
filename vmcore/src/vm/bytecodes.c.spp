@@ -1015,8 +1015,8 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
             } else {
                 int length = getArrayLength(str);
 #ifdef UNICODE
-				assume(((UWord)getObject(str, HDR_klass) & HDR_headerTagMask) == 0);
                 Address cls = getClass(str);
+				assume(((UWord)getObject(str, HDR_klass) & HDR_headerTagMask) == 0);
                 if (com_sun_squawk_Klass_id(cls) == com_sun_squawk_StringOfBytes) {
 #endif
                     unsigned char *chars = (unsigned char *)str;
@@ -1061,8 +1061,8 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
             } else {
                 int length = getArrayLength(str);
 #ifdef UNICODE
-				assume(((UWord)getObject(str, HDR_klass) & HDR_headerTagMask) == 0);
                 Address cls = getClass(str);
+				assume(((UWord)getObject(str, HDR_klass) & HDR_headerTagMask) == 0);
                 if (com_sun_squawk_Klass_id(cls) == com_sun_squawk_StringOfBytes) {
 #endif
                     unsigned char *chars = (unsigned char *)str;
@@ -1330,11 +1330,13 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
                             Address currentMP = getObject($actual_fp, FP_method);
 							assumeInterp(((UWord)getObject(reportedMP, HDR_klass) & HDR_headerTagMask) == 0);
 							assumeInterp(((UWord)getObject(currentMP, HDR_klass) & HDR_headerTagMask) == 0);
-                            Address classOfReportedMP = getClass(reportedMP);
-                            Address classOfCurrentMP = getClass(currentMP);
+                            {
+                                Address classOfReportedMP = getClass(reportedMP);
+                                Address classOfCurrentMP = getClass(currentMP);
 
-                            if (classOfReportedMP == classOfCurrentMP) {
-                                break;
+                                if (classOfReportedMP == classOfCurrentMP) {
+                                    break;
+                                }
                             }
                         }
 
@@ -3735,7 +3737,6 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                 case Native_com_sun_squawk_NativeUnsafe_charAt: {
                     int     off = popInt();
                     Address str = popAddress();
-					assumeInterp(((UWord)getObject(str, HDR_klass) & HDR_headerTagMask) == 0);
                     Address cls = getClass(str);
                     boundsAssume(str, off);
                     if (com_sun_squawk_Klass_id(cls) == com_sun_squawk_StringOfBytes) {
