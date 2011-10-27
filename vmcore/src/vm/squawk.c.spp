@@ -891,7 +891,9 @@ void usage() {
     printf("                    32: heap trace after each GC\n");
     printf("                    64: include heap contents in heap trace\n");
 #endif
+#if (com_sun_squawk_GC_GC_TRACING_SUPPORTED | com_sun_squawk_GarbageCollector_HEAP_TRACE)
     printf("    -Xtgca:<n>     start GC tracing at collection 'n' (0)\n");
+#endif
 #if TRACE
     printf("    -Xts:<n>       start tracing after 'n' backward branches\n");
     printf("    -Xte:<n>       stop tracing after 'n' backward branches\n");
@@ -1190,17 +1192,20 @@ fprintf(stderr, "&&&& Special int val2 = %lx\n", val2);
     assume(isWordAligned((UWord)com_sun_squawk_VMThread_serviceStack));
 
     if (DEBUG_STARTUP || com_sun_squawk_GC_traceFlags != 0) {
-        fprintf(stderr, format("ROM relocated to %x\n"), com_sun_squawk_VM_romStart);
         printRange("ROM       ", (char*)com_sun_squawk_VM_romStart, (char*)com_sun_squawk_VM_romEnd);
         printRange("Suite     ", (char*)suite, (char*)((char*) suite + bootstrapSize));
         printRange("Memory    ", (char*)memory, (char*)memoryEnd);
 #if TYPEMAP
         printRange("Type map  ", (char*)getTypePointer(memory), (char*)getTypePointer(memoryEnd));
 #endif /* TYPEMAP */
+#if DEFAULT_NVM_SIZE
         printRange("NVM       ", (char*)com_sun_squawk_GC_nvmStart, (char*)com_sun_squawk_GC_nvmEnd);
+#endif
         printRange("RAM       ", (char*)com_sun_squawk_GC_ramStart, (char*)com_sun_squawk_GC_ramEnd);
         printRange("ServiceStk", (char*)com_sun_squawk_VMThread_serviceStack, (char*)Address_add(com_sun_squawk_VMThread_serviceStack, SERVICE_CHUNK_SIZE_MINUS2WORDS));
+#if DEBUG_STARTUP
         printRange("argv      ", (char*)com_sun_squawk_VM_argv, (char*)Address_add(memory, offset));
+#endif
     }
 
     return suite;
@@ -1356,8 +1361,6 @@ void setupSignals() {
 
 }
 
-
-
 #endif  // the new way
 #endif // FLASH_MEMORY
 
@@ -1418,8 +1421,10 @@ Address processArgs(char *argv[], const int argc) {
                 ramSize = roundDownToWord(parseQuantity(arg+3, wholeArg));
             } else if (startsWith(arg, "boot:")) {
                 bootstrapSuiteFile = arg + 5;
+#if (com_sun_squawk_GC_GC_TRACING_SUPPORTED | com_sun_squawk_GarbageCollector_HEAP_TRACE)
             } else if (startsWith(arg, "tgca:")) {
                 com_sun_squawk_GC_traceThreshold = parseQuantity(arg+5, wholeArg);
+#endif
             } else if (startsWith(arg, "tgc:")) {
                 com_sun_squawk_GC_traceFlags = parseQuantity(arg+4, wholeArg);
 #ifndef FLASH_MEMORY

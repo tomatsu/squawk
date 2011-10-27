@@ -41,6 +41,9 @@
 #undef PLATFORM_UNALIGNED_LOADS
 #define PLATFORM_UNALIGNED_LOADS false
 
+// don't support the NVM space, or -Xmxnvm option
+#define DEFAULT_NVM_SIZE   0
+
 #define SERVICE_CHUNK_SIZE (8*1024)
 #define IODOTC "9200-io.c"
 

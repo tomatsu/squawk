@@ -31,7 +31,7 @@
 
 /**
  * This struct encapsulates all the globals in the Squawk VM. This allows
- * a system to be built with several seporate VM execution contexts.
+ * a system to be built with several separate VM execution contexts.
  */
 typedef struct globalsStruct {
     Address     _memory;                     /* The buffer containing ROM, NVM, RAM and serviceChunk */

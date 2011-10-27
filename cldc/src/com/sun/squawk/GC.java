@@ -207,7 +207,7 @@ public class GC implements GlobalStaticFields {
 
     /**
      * The number of collections that must occur before garbage collector
-     * tracing is enabled.
+     * tracing is enabled. Only effective if GarbageCollector.HEAP_TRACE || GC.GC_TRACING_SUPPORTED.
      */
     private static int traceThreshold;
 
