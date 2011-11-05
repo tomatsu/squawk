@@ -148,7 +148,7 @@ void osMilliSleep(long long millisecondsToWait) {
 //  diagnosticWithValue("GLOBAL_WAITFOREVENT - deepSleepEnabled", deepSleepEnabled);
 //	diagnosticWithValue("GLOBAL_WAITFOREVENT - sleepManagerRunning", sleepManagerRunning);
 //	diagnosticWithValue("GLOBAL_WAITFOREVENT - minimumDeepSleepMillis", minimumDeepSleepMillis);
-    if ((millisecondsToWait <= 0x7FFFFFFFFFFFFFFFLL) && deepSleepEnabled && !sleepManagerRunning && (millisecondsToWait >= minimumDeepSleepMillis)) {
+    if (deepSleepEnabled && !sleepManagerRunning && (millisecondsToWait >= minimumDeepSleepMillis)) {
 //	    diagnosticWithValue("GLOBAL_WAITFOREVENT - deep sleeping for", (int)millisecondsToWait);
         setDeepSleepEventOutstanding(target);
     } else {
