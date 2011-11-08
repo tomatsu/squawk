@@ -42,6 +42,9 @@ import com.sun.squawk.util.Arrays;
 import com.sun.squawk.util.Comparer;
 import com.sun.squawk.util.UnexpectedException;
 
+/**
+ * The collection of INorFlashSectorStates for a particular record store.
+ */
 public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
 
     public static final byte ERASED_VALUE = (byte) 0xFF;

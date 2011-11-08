@@ -46,7 +46,6 @@ import com.sun.squawk.*;
  * @see     Comparer
  * @since   1.2
  */
-
 public class Arrays {
     // Suppresses default constructor, ensuring non-instantiability.
     private Arrays() {
@@ -65,7 +64,7 @@ public class Arrays {
      * @param a the array to be sorted.
      */
     public static void sort(long[] a) {
-    sort1(a, 0, a.length);
+        sort1(a, 0, a.length);
     }
 
     /**
@@ -90,7 +89,7 @@ public class Arrays {
      */
     public static void sort(long[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-    sort1(a, fromIndex, toIndex-fromIndex);
+        sort1(a, fromIndex, toIndex - fromIndex);
     }
 
     /**
@@ -104,7 +103,7 @@ public class Arrays {
      * @param a the array to be sorted.
      */
     public static void sort(int[] a) {
-    sort1(a, 0, a.length);
+        sort1(a, 0, a.length);
     }
 
     /**
@@ -129,7 +128,7 @@ public class Arrays {
      */
     public static void sort(int[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-    sort1(a, fromIndex, toIndex-fromIndex);
+        sort1(a, fromIndex, toIndex - fromIndex);
     }
 
     /**
@@ -143,7 +142,7 @@ public class Arrays {
      * @param a the array to be sorted.
      */
     public static void sort(short[] a) {
-    sort1(a, 0, a.length);
+        sort1(a, 0, a.length);
     }
 
     /**
@@ -168,7 +167,7 @@ public class Arrays {
      */
     public static void sort(short[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-    sort1(a, fromIndex, toIndex-fromIndex);
+        sort1(a, fromIndex, toIndex - fromIndex);
     }
 
     /**
@@ -182,7 +181,7 @@ public class Arrays {
      * @param a the array to be sorted.
      */
     public static void sort(char[] a) {
-    sort1(a, 0, a.length);
+        sort1(a, 0, a.length);
     }
 
     /**
@@ -207,7 +206,7 @@ public class Arrays {
      */
     public static void sort(char[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-    sort1(a, fromIndex, toIndex-fromIndex);
+        sort1(a, fromIndex, toIndex - fromIndex);
     }
 
     /**
@@ -221,7 +220,7 @@ public class Arrays {
      * @param a the array to be sorted.
      */
     public static void sort(byte[] a) {
-    sort1(a, 0, a.length);
+        sort1(a, 0, a.length);
     }
 
     /**
@@ -246,11 +245,10 @@ public class Arrays {
      */
     public static void sort(byte[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-    sort1(a, fromIndex, toIndex-fromIndex);
+        sort1(a, fromIndex, toIndex - fromIndex);
     }
 
 /*if[FLOATS]*/
-
     /**
      * Sorts the specified array of doubles into ascending numerical order.
      * <p>
@@ -277,7 +275,7 @@ public class Arrays {
      * @param a the array to be sorted.
      */
     public static void sort(double[] a) {
-    sort2(a, 0, a.length);
+        sort2(a, 0, a.length);
     }
 
     /**
@@ -316,7 +314,7 @@ public class Arrays {
      */
     public static void sort(double[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-    sort2(a, fromIndex, toIndex);
+        sort2(a, fromIndex, toIndex);
     }
 
     /**
@@ -345,7 +343,7 @@ public class Arrays {
      * @param a the array to be sorted.
      */
     public static void sort(float[] a) {
-    sort2(a, 0, a.length);
+        sort2(a, 0, a.length);
     }
 
     /**
@@ -384,7 +382,7 @@ public class Arrays {
      */
     public static void sort(float[] a, int fromIndex, int toIndex) {
         rangeCheck(a.length, fromIndex, toIndex);
-    sort2(a, fromIndex, toIndex);
+        sort2(a, fromIndex, toIndex);
     }
 
     private static void sort2(double a[], int fromIndex, int toIndex) {
@@ -400,13 +398,13 @@ public class Arrays {
          */
         int numNegZeros = 0;
         int i = fromIndex, n = toIndex;
-        while(i < n) {
+        while (i < n) {
             if (a[i] != a[i]) {
-        double swap = a[i];
+                double swap = a[i];
                 a[i] = a[--n];
                 a[n] = swap;
             } else {
-                if (a[i]==0 && Double.doubleToLongBits(a[i])==NEG_ZERO_BITS) {
+                if (a[i] == 0 && Double.doubleToLongBits(a[i]) == NEG_ZERO_BITS) {
                     a[i] = 0.0d;
                     numNegZeros++;
                 }
@@ -415,21 +413,21 @@ public class Arrays {
         }
 
         // Main sort phase: quicksort everything but the NaN's
-        sort1(a, fromIndex, n-fromIndex);
+        sort1(a, fromIndex, n - fromIndex);
 
         // Postprocessing phase: change 0.0's to -0.0's as required
         if (numNegZeros != 0) {
-            int j = binarySearch(a, 0.0d, fromIndex, n-1); // posn of ANY zero
+            int j = binarySearch(a, 0.0d, fromIndex, n - 1); // posn of ANY zero
             do {
                 j--;
-            } while (j>=0 && a[j]==0.0d);
+            } while (j >= 0 && a[j] == 0.0d);
 
             // j is now one less than the index of the FIRST zero
-            for (int k=0; k<numNegZeros; k++)
+            for (int k = 0; k < numNegZeros; k++) {
                 a[++j] = -0.0d;
+            }
         }
     }
-
 
     private static void sort2(float a[], int fromIndex, int toIndex) {
         final int NEG_ZERO_BITS = Float.floatToIntBits(-0.0f);
@@ -444,13 +442,13 @@ public class Arrays {
          */
         int numNegZeros = 0;
         int i = fromIndex, n = toIndex;
-        while(i < n) {
+        while (i < n) {
             if (a[i] != a[i]) {
-        float swap = a[i];
+                float swap = a[i];
                 a[i] = a[--n];
                 a[n] = swap;
             } else {
-                if (a[i]==0 && Float.floatToIntBits(a[i])==NEG_ZERO_BITS) {
+                if (a[i] == 0 && Float.floatToIntBits(a[i]) == NEG_ZERO_BITS) {
                     a[i] = 0.0f;
                     numNegZeros++;
                 }
@@ -459,618 +457,679 @@ public class Arrays {
         }
 
         // Main sort phase: quicksort everything but the NaN's
-        sort1(a, fromIndex, n-fromIndex);
+        sort1(a, fromIndex, n - fromIndex);
 
         // Postprocessing phase: change 0.0's to -0.0's as required
         if (numNegZeros != 0) {
-            int j = binarySearch(a, 0.0f, fromIndex, n-1); // posn of ANY zero
+            int j = binarySearch(a, 0.0f, fromIndex, n - 1); // posn of ANY zero
             do {
                 j--;
-            } while (j>=0 && a[j]==0.0f);
+            } while (j >= 0 && a[j] == 0.0f);
 
             // j is now one less than the index of the FIRST zero
-            for (int k=0; k<numNegZeros; k++)
+            for (int k = 0; k < numNegZeros; k++) {
                 a[++j] = -0.0f;
+            }
         }
     }
-
-
 /*end[FLOATS]*/
 
     /*
      * The code for each of the seven primitive types is largely identical.
      * C'est la vie.
      */
-
     /**
      * Sorts the specified sub-array of longs into ascending order.
      */
     private static void sort1(long x[], int off, int len) {
-    // Insertion sort on smallest arrays
-    if (len < 7) {
-        for (int i=off; i<len+off; i++)
-        for (int j=i; j>off && x[j-1]>x[j]; j--)
-            swap(x, j, j-1);
-        return;
-    }
-
-    // Choose a partition element, v
-    int m = off + (len >> 1);       // Small arrays, middle element
-    if (len > 7) {
-        int l = off;
-        int n = off + len - 1;
-        if (len > 40) {        // Big arrays, pseudomedian of 9
-        int s = len/8;
-        l = med3(x, l,     l+s, l+2*s);
-        m = med3(x, m-s,   m,   m+s);
-        n = med3(x, n-2*s, n-s, n);
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i = off; i < len + off; i++) {
+                for (int j = i; j > off && x[j - 1] > x[j]; j--) {
+                    swap(x, j, j - 1);
+                }
+            }
+            return;
         }
-        m = med3(x, l, m, n); // Mid-size, med of 3
-    }
-    long v = x[m];
 
-    // Establish Invariant: v* (<v)* (>v)* v*
-    int a = off, b = a, c = off + len - 1, d = c;
-    while(true) {
-        while (b <= c && x[b] <= v) {
-        if (x[b] == v)
-            swap(x, a++, b);
-        b++;
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len / 8;
+                l = med3(x, l, l + s, l + 2 * s);
+                m = med3(x, m - s, m, m + s);
+                n = med3(x, n - 2 * s, n - s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
         }
-        while (c >= b && x[c] >= v) {
-        if (x[c] == v)
-            swap(x, c, d--);
-        c--;
+        long v = x[m];
+
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while (true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v) {
+                    swap(x, a++, b);
+                }
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v) {
+                    swap(x, c, d--);
+                }
+                c--;
+            }
+            if (b > c) {
+                break;
+            }
+            swap(x, b++, c--);
         }
-        if (b > c)
-        break;
-        swap(x, b++, c--);
-    }
 
-    // Swap partition elements back to middle
-    int s, n = off + len;
-    s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-    s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a - off, b - a);
+        vecswap(x, off, b - s, s);
+        s = Math.min(d - c, n - d - 1);
+        vecswap(x, b, n - s, s);
 
-    // Recursively sort non-partition-elements
-    if ((s = b-a) > 1)
-        sort1(x, off, s);
-    if ((s = d-c) > 1)
-        sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b - a) > 1) {
+            sort1(x, off, s);
+        }
+        if ((s = d - c) > 1) {
+            sort1(x, n - s, s);
+        }
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(long x[], int a, int b) {
-    long t = x[a];
-    x[a] = x[b];
-    x[b] = t;
+        long t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(long x[], int a, int b, int n) {
-    for (int i=0; i<n; i++, a++, b++)
-        swap(x, a, b);
+        for (int i = 0; i < n; i++, a++, b++) {
+            swap(x, a, b);
+        }
     }
 
     /**
      * Returns the index of the median of the three indexed longs.
      */
     private static int med3(long x[], int a, int b, int c) {
-    return (x[a] < x[b] ?
-        (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-        (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b]
+                ? (x[b] < x[c] ? b : x[a] < x[c] ? c : a)
+                : (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
 
     /**
      * Sorts the specified sub-array of integers into ascending order.
      */
     private static void sort1(int x[], int off, int len) {
-    // Insertion sort on smallest arrays
-    if (len < 7) {
-        for (int i=off; i<len+off; i++)
-        for (int j=i; j>off && x[j-1]>x[j]; j--)
-            swap(x, j, j-1);
-        return;
-    }
-
-    // Choose a partition element, v
-    int m = off + (len >> 1);       // Small arrays, middle element
-    if (len > 7) {
-        int l = off;
-        int n = off + len - 1;
-        if (len > 40) {        // Big arrays, pseudomedian of 9
-        int s = len/8;
-        l = med3(x, l,     l+s, l+2*s);
-        m = med3(x, m-s,   m,   m+s);
-        n = med3(x, n-2*s, n-s, n);
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i = off; i < len + off; i++) {
+                for (int j = i; j > off && x[j - 1] > x[j]; j--) {
+                    swap(x, j, j - 1);
+                }
+            }
+            return;
         }
-        m = med3(x, l, m, n); // Mid-size, med of 3
-    }
-    int v = x[m];
 
-    // Establish Invariant: v* (<v)* (>v)* v*
-    int a = off, b = a, c = off + len - 1, d = c;
-    while(true) {
-        while (b <= c && x[b] <= v) {
-        if (x[b] == v)
-            swap(x, a++, b);
-        b++;
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len / 8;
+                l = med3(x, l, l + s, l + 2 * s);
+                m = med3(x, m - s, m, m + s);
+                n = med3(x, n - 2 * s, n - s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
         }
-        while (c >= b && x[c] >= v) {
-        if (x[c] == v)
-            swap(x, c, d--);
-        c--;
+        int v = x[m];
+
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while (true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v) {
+                    swap(x, a++, b);
+                }
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v) {
+                    swap(x, c, d--);
+                }
+                c--;
+            }
+            if (b > c) {
+                break;
+            }
+            swap(x, b++, c--);
         }
-        if (b > c)
-        break;
-        swap(x, b++, c--);
-    }
 
-    // Swap partition elements back to middle
-    int s, n = off + len;
-    s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-    s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a - off, b - a);
+        vecswap(x, off, b - s, s);
+        s = Math.min(d - c, n - d - 1);
+        vecswap(x, b, n - s, s);
 
-    // Recursively sort non-partition-elements
-    if ((s = b-a) > 1)
-        sort1(x, off, s);
-    if ((s = d-c) > 1)
-        sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b - a) > 1) {
+            sort1(x, off, s);
+        }
+        if ((s = d - c) > 1) {
+            sort1(x, n - s, s);
+        }
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(int x[], int a, int b) {
-    int t = x[a];
-    x[a] = x[b];
-    x[b] = t;
+        int t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(int x[], int a, int b, int n) {
-    for (int i=0; i<n; i++, a++, b++)
-        swap(x, a, b);
+        for (int i = 0; i < n; i++, a++, b++) {
+            swap(x, a, b);
+        }
     }
 
     /**
      * Returns the index of the median of the three indexed integers.
      */
     private static int med3(int x[], int a, int b, int c) {
-    return (x[a] < x[b] ?
-        (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-        (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b]
+                ? (x[b] < x[c] ? b : x[a] < x[c] ? c : a)
+                : (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
 
     /**
      * Sorts the specified sub-array of shorts into ascending order.
      */
     private static void sort1(short x[], int off, int len) {
-    // Insertion sort on smallest arrays
-    if (len < 7) {
-        for (int i=off; i<len+off; i++)
-        for (int j=i; j>off && x[j-1]>x[j]; j--)
-            swap(x, j, j-1);
-        return;
-    }
-
-    // Choose a partition element, v
-    int m = off + (len >> 1);       // Small arrays, middle element
-    if (len > 7) {
-        int l = off;
-        int n = off + len - 1;
-        if (len > 40) {        // Big arrays, pseudomedian of 9
-        int s = len/8;
-        l = med3(x, l,     l+s, l+2*s);
-        m = med3(x, m-s,   m,   m+s);
-        n = med3(x, n-2*s, n-s, n);
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i = off; i < len + off; i++) {
+                for (int j = i; j > off && x[j - 1] > x[j]; j--) {
+                    swap(x, j, j - 1);
+                }
+            }
+            return;
         }
-        m = med3(x, l, m, n); // Mid-size, med of 3
-    }
-    short v = x[m];
 
-    // Establish Invariant: v* (<v)* (>v)* v*
-    int a = off, b = a, c = off + len - 1, d = c;
-    while(true) {
-        while (b <= c && x[b] <= v) {
-        if (x[b] == v)
-            swap(x, a++, b);
-        b++;
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len / 8;
+                l = med3(x, l, l + s, l + 2 * s);
+                m = med3(x, m - s, m, m + s);
+                n = med3(x, n - 2 * s, n - s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
         }
-        while (c >= b && x[c] >= v) {
-        if (x[c] == v)
-            swap(x, c, d--);
-        c--;
+        short v = x[m];
+
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while (true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v) {
+                    swap(x, a++, b);
+                }
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v) {
+                    swap(x, c, d--);
+                }
+                c--;
+            }
+            if (b > c) {
+                break;
+            }
+            swap(x, b++, c--);
         }
-        if (b > c)
-        break;
-        swap(x, b++, c--);
-    }
 
-    // Swap partition elements back to middle
-    int s, n = off + len;
-    s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-    s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a - off, b - a);
+        vecswap(x, off, b - s, s);
+        s = Math.min(d - c, n - d - 1);
+        vecswap(x, b, n - s, s);
 
-    // Recursively sort non-partition-elements
-    if ((s = b-a) > 1)
-        sort1(x, off, s);
-    if ((s = d-c) > 1)
-        sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b - a) > 1) {
+            sort1(x, off, s);
+        }
+        if ((s = d - c) > 1) {
+            sort1(x, n - s, s);
+        }
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(short x[], int a, int b) {
-    short t = x[a];
-    x[a] = x[b];
-    x[b] = t;
+        short t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(short x[], int a, int b, int n) {
-    for (int i=0; i<n; i++, a++, b++)
-        swap(x, a, b);
+        for (int i = 0; i < n; i++, a++, b++) {
+            swap(x, a, b);
+        }
     }
 
     /**
      * Returns the index of the median of the three indexed shorts.
      */
     private static int med3(short x[], int a, int b, int c) {
-    return (x[a] < x[b] ?
-        (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-        (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b]
+                ? (x[b] < x[c] ? b : x[a] < x[c] ? c : a)
+                : (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
-
 
     /**
      * Sorts the specified sub-array of chars into ascending order.
      */
     private static void sort1(char x[], int off, int len) {
-    // Insertion sort on smallest arrays
-    if (len < 7) {
-        for (int i=off; i<len+off; i++)
-        for (int j=i; j>off && x[j-1]>x[j]; j--)
-            swap(x, j, j-1);
-        return;
-    }
-
-    // Choose a partition element, v
-    int m = off + (len >> 1);       // Small arrays, middle element
-    if (len > 7) {
-        int l = off;
-        int n = off + len - 1;
-        if (len > 40) {        // Big arrays, pseudomedian of 9
-        int s = len/8;
-        l = med3(x, l,     l+s, l+2*s);
-        m = med3(x, m-s,   m,   m+s);
-        n = med3(x, n-2*s, n-s, n);
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i = off; i < len + off; i++) {
+                for (int j = i; j > off && x[j - 1] > x[j]; j--) {
+                    swap(x, j, j - 1);
+                }
+            }
+            return;
         }
-        m = med3(x, l, m, n); // Mid-size, med of 3
-    }
-    char v = x[m];
 
-    // Establish Invariant: v* (<v)* (>v)* v*
-    int a = off, b = a, c = off + len - 1, d = c;
-    while(true) {
-        while (b <= c && x[b] <= v) {
-        if (x[b] == v)
-            swap(x, a++, b);
-        b++;
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len / 8;
+                l = med3(x, l, l + s, l + 2 * s);
+                m = med3(x, m - s, m, m + s);
+                n = med3(x, n - 2 * s, n - s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
         }
-        while (c >= b && x[c] >= v) {
-        if (x[c] == v)
-            swap(x, c, d--);
-        c--;
+        char v = x[m];
+
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while (true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v) {
+                    swap(x, a++, b);
+                }
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v) {
+                    swap(x, c, d--);
+                }
+                c--;
+            }
+            if (b > c) {
+                break;
+            }
+            swap(x, b++, c--);
         }
-        if (b > c)
-        break;
-        swap(x, b++, c--);
-    }
 
-    // Swap partition elements back to middle
-    int s, n = off + len;
-    s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-    s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a - off, b - a);
+        vecswap(x, off, b - s, s);
+        s = Math.min(d - c, n - d - 1);
+        vecswap(x, b, n - s, s);
 
-    // Recursively sort non-partition-elements
-    if ((s = b-a) > 1)
-        sort1(x, off, s);
-    if ((s = d-c) > 1)
-        sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b - a) > 1) {
+            sort1(x, off, s);
+        }
+        if ((s = d - c) > 1) {
+            sort1(x, n - s, s);
+        }
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(char x[], int a, int b) {
-    char t = x[a];
-    x[a] = x[b];
-    x[b] = t;
+        char t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(char x[], int a, int b, int n) {
-    for (int i=0; i<n; i++, a++, b++)
-        swap(x, a, b);
+        for (int i = 0; i < n; i++, a++, b++) {
+            swap(x, a, b);
+        }
     }
 
     /**
      * Returns the index of the median of the three indexed chars.
      */
     private static int med3(char x[], int a, int b, int c) {
-    return (x[a] < x[b] ?
-        (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-        (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b]
+                ? (x[b] < x[c] ? b : x[a] < x[c] ? c : a)
+                : (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
-
 
     /**
      * Sorts the specified sub-array of bytes into ascending order.
      */
     private static void sort1(byte x[], int off, int len) {
-    // Insertion sort on smallest arrays
-    if (len < 7) {
-        for (int i=off; i<len+off; i++)
-        for (int j=i; j>off && x[j-1]>x[j]; j--)
-            swap(x, j, j-1);
-        return;
-    }
-
-    // Choose a partition element, v
-    int m = off + (len >> 1);       // Small arrays, middle element
-    if (len > 7) {
-        int l = off;
-        int n = off + len - 1;
-        if (len > 40) {        // Big arrays, pseudomedian of 9
-        int s = len/8;
-        l = med3(x, l,     l+s, l+2*s);
-        m = med3(x, m-s,   m,   m+s);
-        n = med3(x, n-2*s, n-s, n);
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i = off; i < len + off; i++) {
+                for (int j = i; j > off && x[j - 1] > x[j]; j--) {
+                    swap(x, j, j - 1);
+                }
+            }
+            return;
         }
-        m = med3(x, l, m, n); // Mid-size, med of 3
-    }
-    byte v = x[m];
 
-    // Establish Invariant: v* (<v)* (>v)* v*
-    int a = off, b = a, c = off + len - 1, d = c;
-    while(true) {
-        while (b <= c && x[b] <= v) {
-        if (x[b] == v)
-            swap(x, a++, b);
-        b++;
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len / 8;
+                l = med3(x, l, l + s, l + 2 * s);
+                m = med3(x, m - s, m, m + s);
+                n = med3(x, n - 2 * s, n - s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
         }
-        while (c >= b && x[c] >= v) {
-        if (x[c] == v)
-            swap(x, c, d--);
-        c--;
+        byte v = x[m];
+
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while (true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v) {
+                    swap(x, a++, b);
+                }
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v) {
+                    swap(x, c, d--);
+                }
+                c--;
+            }
+            if (b > c) {
+                break;
+            }
+            swap(x, b++, c--);
         }
-        if (b > c)
-        break;
-        swap(x, b++, c--);
-    }
 
-    // Swap partition elements back to middle
-    int s, n = off + len;
-    s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-    s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a - off, b - a);
+        vecswap(x, off, b - s, s);
+        s = Math.min(d - c, n - d - 1);
+        vecswap(x, b, n - s, s);
 
-    // Recursively sort non-partition-elements
-    if ((s = b-a) > 1)
-        sort1(x, off, s);
-    if ((s = d-c) > 1)
-        sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b - a) > 1) {
+            sort1(x, off, s);
+        }
+        if ((s = d - c) > 1) {
+            sort1(x, n - s, s);
+        }
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(byte x[], int a, int b) {
-    byte t = x[a];
-    x[a] = x[b];
-    x[b] = t;
+        byte t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(byte x[], int a, int b, int n) {
-    for (int i=0; i<n; i++, a++, b++)
-        swap(x, a, b);
+        for (int i = 0; i < n; i++, a++, b++) {
+            swap(x, a, b);
+        }
     }
 
     /**
      * Returns the index of the median of the three indexed bytes.
      */
     private static int med3(byte x[], int a, int b, int c) {
-    return (x[a] < x[b] ?
-        (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-        (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b]
+                ? (x[b] < x[c] ? b : x[a] < x[c] ? c : a)
+                : (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
 
-
 /*if[FLOATS]*/
-
     /**
      * Sorts the specified sub-array of doubles into ascending order.
      */
     private static void sort1(double x[], int off, int len) {
-    // Insertion sort on smallest arrays
-    if (len < 7) {
-        for (int i=off; i<len+off; i++)
-        for (int j=i; j>off && x[j-1]>x[j]; j--)
-            swap(x, j, j-1);
-        return;
-    }
-
-    // Choose a partition element, v
-    int m = off + (len >> 1);       // Small arrays, middle element
-    if (len > 7) {
-        int l = off;
-        int n = off + len - 1;
-        if (len > 40) {        // Big arrays, pseudomedian of 9
-        int s = len/8;
-        l = med3(x, l,     l+s, l+2*s);
-        m = med3(x, m-s,   m,   m+s);
-        n = med3(x, n-2*s, n-s, n);
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i = off; i < len + off; i++) {
+                for (int j = i; j > off && x[j - 1] > x[j]; j--) {
+                    swap(x, j, j - 1);
+                }
+            }
+            return;
         }
-        m = med3(x, l, m, n); // Mid-size, med of 3
-    }
-    double v = x[m];
 
-    // Establish Invariant: v* (<v)* (>v)* v*
-    int a = off, b = a, c = off + len - 1, d = c;
-    while(true) {
-        while (b <= c && x[b] <= v) {
-        if (x[b] == v)
-            swap(x, a++, b);
-        b++;
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len / 8;
+                l = med3(x, l, l + s, l + 2 * s);
+                m = med3(x, m - s, m, m + s);
+                n = med3(x, n - 2 * s, n - s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
         }
-        while (c >= b && x[c] >= v) {
-        if (x[c] == v)
-            swap(x, c, d--);
-        c--;
+        double v = x[m];
+
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while (true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v) {
+                    swap(x, a++, b);
+                }
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v) {
+                    swap(x, c, d--);
+                }
+                c--;
+            }
+            if (b > c) {
+                break;
+            }
+            swap(x, b++, c--);
         }
-        if (b > c)
-        break;
-        swap(x, b++, c--);
-    }
 
-    // Swap partition elements back to middle
-    int s, n = off + len;
-    s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-    s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a - off, b - a);
+        vecswap(x, off, b - s, s);
+        s = Math.min(d - c, n - d - 1);
+        vecswap(x, b, n - s, s);
 
-    // Recursively sort non-partition-elements
-    if ((s = b-a) > 1)
-        sort1(x, off, s);
-    if ((s = d-c) > 1)
-        sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b - a) > 1) {
+            sort1(x, off, s);
+        }
+        if ((s = d - c) > 1) {
+            sort1(x, n - s, s);
+        }
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(double x[], int a, int b) {
-    double t = x[a];
-    x[a] = x[b];
-    x[b] = t;
+        double t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(double x[], int a, int b, int n) {
-    for (int i=0; i<n; i++, a++, b++)
-        swap(x, a, b);
+        for (int i = 0; i < n; i++, a++, b++) {
+            swap(x, a, b);
+        }
     }
 
     /**
      * Returns the index of the median of the three indexed doubles.
      */
     private static int med3(double x[], int a, int b, int c) {
-    return (x[a] < x[b] ?
-        (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-        (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b]
+                ? (x[b] < x[c] ? b : x[a] < x[c] ? c : a)
+                : (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
-
 
     /**
      * Sorts the specified sub-array of floats into ascending order.
      */
     private static void sort1(float x[], int off, int len) {
-    // Insertion sort on smallest arrays
-    if (len < 7) {
-        for (int i=off; i<len+off; i++)
-        for (int j=i; j>off && x[j-1]>x[j]; j--)
-            swap(x, j, j-1);
-        return;
-    }
-
-    // Choose a partition element, v
-    int m = off + (len >> 1);       // Small arrays, middle element
-    if (len > 7) {
-        int l = off;
-        int n = off + len - 1;
-        if (len > 40) {        // Big arrays, pseudomedian of 9
-        int s = len/8;
-        l = med3(x, l,     l+s, l+2*s);
-        m = med3(x, m-s,   m,   m+s);
-        n = med3(x, n-2*s, n-s, n);
+        // Insertion sort on smallest arrays
+        if (len < 7) {
+            for (int i = off; i < len + off; i++) {
+                for (int j = i; j > off && x[j - 1] > x[j]; j--) {
+                    swap(x, j, j - 1);
+                }
+            }
+            return;
         }
-        m = med3(x, l, m, n); // Mid-size, med of 3
-    }
-    float v = x[m];
 
-    // Establish Invariant: v* (<v)* (>v)* v*
-    int a = off, b = a, c = off + len - 1, d = c;
-    while(true) {
-        while (b <= c && x[b] <= v) {
-        if (x[b] == v)
-            swap(x, a++, b);
-        b++;
+        // Choose a partition element, v
+        int m = off + (len >> 1);       // Small arrays, middle element
+        if (len > 7) {
+            int l = off;
+            int n = off + len - 1;
+            if (len > 40) {        // Big arrays, pseudomedian of 9
+                int s = len / 8;
+                l = med3(x, l, l + s, l + 2 * s);
+                m = med3(x, m - s, m, m + s);
+                n = med3(x, n - 2 * s, n - s, n);
+            }
+            m = med3(x, l, m, n); // Mid-size, med of 3
         }
-        while (c >= b && x[c] >= v) {
-        if (x[c] == v)
-            swap(x, c, d--);
-        c--;
+        float v = x[m];
+
+        // Establish Invariant: v* (<v)* (>v)* v*
+        int a = off, b = a, c = off + len - 1, d = c;
+        while (true) {
+            while (b <= c && x[b] <= v) {
+                if (x[b] == v) {
+                    swap(x, a++, b);
+                }
+                b++;
+            }
+            while (c >= b && x[c] >= v) {
+                if (x[c] == v) {
+                    swap(x, c, d--);
+                }
+                c--;
+            }
+            if (b > c) {
+                break;
+            }
+            swap(x, b++, c--);
         }
-        if (b > c)
-        break;
-        swap(x, b++, c--);
-    }
 
-    // Swap partition elements back to middle
-    int s, n = off + len;
-    s = Math.min(a-off, b-a  );  vecswap(x, off, b-s, s);
-    s = Math.min(d-c,   n-d-1);  vecswap(x, b,   n-s, s);
+        // Swap partition elements back to middle
+        int s, n = off + len;
+        s = Math.min(a - off, b - a);
+        vecswap(x, off, b - s, s);
+        s = Math.min(d - c, n - d - 1);
+        vecswap(x, b, n - s, s);
 
-    // Recursively sort non-partition-elements
-    if ((s = b-a) > 1)
-        sort1(x, off, s);
-    if ((s = d-c) > 1)
-        sort1(x, n-s, s);
+        // Recursively sort non-partition-elements
+        if ((s = b - a) > 1) {
+            sort1(x, off, s);
+        }
+        if ((s = d - c) > 1) {
+            sort1(x, n - s, s);
+        }
     }
 
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(float x[], int a, int b) {
-    float t = x[a];
-    x[a] = x[b];
-    x[b] = t;
+        float t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
      * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
      */
     private static void vecswap(float x[], int a, int b, int n) {
-    for (int i=0; i<n; i++, a++, b++)
-        swap(x, a, b);
+        for (int i = 0; i < n; i++, a++, b++) {
+            swap(x, a, b);
+        }
     }
 
     /**
      * Returns the index of the median of the three indexed floats.
      */
     private static int med3(float x[], int a, int b, int c) {
-    return (x[a] < x[b] ?
-        (x[b] < x[c] ? b : x[a] < x[c] ? c : a) :
-        (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
+        return (x[a] < x[b]
+                ? (x[b] < x[c] ? b : x[a] < x[c] ? c : a)
+                : (x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
-
 /*end[FLOATS]*/
-
 
     /**
      * Sorts the specified array of objects into ascending order, according to
@@ -1097,7 +1156,7 @@ public class Arrays {
 //        Object aux[] = (Object[])a.clone();
 //        mergeSort(aux, a, 0, a.length);
 //    }
-
+    
     /**
      * Sorts the specified range of the specified array of objects into
      * ascending order, according to the <i>natural ordering</i> of its
@@ -1135,7 +1194,6 @@ public class Arrays {
 //        Object aux[] = (Object[])a.clone();  // Optimization opportunity
 //        mergeSort(aux, a, fromIndex, toIndex);
 //    }
-
 //    private static void mergeSort(Object src[], Object dest[],
 //                                  int low, int high) {
 //    int length = high - low;
@@ -1150,7 +1208,7 @@ public class Arrays {
 //    }
 //
 //        // Recursively sort halves of dest into src
-//        int mid = (low + high) >>> 1;
+//        int mid = (low + high) >> 1;
 //        mergeSort(dest, src, low, mid);
 //        mergeSort(dest, src, mid, high);
 //
@@ -1169,14 +1227,14 @@ public class Arrays {
 //                dest[i] = src[q++];
 //        }
 //    }
-
+    
     /**
      * Swaps x[a] with x[b].
      */
     private static void swap(Object x[], int a, int b) {
-    Object t = x[a];
-    x[a] = x[b];
-    x[b] = t;
+        Object t = x[a];
+        x[a] = x[b];
+        x[b] = t;
     }
 
     /**
@@ -1201,7 +1259,6 @@ public class Arrays {
      * @see Comparer
      */
     public static void sort(Object[] a, Comparer c) {
-//        Object aux[] = (Object[])a.clone();
         Object aux[] = new Object[a.length];
         System.arraycopy(a, 0, aux, 0, aux.length);
         mergeSort(aux, a, 0, a.length, c);
@@ -1240,7 +1297,7 @@ public class Arrays {
      * @see Comparer
      */
     public static void sort(Object[] a, int fromIndex, int toIndex,
-                            Comparer c) {
+            Comparer c) {
         rangeCheck(a.length, fromIndex, toIndex);
 //        Object aux[] = (Object[])a.clone();
         Object aux[] = new Object[a.length];
@@ -1248,20 +1305,22 @@ public class Arrays {
 //        if (c==null)
 //            mergeSort(aux, a, fromIndex, toIndex);
 //        else
-            mergeSort(aux, a, fromIndex, toIndex, c);
+        mergeSort(aux, a, fromIndex, toIndex, c);
     }
 
     private static void mergeSort(Object src[], Object dest[],
-                                  int low, int high, Comparer c) {
-    int length = high - low;
+            int low, int high, Comparer c) {
+        int length = high - low;
 
-    // Insertion sort on smallest arrays
-    if (length < 7) {
-        for (int i=low; i<high; i++)
-        for (int j=i; j>low && c.compare(dest[j-1], dest[j])>0; j--)
-            swap(dest, j, j-1);
-        return;
-    }
+        // Insertion sort on smallest arrays
+        if (length < 7) {
+            for (int i = low; i < high; i++) {
+                for (int j = i; j > low && c.compare(dest[j - 1], dest[j]) > 0; j--) {
+                    swap(dest, j, j - 1);
+                }
+            }
+            return;
+        }
 
         // Recursively sort halves of dest into src
         int mid = (low + high) >>> 1;
@@ -1270,17 +1329,18 @@ public class Arrays {
 
         // If list is already sorted, just copy from src to dest.  This is an
         // optimization that results in faster sorts for nearly ordered lists.
-        if (c.compare(src[mid-1], src[mid]) <= 0) {
-           System.arraycopy(src, low, dest, low, length);
-           return;
+        if (c.compare(src[mid - 1], src[mid]) <= 0) {
+            System.arraycopy(src, low, dest, low, length);
+            return;
         }
 
         // Merge sorted halves (now in src) into dest
-        for(int i = low, p = low, q = mid; i < high; i++) {
-            if (q>=high || p<mid && c.compare(src[p], src[q]) <= 0)
+        for (int i = low, p = low, q = mid; i < high; i++) {
+            if (q >= high || p < mid && c.compare(src[p], src[q]) <= 0) {
                 dest[i] = src[p++];
-            else
+            } else {
                 dest[i] = src[q++];
+            }
         }
     }
 
@@ -1289,13 +1349,21 @@ public class Arrays {
      * appropriate exception if they aren't.
      */
     private static void rangeCheck(int arrayLen, int fromIndex, int toIndex) {
-        if (fromIndex > toIndex)
-            throw new IllegalArgumentException("fromIndex(" + fromIndex +
-                       ") > toIndex(" + toIndex+")");
-        if (fromIndex < 0)
+/*if[VERBOSE_EXCEPTIONS]*/
+        if (fromIndex > toIndex) {
+            throw new IllegalArgumentException("fromIndex(" + fromIndex
+                    + ") > toIndex(" + toIndex + ")");
+        }
+        if (fromIndex < 0) {
             throw new ArrayIndexOutOfBoundsException(fromIndex);
-        if (toIndex > arrayLen)
+        }
+        if (toIndex > arrayLen) {
             throw new ArrayIndexOutOfBoundsException(toIndex);
+        }
+/*else[VERBOSE_EXCEPTIONS]*/
+//      if ((fromIndex > toIndex) || (fromIndex < 0)|| (toIndex > arrayLen))
+//          throw new ArrayIndexOutOfBoundsException();
+/*end[VERBOSE_EXCEPTIONS]*/
     }
 
     /**
@@ -1305,7 +1373,8 @@ public class Arrays {
      * @param length
      * @throws IndexOutOfBoundsException
      */
-    public static void boundsCheck(int arrayLen, int offset, int length) throws IndexOutOfBoundsException {
+    public static void boundsCheck(int arrayLen, int offset, int length)
+            throws IndexOutOfBoundsException {
         Assert.that(arrayLen >= 0);
 /*if[VERBOSE_EXCEPTIONS]*/
         if (offset < 0) {
@@ -1350,23 +1419,23 @@ public class Arrays {
      * @see #sort(long[])
      */
     public static int binarySearch(long[] a, long key) {
-    int low = 0;
-    int high = a.length-1;
+        int low = 0;
+        int high = a.length - 1;
 
-    while (low <= high) {
-        int mid = (low + high) >>> 1;
-        long midVal = a[mid];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            long midVal = a[mid];
 
-        if (midVal < key)
-        low = mid + 1;
-        else if (midVal > key)
-        high = mid - 1;
-        else
-        return mid; // key found
+            if (midVal < key) {
+                low = mid + 1;
+            } else if (midVal > key) {
+                high = mid - 1;
+            } else {
+                return mid; // key found
+            }
+        }
+        return -(low + 1);  // key not found.
     }
-    return -(low + 1);  // key not found.
-    }
-
 
     /**
      * Searches the specified array of ints for the specified value using the
@@ -1389,21 +1458,22 @@ public class Arrays {
      * @see #sort(int[])
      */
     public static int binarySearch(int[] a, int key) {
-    int low = 0;
-    int high = a.length-1;
+        int low = 0;
+        int high = a.length - 1;
 
-    while (low <= high) {
-        int mid = (low + high) >>> 1;
-        int midVal = a[mid];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            int midVal = a[mid];
 
-        if (midVal < key)
-        low = mid + 1;
-        else if (midVal > key)
-        high = mid - 1;
-        else
-        return mid; // key found
-    }
-    return -(low + 1);  // key not found.
+            if (midVal < key) {
+                low = mid + 1;
+            } else if (midVal > key) {
+                high = mid - 1;
+            } else {
+                return mid; // key found
+            }
+        }
+        return -(low + 1);  // key not found.
     }
 
     /**
@@ -1427,21 +1497,22 @@ public class Arrays {
      * @see #sort(short[])
      */
     public static int binarySearch(short[] a, short key) {
-    int low = 0;
-    int high = a.length-1;
+        int low = 0;
+        int high = a.length - 1;
 
-    while (low <= high) {
-        int mid = (low + high) >>> 1;
-        short midVal = a[mid];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            short midVal = a[mid];
 
-        if (midVal < key)
-        low = mid + 1;
-        else if (midVal > key)
-        high = mid - 1;
-        else
-        return mid; // key found
-    }
-    return -(low + 1);  // key not found.
+            if (midVal < key) {
+                low = mid + 1;
+            } else if (midVal > key) {
+                high = mid - 1;
+            } else {
+                return mid; // key found
+            }
+        }
+        return -(low + 1);  // key not found.
     }
 
     /**
@@ -1465,21 +1536,22 @@ public class Arrays {
      * @see #sort(char[])
      */
     public static int binarySearch(char[] a, char key) {
-    int low = 0;
-    int high = a.length-1;
+        int low = 0;
+        int high = a.length - 1;
 
-    while (low <= high) {
-        int mid = (low + high) >>> 1;
-        char midVal = a[mid];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            char midVal = a[mid];
 
-        if (midVal < key)
-        low = mid + 1;
-        else if (midVal > key)
-        high = mid - 1;
-        else
-        return mid; // key found
-    }
-    return -(low + 1);  // key not found.
+            if (midVal < key) {
+                low = mid + 1;
+            } else if (midVal > key) {
+                high = mid - 1;
+            } else {
+                return mid; // key found
+            }
+        }
+        return -(low + 1);  // key not found.
     }
 
     /**
@@ -1503,25 +1575,25 @@ public class Arrays {
      * @see #sort(byte[])
      */
     public static int binarySearch(byte[] a, byte key) {
-    int low = 0;
-    int high = a.length-1;
+        int low = 0;
+        int high = a.length - 1;
 
-    while (low <= high) {
-        int mid = (low + high) >>> 1;
-        byte midVal = a[mid];
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            byte midVal = a[mid];
 
-        if (midVal < key)
-        low = mid + 1;
-        else if (midVal > key)
-        high = mid - 1;
-        else
-        return mid; // key found
-    }
-    return -(low + 1);  // key not found.
+            if (midVal < key) {
+                low = mid + 1;
+            } else if (midVal > key) {
+                high = mid - 1;
+            } else {
+                return mid; // key found
+            }
+        }
+        return -(low + 1);  // key not found.
     }
 
 /*if[FLOATS]*/
-
     /**
      * Searches the specified array of doubles for the specified value using
      * the binary search algorithm.  The array <strong>must</strong> be sorted
@@ -1544,13 +1616,13 @@ public class Arrays {
      * @see #sort(double[])
      */
     public static int binarySearch(double[] a, double key) {
-        return binarySearch(a, key, 0, a.length-1);
+        return binarySearch(a, key, 0, a.length - 1);
     }
 
-    private static int binarySearch(double[] a, double key, int low,int high) {
-    while (low <= high) {
-        int mid = (low + high) >>> 1;
-        double midVal = a[mid];
+    private static int binarySearch(double[] a, double key, int low, int high) {
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            double midVal = a[mid];
 
             int cmp;
             if (midVal < key) {
@@ -1560,19 +1632,20 @@ public class Arrays {
             } else {
                 long midBits = Double.doubleToLongBits(midVal);
                 long keyBits = Double.doubleToLongBits(key);
-                cmp = (midBits == keyBits ?  0 : // Values are equal
-                       (midBits < keyBits ? -1 : // (-0.0, 0.0) or (!NaN, NaN)
+                cmp = (midBits == keyBits ? 0 : // Values are equal
+                        (midBits < keyBits ? -1 : // (-0.0, 0.0) or (!NaN, NaN)
                         1));                     // (0.0, -0.0) or (NaN, !NaN)
             }
 
-        if (cmp < 0)
-        low = mid + 1;
-        else if (cmp > 0)
-        high = mid - 1;
-        else
-        return mid; // key found
-    }
-    return -(low + 1);  // key not found.
+            if (cmp < 0) {
+                low = mid + 1;
+            } else if (cmp > 0) {
+                high = mid - 1;
+            } else {
+                return mid; // key found
+            }
+        }
+        return -(low + 1);  // key not found.
     }
 
     /**
@@ -1597,13 +1670,13 @@ public class Arrays {
      * @see #sort(float[])
      */
     public static int binarySearch(float[] a, float key) {
-        return binarySearch(a, key, 0, a.length-1);
+        return binarySearch(a, key, 0, a.length - 1);
     }
 
-    private static int binarySearch(float[] a, float key, int low,int high) {
-    while (low <= high) {
-        int mid = (low + high) >>> 1;
-        float midVal = a[mid];
+    private static int binarySearch(float[] a, float key, int low, int high) {
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            float midVal = a[mid];
 
             int cmp;
             if (midVal < key) {
@@ -1613,22 +1686,21 @@ public class Arrays {
             } else {
                 int midBits = Float.floatToIntBits(midVal);
                 int keyBits = Float.floatToIntBits(key);
-                cmp = (midBits == keyBits ?  0 : // Values are equal
-                       (midBits < keyBits ? -1 : // (-0.0, 0.0) or (!NaN, NaN)
+                cmp = (midBits == keyBits ? 0 : // Values are equal
+                        (midBits < keyBits ? -1 : // (-0.0, 0.0) or (!NaN, NaN)
                         1));                     // (0.0, -0.0) or (NaN, !NaN)
             }
 
-        if (cmp < 0)
-        low = mid + 1;
-        else if (cmp > 0)
-        high = mid - 1;
-        else
-        return mid; // key found
+            if (cmp < 0) {
+                low = mid + 1;
+            } else if (cmp > 0) {
+                high = mid - 1;
+            } else {
+                return mid; // key found
+            }
+        }
+        return -(low + 1);  // key not found.
     }
-    return -(low + 1);  // key not found.
-    }
-
-
 /*end[FLOATS]*/
 
     /**
@@ -1677,7 +1749,7 @@ public class Arrays {
 //    }
 //    return -(low + 1);  // key not found.
 //    }
-
+    
     /**
      * Searches the specified array for the specified object using the binary
      * search algorithm.  The array must be sorted into ascending order
@@ -1712,22 +1784,23 @@ public class Arrays {
 //        if (c==null)
 //            return binarySearch(a, key);
 
-    int low = 0;
-    int high = a.length-1;
+        int low = 0;
+        int high = a.length - 1;
 
-    while (low <= high) {
-        int mid = (low + high) >>> 1;
-        Object midVal = a[mid];
-        int cmp = c.compare(midVal, key);
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            Object midVal = a[mid];
+            int cmp = c.compare(midVal, key);
 
-        if (cmp < 0)
-        low = mid + 1;
-        else if (cmp > 0)
-        high = mid - 1;
-        else
-        return mid; // key found
-    }
-    return -(low + 1);  // key not found.
+            if (cmp < 0) {
+                low = mid + 1;
+            } else if (cmp > 0) {
+                high = mid - 1;
+            } else {
+                return mid; // key found
+            }
+        }
+        return -(low + 1);  // key not found.
     }
 
     // Resizing
@@ -1953,7 +2026,7 @@ public class Arrays {
     }
 
     // Equality Testing
-
+    
     /**
      * Returns <tt>true</tt> if the two specified arrays of longs are
      * <i>equal</i> to one another.  Two arrays are considered equal if both
@@ -1967,18 +2040,23 @@ public class Arrays {
      * @return <tt>true</tt> if the two arrays are equal.
      */
     public static boolean equals(long[] a, long[] a2) {
-        if (a==a2)
+        if (a == a2) {
             return true;
-        if (a==null || a2==null)
+        }
+        if (a == null || a2 == null) {
             return false;
+        }
 
         int length = a.length;
-        if (a2.length != length)
+        if (a2.length != length) {
             return false;
+        }
 
-        for (int i=0; i<length; i++)
-            if (a[i] != a2[i])
+        for (int i = 0; i < length; i++) {
+            if (a[i] != a2[i]) {
                 return false;
+            }
+        }
 
         return true;
     }
@@ -1996,18 +2074,23 @@ public class Arrays {
      * @return <tt>true</tt> if the two arrays are equal.
      */
     public static boolean equals(int[] a, int[] a2) {
-        if (a==a2)
+        if (a == a2) {
             return true;
-        if (a==null || a2==null)
+        }
+        if (a == null || a2 == null) {
             return false;
+        }
 
         int length = a.length;
-        if (a2.length != length)
+        if (a2.length != length) {
             return false;
+        }
 
-        for (int i=0; i<length; i++)
-            if (a[i] != a2[i])
+        for (int i = 0; i < length; i++) {
+            if (a[i] != a2[i]) {
                 return false;
+            }
+        }
 
         return true;
     }
@@ -2025,18 +2108,23 @@ public class Arrays {
      * @return <tt>true</tt> if the two arrays are equal.
      */
     public static boolean equals(short[] a, short a2[]) {
-        if (a==a2)
+        if (a == a2) {
             return true;
-        if (a==null || a2==null)
+        }
+        if (a == null || a2 == null) {
             return false;
+        }
 
         int length = a.length;
-        if (a2.length != length)
+        if (a2.length != length) {
             return false;
+        }
 
-        for (int i=0; i<length; i++)
-            if (a[i] != a2[i])
+        for (int i = 0; i < length; i++) {
+            if (a[i] != a2[i]) {
                 return false;
+            }
+        }
 
         return true;
     }
@@ -2054,18 +2142,23 @@ public class Arrays {
      * @return <tt>true</tt> if the two arrays are equal.
      */
     public static boolean equals(char[] a, char[] a2) {
-        if (a==a2)
+        if (a == a2) {
             return true;
-        if (a==null || a2==null)
+        }
+        if (a == null || a2 == null) {
             return false;
+        }
 
         int length = a.length;
-        if (a2.length != length)
+        if (a2.length != length) {
             return false;
+        }
 
-        for (int i=0; i<length; i++)
-            if (a[i] != a2[i])
+        for (int i = 0; i < length; i++) {
+            if (a[i] != a2[i]) {
                 return false;
+            }
+        }
 
         return true;
     }
@@ -2083,18 +2176,23 @@ public class Arrays {
      * @return <tt>true</tt> if the two arrays are equal.
      */
     public static boolean equals(byte[] a, byte[] a2) {
-        if (a==a2)
+        if (a == a2) {
             return true;
-        if (a==null || a2==null)
+        }
+        if (a == null || a2 == null) {
             return false;
+        }
 
         int length = a.length;
-        if (a2.length != length)
+        if (a2.length != length) {
             return false;
+        }
 
-        for (int i=0; i<length; i++)
-            if (a[i] != a2[i])
+        for (int i = 0; i < length; i++) {
+            if (a[i] != a2[i]) {
                 return false;
+            }
+        }
 
         return true;
     }
@@ -2112,24 +2210,28 @@ public class Arrays {
      * @return <tt>true</tt> if the two arrays are equal.
      */
     public static boolean equals(boolean[] a, boolean[] a2) {
-        if (a==a2)
+        if (a == a2) {
             return true;
-        if (a==null || a2==null)
+        }
+        if (a == null || a2 == null) {
             return false;
+        }
 
         int length = a.length;
-        if (a2.length != length)
+        if (a2.length != length) {
             return false;
+        }
 
-        for (int i=0; i<length; i++)
-            if (a[i] != a2[i])
+        for (int i = 0; i < length; i++) {
+            if (a[i] != a2[i]) {
                 return false;
+            }
+        }
 
         return true;
     }
 
 /*if[FLOATS]*/
-
     /**
      * Returns <tt>true</tt> if the two specified arrays of doubles are
      * <i>equal</i> to one another.  Two arrays are considered equal if both
@@ -2149,18 +2251,23 @@ public class Arrays {
      * @see Double#equals(Object)
      */
     public static boolean equals(double[] a, double[] a2) {
-        if (a==a2)
+        if (a == a2) {
             return true;
-        if (a==null || a2==null)
+        }
+        if (a == null || a2 == null) {
             return false;
+        }
 
         int length = a.length;
-        if (a2.length != length)
+        if (a2.length != length) {
             return false;
+        }
 
-        for (int i=0; i<length; i++)
-        if (Double.doubleToLongBits(a[i])!=Double.doubleToLongBits(a2[i]))
+        for (int i = 0; i < length; i++) {
+            if (Double.doubleToLongBits(a[i]) != Double.doubleToLongBits(a2[i])) {
                 return false;
+            }
+        }
 
         return true;
     }
@@ -2184,22 +2291,26 @@ public class Arrays {
      * @see Float#equals(Object)
      */
     public static boolean equals(float[] a, float[] a2) {
-        if (a==a2)
+        if (a == a2) {
             return true;
-        if (a==null || a2==null)
+        }
+        if (a == null || a2 == null) {
             return false;
+        }
 
         int length = a.length;
-        if (a2.length != length)
+        if (a2.length != length) {
             return false;
+        }
 
-        for (int i=0; i<length; i++)
-        if (Float.floatToIntBits(a[i])!=Float.floatToIntBits(a2[i]))
+        for (int i = 0; i < length; i++) {
+            if (Float.floatToIntBits(a[i]) != Float.floatToIntBits(a2[i])) {
                 return false;
+            }
+        }
 
         return true;
     }
-
 /*end[FLOATS]*/
 
     /**
@@ -2217,20 +2328,24 @@ public class Arrays {
      * @return <tt>true</tt> if the two arrays are equal.
      */
     public static boolean equals(Object[] a, Object[] a2) {
-        if (a==a2)
+        if (a == a2) {
             return true;
-        if (a==null || a2==null)
+        }
+        if (a == null || a2 == null) {
             return false;
+        }
 
         int length = a.length;
-        if (a2.length != length)
+        if (a2.length != length) {
             return false;
+        }
 
-        for (int i=0; i<length; i++) {
+        for (int i = 0; i < length; i++) {
             Object o1 = a[i];
             Object o2 = a2[i];
-            if (!(o1==null ? o2==null : o1.equals(o2)))
+            if (!(o1 == null ? o2 == null : o1.equals(o2))) {
                 return false;
+            }
         }
 
         return true;
@@ -2249,41 +2364,46 @@ public class Arrays {
      * @return <tt>true</tt> if the two arrays are equal.
      */
     public static boolean equals(Object a, Object b) {
-        if (a==b)
+        if (a == b) {
             return true;
-        if (a==null || b==null)
+        }
+        if (a == null || b == null) {
             return false;
+        }
 
 
         if (!VM.isArray(a) || !VM.isArray(b)) {
             return a.equals(b);
         }
-        if (a instanceof int[] && b instanceof int[]) {
-            return equals((int[])a, (int[])b);
-        }
-        if (a instanceof short[] && b instanceof short[]) {
-            return equals((short[])a, (short[])b);
-        }
-        if (a instanceof byte[] && b instanceof byte[]) {
-            return equals((byte[])a, (byte[])b);
-        }
-        if (a instanceof boolean[] && b instanceof boolean[]) {
-            return equals((boolean[])a, (boolean[])b);
-        }
-        if (a instanceof char[] && b instanceof char[]) {
-            return equals((char[])a, (char[])b);
-        }
-        if (a instanceof double[] && b instanceof double[]) {
-            return equals((double[])a, (double[])b);
-        }
-        if (a instanceof float[] && b instanceof float[]) {
-            return equals((float[])a, (float[])b);
-        }
-        if (a instanceof long[] && b instanceof long[]) {
-            return equals((long[])a, (long[])b);
+
+        if (VM.getClass(a) == VM.getClass(b)) { // arrays of primitive types have to have the same array class to be equal
+            if (a instanceof int[]) {
+                return equals((int[]) a, (int[]) b);
+            }
+            if (a instanceof short[]) {
+                return equals((short[]) a, (short[]) b);
+            }
+            if (a instanceof byte[]) {
+                return equals((byte[]) a, (byte[]) b);
+            }
+            if (a instanceof boolean[]) {
+                return equals((boolean[]) a, (boolean[]) b);
+            }
+            if (a instanceof char[]) {
+                return equals((char[]) a, (char[]) b);
+            }
+            if (a instanceof double[]) {
+                return equals((double[]) a, (double[]) b);
+            }
+            if (a instanceof float[]) {
+                return equals((float[]) a, (float[]) b);
+            }
+            if (a instanceof long[]) {
+                return equals((long[]) a, (long[]) b);
+            }
         }
         if (a instanceof Object[] && b instanceof Object[]) {
-            return equals((Object[])a, (Object[])b);
+            return equals((Object[]) a, (Object[]) b);
         }
         return false;
     }
@@ -2310,78 +2430,54 @@ public class Arrays {
 
         // The hash code is computed by summing up to 5 elements from the
         // array and adding that to the length of the array
-        int hash;
+        int length = length(object);
+        int step = (length + 5) / 5;
+        int hash = length;
+
         if (object instanceof int[]) {
-            int[] array = (int[])object;
-            int length = array.length;
-            hash = length;
-            int step = (length+5) / 5;
+            int[] array = (int[]) object;
             for (int i = 0; i < length; i += step) {
                 hash += array[i];
             }
         } else if (object instanceof short[]) {
-            short[] array = (short[])object;
-            int length = array.length;
-            hash = length;
-            int step = (length+5) / 5;
+            short[] array = (short[]) object;
             for (int i = 0; i < length; i += step) {
                 hash += array[i];
             }
         } else if (object instanceof byte[]) {
-            byte[] array = (byte[])object;
-            int length = array.length;
-            hash = length;
-            int step = (length+5) / 5;
+            byte[] array = (byte[]) object;
             for (int i = 0; i < length; i += step) {
                 hash += array[i];
             }
         } else if (object instanceof boolean[]) {
-            boolean[] array = (boolean[])object;
-            int length = array.length;
-            hash = length;
-            int step = (length+5) / 5;
+            boolean[] array = (boolean[]) object;
             for (int i = 0; i < length; i += step) {
                 hash += array[i] ? i : 0;
             }
         } else if (object instanceof char[]) {
-            char[] array = (char[])object;
-            int length = array.length;
-            hash = length;
-            int step = (length+5) / 5;
+            char[] array = (char[]) object;
             for (int i = 0; i < length; i += step) {
                 hash += array[i];
             }
 /*if[FLOATS]*/
         } else if (object instanceof double[]) {
-            double[] array = (double[])object;
-            int length = array.length;
-            hash = length;
-            int step = (length+5) / 5;
+            double[] array = (double[]) object;
             for (int i = 0; i < length; i += step) {
                 hash += array[i];
             }
         } else if (object instanceof float[]) {
-            float[] array = (float[])object;
-            int length = array.length;
-            hash = length;
-            int step = (length+5) / 5;
+            float[] array = (float[]) object;
             for (int i = 0; i < length; i += step) {
                 hash += array[i];
             }
 /*end[FLOATS]*/
         } else if (object instanceof long[]) {
-            long[] array = (long[])object;
-            int length = array.length;
-            hash = length;
-            int step = (length+5) / 5;
+            long[] array = (long[]) object;
             for (int i = 0; i < length; i += step) {
                 hash += array[i];
             }
-        } else if (object instanceof Object[]) {
-            Object[] array = (Object[])object;
-            int length = array.length;
-            hash = length;
-            int step = (length+5) / 5;
+        } else /* if (object instanceof Object[]) */ {
+            Object[] array = (Object[]) object;
             for (int i = 0; i < length; i += step) {
                 if (array[i] == null) {
                     hash += i;
@@ -2389,8 +2485,6 @@ public class Arrays {
                     hash += array[i].hashCode();
                 }
             }
-        } else {
-            throw new Error("InternalError");
         }
         return hash;
     }
@@ -2404,26 +2498,7 @@ public class Arrays {
      *                  an array
      */
     public static int length(Object array) {
-        if (array instanceof int[]) {
-            return ((int[])array).length;
-        } else if (array instanceof short[]) {
-            return ((short[])array).length;
-        } else if (array instanceof byte[]) {
-            return ((byte[])array).length;
-        } else if (array instanceof boolean[]) {
-            return ((boolean[])array).length;
-        } else if (array instanceof char[]) {
-            return ((char[])array).length;
-        } else if (array instanceof double[]) {
-            return ((double[])array).length;
-        } else if (array instanceof float[]) {
-            return ((float[])array).length;
-        } else if (array instanceof long[]) {
-            return ((long[])array).length;
-        } else if (array instanceof Object[]) {
-            return ((Object[])array).length;
-        }
-        throw new IllegalArgumentException();
+        return VM.getLength(array);
     }
 
     // Filling
@@ -2458,8 +2533,9 @@ public class Arrays {
      */
     public static void fill(long[] a, int fromIndex, int toIndex, long val) {
         rangeCheck(a.length, fromIndex, toIndex);
-        for (int i=fromIndex; i<toIndex; i++)
+        for (int i = fromIndex; i < toIndex; i++) {
             a[i] = val;
+        }
     }
 
     /**
@@ -2492,8 +2568,9 @@ public class Arrays {
      */
     public static void fill(int[] a, int fromIndex, int toIndex, int val) {
         rangeCheck(a.length, fromIndex, toIndex);
-        for (int i=fromIndex; i<toIndex; i++)
+        for (int i = fromIndex; i < toIndex; i++) {
             a[i] = val;
+        }
     }
 
     /**
@@ -2526,8 +2603,9 @@ public class Arrays {
      */
     public static void fill(short[] a, int fromIndex, int toIndex, short val) {
         rangeCheck(a.length, fromIndex, toIndex);
-        for (int i=fromIndex; i<toIndex; i++)
+        for (int i = fromIndex; i < toIndex; i++) {
             a[i] = val;
+        }
     }
 
     /**
@@ -2560,8 +2638,9 @@ public class Arrays {
      */
     public static void fill(char[] a, int fromIndex, int toIndex, char val) {
         rangeCheck(a.length, fromIndex, toIndex);
-        for (int i=fromIndex; i<toIndex; i++)
+        for (int i = fromIndex; i < toIndex; i++) {
             a[i] = val;
+        }
     }
 
     /**
@@ -2594,8 +2673,9 @@ public class Arrays {
      */
     public static void fill(byte[] a, int fromIndex, int toIndex, byte val) {
         rangeCheck(a.length, fromIndex, toIndex);
-        for (int i=fromIndex; i<toIndex; i++)
+        for (int i = fromIndex; i < toIndex; i++) {
             a[i] = val;
+        }
     }
 
     /**
@@ -2627,14 +2707,14 @@ public class Arrays {
      *         <tt>toIndex &gt; a.length</tt>
      */
     public static void fill(boolean[] a, int fromIndex, int toIndex,
-                            boolean val) {
+            boolean val) {
         rangeCheck(a.length, fromIndex, toIndex);
-        for (int i=fromIndex; i<toIndex; i++)
+        for (int i = fromIndex; i < toIndex; i++) {
             a[i] = val;
+        }
     }
 
 /*if[FLOATS]*/
-
     /**
      * Assigns the specified double value to each element of the specified
      * array of doubles.
@@ -2663,10 +2743,11 @@ public class Arrays {
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
      *         <tt>toIndex &gt; a.length</tt>
      */
-    public static void fill(double[] a, int fromIndex, int toIndex,double val){
+    public static void fill(double[] a, int fromIndex, int toIndex, double val) {
         rangeCheck(a.length, fromIndex, toIndex);
-        for (int i=fromIndex; i<toIndex; i++)
+        for (int i = fromIndex; i < toIndex; i++) {
             a[i] = val;
+        }
     }
 
     /**
@@ -2699,10 +2780,10 @@ public class Arrays {
      */
     public static void fill(float[] a, int fromIndex, int toIndex, float val) {
         rangeCheck(a.length, fromIndex, toIndex);
-        for (int i=fromIndex; i<toIndex; i++)
+        for (int i = fromIndex; i < toIndex; i++) {
             a[i] = val;
+        }
     }
-
 /*end[FLOATS]*/
 
     /**
@@ -2733,10 +2814,10 @@ public class Arrays {
      * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or
      *         <tt>toIndex &gt; a.length</tt>
      */
-    public static void fill(Object[] a, int fromIndex, int toIndex,Object val){
+    public static void fill(Object[] a, int fromIndex, int toIndex, Object val) {
         rangeCheck(a.length, fromIndex, toIndex);
-        for (int i=fromIndex; i<toIndex; i++)
+        for (int i = fromIndex; i < toIndex; i++) {
             a[i] = val;
+        }
     }
-
 }

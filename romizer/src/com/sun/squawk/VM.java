@@ -717,7 +717,17 @@ public class VM {
         return object.getClass().isArray();
     }
 
-
+   /**
+     * Returns the length of the specified array object, as an int.
+     *
+     * @param   array  the array
+     * @return  the length of <code>array</code>
+     * @throws  IllegalArgumentException if <code>array</code> argument is not
+     *                  an array
+     */
+    public static int getLength(Object array) {
+        return java.lang.reflect.Array.getLength(array);
+    }
 
     /*=======================================================================*\
      *                              Native methods                           *

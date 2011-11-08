@@ -39,8 +39,7 @@ import com.sun.squawk.peripheral.INorFlashSector;
 import com.sun.squawk.util.Assert;
 
 /**
- * 
- *
+ * Metadata for a NorFlashSector
  */
 public class NorFlashSectorState implements INorFlashSectorState {
     public static final boolean DEBUG = false;

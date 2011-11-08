@@ -4458,7 +4458,22 @@ hbp.dumpState();
     public static boolean isArray(Object o) {
         return (GC.getKlass(o).isArray());
     }
-
+    
+   /**
+     * Returns the length of the specified array object, as an int.
+     *
+     * @param   array  the array
+     * @return  the length of <code>array</code>
+     * @throws  IllegalArgumentException if <code>array</code> argument is not
+     *                  an array
+     */
+    public static int getLength(Object array) {
+        if (array == null || !VM.isArray(array)) {
+            throw new IllegalArgumentException();
+        }
+        return GC.getArrayLength(array);
+    }
+    
     static boolean isFirstIsolateInitialized() {
         return isFirstIsolateInitialized;
     }

@@ -92,19 +92,18 @@ import com.sun.squawk.rms.*;
  *
  * @version MIDP 1.0
  */
-public class RecordStore
-{
+public class RecordStore {
 
     /** number of open instances of this record store */
     private int opencount;
 
     /** Most recent RecordStoreEntry representing this record store */
     private IRecordStoreEntry recordStoreEntry;
-    
+
     /** Name of the record store, we keep this around in order to be able to do
      * a lookup if we are ever Isolate migrated to another location
      */
-    private String recordStoreName;
+    private final String recordStoreName;
 
     /** recordListeners of this record store */
     private java.util.Vector recordListener;
@@ -122,22 +121,11 @@ public class RecordStore
      */
 
     /**
-     * MIDlets must use <code>openRecordStore()</code> to get
-     * a <code>RecordStore</code> object. If this constructor
-     * is not declared (as private scope), Javadoc (and Java)
-     * will assume a public constructor.
-     */
-    private RecordStore()
-    {
-    }
-
-
-    /**
      * Apps must use <code>openRecordStore()</code> to get
      * a <code>RecordStore</code> object. This constructor
      * is used internally for creating RecordStore objects.
      *
-     * <code>dbCache</code> must be held/synchornized before calling
+     * <code>dbCache</code> must be held/synchronized before calling
      * this constructor.
      *
      * @param recordStoreName a string to name the record store.
@@ -148,9 +136,7 @@ public class RecordStore
      * @exception RecordStoreNotFoundException if can't find the record store
      *            and create is set to false.
      */
-
     private RecordStore(String recordStoreName, boolean create) throws RecordStoreException, RecordStoreNotFoundException {
-        this();
         this.recordStoreName = recordStoreName;
         recordListener = new java.util.Vector(3);
         recordStoreEntry = ImpGlobal.getRecordStoreManager().getRecordStore(recordStoreName, create);
@@ -162,7 +148,7 @@ public class RecordStore
     /*
      * Public Static Methods
      */
-
+    
     /**
      * Open (and possibly create) a record store associated with the
      * given MIDlet suite. If this method is called by a MIDlet when
@@ -184,45 +170,44 @@ public class RecordStore
      *            completed because the record store is full.
      */
     public static RecordStore openRecordStore(String recordStoreName,
-                          boolean createIfNecessary)
-        throws RecordStoreException, RecordStoreFullException,
-        RecordStoreNotFoundException
-    {
+            boolean createIfNecessary)
+            throws RecordStoreException, RecordStoreFullException,
+                   RecordStoreNotFoundException {
         Vector dbCache = ImpGlobal.getRecordStoreDbCache();
-    synchronized (dbCache) {
+        synchronized (dbCache) {
 
-        if (recordStoreName.length() > 32) {
-        throw new RecordStoreException("record store name too long");
+            if (recordStoreName.length() > 32) {
+                throw new RecordStoreException("record store name too long");
+            }
+
+            // Cache record store objects and ensure that there is only
+            // one record store object in memory for any given record
+            // store file. This is good for memory use. This is NOT safe
+            // in the situation where multiple VM's may be executing code
+            // concurrently. In that case, you have to sync things through
+            // file locking or something similar.
+
+            // Check the record store cache for a db with the same name
+            RecordStore db;
+            for (int n = 0; n < dbCache.size(); n++) {
+                db = (RecordStore) dbCache.elementAt(n);
+                if (db.getName().equals(recordStoreName)) {
+                    db.opencount++;  // times rs has been opened
+                    return db;  // return ref to cached record store
+                }
+            }
+
+            /*
+             * Record store not found in cache, create it.
+             */
+            db = new RecordStore(recordStoreName, createIfNecessary);
+            /*
+             * Now add the new record store to the cache
+             */
+            db.opencount = 1;
+            dbCache.addElement(db);
+            return db;
         }
-
-        // Cache record store objects and ensure that there is only
-        // one record store object in memory for any given record
-        // store file. This is good for memory use. This is NOT safe
-        // in the situation where multiple VM's may be executing code
-        // concurrently. In that case, you have to sync things through
-        // file locking or something similar.
-
-        // Check the record store cache for a db with the same name
-        RecordStore db;
-        for (int n = 0; n < dbCache.size(); n++) {
-        db = (RecordStore)dbCache.elementAt(n);
-        if (db.getName().equals(recordStoreName)) {
-            db.opencount++;  // times rs has been opened
-            return db;  // return ref to cached record store
-        }
-        }
-
-        /*
-         * Record store not found in cache, create it.
-         */
-        db = new RecordStore(recordStoreName, createIfNecessary);
-        /*
-         * Now add the new record store to the cache
-         */
-        db.opencount = 1;
-        dbCache.addElement(db);
-        return db;
-    }
     }
 
     /**
@@ -237,8 +222,7 @@ public class RecordStore
      *         MIDlet suite. Note that if the MIDlet suite does not
      *         have any record stores, this function will return NULL.
      */
-    public static String[] listRecordStores()
-    {
+    public static String[] listRecordStores() {
         try {
             return ImpGlobal.getRecordStoreManager().getRecordStoreNames();
         } catch (RecordStoreException e) {
@@ -266,11 +250,11 @@ public class RecordStore
         synchronized (dbCache) {
             RecordStore db;
             for (int n = 0; n < dbCache.size(); n++) {
-            db = (RecordStore)dbCache.elementAt(n);
-            if (db.getName().equals(recordStoreName)) {
-                // cannot delete an open record store
-                throw new RecordStoreException("deleteRecordStore error: record store is still open");
-            }
+                db = (RecordStore) dbCache.elementAt(n);
+                if (db.getName().equals(recordStoreName)) {
+                    // cannot delete an open record store
+                    throw new RecordStoreException("deleteRecordStore error: record store is still open");
+                }
             }
             boolean found = ImpGlobal.getRecordStoreManager().deleteRecordStore(recordStoreName);
             if (!found) {
@@ -282,7 +266,7 @@ public class RecordStore
     /*
      * Public RecordStore update operations
      */
-
+    
     /**
      * Adds a new record to the record store. The recordId for this
      * new record is returned. This is a blocking atomic operation.
@@ -310,8 +294,8 @@ public class RecordStore
     public synchronized int addRecord(byte[] data, int offset, int numBytes) throws RecordStoreNotOpenException, RecordStoreException, RecordStoreFullException {
         checkOpen();
         if ((data == null) && (numBytes > 0)) {
-        throw new NullPointerException("illegal arguments: null " +
-                           "data,  numBytes > 0");
+            throw new NullPointerException("illegal arguments: null "
+                    + "data,  numBytes > 0");
         }
         int recordId = recordStoreEntry.addRecord(data, offset, numBytes);
         // tell listeners a record has been added
@@ -333,9 +317,8 @@ public class RecordStore
      *            occurs.
      */
     public synchronized void deleteRecord(int recordId)
-    throws RecordStoreNotOpenException, InvalidRecordIDException,
-        RecordStoreException
-    {
+            throws RecordStoreNotOpenException, InvalidRecordIDException,
+                   RecordStoreException {
         checkOpen();
         recordStoreEntry.deleteRecord(recordId);
         // tell listeners a record has been deleted
@@ -360,20 +343,19 @@ public class RecordStore
      *            exception occurred.
      */
     public synchronized void closeRecordStore()
-    throws RecordStoreNotOpenException, RecordStoreException
-    {
+            throws RecordStoreNotOpenException, RecordStoreException {
         Vector dbCache = ImpGlobal.getRecordStoreDbCache();
         synchronized (dbCache) {
-        checkOpen();
-        opencount--;
-        if (opencount <= 0) {  // free stuff - final close
-            dbCache.removeElement(this);
-            // closing now...no need to listen
-            if (!recordListener.isEmpty()) {
-                recordListener.removeAllElements();
+            checkOpen();
+            opencount--;
+            if (opencount <= 0) {  // free stuff - final close
+                dbCache.removeElement(this);
+                // closing now...no need to listen
+                if (!recordListener.isEmpty()) {
+                    recordListener.removeAllElements();
+                }
+                recordStoreEntry = null;
             }
-            recordStoreEntry = null;
-        }
         }
     }
 
@@ -392,11 +374,10 @@ public class RecordStore
      *            occurs.
      */
     public int getRecordSize(int recordId)
-    throws RecordStoreNotOpenException, InvalidRecordIDException,
-        RecordStoreException
-    {
+            throws RecordStoreNotOpenException, InvalidRecordIDException,
+                   RecordStoreException {
         checkOpen();
-       return recordStoreEntry.getRecordSize(recordId);
+        return recordStoreEntry.getRecordSize(recordId);
     }
 
     /**
@@ -416,9 +397,8 @@ public class RecordStore
      * @see #setRecord
      */
     public synchronized int getRecord(int recordId, byte[] buffer, int offset)
-    throws RecordStoreNotOpenException, InvalidRecordIDException,
-    RecordStoreException
-    {
+            throws RecordStoreNotOpenException, InvalidRecordIDException,
+                   RecordStoreException {
         checkOpen();
         return recordStoreEntry.getRecord(recordId, buffer, offset);
     }
@@ -439,9 +419,8 @@ public class RecordStore
      * @see #setRecord
      */
     public synchronized byte[] getRecord(int recordId)
-    throws RecordStoreNotOpenException, InvalidRecordIDException,
-        RecordStoreException
-    {
+            throws RecordStoreNotOpenException, InvalidRecordIDException,
+                   RecordStoreException {
         checkOpen();
         byte[] data = recordStoreEntry.getRecord(recordId);
         return data;
@@ -469,14 +448,13 @@ public class RecordStore
      * @see #getRecord
      */
     public synchronized void setRecord(int recordId, byte[] newData,
-              int offset, int numBytes)
-    throws RecordStoreNotOpenException, InvalidRecordIDException,
-        RecordStoreException, RecordStoreFullException
-    {
+            int offset, int numBytes)
+            throws RecordStoreNotOpenException, InvalidRecordIDException,
+                   RecordStoreException, RecordStoreFullException {
         checkOpen();
 
         if ((newData == null) && (numBytes > 0)) {
-        throw new NullPointerException();
+            throw new NullPointerException();
         }
         recordStoreEntry.setRecord(recordId, newData, offset, numBytes);
         notifyRecordChangedListeners(recordId);
@@ -494,7 +472,7 @@ public class RecordStore
      *
      * @exception RecordStoreNotOpenException if the record store is closed
      */
-    public String getName() throws RecordStoreNotOpenException{
+    public String getName() throws RecordStoreNotOpenException {
         checkOpen();
         return recordStoreName;
     }
@@ -513,8 +491,7 @@ public class RecordStore
      * @exception RecordStoreNotOpenException if the record store is not open.
      */
     public int getVersion()
-    throws RecordStoreNotOpenException
-    {
+            throws RecordStoreNotOpenException {
         checkOpen();
         return recordStoreEntry.getVersion();
     }
@@ -527,10 +504,9 @@ public class RecordStore
      * @exception RecordStoreNotOpenException if the record store is not open.
      */
     public int getNumRecords()
-    throws RecordStoreNotOpenException
-    {
-    checkOpen();
-    return recordStoreEntry.getNumRecords();
+            throws RecordStoreNotOpenException {
+        checkOpen();
+        return recordStoreEntry.getNumRecords();
     }
 
     /**
@@ -545,14 +521,13 @@ public class RecordStore
      * @return the size of the record store in bytes.
      */
     public int getSize()
-    throws RecordStoreNotOpenException
-    {
-    checkOpen();
-    try {
-        return recordStoreEntry.getRecordsSize();
-    } catch (RecordStoreException e) {
-        throw new RecordStoreNotOpenException(e.getMessage());
-    }
+            throws RecordStoreNotOpenException {
+        checkOpen();
+        try {
+            return recordStoreEntry.getRecordsSize();
+        } catch (RecordStoreException e) {
+            throw new RecordStoreNotOpenException(e.getMessage());
+        }
     }
 
     /**
@@ -587,10 +562,9 @@ public class RecordStore
      * @exception RecordStoreNotOpenException if the record store is not open.
      */
     public long getLastModified()
-    throws RecordStoreNotOpenException
-    {
-    checkOpen();
-    return recordStoreEntry.getTimestamp();
+            throws RecordStoreNotOpenException {
+        checkOpen();
+        return recordStoreEntry.getTimestamp();
     }
 
     /**
@@ -603,8 +577,9 @@ public class RecordStore
      * @see #removeRecordListener
      */
     public synchronized void addRecordListener(RecordListener listener) {
-        if (!recordListener.contains(listener))
-        recordListener.addElement(listener);
+        if (!recordListener.contains(listener)) {
+            recordListener.addElement(listener);
+        }
     }
 
     /**
@@ -638,10 +613,9 @@ public class RecordStore
      *            exception occurred.
      */
     public int getNextRecordID()
-    throws RecordStoreNotOpenException, RecordStoreException
-    {
-    checkOpen();
-    return recordStoreEntry.getNextRecordId();
+            throws RecordStoreNotOpenException, RecordStoreException {
+        checkOpen();
+        return recordStoreEntry.getNextRecordId();
     }
 
     /**
@@ -697,20 +671,19 @@ public class RecordStore
      *         record store in an optionally specified order.
      */
     public RecordEnumeration enumerateRecords(RecordFilter filter,
-                          RecordComparator comparator,
-                          boolean keepUpdated)
-    throws RecordStoreNotOpenException
-    {
-    checkOpen();
-    return new RecordEnumerationImpl(this, filter,
-                     comparator, keepUpdated);
+            RecordComparator comparator,
+            boolean keepUpdated)
+            throws RecordStoreNotOpenException {
+        checkOpen();
+        return new RecordEnumerationImpl(this, filter,
+                comparator, keepUpdated);
     }
 
 
     /*
      * Private Utility Methods
      */
-
+    
     /**
      * Throws a RecordStoreNotOpenException if the RecordStore
      * is closed.  (A RecordStore is closed if the RandomAccessFile
@@ -718,10 +691,10 @@ public class RecordStore
      *
      * @exception RecordStoreNotOpenException if RecordStore is closed
      */
-    private void checkOpen() throws RecordStoreNotOpenException
-    {
-    if (recordStoreEntry == null)
-        throw new RecordStoreNotOpenException();
+    private void checkOpen() throws RecordStoreNotOpenException {
+        if (recordStoreEntry == null) {
+            throw new RecordStoreNotOpenException();
+        }
     }
 
     /**
@@ -729,12 +702,11 @@ public class RecordStore
      *
      * @param recordId the record id of the changed record.
      */
-    private void notifyRecordChangedListeners(int recordId)
-    {
-    for (int i = 0; i < recordListener.size(); i++) {
-        RecordListener rl = (RecordListener)recordListener.elementAt(i);
-        rl.recordChanged(this, recordId);
-    }
+    private void notifyRecordChangedListeners(int recordId) {
+        for (int i = 0; i < recordListener.size(); i++) {
+            RecordListener rl = (RecordListener) recordListener.elementAt(i);
+            rl.recordChanged(this, recordId);
+        }
     }
 
     /**
@@ -742,12 +714,11 @@ public class RecordStore
      *
      * @param recordId the record id of the added record.
      */
-    private void notifyRecordAddedListeners(int recordId)
-    {
-    for (int i = 0; i < recordListener.size(); i++) {
-        RecordListener rl = (RecordListener)recordListener.elementAt(i);
-        rl.recordAdded(this, recordId);
-    }
+    private void notifyRecordAddedListeners(int recordId) {
+        for (int i = 0; i < recordListener.size(); i++) {
+            RecordListener rl = (RecordListener) recordListener.elementAt(i);
+            rl.recordAdded(this, recordId);
+        }
     }
 
     /**
@@ -755,14 +726,12 @@ public class RecordStore
      *
      * @param recordId the record id of the changed record.
      */
-    private void notifyRecordDeletedListeners(int recordId)
-    {
-    for (int i = 0; i < recordListener.size(); i++) {
-        RecordListener rl = (RecordListener)recordListener.elementAt(i);
-        rl.recordDeleted(this, recordId);
+    private void notifyRecordDeletedListeners(int recordId) {
+        for (int i = 0; i < recordListener.size(); i++) {
+            RecordListener rl = (RecordListener) recordListener.elementAt(i);
+            rl.recordDeleted(this, recordId);
+        }
     }
-    }
-
 
     /**
      * Returns all of the recordId's currently in the record store.
@@ -773,9 +742,7 @@ public class RecordStore
      * @return an array of the recordId's currently in the record store
      *         or null if the record store is closed.
      */
-    int[] getRecordIDs()
-    {
+    int[] getRecordIDs() {
         return recordStoreEntry.getRecordIdsCopy();
-     }
-
+    }
 }

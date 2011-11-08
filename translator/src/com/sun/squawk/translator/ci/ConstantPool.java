@@ -24,8 +24,6 @@
 
 package com.sun.squawk.translator.ci;
 
-import java.io.IOException;
-
 import com.sun.squawk.util.Assert;
 import com.sun.squawk.translator.*;
 import com.sun.squawk.util.SquawkVector;    // Version without synchronization
@@ -45,47 +43,47 @@ public class ConstantPool {
     \*---------------------------------------------------------------------------*/
 
     /**
-     * Contant pool tag value denoting a UTF-8 encoded string entry.
+     * Constant pool tag value denoting a UTF-8 encoded string entry.
      */
     public static final int CONSTANT_Utf8 = 1;
 
     /**
-     * Contant pool tag value denoting a unicode encoded string entry.
+     * Constant pool tag value denoting a unicode encoded string entry.
      */
     public static final int CONSTANT_Unicode = 2;
 
     /**
-     * Contant pool tag value denoting a 4-byte <code>int</code> constant.
+     * Constant pool tag value denoting a 4-byte <code>int</code> constant.
      */
     public static final int CONSTANT_Integer = 3;
 
     /**
-     * Contant pool tag value denoting a 4-byte <code>float</code> constant.
+     * Constant pool tag value denoting a 4-byte <code>float</code> constant.
      */
     public static final int CONSTANT_Float = 4;
 
     /**
-     * Contant pool tag value denoting an 8-byte <code>long</code> constant.
+     * Constant pool tag value denoting an 8-byte <code>long</code> constant.
      */
     public static final int CONSTANT_Long = 5;
 
     /**
-     * Contant pool tag value denoting an 8-byte <code>double</code> constant.
+     * Constant pool tag value denoting an 8-byte <code>double</code> constant.
      */
     public static final int CONSTANT_Double = 6;
 
     /**
-     * Contant pool tag value denoting a class or interface reference.
+     * Constant pool tag value denoting a class or interface reference.
      */
     public static final int CONSTANT_Class = 7;
 
     /**
-     * Contant pool tag value denoting a <code>String</code> value.
+     * Constant pool tag value denoting a <code>String</code> value.
      */
     public static final int CONSTANT_String = 8;
 
     /**
-     * Contant pool tag value denoting a field reference.
+     * Constant pool tag value denoting a field reference.
      */
     public static final int CONSTANT_Fieldref = 9;
 
@@ -95,17 +93,17 @@ public class ConstantPool {
     public static final int CONSTANT_Methodref = 10;
 
     /**
-     * Contant pool tag value denoting an interface method reference.
+     * Constant pool tag value denoting an interface method reference.
      */
     public static final int CONSTANT_InterfaceMethodref = 11;
 
     /**
-     * Contant pool tag value denoting a members name and type values.
+     * Constant pool tag value denoting a members name and type values.
      */
     public static final int CONSTANT_NameAndType = 12;
 
     /**
-     * Contant pool tag value denoting an Object value. This is an extension
+     * Constant pool tag value denoting an Object value. This is an extension
      * to the constants defined in the JVM specification.
      */
     public static final int CONSTANT_Object = 14;
@@ -197,12 +195,6 @@ public class ConstantPool {
      * data structures.
      */
 
-    /* This was introduced temporarily, perhaps to get Java5 synatx support working.
-     * But for now, keep standard access control in order to pass TCK tests.
-     * Might need to turn into a parameter option (default to false!).
-     */
-    private final static boolean ALLOW_LOOSE_ACCESS_CONTROL = false;
-    
     /**
      * The translation context
      */
@@ -1138,7 +1130,7 @@ public class ConstantPool {
                     case CONSTANT_Class:
                     case CONSTANT_String: {
                         verifyEntry(raw[i], CONSTANT_Utf8);
-                        entries[i] = (tags[i] == CONSTANT_String ? isolate.intern((String)entries[raw[i]]) : entries[raw[i]]);
+                        entries[i] = (tags[i] == CONSTANT_String ? Isolate.intern((String)entries[raw[i]]) : entries[raw[i]]);
                         raw[i] = 0;
                         break;
                     }

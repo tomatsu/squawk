@@ -35,8 +35,6 @@ import com.sun.squawk.Address;
  * A NOR flash sector can be completely erased, setting all bits to 1s.  Writing simply
  * sets some bits from 1 to 0.  Setting a bit from 0 to 1, requires the complete sector
  * to be erased.
- * 
- *
  */
 public interface INorFlashSector {
     public static final int USER_PURPOSED = 1;
