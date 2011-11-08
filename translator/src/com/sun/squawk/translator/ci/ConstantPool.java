@@ -195,6 +195,12 @@ public class ConstantPool {
      * data structures.
      */
 
+    /* This was introduced temporarily, perhaps to get Java5 synatx support working.
+     * But for now, keep standard access control in order to pass TCK tests.
+     * Might need to turn into a parameter option (default to false!).
+     */
+    private final static boolean ALLOW_LOOSE_ACCESS_CONTROL = false;
+    
     /**
      * The translation context
      */
