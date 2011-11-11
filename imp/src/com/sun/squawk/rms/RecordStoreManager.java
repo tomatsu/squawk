@@ -38,6 +38,10 @@ import com.sun.squawk.flash.IMemoryHeapBlock;
 import com.sun.squawk.flash.INorFlashMemoryHeap;
 import com.sun.squawk.flash.INorFlashMemoryHeapScanner;
 
+/**
+ * Keeps track of multiple records stores (by name). Also handles case where owning midlet has changed,
+ * so store has to be erased.
+ */
 public class RecordStoreManager implements IRecordStoreManager {
 
     protected INorFlashMemoryHeap memoryHeap;
@@ -134,7 +138,7 @@ public class RecordStoreManager implements IRecordStoreManager {
             }
             entry.setAddress(block.getAddress());
             entry.readFrom(block);
-            return (IRmsEntry) entry;
+            return entry;
         } catch (IOException e) {
             throw new RecordStoreException(e.getMessage());
         }
@@ -194,7 +198,7 @@ public class RecordStoreManager implements IRecordStoreManager {
                 names.addElement(entry.getName());
             }
         }
-        if (names.size() ==0) {
+        if (names.size() == 0) {
             return null;
         }
         String[] strings = new String[names.size()];
@@ -206,7 +210,7 @@ public class RecordStoreManager implements IRecordStoreManager {
         return memoryHeap.getSizeAvailable();
     }
 
-    protected void init() throws RecordStoreException {
+    private void init() throws RecordStoreException {
         currentRecordStores = new IRecordStoreEntry[4];
         if (scanVisitor == null) {
             scanVisitor = new RecordStoreManagerScanVisitor(this);

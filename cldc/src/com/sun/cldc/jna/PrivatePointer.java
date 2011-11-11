@@ -1,5 +1,6 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This code is free software; you can redistribute it and/or modify
@@ -17,8 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  *
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -38,23 +39,6 @@ public class PrivatePointer  {
     private PrivatePointer() {}
 
     /**
-     * Get a pointer to the interior of a Java array.
-     * Check that the range requested is within the array bounds.
-     * @param array
-     * @param offset
-     * @param len
-     * @return
-     */
-    private static Address getPtrToArray(byte[] array, int offset, int len) {
-        Assert.that(GC.setGCEnabled(false) == false);
-        int alen = array.length;
-        if (offset < 0 || (offset + len) > alen) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-        return Address.fromObject(array).add(offset);
-    }
-
-    /**
      * Get ready to allow creating array buffers.
      * @return previous state
      */
@@ -71,42 +55,31 @@ public class PrivatePointer  {
     }
 
     /**
-     * Create a native buffer pointing to either the array data directly,
-     * or to a copy of the array data.
-     * bytes
-     * The returned point can be released when not needed.
+     * Check array argument before calling createArrayBuffer
      *
      * @param array the array to access
-     * @return Pointer the C-accessible version of the array data
      * @throws OutOfMemoryError if the underlying memory cannot be allocated
      * @throws IllegalArgumentException if array is not really an array
      */
-    public static Address createArrayBuffer(Object array) throws OutOfMemoryError {
-        Assert.always(GC.setGCEnabled(false) == false);
+    public static void preCheckArrayBuffer(Object array) throws OutOfMemoryError {
+        Assert.that(GC.isGCEnabled());
         Klass klass = GC.getKlass(array);
         if (!klass.isArray()) {
             throw new IllegalArgumentException();
         }
-//        int length = GC.getArrayLength(array);
-//        int elemsize = klass.getComponentType().getDataSize();
-        return Address.fromObject(array);
     }
 
     /**
-     * Create a native buffer pointing to either the array data directly,
-     * or to a copy of the array data.
-     * bytes
-     * The returned pointer can be released when not needed.
+     * Check arguments before calling createArrayBuffer
      *
      * @param array the array to access
      * @param offset index of the first element to access
      * @param number number of elements to access
-     * @return Pointer the C-accessible version of the array data
      * @throws OutOfMemoryError if the underlying memory cannot be allocated
      * @throws IllegalArgumentException if array is not really an array
      */
-    public static Address createArrayBuffer(Object array, int offset, int number) throws OutOfMemoryError {
-        Assert.always(GC.setGCEnabled(false) == false);
+    public static void preCheckArrayBuffer(Object array, int offset, int number) throws OutOfMemoryError {
+        Assert.that(GC.isGCEnabled());
         Klass klass = GC.getKlass(array);
         if (!klass.isArray()) {
             throw new IllegalArgumentException();
@@ -115,6 +88,49 @@ public class PrivatePointer  {
         int length = GC.getArrayLength(array);
         int elemsize = klass.getComponentType().getDataSize();
         Pointer.checkMultiBounds1(length + elemsize, offset, number, elemsize);
+    }
+    
+    /**
+     * Create a native buffer pointing to either the array data directly,
+     * or to a copy of the array data.
+     * The returned pointer can be released when not needed.
+     *
+     * WARNING: You MUST call preCheckArrayBuffer() on "array" 
+     * before calling createArrayBuffer(), because it is too late to throw an exception now.
+     * 
+     * WARNING: You MUST have called setUpArrayStateBuffer before calling createArrayBuffer().
+     * 
+     * @param array the array to access
+     * @return Pointer the C-accessible version of the array data
+     */
+    public static Address createArrayBuffer(Object array) {
+        Assert.always(GC.setGCEnabled(false) == false);
+        Assert.that(GC.getKlass(array).isArray());
+        return Address.fromObject(array);
+    }
+
+    /**
+     * Create a native buffer pointing to either the array data directly,
+     * or to a copy of the array data.
+     * bytes
+     * The returned pointer can be released when not needed.
+     * 
+     * WARNING: You MUST call preCheckArrayBuffer() on "array", "offset", "number" 
+     * before calling createArrayBuffer(), because it is too late to throw an exception now.
+     * 
+     * WARNING: You MUST have called setUpArrayStateBuffer before calling createArrayBuffer().
+     *
+     * @param array the array to access
+     * @param offset index of the first element to access
+     * @param number number of elements to access
+     * @return Pointer the C-accessible version of the array data
+     */
+    public static Address createArrayBuffer(Object array, int offset, int number) {
+        Assert.always(GC.setGCEnabled(false) == false);
+        Assert.that(GC.getKlass(array).isArray());
+        Klass klass = GC.getKlass(array);
+
+        int elemsize = klass.getComponentType().getDataSize();
         return Address.fromObject(array).add(offset * elemsize);
     }
 

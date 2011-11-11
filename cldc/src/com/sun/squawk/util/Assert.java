@@ -66,9 +66,16 @@ public class Assert {
      * @param message
      */
     protected static void throwAssertFailedException(String message)  throws NotInlinedPragma {
-        System.err.flush();
-        System.out.flush();
-        throw new RuntimeException("Assertion failed: " + message);
+        if (System.err != null) {
+            System.err.flush();
+            System.out.flush();
+            throw new RuntimeException("Assertion failed: " + message);
+        } else {
+            VM.print("Assertion failed: ");
+            VM.println(message);
+            VM.println("Too early to throw exception");
+            VM.fatalVMError();
+        }
     }
 
     /**

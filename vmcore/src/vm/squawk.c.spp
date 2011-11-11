@@ -1750,12 +1750,14 @@ void Squawk_continue(Globals *gp) {
         }
 
         throw_nullPointerException: {
+            saveContextRegisters();
             resetStackPointer();
             call(com_sun_squawk_VM_nullPointerException);
             continue;
         }
 
         throw_arrayIndexOutOfBoundsException: {
+            saveContextRegisters();
             resetStackPointer();
             call(com_sun_squawk_VM_arrayIndexOutOfBoundsException);
             continue;
@@ -1832,7 +1834,17 @@ extern  void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddre
     stackHigh = Address_add(ss, getArrayLength(ss) * HDR_BYTES_PER_WORD);
     printValueInRange(_sp, "sp", sl, stackHigh, "current stack");
     printValueInRange(_fp, "fp", sl, stackHigh, "current stack");
-
+    
+    // saved values not always valid. 
+    fprintf(stderr, "        next three saved values may not be valid:\n");
+#if com_sun_squawk_Klass_ENABLE_DYNAMIC_CLASSLOADING
+    printValueInRange(saved_ip, "saved_ip", com_sun_squawk_VM_romStart, com_sun_squawk_GC_ramEnd, "code");
+#else
+    printValueInRange(saved_ip, "saved_ip", com_sun_squawk_VM_romStart, com_sun_squawk_VM_romEnd, "code");
+#endif
+    printValueInRange(saved_sp, "saved_sp", sl, stackHigh, "current stack");
+    printValueInRange(saved_fp, "saved_fp", sl, stackHigh, "current stack");
+    
     if (userStack) {
         Address thread = getObject(ss, SC_owner);
 

@@ -2013,7 +2013,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
         }
 
         /**
-         * Backward branch target in applicaton code.
+         * Backward branch target in application code.
          *
          * <p>
          * Java Stack:  _  ->  _

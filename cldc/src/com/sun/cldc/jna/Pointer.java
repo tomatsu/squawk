@@ -1,33 +1,32 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
-
 
 package com.sun.cldc.jna;
 
 import com.sun.squawk.Address;
 import com.sun.squawk.GC;
-import com.sun.squawk.Klass;
 import com.sun.squawk.NativeUnsafe;
 import com.sun.squawk.UWord;
 import com.sun.squawk.Unsafe;
@@ -39,11 +38,10 @@ import com.sun.squawk.realtime.RawMemoryFloatAccess;
 //import com.sun.squawk.realtime.RawMemoryAccess;
 /*end[FLOATS]*/
 import com.sun.squawk.realtime.SizeOutOfBoundsException;
-import com.sun.squawk.util.Assert;
 import com.sun.squawk.vm.CID;
 
 /**
- * A pointer to native memory, based on RTSJ-like RawMemoryAccesss semantics. Otherise similar to the Memory class in JNA.
+ * A pointer to native memory, based on RTSJ-like RawMemoryAccesss semantics. Otherwise similar to the Memory class in JNA.
  * All pointers have a size, so memory access through a pointer is range-checked.
  * 
  * A pointer can either have a dedicated backing buffer of native memory (from malloc or similar), or it may be a "shared" subset of
@@ -51,12 +49,12 @@ import com.sun.squawk.vm.CID;
  * 
  * <h3>Differences from JNA</h3>
  * <ul>
- *   <li> The backing native memory is not automically freed by finalization - No finalization in cldc.
+ *   <li> The backing native memory is not automatically freed by finalization - No finalization in cldc.
  *   <li> No getIntArray(), etc methods<br>
  *        Use explicit "buf = new int[size]; geInts(offset, buf. size);" (from RTSJ)
  *   <li> No read() methods, use getInts(), etc. instead (from RTSJ)
  *   <li> No write() methods, use setInts(), etc. instead (from RTSJ)
- *   <li> No getPointerArray() method - we need to specifiy a size for each Pointer
+ *   <li> No getPointerArray() method - we need to specify a size for each Pointer
  *   <li> No getChar(), setChar() or read or write of chars methods. (from RTSJ)
  *   <li> No getByteBuffer() method -  no NIO in cldc
  *   <li> Some offsets are of type int instead of long (this is "Microedition", after all)
@@ -99,7 +97,7 @@ public class Pointer
      * @param base the base address of the pointer
      * @param size the number of bytes that can be referenced from this pointer
      * 
-     * @throws SecurityException if the memory range intersets the Java heap
+     * @throws SecurityException if the memory range intersects the Java heap
      *
      * @exception OffsetOutOfBoundsException    Thrown if the address is invalid.
      *
@@ -118,7 +116,7 @@ public class Pointer
      * @param base the base address of the pointer
      * @param size the number of bytes that can be referenced from this pointer
      * 
-     * @throws SecurityException if the memory range intersets the Java heap
+     * @throws SecurityException if the memory range intersects the Java heap
      *
      * @exception OffsetOutOfBoundsException    Thrown if the address is invalid.
      *
@@ -137,7 +135,7 @@ public class Pointer
      * @param base the base address of the pointer
      * @param size the number of bytes that can be referenced from this pointer
      * 
-     * @throws SecurityException if the memory range intersets the Java heap
+     * @throws SecurityException if the memory range intersects the Java heap
      *
      * @exception OffsetOutOfBoundsException    Thrown if the address is invalid.
      *
@@ -198,7 +196,7 @@ public class Pointer
     }
         
     /** 
-     * Craete a ptr that's a based on an offset to some other pointer.
+     * Create a pointer that's a based on an offset to some other pointer.
      * 
      * @param base pointer
      * @param offset from pointer
@@ -256,9 +254,9 @@ public class Pointer
     }
 
     /**
-     * Read a ptr value from memory at offset, and construct a new pointer representing the data stored there...
+     * Read a pointer value from memory at offset, and construct a new pointer representing the data stored there...
      * 
-     * @param offset offset from <code>this</code> pointer that conatins a memory location that is an address.
+     * @param offset offset from <code>this</code> pointer that contains a memory location that is an address.
      * @param size the size that the new pointer should have
      * @return a new pointer with e
      */
@@ -337,7 +335,7 @@ public class Pointer
      * @param offset the byte offset of the c string from the base of this pointer
      * @param data
      */
-    private final void setString(int offset, byte[] data) {
+    private void setString(int offset, byte[] data) {
         int len = data.length;
         checkMultiWrite(offset, len + 1, 1);
         setBytes(offset, data, 0, len);
@@ -412,86 +410,6 @@ public class Pointer
     }
     
     /**
-     * Get a pointer to the interior of a Java array. 
-     * Check that the range requested is within the array bounds.
-     * @param array
-     * @param offset
-     * @param len
-     * @return
-     */
-    private static Address getPtrToArray(byte[] array, int offset, int len) {
-        Assert.that(GC.setGCEnabled(false) == false);
-        int alen = array.length;
-        if (offset < 0 || (offset + len) > alen) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-        return Address.fromObject(array).add(offset);
-    }
-    
-//    /**
-//     * Get ready to allow creating array buffers.
-//     * @return previous state
-//     */
-//    public static boolean setUpArrayBufferState() {
-//        return GC.setGCEnabled(false);
-//    }
-//
-//    /**
-//     * Clean up after creating array buffers.
-//     * @return previous state
-//     */
-//    public static void tearDownArrayBufferState(boolean oldState) {
-//        GC.setGCEnabled(oldState);
-//    }
-//    /**
-//     * Create a native buffer pointing to either the array data directly,
-//     * or to a copy of the array data.
-//     * bytes
-//     * The returned point can be released when not needed.
-//     *
-//     * @param array the array to access
-//     * @return Pointer the C-accessible version of the array data
-//     * @throws OutOfMemoryError if the underlying memory cannot be allocated
-//     * @throws IllegalArgumentException if array is not really an array
-//     */
-//    public static Pointer createArrayBuffer(Object array) throws OutOfMemoryError {
-//        Assert.always(GC.setGCEnabled(false) == false);
-//        Klass klass = GC.getKlass(array);
-//        if (!klass.isArray()) {
-//            throw new IllegalArgumentException();
-//        }
-//        int length = GC.getArrayLength(array);
-//        int elemsize = klass.getComponentType().getDataSize();
-//        return new Pointer(Address.fromObject(array), length * elemsize);
-//    }
-//
-//    /**
-//     * Create a native buffer pointing to either the array data directly,
-//     * or to a copy of the array data.
-//     * bytes
-//     * The returned pointer can be released when not needed.
-//     *
-//     * @param array the array to access
-//     * @param offset index of the first element to access
-//     * @param number number of elements to access
-//     * @return Pointer the C-accessible version of the array data
-//     * @throws OutOfMemoryError if the underlying memory cannot be allocated
-//     * @throws IllegalArgumentException if array is not really an array
-//     */
-//    public static Pointer createArrayBuffer(Object array, int offset, int number) throws OutOfMemoryError {
-//        Assert.always(GC.setGCEnabled(false) == false);
-//        Klass klass = GC.getKlass(array);
-//        if (!klass.isArray()) {
-//            throw new IllegalArgumentException();
-//        }
-//
-//        int length = GC.getArrayLength(array);
-//        int elemsize = klass.getComponentType().getDataSize();
-//        checkMultiBounds(length + elemsize, offset, number, elemsize);
-//        return new Pointer(Address.fromObject(array).add(offset * elemsize), number * elemsize);
-//    }
- 
-    /**
      * Copy <code>len</code> bytes from <code>src</code> to <code>dst</code> starting at the given offsets.
      * Throws exception if the memory ranges specified for  <code>src</code> dst <code>dst</code> stray outside the 
      * valid ranges for those <code>Pointers</code>.
@@ -517,7 +435,7 @@ public class Pointer
         VM.copyBytes(src.address(), srcOffset, dst.address(), dstOffset, len, false);
     }
 
-       /**
+    /**
      * Do a bounds check on accessing a range.
      * <p>
      *

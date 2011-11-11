@@ -2956,7 +2956,6 @@ final class TimerQueue {
         }
     }
 
-
     /**
      * Remove all the threads in this queue that are owned by <code>isolate</code>
      * and add them to the queue of hibernated timer-blocked threads in the isolate.

@@ -176,6 +176,8 @@ public class InstructionEmitter implements InstructionVisitor {
      * Flag to show if the method being converted is considered an application class.
      */
     private boolean isAppClass = true;
+    
+    final static String SYSTEM_CLASS_PREFIX = "com.sun.squawk.";
 
     /**
      * Constructor.
@@ -198,7 +200,18 @@ public class InstructionEmitter implements InstructionVisitor {
          * System classes are not preemptable, but application classes must call Thread.yield()
          * every so often.
          */
-        isAppClass = !VM.getCurrentIsolate().getLeafSuite().isBootstrap();
+        if (VM.getCurrentIsolate().getLeafSuite().isBootstrap()) {
+            String name = classFile.getDefinedClass().getInternalName();
+            if (name.startsWith(SYSTEM_CLASS_PREFIX) || name.startsWith("java.") || name.startsWith("com.sun.")  
+                    //|| name.startsWith("javax.")
+//                    || name.startsWith("tests.")
+                    ) {
+                isAppClass = false;
+                // System.out.println("Found system class: " + name);
+            } else {
+                System.out.println("Found APP class: " + name);
+            }
+        }
     }
 
     /**
