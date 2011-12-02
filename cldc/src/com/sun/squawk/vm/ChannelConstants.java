@@ -329,20 +329,27 @@ public final class ChannelConstants {
     public static final int SET_SYSTEM_TIME                     = MISC_OPCODES + 11;
     public static final int ENABLE_AVR_CLOCK_SYNCHRONISATION    = MISC_OPCODES + 12;
 
-	public static final int GET_PUBLIC_KEY                      = MISC_OPCODES + 13;
+    public static final int GET_PUBLIC_KEY                      = MISC_OPCODES + 13;
 
-	public static final int COMPUTE_CRC16_FOR_MEMORY_REGION     = MISC_OPCODES + 14;
+    public static final int COMPUTE_CRC16_FOR_MEMORY_REGION     = MISC_OPCODES + 14;
     
     public static final int REPROGRAM_MMU                       = MISC_OPCODES + 15;
-	public static final int GET_ALLOCATED_FILE_SIZE             = MISC_OPCODES + 16;
-	public static final int GET_FILE_VIRTUAL_ADDRESS            = MISC_OPCODES + 17;
-	
-	public static final int GET_DMA_BUFFER_SIZE                 = MISC_OPCODES + 18;
-	public static final int GET_DMA_BUFFER_ADDRESS              = MISC_OPCODES + 19;
-
-	public static final int GET_RECORDED_OUTPUT                 = MISC_OPCODES + 20;
-    public static final int GET_VAR_ADDR                        = MISC_OPCODES + 21;
+    public static final int GET_ALLOCATED_FILE_SIZE             = MISC_OPCODES + 16;
+    public static final int GET_FILE_VIRTUAL_ADDRESS            = MISC_OPCODES + 17;
     
+    public static final int GET_DMA_BUFFER_SIZE                 = MISC_OPCODES + 18;
+    public static final int GET_DMA_BUFFER_ADDRESS              = MISC_OPCODES + 19;
+
+    public static final int GET_RECORDED_OUTPUT                 = MISC_OPCODES + 20;
+    public static final int GET_VAR_ADDR                        = MISC_OPCODES + 21;
+    public static final int ADC_INIT                            = MISC_OPCODES + 22;
+    public static final int ADC_SET_THRESHOLD                   = MISC_OPCODES + 23;
+    public static final int ADC_GET_HIGH_THRESHOLD              = MISC_OPCODES + 24;
+    public static final int ADC_GET_LOW_THRESHOLD               = MISC_OPCODES + 25;
+    public static final int ADC_CHECK_INTERRUPT                 = MISC_OPCODES + 26;
+    public static final int ADC_ENABLE_THRESHOLD                = MISC_OPCODES + 27;
+    public static final int ADC_ARE_THRESHOLD_ENABLE            = MISC_OPCODES + 28;
+
     /*
      * Index of variable in C. 
      */
