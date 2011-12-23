@@ -382,8 +382,6 @@ public interface GCFFile {
      * written that have been buffered by the connection,
      * should immediately be written to their intended destination.
      * <p>
-     * The <code>flush</code> method of <code>ConnectionBaseAdapter</code>
-     * does nothing.
      *
      * @exception  IOException  if an I/O error occurs.
      */

@@ -25,7 +25,6 @@ package com.sun.squawk.io.j2me.file;
 //package com.sun.midp.io.j2me.file;
 
 import com.sun.squawk.microedition.io.FileConnection;
-import com.sun.squawk.VM;
 import com.sun.squawk.platform.GCFFile;
 import com.sun.squawk.io.ConnectionBaseAdapter;
 import com.sun.squawk.io.j2me.ParameterParser;
@@ -72,14 +71,15 @@ public class Protocol extends ConnectionBaseAdapter implements FileConnection {
     /** Output stream associated with this connection */
     OutputStream fos;
     /** Separator for file path components */
-    private static String sep;
+    private final static String sep;
     
     /** Static initialization of file separator */
     static {
-        sep = System.getProperty("file.separator");
-        if (sep == null) {
+        String separator = System.getProperty("file.separator");
+        if (separator == null) {
             throw new NullPointerException("Undefined \"file.separator\" property");
         }
+        sep = separator;
     }
 
     /**
@@ -155,7 +155,7 @@ public class Protocol extends ConnectionBaseAdapter implements FileConnection {
                 if (realfileName.endsWith("/")) {
                     throw new IllegalArgumentException("Directory listing not yet supported");
                 } else {
-                    if (p.path.size() != 0 /*&& !(new File(realfileName).isAbsolute()*/) {
+                    if (!p.path.isEmpty() /*&& !(new File(realfileName).isAbsolute()*/) {
                         boolean found = false;
                         Enumeration e = p.path.elements();
                         while (e.hasMoreElements()) {
@@ -173,7 +173,7 @@ public class Protocol extends ConnectionBaseAdapter implements FileConnection {
                     }
                 }
             } else if (mode == Connector.WRITE) {
-                if (p.path.size() != 0 /*&& !(new File(realfileName).isAbsolute()*/) {
+                if (!p.path.isEmpty() /*&& !(new File(realfileName).isAbsolute()*/) {
                     boolean found = false;
                     Enumeration e = p.path.elements();
                     while (e.hasMoreElements()) {
@@ -1139,7 +1139,7 @@ public class Protocol extends ConnectionBaseAdapter implements FileConnection {
      * @throws SecurityException if read is not allowed
      * @throws IllegalStateException if connection is write only
      */
-    private final void checkReadPermission(String fileURL, int mode)
+    private void checkReadPermission(String fileURL, int mode)
             throws InterruptedIOException {
 
 //        if (classSecurityToken == null) { // FC permission
@@ -1212,7 +1212,7 @@ public class Protocol extends ConnectionBaseAdapter implements FileConnection {
      * @throws SecurityException if write is not allowed
      * @throws IllegalStateException if connection is read only
      */
-    private final void checkWritePermission(String fileURL, int mode)
+    private void checkWritePermission(String fileURL, int mode)
             throws InterruptedIOException {
 
 //        if (classSecurityToken == null) { // FC permission
@@ -1242,7 +1242,7 @@ public class Protocol extends ConnectionBaseAdapter implements FileConnection {
      * @throws SecurityException if write is not allowed
      * @throws IllegalStateException if connection is read only
      */
-    protected final void checkWritePermission() throws InterruptedIOException {
+    protected void checkWritePermission() throws InterruptedIOException {
         checkWritePermission(fileURL, mode);
     }
 
@@ -1389,7 +1389,7 @@ class EscapedUtil {
             if (name == null) {
                 return null;
             }
-            if (name.indexOf("%") == -1) {
+            if (name.indexOf('%') == -1) {
                 return name;
             } else {
                 byte newName[] = new byte[name.length()];

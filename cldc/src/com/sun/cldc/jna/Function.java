@@ -39,8 +39,8 @@ import com.sun.squawk.VMThread;
  * <h3>Differences from JNA</h3>
  * <ul>
  * <li> Function is NOT a subclass of Pointer
- * <li> Invocation is via calls to one of the predfined "call()" methods, not using the generic invoke() method.
- * <li> Throws RuntimeExceptions instead of UnsatisfiedLinkErrors. Are link errors really "unrecoverable"? Platform independant code might want to work around missing functions.
+ * <li> Invocation is via calls to one of the predefined "call()" methods, not using the generic invoke() method.
+ * <li> Throws RuntimeExceptions instead of UnsatisfiedLinkErrors. Are link errors really "unrecoverable"? Platform independent code might want to work around missing functions.
  * <li> Calling conventions unimplemented
  * <li> no finalization in cldc, need to call dispose() explicitly (could add a shutdownhook though).
  * <li> no parseVersion();

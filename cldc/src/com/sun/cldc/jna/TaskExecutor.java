@@ -88,7 +88,7 @@ public class TaskExecutor {
     }
 
     /**
-     * Create a natve thread with the given name, priority and stack size.
+     * Create a native thread with the given name, priority and stack size.
      *
      * @param name name may be passed on to the native thread
      * @param priority
@@ -146,7 +146,7 @@ public class TaskExecutor {
     /**
      * Tell TaskExecutor to stop running new NativeTasks.
      * Any NativeTasks that were pending on the TaskExecutor's run queue
-     * will be signalled as completing with an error.
+     * will be signaled as completing with an error.
      */
     public void cancelTaskExecutor() {
         checkTaskExecutor();

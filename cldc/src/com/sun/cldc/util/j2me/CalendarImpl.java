@@ -25,7 +25,6 @@
 package com.sun.cldc.util.j2me;
 
 import java.util.*;
-import java.io.*;
 
 /**
  * This class is an implementation of the subsetted
@@ -107,8 +106,8 @@ public class CalendarImpl extends Calendar {
         // Time to fields takes the wall millis (Standard or DST).
         timeToFields(localMillis);
 
-        long days = (long)(localMillis / ONE_DAY);
-        int millisInDay = (int)(localMillis - (days * ONE_DAY));
+        long ndays = (localMillis / ONE_DAY);
+        int millisInDay = (int)(localMillis - (ndays * ONE_DAY));
 
         if (millisInDay < 0) millisInDay += ONE_DAY;
 
@@ -167,8 +166,8 @@ public class CalendarImpl extends Calendar {
      * @param theTime the time in wall millis (either Standard or DST),
      * whichever is in effect
      */
-    private final void timeToFields(long theTime) {
-        int dayOfYear, weekCount, rawYear;
+    private void timeToFields(long theTime) {
+        int dayOfYear, rawYear;
         boolean isLeap;
 
         // Compute the year, month, and day of month from the given millis
@@ -381,7 +380,6 @@ public class CalendarImpl extends Calendar {
         int month = calendar.get(Calendar.MONTH) + 1;
         int day = calendar.get(Calendar.DAY_OF_MONTH);
         int hour_of_day = calendar.get(Calendar.HOUR_OF_DAY);
-//        int hour = calendar.get(Calendar.HOUR);
         int minute = calendar.get(Calendar.MINUTE);
         int seconds = calendar.get(Calendar.SECOND);
 
@@ -419,7 +417,7 @@ public class CalendarImpl extends Calendar {
         return sb.toString();
     }
 
-    private static final StringBuffer appendFourDigits(StringBuffer sb, int number) {
+    private static StringBuffer appendFourDigits(StringBuffer sb, int number) {
         if (number >= 0 && number < 1000) {
             sb.append('0');
             if (number < 100) {
@@ -432,7 +430,7 @@ public class CalendarImpl extends Calendar {
         return sb.append(number);
     }
 
-    private static final StringBuffer appendTwoDigits(StringBuffer sb, int number) {
+    private static StringBuffer appendTwoDigits(StringBuffer sb, int number) {
         if (number < 10) {
             sb.append('0');
         }
@@ -571,9 +569,8 @@ public class CalendarImpl extends Calendar {
      * year 1 BC, -1 indicating 2 BC, etc.
      * @return the Julian day number
      */
-    private final long calculateJulianDay(boolean isGregorian, int year) {
+    private long calculateJulianDay(boolean isGregorian, int year) {
         int month = 0;
-        long millis = 0;
 
         month = this.fields[MONTH] - JANUARY;
 
@@ -657,7 +654,7 @@ public class CalendarImpl extends Calendar {
      * @param millis the given milliseconds.
      * @return the Julian day number.
      */
-    private static final long millisToJulianDay(long millis) {
+    private static long millisToJulianDay(long millis) {
         return EPOCH_JULIAN_DAY + floorDivide(millis, ONE_DAY);
     }
 
@@ -666,11 +663,11 @@ public class CalendarImpl extends Calendar {
      * @param julian the given Julian day number.
      * @return time as milliseconds.
      */
-    private static final long julianDayToMillis(long julian) {
+    private static long julianDayToMillis(long julian) {
         return (julian - EPOCH_JULIAN_DAY) * ONE_DAY;
     }
 
-    private static final int julianDayToDayOfWeek(long julian) {
+    private static int julianDayToDayOfWeek(long julian) {
         // If julian is negative, then julian%7 will be negative, so we adjust
         // accordingly.  We add 1 because Julian day 0 is Monday.
         int dayOfWeek = (int)((julian + 1) % 7);
@@ -687,7 +684,7 @@ public class CalendarImpl extends Calendar {
      * @param denominator a divisor which must be > 0
      * @return the floor of the quotient.
      */
-    public static final long floorDivide(long numerator, long denominator) {
+    public static long floorDivide(long numerator, long denominator) {
         // We do this computation in order to handle
         // a numerator of Long.MIN_VALUE correctly
         return (numerator >= 0) ?
@@ -705,7 +702,7 @@ public class CalendarImpl extends Calendar {
      * @param denominator a divisor which must be > 0
      * @return the floor of the quotient.
      */
-    private static final int floorDivide(int numerator, int denominator) {
+    private static int floorDivide(int numerator, int denominator) {
         // We do this computation in order to handle
         // a numerator of Integer.MIN_VALUE correctly
         return (numerator >= 0) ?
@@ -727,7 +724,7 @@ public class CalendarImpl extends Calendar {
      * % denominator</code>, this will always be non-negative.
      * @return the floor of the quotient.
      */
-    private static final int
+    private static int
         floorDivide(int numerator, int denominator, int[] remainder) {
 
         if (numerator >= 0) {
@@ -753,7 +750,7 @@ public class CalendarImpl extends Calendar {
      * % denominator</code>, this will always be non-negative.
      * @return the floor of the quotient.
      */
-    private static final int
+    private static int
         floorDivide(long numerator, int denominator, int[] remainder) {
 
         if (numerator >= 0) {
