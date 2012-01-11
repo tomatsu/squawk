@@ -25,11 +25,10 @@
 
 package com.sun.squawk;
 
-import java.io.*;
-
 import com.sun.squawk.pragma.*;
 import com.sun.squawk.util.*;
 import com.sun.squawk.vm.*;
+import java.io.PrintStream;
 
 /**
  * The Klass class represents the types in the Squawk VM.
@@ -285,6 +284,52 @@ public class Klass<T> {
     }
 
     /**
+     * Look up class from class files.
+     * 
+     * @param className
+     * @return class, exception, or null
+     * @throws HostedPragma 
+     */
+    private static Object forNameDynamic(String className)  
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
+        throws HostedPragma
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
+    {
+        ClassNotFoundException cnfe = null;
+        Klass klass = null;
+        Isolate isolate = VM.getCurrentIsolate();
+        if (isolate.getLeafSuite().isClosed()) {
+            cnfe = new ClassNotFoundException(className + " [The current isolate has no class path]");
+        } else if ((className.startsWith("java.")
+                || className.startsWith("javax.")
+                || className.startsWith("com.sun.squawk.")
+                || className.startsWith("com.sun.cldc."))) {
+            String packageName = className.substring(0, className.lastIndexOf('.'));
+            cnfe = new ClassNotFoundException("Prohibited package name: " + packageName);
+        } else {
+            TranslatorInterface translator = isolate.getTranslator();
+            if (translator != null) {
+                translator.open(isolate.getLeafSuite(), isolate.getClassPath());
+                if (translator.isValidClassName(className)) {
+                    klass = Klass.getClass(className, false);
+                    translator.load(klass);
+                    // Must load complete closure
+                    translator.close(Suite.DEBUG);
+                }
+            } else {
+                if (VM.isVerbose()) {
+                    VM.println("[translator not found - dynamic class loading disabled]");
+                }
+            }
+        }
+        
+        if (cnfe != null) {
+            return cnfe;
+        }
+        return klass;
+    }
+    
+    /**
      * Returns the <code>Klass</code> object associated with the class
      * with the given string name.
      * @param className the class name to lookup
@@ -302,33 +347,14 @@ public class Klass<T> {
         Klass klass = Klass.lookupKlass(className);
         ClassNotFoundException cnfe = null;
         if (klass == null) {
-/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
-            Isolate isolate = VM.getCurrentIsolate();
-            if (isolate.getLeafSuite().isClosed()) {
-                cnfe = new ClassNotFoundException(className + " [The current isolate has no class path]");
-            } else if ((className.startsWith("java.") ||
-                        className.startsWith("javax.") ||
-                        className.startsWith("com.sun.squawk.") ||
-                        className.startsWith("com.sun.cldc."))) {
-                String packageName = className.substring(0, className.lastIndexOf('.'));
-                cnfe = new ClassNotFoundException("Prohibited package name: " + packageName);
-            } else {
-                TranslatorInterface translator = isolate.getTranslator();
-                if (translator != null) {
-                    translator.open(isolate.getLeafSuite(), isolate.getClassPath());
-                    if (translator.isValidClassName(className)) {
-                        klass = Klass.getClass(className, false);
-                        translator.load(klass);
-                        // Must load complete closure
-                        translator.close(Suite.DEBUG);
-                    }
+            if (ENABLE_DYNAMIC_CLASSLOADING || VM.isHosted()) {
+                Object result = forNameDynamic(className);
+                if (result instanceof Klass) {
+                    klass = (Klass)result;
                 } else {
-                    if (VM.isVerbose()) {
-                        VM.println("[translator not found - dynamic class loading disabled]");
-                    }
+                    cnfe = (ClassNotFoundException)result;
                 }
             }
-/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         }
 
         if (klass != null && klass.getState() != Klass.STATE_DEFINED) {
@@ -337,6 +363,7 @@ public class Klass<T> {
         }
 
         // handle error cases:
+        // TODO: Simplify, but make sure TCK tests pass
 /*if[ENABLE_DYNAMIC_CLASSLOADING]*/
         if (VM.getCurrentIsolate().getLeafSuite().shouldThrowNoClassDefFoundErrorFor(className)) {
             if (cnfe != null && cnfe.getMessage() != null) {
@@ -2958,6 +2985,20 @@ T
         return method == match;
     }
     
+    private Method findMethodDynamic(Object body)
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
+        throws HostedPragma
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
+    {
+        if (body instanceof MethodBody) {
+            MethodBody mbody = (MethodBody)body;
+            if (mbody.getDefiningClass() == this) {
+                return mbody.getDefiningMethod();
+            }
+        }
+        return null;
+    }
+    
     /**
      * Searches for the symbolic method declaration corresponding to a given method body
      * that was defined by this class.
@@ -2966,16 +3007,13 @@ T
      * @return the symbolic info for <code>body</code> or null if it is not available
      */
     Method findMethod(Object body) {
-/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
-        if (body instanceof MethodBody) {
-            MethodBody mbody = (MethodBody)body;
-            if (mbody.getDefiningClass() == this) {
-                return mbody.getDefiningMethod();
-            } else {
-                return null;
+        if (ENABLE_DYNAMIC_CLASSLOADING || VM.isHosted()) {
+            Method result = findMethodDynamic(body);
+            if (result != null) {
+                return result;
             }
         }
-/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
+
         KlassMetadata metadata = getMetadata();
         if (metadata == null) {
             return null;
@@ -3431,12 +3469,15 @@ T
                 return cs;
             }
         } catch (Throwable ex) {
+            Error err;
             /*
              * Step 10
              */
-            if (!(ex instanceof Error)) {
+            if (ex instanceof Error) {
+                err = (Error)ex;
+            } else {
                 ex.printStackTrace();
-                ex = new Error("ExceptionInInitializer: " + name + ":" + ex);
+                err = new Error("ExceptionInInitializer: " + name + ":" + ex);
             }
             /*
              * Step 11
@@ -3445,7 +3486,7 @@ T
                 setInitializationState(null); // state = FAILED;
                 notifyAll();
             }
-            throw (Error)ex;
+            throw err;
         }
     }
 

@@ -35,6 +35,14 @@ import com.sun.squawk.pragma.*;
  */
 public class ProxySupport {
 
+    private static void setProperty(String key, String value) {
+        if (VM.isHosted()) {
+            System.setProperty(key, value);
+        } else {
+            VM.getCurrentIsolate().setProperty(key, value);
+        }
+    }
+    
     /**
      * Creates and initializes the translator.
      *
@@ -46,11 +54,9 @@ public class ProxySupport {
             VM.setCurrentIsolate(null);
             Isolate isolate = new Isolate(null, null, suite);
             VM.setCurrentIsolate(isolate);
-            if (VM.isHosted()) {
-                System.setProperty("translator.deadMethodElimination", "false");
-            } else {
-                isolate.setProperty("translator.deadMethodElimination", "false");
-            }
+            setProperty("translator.deadMethodElimination", "false");
+            setProperty("translator.deadClassElimination",  "false");
+            
             isolate.setTranslator(new Translator());
             
             TranslatorInterface translator = isolate.getTranslator();

@@ -25,15 +25,6 @@
 
 package com.sun.squawk.flash;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.Vector;
-
-import javax.microedition.rms.RecordStoreException;
-import javax.microedition.rms.RecordStoreFullException;
-
 import com.sun.squawk.Address;
 import com.sun.squawk.VM;
 import com.sun.squawk.peripheral.INorFlashSector;
@@ -41,6 +32,10 @@ import com.sun.squawk.peripheral.INorFlashSectorAllocator;
 import com.sun.squawk.util.Arrays;
 import com.sun.squawk.util.Comparer;
 import com.sun.squawk.util.UnexpectedException;
+import java.io.*;
+import java.util.Vector;
+import javax.microedition.rms.RecordStoreException;
+import javax.microedition.rms.RecordStoreFullException;
 
 /**
  * The collection of INorFlashSectorStates for a particular record store.
@@ -55,11 +50,12 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
     public static final int BLOCK_HEADER_SIZE = FLASH_WORD_SIZE + 4;
     public static final byte[] BLOCK_FOOTER = new byte[] {ERASED_VALUE_XOR, ERASED_VALUE_XOR};
 
-    protected final INorFlashSectorState[] sectorStates;
+    // field below re NOT final in order to enable unit testing...
+    protected INorFlashSectorState[] sectorStates;
     protected INorFlashSectorState currentSectorState;
     protected int erasedSequenceCurrentValue;
-    protected final INorFlashSectorStateList inUseSectorStateList;
-    protected final INorFlashSectorStateList toBeErasedSectorStateList;
+    protected INorFlashSectorStateList inUseSectorStateList;
+    protected INorFlashSectorStateList toBeErasedSectorStateList;
     protected boolean hasScannedBlocks;
     
     /**

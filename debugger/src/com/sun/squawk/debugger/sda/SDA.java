@@ -79,7 +79,7 @@ public final class SDA extends Debugger {
             Klass klass = suite.getKlass(i);
 
             // Ignore all VM internal types
-            if (!klass.isInternalType()) {
+            if (klass != null && !klass.isInternalType()) {
                 getIDForClass(klass);
             }
         }

@@ -97,7 +97,7 @@ public class VM {
     }
 
     public static boolean isVeryVerbose() {
-        return false;
+        return isVerbose;
     }
 
     /**

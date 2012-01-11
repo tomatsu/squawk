@@ -77,7 +77,7 @@ public interface GCFSockets {
      * @param len the maximum number of bytes to read.
      *
      * @return the total number of bytes read into the buffer, or
-     *         <tt>-1</tt> if there is no mo data because the end of
+     *         <tt>-1</tt> if there is no more data because the end of
      *         the stream has been reached.
      * @throws IOException 
      */
