@@ -209,7 +209,7 @@ public class InstructionEmitter implements InstructionVisitor {
                 isAppClass = false;
                 // System.out.println("Found system class: " + name);
             } else {
-                System.out.println("Found APP class: " + name);
+                // System.out.println("Found APP class: " + name);
             }
         }
     }
