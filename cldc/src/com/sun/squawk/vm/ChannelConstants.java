@@ -351,6 +351,34 @@ public final class ChannelConstants {
     public static final int ADC_ARE_THRESHOLD_ENABLE            = MISC_OPCODES + 28;
 
     /*
+     * Ethernet related OPCODES
+     */
+    public static final int ETHERNET_OP                         = MISC_OPCODES + 29;
+    public static final int ETHERNET_INIT                       = ETHERNET_OP + 0;
+    public static final int ETHERNET_CONFIG_NETIF               = ETHERNET_OP + 1;
+    public static final int ETHERNET_START_PROCESS              = ETHERNET_OP + 2;
+    public static final int ETHERNET_STOP_PROCESS               = ETHERNET_OP + 3;
+    public static final int ETHERNET_BIND                       = ETHERNET_OP + 4;
+    public static final int ETHERNET_LISTEN                     = ETHERNET_OP + 5;
+    public static final int ETHERNET_SEND                       = ETHERNET_OP + 6;
+    public static final int ETHERNET_CONNECT                    = ETHERNET_OP + 7;
+    public static final int ETHERNET_CLOSE                      = ETHERNET_OP + 8;    
+    public static final int ETHERNET_TCP_NEW                    = ETHERNET_OP + 9;
+    public static final int ETHERNET_CHECK_EVENT                = ETHERNET_OP + 10;
+    public static final int ETHERNET_POP_EVENT                  = ETHERNET_OP + 11;
+    public static final int ETHERNET_GET_EVENT_OPCODE           = ETHERNET_OP + 12;
+    public static final int ETHERNET_GET_EVENT_PCB              = ETHERNET_OP + 13;
+    public static final int ETHERNET_GET_EVENT_BUF              = ETHERNET_OP + 14;
+    public static final int ETHERNET_GET_EVENT_BUF_PTR          = ETHERNET_OP + 15;
+    public static final int ETHERNET_GET_EVENT_BUF_PUSHTOAPP    = ETHERNET_OP + 16;    
+    public static final int ETHERNET_GET_EVENT_BUF_LEN          = ETHERNET_OP + 17;
+    public static final int ETHERNET_GET_EVENT_ERR              = ETHERNET_OP + 18;
+    public static final int ETHERNET_GET_EVENT_ARG              = ETHERNET_OP + 19;
+    public static final int ETHERNET_COPY_PBUF                  = ETHERNET_OP + 20;
+    public static final int ETHERNET_FREE_PBUF                  = ETHERNET_OP + 21;
+    public static final int GET_ETHERNET_EVENT                  = ETHERNET_OP + 22;
+
+    /*
      * Index of variable in C. 
      */
     public static final int VAR_JAVA_IRQ_GPIO_STATUS            = 0;

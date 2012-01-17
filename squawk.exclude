@@ -54,13 +54,10 @@ PLATFORM_TYPE_DELEGATING=false                 com.sun.squawk.io.j2me.channel.*
 # Classes only used when PLATFORM_TYPE = NATIVE 
 ###############################################
 PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.j2me.file.*
-PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.j2me.socket.*
-PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.j2me.serversocket.*
 # Currently the platform classes are only used by PLATFORM_TYPE=NATIVE, but that may change...
 PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.platform.Platform
 PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.platform.BaseGCFFile
 PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.platform.GCFFile
-PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.platform.GCFSockets
 PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.platform.posix.*
 PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.microedition.io.FileConnection
 PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.ConnectionBaseInterface
@@ -72,6 +69,12 @@ PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.io.j2me.ParameterP
 #in progress:
 PLATFORM_TYPE_NATIVE=false                     com.sun.squawk.platform.windows.*
 
+###############################################
+# Classes only used when GCFSOCKETS_ENABLE = TRUE
+###############################################
+GCFSOCKETS_ENABLE=false                        com.sun.squawk.io.j2me.socket.*
+GCFSOCKETS_ENABLE=false                        com.sun.squawk.io.j2me.serversocket.*
+GCFSOCKETS_ENABLE=false                        com.sun.squawk.platform.GCFSockets
 
 ###############################################
 # Classes that don't need to be on device, but on desktop:
@@ -84,8 +87,6 @@ FLASH_MEMORY=true                            com.sun.cldc.jna.platform.Posix
 ###############################################
 FLASH_MEMORY=false                            com.sun.squawk.io.j2me.spotsuite.*
 FLASH_MEMORY=false                            com.sun.cldc.jna.platform.Spot
-
-
 
 ###############################################
 # Other Property-dependant classes
