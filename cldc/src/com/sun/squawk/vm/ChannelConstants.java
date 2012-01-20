@@ -376,7 +376,9 @@ public final class ChannelConstants {
     public static final int ETHERNET_GET_EVENT_ARG              = ETHERNET_OP + 19;
     public static final int ETHERNET_COPY_PBUF                  = ETHERNET_OP + 20;
     public static final int ETHERNET_FREE_PBUF                  = ETHERNET_OP + 21;
-    public static final int GET_ETHERNET_EVENT                  = ETHERNET_OP + 22;
+    public static final int ETHERNET_SET_SCKOPT                 = ETHERNET_OP + 22;
+    public static final int ETHERNET_GET_SCKOPT                 = ETHERNET_OP + 23;
+    public static final int GET_ETHERNET_EVENT                  = ETHERNET_OP + 24;
 
     /*
      * Index of variable in C. 
