@@ -45,8 +45,7 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
     public static final byte ERASED_VALUE = (byte) 0xFF;
     public static final byte ERASED_VALUE_XOR = (byte) 0x00;
     // allocated(FLASH_WORD_SIZE) + size (int)
-    public static final int FLASH_WORD_SIZE = ((VM.getCurrentIsolate().getProperty("FLASH_WORD_SIZE") != null)?
-        (Integer.valueOf(VM.getCurrentIsolate().getProperty("FLASH_WORD_SIZE")).intValue()):2);
+    public static final int FLASH_WORD_SIZE = getTargetFlashWordSize();
     public static final int BLOCK_HEADER_SIZE = FLASH_WORD_SIZE + 4;
     public static final byte[] BLOCK_FOOTER = new byte[] {ERASED_VALUE_XOR, ERASED_VALUE_XOR};
 
@@ -57,6 +56,19 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
     protected INorFlashSectorStateList inUseSectorStateList;
     protected INorFlashSectorStateList toBeErasedSectorStateList;
     protected boolean hasScannedBlocks;
+    
+    private static int getTargetFlashWordSize() {
+        if (true || VM.isHosted()) {
+            return 2;
+        } else {
+            String wrd = VM.getCurrentIsolate().getProperty("FLASH_WORD_SIZE");
+            if (wrd != null) {
+                return Integer.parseInt(wrd);
+            } else {
+                return 2;
+            }
+        }
+    }
     
     /**
      * 
@@ -87,6 +99,12 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
         return userSectors;
     }
 
+    protected NorFlashMemoryHeap() { 
+        // used by unit tests
+        inUseSectorStateList = new NorFlashSectorStateList();
+        toBeErasedSectorStateList = new NorFlashSectorStateList();
+    }
+        
     public NorFlashMemoryHeap(INorFlashSectorState[] sectorStates) {
         this.sectorStates = sectorStates;
         inUseSectorStateList = new NorFlashSectorStateList();
@@ -295,6 +313,7 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
                 return +1;
             }
         });
+        this.sectorStates = sectorStates;
         erasedSequenceCurrentValue = 0;
     }
 

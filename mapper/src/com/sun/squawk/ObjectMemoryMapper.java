@@ -211,7 +211,7 @@ public class ObjectMemoryMapper {
 /*if[TYPEMAP]*/
         out.println("    -notypemap      omit typemap info");
 /*end[TYPEMAP]*/
-        out.println("    -verbose, -v        provide more output while running");
+        out.println("    -verbose, -v    provide more output while running");
         out.println("    -h              show this help message");
     }
     
