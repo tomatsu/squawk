@@ -39,7 +39,7 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({
     com.sun.squawk.rms.AllTests.class,
     com.sun.squawk.imp.AllTests.class,
-    RecordStoreIntegrationTest.class,
+    RecordStoreIntegrationTest.class
 })
 public class AllTests {
 

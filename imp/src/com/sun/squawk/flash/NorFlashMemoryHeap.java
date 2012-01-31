@@ -58,7 +58,7 @@ public class NorFlashMemoryHeap implements INorFlashMemoryHeap {
     protected boolean hasScannedBlocks;
     
     private static int getTargetFlashWordSize() {
-        if (true || VM.isHosted()) {
+        if (VM.isHosted()) {
             return 2;
         } else {
             String wrd = VM.getCurrentIsolate().getProperty("FLASH_WORD_SIZE");
