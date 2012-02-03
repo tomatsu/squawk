@@ -221,6 +221,14 @@ static Address lookupStaticMethod(int cid, int methodOffset);
 
 #define MAX_JVM_ARGS 20
 
+/**
+ * The tracing limits.
+ */
+const jlong MAX_UJLONG = (jlong)0x7fffffff << 32 | 0xffffffff;
+#ifndef TRACESTART
+#define TRACESTART MAX_UJLONG
+#endif
+
 /*
  * Forward declaration of VM exit routine.
  */
