@@ -917,9 +917,7 @@ INLINE_UNALIGNED void setUnalignedLong(Address base, Offset offset, jlong value)
                   return (jlong)(((jlong)high) << 32 | (((jlong)low) & 0xFFFFFFFF)); */
 
                 /* But, for some reason, the following two lines do: */
-				/* slow vers: 
-				   const jlong res = ((jlong)high) << 32 | (((jlong)low) & 0xFFFFFFFF); */
-                const jlong res = ((jlong)high) << 32 | low;
+				const jlong res = makeLong(high, low);
                 return res;
             }
         }

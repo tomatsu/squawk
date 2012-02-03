@@ -221,14 +221,6 @@ static Address lookupStaticMethod(int cid, int methodOffset);
 
 #define MAX_JVM_ARGS 20
 
-/**
- * The tracing limits.
- */
-const jlong MAX_UJLONG = (jlong)0x7fffffff << 32 | 0xffffffff;
-#ifndef TRACESTART
-#define TRACESTART MAX_UJLONG
-#endif
-
 /*
  * Forward declaration of VM exit routine.
  */
@@ -1149,21 +1141,6 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     com_sun_squawk_GC_ramStart = (Address)roundUp((UWord)com_sun_squawk_GC_nvmEnd, pageSize);
     com_sun_squawk_GC_ramEnd = Address_add(com_sun_squawk_GC_ramStart, ramSize);
 
-/*setUnalignedLong(com_sun_squawk_GC_ramStart, 0, 0x1122334455667788LL);
-jlong val = getUnalignedLong(com_sun_squawk_GC_ramStart, 0);
-fprintf(stderr, "&&&& Special long val = %llx\n", val);
-swap8(com_sun_squawk_GC_ramStart);
-val = getUnalignedLong(com_sun_squawk_GC_ramStart, 0);
-fprintf(stderr, "&&&& Special long val2 = %llx\n", val);
-
-setUnalignedInt(com_sun_squawk_GC_ramStart, 0, 0x55667788);
-int val2 = getUnalignedInt(com_sun_squawk_GC_ramStart, 0);
-fprintf(stderr, "&&&& Special int val = %lx\n", val2);
-swap4(com_sun_squawk_GC_ramStart);
-val2 = getUnalignedInt(com_sun_squawk_GC_ramStart, 0);
-fprintf(stderr, "&&&& Special int val2 = %lx\n", val2);
-*/
-
     com_sun_squawk_VM_bootstrapSuite = suite;
 
     // The stack for the service thread starts on the next page after the end of RAM.
@@ -1515,6 +1492,7 @@ Address processArgs(char *argv[], const int argc) {
     return setupMemory(ramSize, nvmSize, newIndex, argv, bootstrapSuiteFile);
 }
 
+#if RUN_UNIT_TESTS
 /**
  * A structure used to verify that the PLATFORM_BIG_ENDIAN constant is correct.
  */
@@ -1581,6 +1559,154 @@ void verifyBuildFlags() {
     }
 }
 
+#define assertEquals4(msg, expected, received) \
+    if (received != expected) { \
+        fprintf(stderr, "Test failed. Expected %x, received %x at %s:%d\n    %s\n", expected, received, __FILE__, __LINE__, msg); \
+        exit(EXIT_FAILURE); \
+    } \
+    
+#define assertEquals8(msg, expected, received) \
+    if (received != expected) { \
+        fprintf(stderr, "Test failed. Expected %llx, received %llx at %s:%d\n    %s\n", expected, received, __FILE__, __LINE__, msg); \
+        exit(EXIT_FAILURE); \
+    } \
+
+void testLongs() {
+    const jlong PATTERN1 = 0xAAAAAAAAAAAAAAAALL;
+    const jlong PATTERN2 = 0xAAAAAAAAFFFFFFFFLL;
+    const int   PATTERN3 = 0xAAAAAAAA;
+    const int   MAX      = 0xFFFFFFFF;
+    
+    jlong l1 = makeLong(PATTERN3, PATTERN3);
+    assertEquals8("makeLong() 1", PATTERN1, l1);
+
+    assertEquals4("getHi() 1", PATTERN3, getHi(l1));
+    assertEquals4("getLo() 1", PATTERN3, getLo(l1));
+
+    l1 = makeLong(PATTERN3, MAX);
+    assertEquals8("makeLong() 2", PATTERN2, l1);
+
+    assertEquals4("getHi() 2", PATTERN3, getHi(l1));
+    assertEquals4("getLo() 2", MAX,      getLo(l1));
+}
+
+void testUnaligned() {
+    const jlong PATTERN1 = 0x1122334455667788LL;
+    const jlong PATTERN1_SWAP = 0x8877665544332211LL;
+    const jlong PATTERN2 = 0xAAAAAAAAFFFFFFFFLL;
+    const jlong PATTERN2_SWAP = 0xFFFFFFFFAAAAAAAALL;
+    const int   PATTERN3 = 0x55667788;
+    const int   PATTERN3_SWAP = 0x88776655;
+    jlong tmp[2];
+    Address buf = ((char*)&tmp) + 1; // force unaligned
+
+    setUnalignedLong(buf, 0, PATTERN1);
+    jlong val = getUnalignedLong(buf, 0);
+    assertEquals8("getUnalignedLong", PATTERN1, val);
+    swap8(buf);
+    val = getUnalignedLong(buf, 0);
+    assertEquals8("swap8", PATTERN1_SWAP, val);
+    
+    setUnalignedLong(buf, 0, PATTERN2);
+    val = getUnalignedLong(buf, 0);
+    assertEquals8("getUnalignedLong 2", PATTERN2, val);
+    swap8(buf);
+    val = getUnalignedLong(buf, 0);
+    assertEquals8("swap8 2", PATTERN2_SWAP, val);
+
+    setUnalignedInt(buf, 0, PATTERN3);
+    int val2 = getUnalignedInt(buf, 0);
+    assertEquals4("getUnalignedInt", PATTERN3, val2);
+    swap4(buf);
+    val2 = getUnalignedInt(buf, 0);
+    assertEquals4("swap4", PATTERN3_SWAP, val2);
+}
+
+void testWordAt() {
+    const jlong PATTERN1 = 0x1122334455667788LL;
+    const jlong PATTERN1_SWAP = 0x8877665544332211LL;
+    const jlong PATTERN2 = 0xAAAAAAAAFFFFFFFFLL;
+    const jlong PATTERN2_SWAP = 0xFFFFFFFFAAAAAAAALL;
+    const int   PATTERN3 = 0x55667788;
+    const int   PATTERN3_SWAP = 0x88776655;
+    jlong tmp;
+    Address buf = &tmp;
+
+    setLongAtWord(buf, 0, PATTERN1);
+    jlong val = getLongAtWord(buf, 0);
+    assertEquals8("getLongAtWord", PATTERN1, val);
+    swap8(buf);
+    val = getLongAtWord(buf, 0);
+    assertEquals8("swap8", PATTERN1_SWAP, val);
+    
+    setLongAtWord(buf, 0, PATTERN2);
+    val = getLongAtWord(buf, 0);
+    assertEquals8("getLongAtWord 2", PATTERN2, val);
+    swap8(buf);
+    val = getLongAtWord(buf, 0);
+    assertEquals8("swap8 2", PATTERN2_SWAP, val);
+}
+
+/*if[FLOATS]*/
+void fpTest() {
+    float f0 = 0.0;
+    float f1 = 1.0;
+    double d0 = 0.0;
+    double d1 = 1.0;
+    FILE *vmOut = streams[currentStream];
+
+    fprintf(vmOut, format("f0 = %i\n"), f2ib(f0));
+    fprintf(vmOut, format("f1 = %i\n"), f2ib(f1));
+    fprintf(vmOut, format("f0 + f0 = %i\n"), f2ib(f0 + f0));
+    fprintf(vmOut, format("f0 + f1 = %i\n"), f2ib(f0 + f1));
+    fprintf(vmOut, format("f0 * f1 = %i\n"), f2ib(f0 * f1));
+    fprintf(vmOut, format("f1 * f1 = %i\n"), f2ib(f1 * f1));
+    fprintf(vmOut, format("f1 + f1 = %i\n"), f2ib(f1 + f1));
+fflush(vmOut);
+
+    fprintf(vmOut, format("f0 = %f\n"), f0);fflush(vmOut);
+    fprintf(vmOut, format("f1 = %f\n"), f1);fflush(vmOut);
+    fprintf(vmOut, format("f0 + f0 = %f\n"), (f0 + f0));fflush(vmOut);
+    fprintf(vmOut, format("f0 + f1 = %f\n"), (f0 + f1));fflush(vmOut);
+    fprintf(vmOut, format("f0 * f1 = %f\n"), (f0 * f1));fflush(vmOut);
+    fprintf(vmOut, format("f1 * f1 = %f\n"), (f1 * f1));fflush(vmOut);
+    fprintf(vmOut, format("f1 + f1 = %f\n"), (f1 + f1));fflush(vmOut);
+
+    fprintf(vmOut, format("d0 = %D\n"), d0);fflush(vmOut);
+    fprintf(vmOut, format("d1 = %D\n"), d1);fflush(vmOut);
+    fprintf(vmOut, format("d0 + d0 = %D\n"), (d0 + d0));fflush(vmOut);
+    fprintf(vmOut, format("d0 + d1 = %D\n"), (d0 + d1));fflush(vmOut);
+    fprintf(vmOut, format("d0 * d1 = %D\n"), (d0 * d1));fflush(vmOut);
+    fprintf(vmOut, format("d1 * d1 = %D\n"), (d1 * d1));fflush(vmOut);
+    fflush(vmOut);
+
+    if (f0 == 0.0) {
+        fprintf(vmOut, "passed 1\n");
+    } else {
+        fprintf(vmOut, "failed 1\n");
+    }
+
+        if (f1 > f0) {
+        fprintf(vmOut, "passed 2\n");
+    } else {
+        fprintf(vmOut, "failed 2\n");
+    }
+
+}
+/*else[FLOATS]*/
+//#define fpTest()
+/*end[FLOATS]*/
+
+void unitTests() {
+    testLongs();
+    testUnaligned();
+    testWordAt();
+    // fix up fp tests to be silent
+    // fpTest();
+}
+
+#endif /* RUN_UNIT_TESTS */
+
 /**
  * Program entrypoint.
  *
@@ -1597,10 +1723,14 @@ Address Squawk_setup(int argc, char *argv[]) {
     assume(sizeof(UWord) == sizeof(Address));
     diagnostic("in Squawk_setup");
 
+#if RUN_UNIT_TESTS
     /*
      * Check that the build flags were correct.
      */
     verifyBuildFlags();
+    
+    unitTests();
+#endif
 
     /*
      * Extract the native VM options
@@ -1871,56 +2001,6 @@ extern  void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddre
 
     fatalVMError("");
 }
-
-/*if[FLOATS]*/
-void fpTest() {
-    float f0 = 0.0;
-    float f1 = 1.0;
-    double d0 = 0.0;
-    double d1 = 1.0;
-    FILE *vmOut = streams[currentStream];
-
-        fprintf(vmOut, format("f0 = %i\n"), f2ib(f0));
-    fprintf(vmOut, format("f1 = %i\n"), f2ib(f1));
-    fprintf(vmOut, format("f0 + f0 = %i\n"), f2ib(f0 + f0));
-    fprintf(vmOut, format("f0 + f1 = %i\n"), f2ib(f0 + f1));
-    fprintf(vmOut, format("f0 * f1 = %i\n"), f2ib(f0 * f1));
-    fprintf(vmOut, format("f1 * f1 = %i\n"), f2ib(f1 * f1));
-    fprintf(vmOut, format("f1 + f1 = %i\n"), f2ib(f1 + f1));
-fflush(vmOut);
-
-    fprintf(vmOut, format("f0 = %f\n"), f0);fflush(vmOut);
-    fprintf(vmOut, format("f1 = %f\n"), f1);fflush(vmOut);
-    fprintf(vmOut, format("f0 + f0 = %f\n"), (f0 + f0));fflush(vmOut);
-    fprintf(vmOut, format("f0 + f1 = %f\n"), (f0 + f1));fflush(vmOut);
-    fprintf(vmOut, format("f0 * f1 = %f\n"), (f0 * f1));fflush(vmOut);
-    fprintf(vmOut, format("f1 * f1 = %f\n"), (f1 * f1));fflush(vmOut);
-    fprintf(vmOut, format("f1 + f1 = %f\n"), (f1 + f1));fflush(vmOut);
-
-    fprintf(vmOut, format("d0 = %D\n"), d0);fflush(vmOut);
-    fprintf(vmOut, format("d1 = %D\n"), d1);fflush(vmOut);
-    fprintf(vmOut, format("d0 + d0 = %D\n"), (d0 + d0));fflush(vmOut);
-    fprintf(vmOut, format("d0 + d1 = %D\n"), (d0 + d1));fflush(vmOut);
-    fprintf(vmOut, format("d0 * d1 = %D\n"), (d0 * d1));fflush(vmOut);
-    fprintf(vmOut, format("d1 * d1 = %D\n"), (d1 * d1));fflush(vmOut);
-    fflush(vmOut);
-
-    if (f0 == 0.0) {
-        fprintf(vmOut, "passed 1\n");
-    } else {
-        fprintf(vmOut, "failed 1\n");
-    }
-
-        if (f1 > f0) {
-        fprintf(vmOut, "passed 2\n");
-    } else {
-        fprintf(vmOut, "failed 2\n");
-    }
-
-}
-/*else[FLOATS]*/
-//#define fpTest()
-/*end[FLOATS]*/
 
 /**
  * Runs the VM.

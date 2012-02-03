@@ -369,6 +369,50 @@ public final class VMThread implements GlobalStaticFields {
     }
 
     /**
+     * Adjust the target times of waiting threads to account for changes to the system clock.
+     * Only adjust when time has moved backwards (e.i. only make threads wake up earlier, not later).
+     * 
+     * EXAMPLE:
+     * A SPOT needs to do something at an absolute time, like launch a missile from Kwajalein Island at 15:24, as well as 
+     * periodically sensor for turtles in the launch area every two minutes.
+     * Then the SPOT's clock is updated to a more correct value from GPS. What should happen?
+     * 
+     * Look at a few cases with these assumptions:
+     * - Initially SPOT thinks the time is 15:21.
+     * - The periodic timer has already waited one minute, so there's 1 minute left to wait.
+     * - Initial thread wait states:
+     *      - Periodic task (PT) should fire in 1 minute. PT target time = 15:22
+     *      - Absolute task (AT) should fire in 3 minutes. AT target time = 15:24
+     * 
+     * A) Clock gets adjusted - it's really it's 15:22. deltaT = + 1
+     *  - Goal:
+     *      - Periodic task should fire in 1 minute (from new time).  Perfect PT target time = 15:23
+     *      - Absolute task should fire in 2 minutes (from new time). Perfect AT target time = 15:24
+     * 
+     * - Solution 1*: Do nothing. PT = 15:22, AT = 15:24. Low-level sleep for periodic task will complete early, but utility class can reschedule. Absolute task will be on time.
+     * - Solution 2: Add deltaT to target times. PT = 15:23, AT = 15:25. Periodic task will not fire early, but absolute task will be late.
+     * 
+     * B) Clock gets adjusted - it's really it's 15:20. deltaT = - 1
+     * Goal:
+     *      - Periodic task should fire in 1 minute (from new time).  Perfect PT target time = 15:21
+     *      - Absolute task should fire in 4 minutes (from new time). Perfect AT target time = 15:24
+     * 
+     * - Solution 1: Do nothing. PT = 15:22, AT = 15:24. Low-level sleep for periodic task will fire late. Absolute task will be on time.
+     * - Solution 2*: Add deltaT to target times. PT = 15:21, AT = 15:23. Periodic task will fire on time. Absolute task will fire early, but utility class can reschedule.
+     * 
+     * In order to preserve sanity we should adjust the wait times when the time moves backwards (new clock < old clock), 
+     * and do nothing if time moves forward. This will allow some sleep() and wait() methods to complete sooner than asked, 
+     * but the sleep/wait can rescheduled by the caller. In no case will a thread wake up 
+     * later than if the clock had not changed.
+     * 
+     * @param deltaT change in time in ms. Must be negative.
+     */
+    static void adjustWaits(long deltaT) {
+        Assert.that(deltaT < 0);
+        timerQueue.adjustWaits(deltaT);
+    }
+
+    /**
      * Adds a given thread to the queue of runnable threads.
      *
      * Note: this method may assign globals and threads into local variables and
@@ -1562,7 +1606,7 @@ VM.println("creating stack:");
                 VMThread thread = VMThread.currentThread;
                 Assert.always(thread == this);
                 thread.appThreadTop = thread.framePointerAsOffset(VM.getFP());
-                apiThread.run();
+                apiThread.run(); // yes, run(), not start().
             } catch (OutOfMemoryError e) {
                 uncaughtException = true;
                 VM.print("Uncaught out of memory error on thread - aborting isolate ");
@@ -1683,8 +1727,8 @@ VM.println("creating stack:");
                 VM.waitForEvent(delta);
                 waitTime = VM.getTimeMillis() - waitTime;
                 oldWaitTimeTotal += waitTime;
-                waitTimeHi32 = (int)(oldWaitTimeTotal >>> 32);
-                waitTimeLo32 = (int)(oldWaitTimeTotal & 0xFFFFFFFFL);
+                waitTimeHi32 = VM.getHi(oldWaitTimeTotal);
+                waitTimeLo32 = VM.getLo(oldWaitTimeTotal);
             }
         }
         
@@ -1699,7 +1743,7 @@ VM.println("creating stack:");
     }
     
     public static long getTotalWaitTime() {
-        return ((long)waitTimeHi32 << 32) | waitTimeLo32;
+        return VM.makeLong(waitTimeHi32, waitTimeLo32);
     }
     
     /**
@@ -2724,7 +2768,6 @@ VM.println("creating stack:");
     
 } /* VMThread */
 
-
 /*=======================================================================*\
  *                              ThreadQueue                              *
 \*=======================================================================*/
@@ -2838,7 +2881,7 @@ final class ThreadQueue {
             }
         }
     }
-}
+} /* ThreadQueue */
 
 
 /*=======================================================================*\
@@ -2980,7 +3023,31 @@ final class TimerQueue {
         }
     }
 
-}
+    /**
+     * Adjust the times of all threads in the timer queue. Note that this does not reorder the threads in the timer queue.
+     * @param deltaT ms (must be negative).
+     */
+    void adjustWaits(long deltaT) {
+        Assert.that(deltaT < 0);
+        VMThread thread = first;
+        while (thread != null) {
+            long time = thread.time;
+            if (time != Long.MAX_VALUE) { // if not "wait forever"
+                time = time + deltaT;
+                if (time < 0) {
+                    /*
+                     * If the new time is much, much earlier than the old time, delta will be large negative number.
+                     * Set new wakeup time to the past, so it will wake up the thread as soon as possible.
+                     */
+                    time = 0;
+                }
+                thread.time = time;
+            }
+            thread = thread.nextTimerThread;
+        }
+    }
+
+} /* TimerQueue */
 
 /**
  * Extension of IntHashtable that enables the pruning the threads of hibernated isolates.

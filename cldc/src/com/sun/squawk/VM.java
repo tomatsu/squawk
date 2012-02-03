@@ -246,6 +246,9 @@ public class VM implements GlobalStaticFields {
      * System-global cache of TaskExecutors
      */
     private static Stack taskCache;
+    
+    private static int timeAdjustmentsLo;
+    private static int timeAdjustmentsHi;
 
     /**
      * If true (1), then interpreter-level tracing is on.
@@ -2330,6 +2333,37 @@ hbp.dumpState();
 /*end[ENABLE_ISOLATE_MIGRATION]*/
 
     /**
+     * Converts two 32 bit ints into a Java long.
+     *
+     * @param high the high word
+     * @param low  the low word
+     * @return the resulting Java long
+     */
+    public static long makeLong(int high, int low) throws AllowInlinedPragma {
+        return (((long)high) << 32) | (((long)low) & 0x00000000FFFFFFFFL);
+    }
+    
+    /**
+     * Return the high word of a Java long
+     *
+     * @param value 64-bit value
+     * @return the high 32-bits of value
+     */
+    public static int getHi(long value) throws AllowInlinedPragma {
+        return (int)(value >>> 32);
+    }
+    
+   /**
+     * Return the low word of a Java long
+     *
+     * @param value 64-bit value
+     * @return the low 32-bits of value
+     */
+    public static int getLo(long value) throws AllowInlinedPragma {
+        return (int)(value & 0xFFFFFFFFL);
+    }
+    
+    /**
      * Gets the current time.
      *
      * @return the time in microseconds
@@ -2339,9 +2373,9 @@ hbp.dumpState();
 /*end[JAVA5SYNTAX]*/
     public static long getTimeMicros() {
         // Must get high word first as it causes the value to be setup that will be accessed via the INTERNAL_LOW_RESULT call
-        long high = execSyncIO(ChannelConstants.INTERNAL_GETTIMEMICROS_HIGH, 0);
-        long low  = execSyncIO(ChannelConstants.INTERNAL_LOW_RESULT, 0);
-        return (high << 32) | (low & 0x00000000FFFFFFFFL);
+        int high = execSyncIO(ChannelConstants.INTERNAL_GETTIMEMICROS_HIGH, 0);
+        int low  = execSyncIO(ChannelConstants.INTERNAL_LOW_RESULT, 0);
+        return makeLong(high, low);
     }
 
     /**
@@ -2355,15 +2389,44 @@ hbp.dumpState();
     public static long getTimeMillis() {
 /*if[!FLASH_MEMORY]*/
     	// Must get high word first as it causes the value to be setup that will be accessed via the INTERNAL_LOW_RESULT call
-    	long high = execSyncIO(ChannelConstants.INTERNAL_GETTIMEMILLIS_HIGH, 0);
-    	long low  = execSyncIO(ChannelConstants.INTERNAL_LOW_RESULT, 0);
-    	return (high << 32) | (low & 0x00000000FFFFFFFFL);
+    	int high = execSyncIO(ChannelConstants.INTERNAL_GETTIMEMILLIS_HIGH, 0);
+    	int low  = execSyncIO(ChannelConstants.INTERNAL_LOW_RESULT, 0);
+    	return makeLong(high, low);
 /*else[FLASH_MEMORY]*/
 //    	if (timeAddr.isZero()) {
 //    		timeAddr = Address.fromPrimitive(execSyncIO(ChannelConstants.GET_CURRENT_TIME_ADDR, 0));
 //    	}
 //		return NativeUnsafe.getLong(timeAddr, 0);
 /*end[FLASH_MEMORY]*/
+    }
+
+    /**
+     * Adjust system state to reflect change in clock.
+     * If the clock changes for some reason (user sets clock, get new time over network etc),
+     * this should be called to adjust the system to the new time.
+     * 
+     * @param deltaT The difference in ms between the new time and the old time. Negative value means clock was adjusted back.
+     */
+    public static void adjustSystemTime(long deltaT) {
+        long timeAdjustments = makeLong(timeAdjustmentsHi, timeAdjustmentsLo);
+        timeAdjustments = timeAdjustments - deltaT;
+        timeAdjustmentsHi = getHi(timeAdjustments);
+        timeAdjustmentsLo = getLo(timeAdjustments);
+        if (deltaT < 0) {
+            VMThread.adjustWaits(deltaT);
+        }
+    }
+
+    /**
+     * Relative time does not change when the clock is adjusted. If 100 ms pass between two calls to relativeTimeMillis(), then
+     * the difference between those two return values will be roughly 100, whether or not the clock was adjusted forward, 
+     * backward, or not at all.
+     * 
+     * @return the relative time in milliseconds
+     */
+    public static long relativeTimeMillis() {
+        long timeAdjustments = makeLong(timeAdjustmentsHi, timeAdjustmentsLo);
+        return getTimeMillis() + timeAdjustments;
     }
 
     /**
@@ -3680,10 +3743,10 @@ hbp.dumpState();
      * @throws java.io.IOException 
      */
     public static long execIOLong(int op, int channel, int i1, int i2, int i3, int i4, int i5, int i6, Object send, Object receive) throws IOException {
-        long low     = execIO(op, channel, i1, i2, i3, i4, i5, i6, send, receive);
-        int  context = currentIsolate.getChannelContext();
-        long high    = execSyncIO(context, ChannelConstants.CONTEXT_GETRESULT_2, 0, 0);
-        return (high << 32) | (low & 0x00000000FFFFFFFFL);
+        int low     = execIO(op, channel, i1, i2, i3, i4, i5, i6, send, receive);
+        int context = currentIsolate.getChannelContext();
+        int high    = execSyncIO(context, ChannelConstants.CONTEXT_GETRESULT_2, 0, 0);
+        return makeLong(high, low);
     }
 
 /*if[!ENABLE_CHANNEL_GUI]*/
@@ -3762,9 +3825,9 @@ hbp.dumpState();
         int result = serviceResult();
         VMThread.waitForEvent(result);
 
-        long highResult = execSyncIO(ChannelConstants.DEEP_SLEEP_TIME_MILLIS_HIGH, 0);
-        long lowResult  = execSyncIO(ChannelConstants.DEEP_SLEEP_TIME_MILLIS_LOW, 0);
-        return (highResult << 32) | (lowResult & 0x00000000FFFFFFFFL);
+        int highResult = execSyncIO(ChannelConstants.DEEP_SLEEP_TIME_MILLIS_HIGH, 0);
+        int lowResult  = execSyncIO(ChannelConstants.DEEP_SLEEP_TIME_MILLIS_LOW, 0);
+        return makeLong(highResult, lowResult);
     }
 
     /**

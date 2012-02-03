@@ -23,6 +23,12 @@
  * information or have any questions.
  */
 
+#if (DEBUG_STARTUP || (defined(ASSUME) && ASSUME != 0))
+#define RUN_UNIT_TESTS 1
+#else
+#define RUN_UNIT_TESTS 1
+#endif
+
 /*---------------------------------------------------------------------------*\
  *                               Debugger                                    *
 \*---------------------------------------------------------------------------*/
@@ -229,6 +235,37 @@ void printRange(char* label, void* start, void* end);
      */
     INLINE boolean isAligned(UWord value, UWord alignment) {
         return value == roundDown(value, alignment);
+    }
+
+   /**
+    * Converts two 32 bit ints into a Java long.
+    *
+    * @param high the high word
+    * @param low  the low word
+    * @return the resulting Java long
+    */
+    INLINE jlong makeLong(int high, int low) {
+        return (((jlong) high) << 32) | ((unsigned int)low);
+    }
+
+    /**
+    * Return the high word of a Java long
+    *
+    * @param value 64-bit value
+    * @return the high 32-bits of value
+    */
+    INLINE int getHi(jlong value) {
+        return (int) (value >> 32);
+    }
+
+    /**
+    * Return the low word of a Java long
+    *
+    * @param value 64-bit value
+    * @return the low 32-bits of value
+    */
+    INLINE int getLo(jlong value) {
+        return (int) (value & 0xFFFFFFFFL);
     }
 
 /*---------------------------------------------------------------------------*\

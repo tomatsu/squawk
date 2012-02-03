@@ -26,17 +26,6 @@
 //#define UNICODE true
 
 /**
- * Converts two 32 bit ints into a Java long.
- *
- * @param high the high word
- * @param low the loe word
- * @return the resulting Java long
- */
-INLINE jlong makeLong(int high, int low) {
-    return (((jlong)high) << 32) | (((jlong)low) & 0x00000000FFFFFFFFL);
-}
-
-/**
  * Sets up the global used to pass an int result from an INTERNAL IO operation back to the VM.
  * The value is accessed in the VM by calling VM.serviceResult().
  *

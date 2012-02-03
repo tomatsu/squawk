@@ -35,14 +35,12 @@ typedef jlong Offset;
 const Address ADDRESS_MAX = (Address)0xFFFFFFFFFFFFFFFFL;
 const UWord WORD_MAX = (UWord)0xFFFFFFFFFFFFFFFFL;
 const UWord DEADBEEF = 0xDEADBEEFDEADBEEFL;
-const UWord EVENT_MESSAGE_HI_BITS_MASK = 0xFFFFFFFF80000000L;
 #else
 typedef unsigned int UWord;
 typedef int Offset;
 const Address ADDRESS_MAX = (Address)0xFFFFFFFF;
 const UWord WORD_MAX = (UWord)0xFFFFFFFF;
 const UWord DEADBEEF = 0xDEADBEEF;
-const UWord EVENT_MESSAGE_HI_BITS_MASK = 0x80000000;
 #endif /* SQUAWK_64 */
 typedef UWord* UWordAddress;
 

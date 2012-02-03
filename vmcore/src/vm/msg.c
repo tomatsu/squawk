@@ -31,6 +31,12 @@
  * Included when OLD_IIC_MESSAGES is defined
  */
 
+#if SQUAWK_64
+const UWord EVENT_MESSAGE_HI_BITS_MASK = 0xFFFFFFFF80000000L;
+#else
+const UWord EVENT_MESSAGE_HI_BITS_MASK = 0x80000000;
+#endif /* SQUAWK_64 */
+
 /**
  * The message data structure. Keep in sync with MessageStruct.java
  * in define directory.

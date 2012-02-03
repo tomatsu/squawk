@@ -109,7 +109,8 @@ public class Test {
         x50();
         x51();
         x52();
-        X53Class.x53(); 
+        X53Class.x53();
+        x54();
         randomTimeTest();
 
         sleepTest();
@@ -1004,6 +1005,25 @@ public class Test {
         }
     }
 
+    private static void x54() {
+        final int PATTERN = 0xAAAAAAAA;
+        final int MAX = 0xFFFFFFFF;
+        final long PATTERN_L = 0xAAAAAAAAAAAAAAAAL;
+        final long PATTERN_2 = 0xAAAAAAAAFFFFFFFFL;
+        
+        long l1 = VM.makeLong(PATTERN, PATTERN);
+        expect("makeLong() 1", PATTERN_L, l1);
+        
+        expect("getHi() 1", PATTERN, VM.getHi(l1));
+        expect("getLo() 1", PATTERN, VM.getLo(l1));
+        
+        l1 = VM.makeLong(PATTERN, MAX);
+        expect("makeLong() 2", PATTERN_2, l1);
+        
+        expect("getHi() 2", PATTERN, VM.getHi(l1));
+        expect("getLo() 2",     MAX, VM.getLo(l1));
+    }
+    
     static void sleepTest() {
         try {
             System.out.println("Current time is: " + new java.util.Date());
