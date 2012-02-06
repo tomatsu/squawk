@@ -2340,7 +2340,10 @@ hbp.dumpState();
      * @return the resulting Java long
      */
     public static long makeLong(int high, int low) throws AllowInlinedPragma {
-        return (((long)high) << 32) | (((long)low) & 0x00000000FFFFFFFFL);
+        long value = (((long)high) << 32) | (((long)low) & 0x00000000FFFFFFFFL);
+        Assert.that(getLo(value) == low);
+        Assert.that(getHi(value) == high);
+        return value;
     }
     
     /**
@@ -2360,8 +2363,69 @@ hbp.dumpState();
      * @return the low 32-bits of value
      */
     public static int getLo(long value) throws AllowInlinedPragma {
-        return (int)(value & 0xFFFFFFFFL);
+        return (int)(value & 0x00000000FFFFFFFFL);
     }
+    
+/*if[DEBUG_CODE_ENABLED]*/
+    // to test system clock changes, mock up changing the system clock in Java.
+    
+    private static int debugClockAdjustmentsLo;
+    private static int debugClockAdjustmentsHi;
+    
+    /**
+     * Gets the current time.
+     *
+     * @return the time in milliseconds
+     */
+/*if[JAVA5SYNTAX]*/
+    @Vm2c(proxy="sysTimeMillis")
+/*end[JAVA5SYNTAX]*/
+    public static long getTimeMillisRaw() {
+/*if[!FLASH_MEMORY]*/
+    	// Must get high word first as it causes the value to be setup that will be accessed via the INTERNAL_LOW_RESULT call
+    	int high = execSyncIO(ChannelConstants.INTERNAL_GETTIMEMILLIS_HIGH, 0);
+    	int low  = execSyncIO(ChannelConstants.INTERNAL_LOW_RESULT, 0);
+    	return makeLong(high, low);
+/*else[FLASH_MEMORY]*/
+//    	if (timeAddr.isZero()) {
+//    		timeAddr = Address.fromPrimitive(execSyncIO(ChannelConstants.GET_CURRENT_TIME_ADDR, 0));
+//    	}
+//		return NativeUnsafe.getLong(timeAddr, 0);
+/*end[FLASH_MEMORY]*/
+    }
+    
+    public static void setSystemClockMockInit(long newTime) {
+        long curTime = getTimeMillis();
+        long delta = newTime - curTime;
+//        VM.println("delta (init): " + delta);
+//        VM.println("   hi: " + getHi(delta));
+//        VM.println("   lo: " + getLo(delta));
+//        VM.println("  cur: " + curTime);
+//        VM.println("  adj: " + makeLong(debugClockAdjustmentsHi, debugClockAdjustmentsLo));
+        
+        debugClockAdjustmentsHi = getHi(delta);
+        debugClockAdjustmentsLo = getLo(delta);
+//        VM.println("  new: " + getTimeMillis());
+    }
+        
+    public static void setSystemClockMock(long newTime) {
+        long curTime = getTimeMillis();
+        long delta = newTime - curTime;
+//        VM.println("delta: " + delta);
+//        VM.println("   hi: " + getHi(delta));
+//        VM.println("   lo: " + getLo(delta));
+//        VM.println("  cur: " + curTime);
+//        VM.println("  adj: " + makeLong(debugClockAdjustmentsHi, debugClockAdjustmentsLo));
+        
+        long adj = makeLong(debugClockAdjustmentsHi, debugClockAdjustmentsLo) + delta;
+        
+        debugClockAdjustmentsHi = getHi(adj);
+        debugClockAdjustmentsLo = getLo(adj);
+//        Assert.that(VM.makeLong(debugClockAdjustmentsHi, debugClockAdjustmentsLo) == adj);
+//        VM.println("  new: " + getTimeMillis());
+        adjustSystemTime(delta);
+    }
+/*end[DEBUG_CODE_ENABLED]*/
     
     /**
      * Gets the current time.
@@ -2383,6 +2447,7 @@ hbp.dumpState();
      *
      * @return the time in milliseconds
      */
+/*if[!DEBUG_CODE_ENABLED]*/
 /*if[JAVA5SYNTAX]*/
     @Vm2c(proxy="sysTimeMillis")
 /*end[JAVA5SYNTAX]*/
@@ -2399,7 +2464,14 @@ hbp.dumpState();
 //		return NativeUnsafe.getLong(timeAddr, 0);
 /*end[FLASH_MEMORY]*/
     }
-
+/*else[DEBUG_CODE_ENABLED]*/
+//    public static long getTimeMillis() {
+//        long realTime = getTimeMillisRaw();
+//        long adjust = makeLong(debugClockAdjustmentsHi, debugClockAdjustmentsLo);
+//        return realTime + adjust;
+//    }
+/*end[DEBUG_CODE_ENABLED]*/
+    
     /**
      * Adjust system state to reflect change in clock.
      * If the clock changes for some reason (user sets clock, get new time over network etc),

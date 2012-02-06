@@ -965,7 +965,7 @@ public class MethodConverter extends JCTree.Visitor {
                 ccode.print(tree.value.toString());
                 break;
             case TypeTags.LONG:
-                ccode.print(tree.value + "L");
+                ccode.print(tree.value + "LL");
                 break;
             case TypeTags.FLOAT:
                 ccode.print(tree.value + "F");
