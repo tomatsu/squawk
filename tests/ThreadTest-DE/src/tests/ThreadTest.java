@@ -34,17 +34,17 @@ import java.util.Hashtable;
  * NOTE: This test relies on debug code in the VM that is only enabled when property DEBUG_CODE_ENABLED is true.
  */
 public class ThreadTest extends MiniTestHelper {
-    final static int SLOP = 50; // ms that wakeups are allowed to be early or late
+    final static int SLOP = 100; // ms that wakeups are allowed to be early or late
     
-    final static int INTERVAL = 200; // interval in ms between absolute tasks
+    final static int INTERVAL = 400; // interval in ms between absolute tasks
     final static int ABSOLUTE_COUNT = 25; // number of absolute time tasks
     
-    final static int PERIOD = 100; // period in ms of periodic task
+    final static int PERIOD = 200; // period in ms of periodic task
     final static int PERIODIC_COUNT = 10 + (ABSOLUTE_COUNT * INTERVAL) / PERIOD;
     
     final static int ADJUST1 = SLOP * 2; // try adjusting clock by small ammount
     final static int ADJUST2 = INTERVAL * 3; // try adjusting clock by large ammount
-    final static int ADJUST_INTERVAL = 1000; // time between adjusting clock
+    final static int ADJUST_INTERVAL = 1800; // time between adjusting clock
 
     /**
      * If the clock is moved forwards, absolute time tasks may be late. There's no helping that, so add extra slop so tests don't fail.
@@ -58,8 +58,7 @@ public class ThreadTest extends MiniTestHelper {
     static void printLog(String msg) {
         long absTime = VM.getTimeMillis();
         long relTime = VM.relativeTimeMillis();
-        String name = Thread.currentThread().toString();
-        System.out.print(name);
+        System.out.print(Thread.currentThread().getName());
         System.out.print(": absTime: ");
         System.out.print(absTime);
         System.out.print(", relTime: ");
@@ -169,7 +168,7 @@ public class ThreadTest extends MiniTestHelper {
         
     public void test() throws TestFailedException {
         long now;
-        Thread p = new Thread(new PeriodicRunnable(), "periodic"); // run this thread at 10ms interval
+        Thread p = new Thread(new PeriodicRunnable(), "periodic-----"); // run this thread at 10ms interval
 
         VM.setSystemClockMockInit(1000); // set time to nominal value to make eyballing results easier
         
@@ -201,7 +200,7 @@ public class ThreadTest extends MiniTestHelper {
         delay(ADJUST_INTERVAL);
 
         // move time up a lot:
-        currentSlop = SLOP + ADJUST2;          // this scheme isn't really thread safe...
+        //currentSlop = SLOP + ADJUST2;          // this scheme isn't really thread safe...
         setSystemClockMock(System.currentTimeMillis() + ADJUST2);
         delay(ADJUST_INTERVAL);
         currentSlop = SLOP;

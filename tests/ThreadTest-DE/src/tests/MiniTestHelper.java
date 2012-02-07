@@ -30,15 +30,15 @@ import com.sun.squawk.VM;
  * Test "framework" for running within Squawk (as opposed to mocked in Java SE)
  */
 public abstract class MiniTestHelper {
-    
+
     private static int failures = 0;
 
     String testName;
-        
-    MiniTestHelper(String testName) { 
+
+    MiniTestHelper(String testName) {
         this.testName = testName;
     }
-    
+
     static void passed(String name) {
         if (VM.isVerbose()) {
             VM.print("Test ");
@@ -72,7 +72,7 @@ public abstract class MiniTestHelper {
             result(msg, expected == actual);
         }
     }
-    
+
     static void expect(String msg, long expected, long actual, int delta) {
         if (Math.abs(expected - actual) > delta) {
             String details = " - expected: " + expected + " +/-: " + delta + " actual value: " + actual;
@@ -81,10 +81,10 @@ public abstract class MiniTestHelper {
             result(msg, true);
         }
     }
-    
+
     public void runTest() {
         boolean passed = false;
-        
+
         try {
             System.out.println("Starting test " + testName);
             test();
@@ -100,7 +100,7 @@ public abstract class MiniTestHelper {
             }
         }
     }
-    
+
     /**
      * The actual test code must be implemented in the test() method.
      */
@@ -114,7 +114,11 @@ abstract class TestRunner implements Runnable {
         try {
             test();
         } catch (TestFailedException ex) {
-            System.err.println("Test Failed: " + ex.getMessage());
+            System.out.flush();
+            System.err.print(">>>>>>>> ");
+            System.err.println(Thread.currentThread().getName());
+            System.err.print("    ");
+            System.err.println(ex.getMessage());
             if (VM.isVerbose()) {
                 ex.printStackTrace();
             }
@@ -128,7 +132,7 @@ abstract class TestRunner implements Runnable {
 }
 
 class TestFailedException extends RuntimeException {
-    
+
     TestFailedException(String msg) {
         super(msg);
     }
