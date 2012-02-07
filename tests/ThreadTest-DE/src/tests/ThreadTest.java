@@ -180,7 +180,7 @@ public class ThreadTest extends MiniTestHelper {
         System.out.println("Schedule for absolute tasks:");
         now = System.currentTimeMillis();
         for (int i = 0; i < ABSOLUTE_COUNT; i++) {
-            long targetTime = now + (INTERVAL * (i + 1)) + 500; // offset 100ms to allow all threads to start up before deadline passes
+            long targetTime = now + (INTERVAL * (i + 1)) + 500; // offset 500ms to allow all threads to start up before deadline passes
             Thread t = new Thread(new AbsoluteRunnable(targetTime), ("absolute-" + targetTime));
             System.out.println("   " + targetTime + ": " + t);
             t.start();
@@ -193,25 +193,21 @@ public class ThreadTest extends MiniTestHelper {
         delay(ADJUST_INTERVAL);
 
         // move time up little:
-        now = System.currentTimeMillis();
-        setSystemClockMock(now + ADJUST1);
+        setSystemClockMock(System.currentTimeMillis() + ADJUST1);
         delay(ADJUST_INTERVAL);
 
         // move time back little:
-        now = System.currentTimeMillis();
-        setSystemClockMock(now - ADJUST1);
+        setSystemClockMock(System.currentTimeMillis() - ADJUST1);
         delay(ADJUST_INTERVAL);
 
         // move time up a lot:
         currentSlop = SLOP + ADJUST2;          // this scheme isn't really thread safe...
-        now = System.currentTimeMillis();
-        setSystemClockMock(now + ADJUST2);
+        setSystemClockMock(System.currentTimeMillis() + ADJUST2);
         delay(ADJUST_INTERVAL);
         currentSlop = SLOP;
 
         // move time back a lot:
-        now = System.currentTimeMillis();
-        setSystemClockMock(now - ADJUST2);
+        setSystemClockMock(System.currentTimeMillis() - ADJUST2);
         delay(ADJUST_INTERVAL);
 
         try {

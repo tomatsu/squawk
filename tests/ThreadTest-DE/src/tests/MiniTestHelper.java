@@ -115,7 +115,9 @@ abstract class TestRunner implements Runnable {
             test();
         } catch (TestFailedException ex) {
             System.err.println("Test Failed: " + ex.getMessage());
-            ex.printStackTrace();
+            if (VM.isVerbose()) {
+                ex.printStackTrace();
+            }
         }
     }
 
