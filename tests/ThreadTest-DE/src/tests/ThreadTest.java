@@ -180,7 +180,7 @@ public class ThreadTest extends MiniTestHelper {
         System.out.println("Schedule for absolute tasks:");
         now = System.currentTimeMillis();
         for (int i = 0; i < ABSOLUTE_COUNT; i++) {
-            long targetTime = now + (INTERVAL * (i + 1)) + 100; // offset 100ms to allow all threads to start up before deadline passes
+            long targetTime = now + (INTERVAL * (i + 1)) + 500; // offset 100ms to allow all threads to start up before deadline passes
             Thread t = new Thread(new AbsoluteRunnable(targetTime), ("absolute-" + targetTime));
             System.out.println("   " + targetTime + ": " + t);
             t.start();
