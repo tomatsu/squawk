@@ -200,7 +200,7 @@ public class ThreadTest extends MiniTestHelper {
         delay(ADJUST_INTERVAL);
 
         // move time up a lot:
-        //currentSlop = SLOP + ADJUST2;          // this scheme isn't really thread safe...
+        currentSlop = SLOP + ADJUST2;          // this scheme isn't really thread safe...
         setSystemClockMock(System.currentTimeMillis() + ADJUST2);
         delay(ADJUST_INTERVAL);
         currentSlop = SLOP;

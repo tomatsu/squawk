@@ -106,6 +106,7 @@ public abstract class MiniTestHelper {
      */
     public abstract void test();
 }
+
 /**
  * TestRunner runs the abstract test method, and catches and reports any TestFailedExceptions.
  */
