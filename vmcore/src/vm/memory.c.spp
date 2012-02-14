@@ -29,7 +29,7 @@
 
 //#if PLATFORM_UNALIGNED_LOADS
 #if 0
-// This slows down interp loop on x86, so never inline the unaligned getters/setters/
+// This slows down interp loop on x86, so don't force inlining the unaligned getters/setters/
 #define INLINE_UNALIGNED INLINE
 #else
 #define INLINE_UNALIGNED 
@@ -772,8 +772,19 @@ INLINE_UNALIGNED void setUnalignedInt(Address base, Offset offset, int value) {
          */
 INLINE_UNALIGNED void setUnalignedLong(Address base, Offset offset, jlong value) {
             signed char *ea = &((signed char *)base)[offset];
-            if (PLATFORM_UNALIGNED_64_LOADS || isAligned((UWord)ea, 8)) {
+            if (PLATFORM_UNALIGNED_64_LOADS || (!PLATFORM_UNALIGNED_LOADS && isAligned((UWord)ea, 8))) {
                 setLongTyped(ea, 0, AddressType_LONG, value);
+            } else if (PLATFORM_UNALIGNED_LOADS) {
+                /* optimize for 32-bit registers */
+                unsigned int hi = value >> 32;
+                unsigned int lo = value & 0xFFFFFFFF;
+                if (PLATFORM_BIG_ENDIAN) {
+                    setIntTyped(ea, 0, AddressType_LONG, hi);
+                    setIntTyped(ea, 1, AddressType_LONG, lo);
+                } else {
+                    setIntTyped(ea, 0, AddressType_LONG, lo);
+                    setIntTyped(ea, 1, AddressType_LONG, hi);
+                }
             } else {
                 /* optimize for 32-bit registers */
                 unsigned int hi = value >> 32;
@@ -806,7 +817,7 @@ INLINE_UNALIGNED void setUnalignedLong(Address base, Offset offset, jlong value)
                     setByteTyped(ea, 7, AddressType_ANY, (char)b7);
                 }
             }
-            setAssume(value == getLong(base, offset));
+            setAssume(value == getUnalignedLong(base, offset));
         }
 
         /**
@@ -979,8 +990,17 @@ INLINE_UNALIGNED int getUnalignedInt(Address base, Offset offset) {
          */
 INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
             signed char *ea = &((signed char *)base)[offset];
-            if (PLATFORM_UNALIGNED_LOADS || isAligned((UWord)ea, 8)) {
+            if (PLATFORM_UNALIGNED_64_LOADS || (!PLATFORM_UNALIGNED_LOADS && isAligned((UWord)ea, 8))) {
                 return getLongTyped(ea, 0, AddressType_ANY);
+            } else if (PLATFORM_UNALIGNED_LOADS) {
+                /* optimize for 32-bit registers */
+                unsigned int first = getIntTyped((Address)ea, 0, AddressType_ANY);
+                unsigned int second = getIntTyped((Address)ea, 1, AddressType_ANY);
+                if (PLATFORM_BIG_ENDIAN) {
+                      return ((jlong)first << 32) | second;
+                } else {
+                      return ((jlong)second << 32) | first;
+                }
             } else {
                 unsigned int b1 = getUByteTyped(ea, 0, AddressType_ANY);
                 unsigned int b2 = getUByteTyped(ea, 1, AddressType_ANY);
@@ -1027,6 +1047,10 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
             }
         }
 
+        INLINE unsigned int SWAP4_VAL(unsigned int val) {
+            return ((val & 0x000000FF) << 24) | ((val & 0x0000FF00) << 8) | ((val & 0x00FF0000) >> 8) | ((val & 0xFF000000) >> 24);
+        }
+
         /**
          * Swaps the endianess of a 4 byte value.
          *
@@ -1044,13 +1068,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
                 setByteTyped(address, 2, AddressType_ANY, (char)b1);
                 setByteTyped(address, 3, AddressType_ANY, (char)b0);
             } else {
-                int value = getIntTyped(address, 0, AddressType_ANY);
-                int b0 = value         & 0xFF;
-                int b1 = (value >> 8)  & 0xFF;
-                int b2 = (value >> 16) & 0xFF;
-                int b3 = (value >> 24) & 0xFF;
-                value = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
-                setIntTyped(address, 0, type, value);
+                setIntTyped(address, 0, type, SWAP4_VAL(getIntTyped(address, 0, AddressType_ANY)));
             }
         }
 
@@ -1061,7 +1079,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
          */
         void swap8(Address address) {
             char type = (TYPEMAP ? getType(address) : AddressType_UNDEFINED);
-            if (!(PLATFORM_UNALIGNED_LOADS || isAligned((UWord)address, 8))) {
+            if (!(PLATFORM_UNALIGNED_LOADS || isAligned((UWord)address, 4))) {
                 int b0 = getUByteTyped(address, 0, AddressType_ANY);
                 int b1 = getUByteTyped(address, 1, AddressType_ANY);
                 int b2 = getUByteTyped(address, 2, AddressType_ANY);
@@ -1082,18 +1100,8 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
                 /* optimize for 32-bit registers */
                 unsigned int hi = getIntTyped(address, 0, AddressType_ANY);
                 unsigned int lo = getIntTyped(address, 1, AddressType_ANY);
-                unsigned int b0 =  hi        & 0xFF;
-                unsigned int b1 = (hi >> 8)  & 0xFF;
-                unsigned int b2 = (hi >> 16) & 0xFF;
-                unsigned int b3 = (hi >> 24) & 0xFF;
-                unsigned int b4 = (lo >> 0) & 0xFF;
-                unsigned int b5 = (lo >> 8) & 0xFF;
-                unsigned int b6 = (lo >> 16) & 0xFF;
-                unsigned int b7 = (lo >> 24) & 0xFF;
-                unsigned int lo2 =  (b4 << 24) | (b5 << 16) | (b6 << 8) | b7;
-                unsigned int hi2 =  (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
-                setIntTyped(address, 0, type, lo2);
-                setIntTyped(address, 1, type, hi2);
+                setIntTyped(address, 0, type, SWAP4_VAL(lo));
+                setIntTyped(address, 1, type, SWAP4_VAL(hi));
             }
         }
 

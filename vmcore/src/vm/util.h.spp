@@ -288,12 +288,27 @@ INLINE int    l2i(jlong l)                 { return (int)l;                     
 
 #include "fp/global.h"
 
+#ifndef C_FP_CONVERSIONS_OK // defualt to safe unless told otherwise
+#define C_FP_CONVERSIONS_OK 1 // FIXME AFTER TESTING
+#endif
 
+#if C_FP_CONVERSIONS_OK
+INLINE jlong float2ll(float f)              { return (jlong)f; }
+INLINE jlong double2ll(double d)            { return (jlong)d; }
+INLINE int double2l(double d)               { return (int)d; }
+INLINE int float2l(float f)                 { return (int)f; }
+#else
 /* can't rely on C conversions. */
-extern jlong float2ll(float f);
-extern jlong double2ll(double d);
-extern int double2l(double d);
-extern int float2l(float f);
+#define float2ll float2ll_slow
+#define double2ll double2ll_slow
+#define double2l double2l_slow
+#define float2l float2l_slow
+
+extern jlong float2ll_slow(float f);
+extern jlong double2ll_slow(double d);
+extern int double2l_slow(double d);
+extern int float2l_slow(float f);
+#endif
 
 #if INLINE_JAVA_FP
 INLINE int    addf(int l, int r)           { return f2ib(ib2f(l) + ib2f(r));           }
@@ -322,29 +337,29 @@ INLINE int    d2f(jlong l)                 { return f2ib((float)lb2d(l));       
 
 #else /* !INLINE_JAVA_FP */
 
-NOINLINE int    addf(int l, int r)          { return f2ib(ib2f(l) + ib2f(r));           }
-NOINLINE int    subf(int l, int r)           { return f2ib(ib2f(l) - ib2f(r));           }
-NOINLINE int    mulf(int l, int r)           { return f2ib(ib2f(l) * ib2f(r));           }
-NOINLINE int    divf(int l, int r)           { return f2ib(ib2f(l) / ib2f(r));           }
-NOINLINE int    remf(int l, int r)           { return f2ib(JFP_lib_remf(ib2f(l), ib2f(r))); }
-NOINLINE int    negf(int l)                  { return f2ib( - ib2f(l));        }
-NOINLINE jlong  addd(jlong l, jlong r)        { return d2lb(lb2d(l) + lb2d(r));           }
-NOINLINE jlong  subd(jlong l, jlong r)       { return d2lb(lb2d(l) - lb2d(r));           }
-NOINLINE jlong  muld(jlong l, jlong r)       { return d2lb(JFP_lib_muld(lb2d(l), lb2d(r))); }
-NOINLINE jlong  divd(jlong l, jlong r)       { return d2lb(JFP_lib_divd(lb2d(l), lb2d(r))); }
-NOINLINE jlong  remd(jlong l, jlong r)       { return d2lb(JFP_lib_remd(lb2d(l), lb2d(r))); }
-NOINLINE jlong  negd(jlong l)                { return d2lb(- lb2d(l));       }
+ int    addf(int l, int r)          { return f2ib(ib2f(l) + ib2f(r));           }
+ int    subf(int l, int r)           { return f2ib(ib2f(l) - ib2f(r));           }
+ int    mulf(int l, int r)           { return f2ib(ib2f(l) * ib2f(r));           }
+ int    divf(int l, int r)           { return f2ib(ib2f(l) / ib2f(r));           }
+ int    remf(int l, int r)           { return f2ib(JFP_lib_remf(ib2f(l), ib2f(r))); }
+ int    negf(int l)                  { return f2ib( - ib2f(l));        }
+ jlong  addd(jlong l, jlong r)        { return d2lb(lb2d(l) + lb2d(r));           }
+ jlong  subd(jlong l, jlong r)       { return d2lb(lb2d(l) - lb2d(r));           }
+ jlong  muld(jlong l, jlong r)       { return d2lb(JFP_lib_muld(lb2d(l), lb2d(r))); }
+ jlong  divd(jlong l, jlong r)       { return d2lb(JFP_lib_divd(lb2d(l), lb2d(r))); }
+ jlong  remd(jlong l, jlong r)       { return d2lb(JFP_lib_remd(lb2d(l), lb2d(r))); }
+ jlong  negd(jlong l)                { return d2lb(- lb2d(l));       }
 
-NOINLINE int    i2f(int i)                   { return f2ib((float)i);                    }
-NOINLINE jlong  i2d(int i)                   { return d2lb((double)i);                   }
-NOINLINE int    l2f(jlong l)                 { return f2ib((float)l);                    }   
-NOINLINE jlong  l2d(jlong l)                 { return d2lb((double)l);                   }
-NOINLINE int    f2i(int f)                   { return (int)float2l(ib2f(f));             }
-NOINLINE jlong  f2l(int f)                   { return (jlong)float2ll(ib2f(f));          }
-NOINLINE jlong  f2d(int f)                   { return d2lb((double)ib2f(f));             }
-NOINLINE int    d2i(jlong l)                 { return (int)double2l(lb2d(l));            }
-NOINLINE jlong  d2l(jlong l)                 { return (jlong)double2ll(lb2d(l));         }
-NOINLINE int    d2f(jlong l)                 { return f2ib((float)lb2d(l));              }
+ int    i2f(int i)                   { return f2ib((float)i);                    }
+ jlong  i2d(int i)                   { return d2lb((double)i);                   }
+ int    l2f(jlong l)                 { return f2ib((float)l);                    }   
+ jlong  l2d(jlong l)                 { return d2lb((double)l);                   }
+ int    f2i(int f)                   { return (int)float2l(ib2f(f));             }
+ jlong  f2l(int f)                   { return (jlong)float2ll(ib2f(f));          }
+ jlong  f2d(int f)                   { return d2lb((double)ib2f(f));             }
+ int    d2i(jlong l)                 { return (int)double2l(lb2d(l));            }
+ jlong  d2l(jlong l)                 { return (jlong)double2ll(lb2d(l));         }
+ int    d2f(jlong l)                 { return f2ib((float)lb2d(l));              }
 #endif /* ! INLINE_JAVA_FP */
 
 /*---------------------------------------------------------------------------*\

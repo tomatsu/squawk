@@ -60,11 +60,11 @@ union  uu2   { jlong l; unsigned int lParts[2]; double d;        };
 #if (PLATFORM_BIG_ENDIAN || ARM_FPA)
 #define __HI(x) (((union uu2*)&x)->lParts[0])
 #define __LO(x) (((union uu2*)&x)->lParts[1])
-#define __HIp(x) (((union uu2*)x)->lParts[0])
-#define __LOp(x) (((union uu2*)x)->lParts[1])
+#define __HIp(x) (((union uu2)x).lParts[0])
+#define __LOp(x) (((union uu2)x).lParts[1])
 #else
-#define __HI(x) (((union uu2*)&x)->lParts[1])
-#define __LO(x) (((union uu2*)&x)->lParts[0])
+#define __HI(x) (((union uu2)x).lParts[1])
+#define __LO(x) (((union uu2)x).lParts[0])
 #define __HIp(x) (((union uu2*)x)->lParts[1])
 #define __LOp(x) (((union uu2*)x)->lParts[0])
 #endif
@@ -116,7 +116,7 @@ extern float  JFP_lib_remf(float x, float y);
 INLINE double  JFP_lib_muld(double x, double y)       { return x * y;      }
 INLINE double  JFP_lib_divd(double x, double y)       { return x / y;      }
 INLINE double  JFP_lib_remd(double x, double y)       { return fmod(x, y);}
-INLINE float   JFP_lib_remf(float x, float y)       { return fmodf(x, y);}
+INLINE float   JFP_lib_remf(float x, float y)         { return fmodf(x, y);}
 
 #endif
 

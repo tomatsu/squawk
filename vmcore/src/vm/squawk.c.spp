@@ -372,7 +372,7 @@ typedef int Type;
  *** Could make CPU-specific versions, but or now do most general case:
  ***/
 
-jlong float2ll(float f) {
+NOINLINE jlong float2ll_slow(float f) {
     static const unsigned long LongMin_f = 0xdf000000L;
     static const unsigned long LongMax_f = 0x5f000000L;
     jlong r;
@@ -388,7 +388,7 @@ jlong float2ll(float f) {
     return r;
 }
 
-jlong double2ll(double d) {
+NOINLINE jlong double2ll_slow(double d) {
 #if ARM_FPA
     static const ujlong LongMin_d = 0x00000000c3e00000LL;
     static const ujlong LongMax_d = 0x0000000043e00000LL;
@@ -410,7 +410,7 @@ jlong double2ll(double d) {
     return r;
 }
 
-int double2l(double d) {
+NOINLINE int double2l_slow(double d) {
 #if ARM_FPA
     static const ujlong IntegerMin_d = 0x00000000c1e00000LL;
     static const ujlong IntegerMax_d = 0x0000000041e00000LL;
@@ -433,7 +433,7 @@ int double2l(double d) {
 
 }
 
-int float2l(float f) {
+NOINLINE int float2l_slow(float f) {
     static const unsigned int IntegerMin_f = 0xcf000000L;
     static const unsigned long IntegerMax_f = 0x4f000000L;
 
@@ -1569,13 +1569,13 @@ void verifyBuildFlags() {
 
 #define assertEquals4(msg, expected, received) \
     if (received != expected) { \
-        fprintf(stderr, "Test failed. Expected %x, received %x at %s:%d\n    %s\n", expected, received, __FILE__, __LINE__, msg); \
+        fprintf(stderr, "Test failed. Expected 0x%x, received 0x%x at %s:%d\n    %s\n", expected, received, __FILE__, __LINE__, msg); \
         exit(EXIT_FAILURE); \
     } \
     
 #define assertEquals8(msg, expected, received) \
     if (received != expected) { \
-        fprintf(stderr, "Test failed. Expected %llx, received %llx at %s:%d\n    %s\n", expected, received, __FILE__, __LINE__, msg); \
+        fprintf(stderr, "Test failed. Expected 0x%llx, received 0x%llx at %s:%d\n    %s\n", expected, received, __FILE__, __LINE__, msg); \
         exit(EXIT_FAILURE); \
     } \
 
@@ -1606,28 +1606,94 @@ void testUnaligned() {
     const int   PATTERN3 = 0x55667788;
     const int   PATTERN3_SWAP = 0x88776655;
     jlong tmp[2];
-    Address buf = ((char*)&tmp) + 1; // force unaligned
-
-    setUnalignedLong(buf, 0, PATTERN1);
-    jlong val = getUnalignedLong(buf, 0);
-    assertEquals8("getUnalignedLong", PATTERN1, val);
-    swap8(buf);
-    val = getUnalignedLong(buf, 0);
-    assertEquals8("swap8", PATTERN1_SWAP, val);
+    Address buf = ((char*)&tmp); // first check aligned:
+    tmp[0] = 0;
+    tmp[1] = 0;
     
-    setUnalignedLong(buf, 0, PATTERN2);
-    val = getUnalignedLong(buf, 0);
-    assertEquals8("getUnalignedLong 2", PATTERN2, val);
-    swap8(buf);
-    val = getUnalignedLong(buf, 0);
-    assertEquals8("swap8 2", PATTERN2_SWAP, val);
+    {
+        jlong val;
+        jlong valCheck;
 
-    setUnalignedInt(buf, 0, PATTERN3);
-    int val2 = getUnalignedInt(buf, 0);
-    assertEquals4("getUnalignedInt", PATTERN3, val2);
-    swap4(buf);
-    val2 = getUnalignedInt(buf, 0);
-    assertEquals4("swap4", PATTERN3_SWAP, val2);
+        // compare results of the aligned and unaligned accessors
+        setLong(buf, 0, PATTERN1);
+        assertEquals8("overwrite", 0ll, tmp[1]);
+        valCheck = getLong(buf, 0);
+        assertEquals8("getLong", PATTERN1, valCheck);
+        
+        setUnalignedLong(buf, 0, PATTERN1);
+        assertEquals8("overwrite", 0ll, tmp[1]);
+        valCheck = getLong(buf, 0);
+        assertEquals8("getLong 2", PATTERN1, valCheck);
+        val = getUnalignedLong(buf, 0);
+        assertEquals8("getUnalignedLong check", valCheck, val);
+        swap8(buf);
+        valCheck = getLong(buf, 0);
+        assertEquals8("swap8 aligned", PATTERN1_SWAP, valCheck);
+        val = getUnalignedLong(buf, 0);
+        assertEquals8("swap8", PATTERN1_SWAP, val);
+
+        setUnalignedLong(buf, 0, PATTERN2);
+        assertEquals8("overwrite", 0ll, tmp[1]);
+        val = getUnalignedLong(buf, 0);
+        assertEquals8("getUnalignedLong 2", PATTERN2, val);
+        swap8(buf);
+        valCheck = getLong(buf, 0);
+        assertEquals8("swap8 p2 aligned", PATTERN2_SWAP, valCheck);
+        val = getUnalignedLong(buf, 0);
+        assertEquals8("swap8 p2 2", PATTERN2_SWAP, val);
+    }
+
+    {
+        int val;
+        int valCheck;
+
+        setInt(buf, 0, PATTERN3);
+        valCheck = getInt(buf, 0);
+        assertEquals4("getInt", PATTERN3, valCheck);
+
+        setUnalignedInt(buf, 0, PATTERN3);
+        valCheck = getInt(buf, 0);
+        assertEquals4("getInt 2", PATTERN3, valCheck);
+        val = getUnalignedInt(buf, 0);
+        assertEquals4("getUnalignedInt", PATTERN3, val);
+        swap4(buf);
+        val = getUnalignedInt(buf, 0);
+        assertEquals4("swap4", PATTERN3_SWAP, val);
+    }
+    
+    // -------- force unaligned -----------------
+    buf = ((char*)&tmp) + 1;
+    const int REMAINDER_MASK = PLATFORM_BIG_ENDIAN ? 0x00FFFFFFLL: 0xFFFFFF00LL;
+
+    {
+        jlong val;
+
+        setUnalignedLong(buf, 0, PATTERN1);
+        assertEquals8("overwrite", 0LL, (tmp[1] & REMAINDER_MASK));
+        val = getUnalignedLong(buf, 0);
+        assertEquals8("getUnalignedLong", PATTERN1, val);
+        swap8(buf);
+        val = getUnalignedLong(buf, 0);
+        assertEquals8("swap8", PATTERN1_SWAP, val);
+
+        setUnalignedLong(buf, 0, PATTERN2);
+        assertEquals8("overwrite", 0LL, (tmp[1] & REMAINDER_MASK));
+        val = getUnalignedLong(buf, 0);
+        assertEquals8("getUnalignedLong p2", PATTERN2, val);
+        swap8(buf);
+        val = getUnalignedLong(buf, 0);
+        assertEquals8("swap8 p2", PATTERN2_SWAP, val);
+    }
+
+    {
+        int val;
+        setUnalignedInt(buf, 0, PATTERN3);
+        val = getUnalignedInt(buf, 0);
+        assertEquals4("getUnalignedInt", PATTERN3, val);
+        swap4(buf);
+        val = getUnalignedInt(buf, 0);
+        assertEquals4("swap4", PATTERN3_SWAP, val);
+    }
 }
 
 void testWordAt() {
@@ -1663,6 +1729,7 @@ void fpTest() {
     double d1 = 1.0;
     FILE *vmOut = streams[currentStream];
 
+#if 0
     fprintf(vmOut, format("f0 = %i\n"), f2ib(f0));
     fprintf(vmOut, format("f1 = %i\n"), f2ib(f1));
     fprintf(vmOut, format("f0 + f0 = %i\n"), f2ib(f0 + f0));
@@ -1670,7 +1737,7 @@ void fpTest() {
     fprintf(vmOut, format("f0 * f1 = %i\n"), f2ib(f0 * f1));
     fprintf(vmOut, format("f1 * f1 = %i\n"), f2ib(f1 * f1));
     fprintf(vmOut, format("f1 + f1 = %i\n"), f2ib(f1 + f1));
-fflush(vmOut);
+    fflush(vmOut);
 
     fprintf(vmOut, format("f0 = %f\n"), f0);fflush(vmOut);
     fprintf(vmOut, format("f1 = %f\n"), f1);fflush(vmOut);
@@ -1687,19 +1754,56 @@ fflush(vmOut);
     fprintf(vmOut, format("d0 * d1 = %D\n"), (d0 * d1));fflush(vmOut);
     fprintf(vmOut, format("d1 * d1 = %D\n"), (d1 * d1));fflush(vmOut);
     fflush(vmOut);
-
+#endif
+    
     if (f0 == 0.0) {
-        fprintf(vmOut, "passed 1\n");
+        // fprintf(vmOut, "fpTest passed 1\n");
     } else {
-        fprintf(vmOut, "failed 1\n");
+        fprintf(vmOut, "fpTest failed 1\n");
     }
 
-        if (f1 > f0) {
-        fprintf(vmOut, "passed 2\n");
+    if (f1 > f0) {
+        // fprintf(vmOut, "fpTest passed 2\n");
     } else {
-        fprintf(vmOut, "failed 2\n");
+        fprintf(vmOut, "fpTest failed 2\n");
     }
 
+#if C_FP_CONVERSIONS_OK
+    // see if the functions float2l, float2ll, double2l, double2ll are needed on this platform:
+
+    //fprintf(vmOut, "Running C_FP_CONVERSIONS_OK tests...\n");
+    assertEquals4("float2l(1.0f)", float2l_slow(1.0f), (int)1.0f);
+    assertEquals4("float2l(F_L_POS_NAN)", float2l_slow(ib2f(F_L_POS_NAN)), (int)(ib2f(F_L_POS_NAN)));
+    assertEquals4("float2l(F_H_POS_NAN)", float2l_slow(ib2f(F_H_POS_NAN)), (int)(ib2f(F_H_POS_NAN)));
+    assertEquals4("float2l(F_L_NEG_NAN)", float2l_slow(ib2f(F_L_NEG_NAN)), (int)(ib2f(F_L_NEG_NAN)));
+    assertEquals4("float2l(F_H_NEG_NAN)", float2l_slow(ib2f(F_H_NEG_NAN)), (int)(ib2f(F_H_NEG_NAN)));
+    assertEquals4("float2l(F_POS_INFINITY)", float2l_slow(ib2f(F_POS_INFINITY)), (int)(ib2f(F_POS_INFINITY)));
+    assertEquals4("float2l(F_NEG_INFINITY)", float2l_slow(ib2f(F_NEG_INFINITY)), (int)(ib2f(F_NEG_INFINITY)));
+
+    assertEquals8("float2ll(1.0f)", float2ll_slow(1.0f), (jlong)1.0f);
+    assertEquals8("float2ll(F_L_POS_NAN)", float2ll_slow(ib2f(F_L_POS_NAN)), (jlong)(ib2f(F_L_POS_NAN)));
+    assertEquals8("float2ll(F_H_POS_NAN)", float2ll_slow(ib2f(F_H_POS_NAN)), (jlong)(ib2f(F_H_POS_NAN)));
+    assertEquals8("float2ll(F_L_NEG_NAN)", float2ll_slow(ib2f(F_L_NEG_NAN)), (jlong)(ib2f(F_L_NEG_NAN)));
+    assertEquals8("float2ll(F_H_NEG_NAN)", float2ll_slow(ib2f(F_H_NEG_NAN)), (jlong)(ib2f(F_H_NEG_NAN)));
+    assertEquals8("float2ll(F_POS_INFINITY)", float2ll_slow(ib2f(F_POS_INFINITY)), (jlong)(ib2f(F_POS_INFINITY)));
+    assertEquals8("float2ll(F_NEG_INFINITY)", float2ll_slow(ib2f(F_NEG_INFINITY)), (jlong)(ib2f(F_NEG_INFINITY)));
+    
+    assertEquals4("double2l(1.0)", double2l_slow(1.0), (int)1.0);
+    assertEquals4("double2l(D_L_POS_NAN)", double2l_slow(lb2d(D_L_POS_NAN)), (int)(lb2d(D_L_POS_NAN)));
+    assertEquals4("double2l(D_H_POS_NAN)", double2l_slow(lb2d(D_H_POS_NAN)), (int)(lb2d(D_H_POS_NAN)));
+    assertEquals4("double2l(D_L_NEG_NAN)", double2l_slow(lb2d(D_L_NEG_NAN)), (int)(lb2d(D_L_NEG_NAN)));
+    assertEquals4("double2l(D_H_NEG_NAN)", double2l_slow(lb2d(D_H_NEG_NAN)), (int)(lb2d(D_H_NEG_NAN)));
+    assertEquals4("double2l(D_POS_INFINITY)", double2l_slow(lb2d(D_POS_INFINITY)), (int)(lb2d(D_POS_INFINITY)));
+    assertEquals4("double2l(D_NEG_INFINITY)", double2l_slow(lb2d(D_NEG_INFINITY)), (int)(lb2d(D_NEG_INFINITY)));
+
+    assertEquals8("double2ll(1.0)", double2ll_slow(1.0), (jlong)1.0);
+    assertEquals8("double2ll(D_L_POS_NAN)", double2ll_slow(lb2d(D_L_POS_NAN)), (jlong)(lb2d(D_L_POS_NAN)));
+    assertEquals8("double2ll(D_H_POS_NAN)", double2ll_slow(lb2d(D_H_POS_NAN)), (jlong)(lb2d(D_H_POS_NAN)));
+    assertEquals8("double2ll(D_L_NEG_NAN)", double2ll_slow(lb2d(D_L_NEG_NAN)), (jlong)(lb2d(D_L_NEG_NAN)));
+    assertEquals8("double2ll(D_H_NEG_NAN)", double2ll_slow(lb2d(D_H_NEG_NAN)), (jlong)(lb2d(D_H_NEG_NAN)));
+    assertEquals8("double2ll(D_POS_INFINITY)", double2ll_slow(lb2d(D_POS_INFINITY)), (jlong)(lb2d(D_POS_INFINITY)));
+    assertEquals8("double2ll(D_NEG_INFINITY)", double2ll_slow(lb2d(D_NEG_INFINITY)), (jlong)(lb2d(D_NEG_INFINITY)));
+#endif
 }
 /*else[FLOATS]*/
 //#define fpTest()
@@ -1709,8 +1813,7 @@ void unitTests() {
     testLongs();
     testUnaligned();
     testWordAt();
-    // fix up fp tests to be silent
-    // fpTest();
+    fpTest();
 }
 
 #endif /* RUN_UNIT_TESTS */
