@@ -289,7 +289,7 @@ INLINE int    l2i(jlong l)                 { return (int)l;                     
 #include "fp/global.h"
 
 #ifndef C_FP_CONVERSIONS_OK // defualt to safe unless told otherwise
-#define C_FP_CONVERSIONS_OK 1 // FIXME AFTER TESTING
+#define C_FP_CONVERSIONS_OK 0
 #endif
 
 #if C_FP_CONVERSIONS_OK
