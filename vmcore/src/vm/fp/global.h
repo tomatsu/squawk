@@ -60,11 +60,11 @@ union  uu2   { jlong l; unsigned int lParts[2]; double d;        };
 #if (PLATFORM_BIG_ENDIAN || ARM_FPA)
 #define __HI(x) (((union uu2*)&x)->lParts[0])
 #define __LO(x) (((union uu2*)&x)->lParts[1])
-#define __HIp(x) (((union uu2)x).lParts[0])
-#define __LOp(x) (((union uu2)x).lParts[1])
+#define __HIp(x) (((union uu2*)x)->lParts[0])
+#define __LOp(x) (((union uu2*)x)->lParts[1])
 #else
-#define __HI(x) (((union uu2)x).lParts[1])
-#define __LO(x) (((union uu2)x).lParts[0])
+#define __HI(x) (((union uu2*)&x)->lParts[1])
+#define __LO(x) (((union uu2*)&x)->lParts[0])
 #define __HIp(x) (((union uu2*)x)->lParts[1])
 #define __LOp(x) (((union uu2*)x)->lParts[0])
 #endif
