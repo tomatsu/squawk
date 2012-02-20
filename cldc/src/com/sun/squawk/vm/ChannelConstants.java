@@ -350,6 +350,7 @@ public final class ChannelConstants {
     public static final int ADC_ENABLE_THRESHOLD                = MISC_OPCODES + 27;
     public static final int ADC_ARE_THRESHOLD_ENABLE            = MISC_OPCODES + 28;
 
+/*if[ENABLE_ETHERNET_SUPPORT]*/
     /*
      * Ethernet related OPCODES
      */
@@ -379,6 +380,7 @@ public final class ChannelConstants {
     public static final int ETHERNET_SET_SCKOPT                 = ETHERNET_OP + 22;
     public static final int ETHERNET_GET_SCKOPT                 = ETHERNET_OP + 23;
     public static final int GET_ETHERNET_EVENT                  = ETHERNET_OP + 24;
+/*end[ENABLE_ETHERNET_SUPPORT]*/
 
     /*
      * Index of variable in C. 
