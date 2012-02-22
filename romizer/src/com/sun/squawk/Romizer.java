@@ -716,6 +716,29 @@ public class Romizer {
     }
 
     /**
+     * Create a sorted array of classes names, such as that romized classes appear earlier than
+     * non-romized classes, and are otherwise sorted by name.
+     */
+    String[] createSortedClassList(Vector<String> classNames) {
+        String[] sortedClassNames = new String[classNames.size()];
+        classNames.copyInto(sortedClassNames);
+        Arrays.sort(sortedClassNames, new Comparator<String>() {
+            public int compare(String object1, String object2) {
+                boolean romize1 = CHeaderFileCreator.isRomizedClass(object1);
+                boolean romize2 = CHeaderFileCreator.isRomizedClass(object2);
+                if (romize1 && !romize2) {
+                    return -1;
+                } else if (!romize1 && romize2) {
+                    return 1;
+                } else {
+                    return object1.compareTo(object2);
+                }
+            }
+        });
+        return sortedClassNames;
+    }
+    
+    /**
      * Loads and translates the classes in the suite.
      *
      * @param  classNames the names of the classes that are to be translated
@@ -736,17 +759,10 @@ public class Romizer {
         try {
 	        translator.open(suite, classPath);
         	suite.addNoClassDefFoundErrorClassNames(noClassDefFoundErrorClasses.toArray(new String[noClassDefFoundErrorClasses.size()]));
-
 	
 	        // Sort the classes in order to make sure that regardless of what platform we are on
 	        // the order of the classes will be the same
-	        String[] sortedClassNames = new String[classNames.size()];
-	        classNames.copyInto(sortedClassNames);
-	        Arrays.sort(sortedClassNames, new Comparator<String>() {
-	            public int compare(String object1, String object2) {
-	                return object1.compareTo(object2);
-	            }
-	        });
+	        String[] sortedClassNames = createSortedClassList(classNames);
 	        // Create classes for each class name
 	        for (String className: sortedClassNames) {
 	        	if (noClassDefFoundErrorClasses.indexOf(className) == -1) {
@@ -756,7 +772,6 @@ public class Romizer {
 
 	        // Compute the complete class closure.
 	        translator.close(suiteType);
-	        
         } catch (com.sun.squawk.translator.VerifyError t) {
             System.err.println(t);
     		lastClassName = translator.getLastClassName();
@@ -769,7 +784,6 @@ public class Romizer {
         // Ensure no classes that were meant to be excluded have been included
         // do later on stripped suite...
         //verifyExclusions(suite);
-
     }
 
     /**

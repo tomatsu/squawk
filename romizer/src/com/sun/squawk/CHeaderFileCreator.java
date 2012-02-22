@@ -313,6 +313,31 @@ public final class CHeaderFileCreator {
     private final static String[] romizedPackagesExclude = {
         "com.sun.squawk.io.j2me."
     };
+    
+    /**
+     * Decide if this class is one of the romized classes (included in rom.h).
+     * @param classname the internal name of the class
+     * @return true if the class must be romized
+     */
+    public static boolean isRomizedClass(String classname) {
+        boolean isRomized = false;
+        for (String pkg : romizedPackagesInclude) {
+            if (classname.startsWith(pkg)) {
+                isRomized = true;
+                break;
+            }
+        }
+
+        if (isRomized) {
+            for (String pkg : romizedPackagesExclude) {
+                if (classname.startsWith(pkg)) {
+                    isRomized = false;
+                    break; // ignore this class
+                }
+            }
+        }
+        return isRomized;
+    }
 
     static class InterpreterMethodInfo {
         Klass klass;
@@ -341,26 +366,12 @@ public final class CHeaderFileCreator {
             return; // ignore this class
         }
 
-
         if (klass.isSynthetic()) {
             return; // ignore this class
         }
 
-        boolean include = false;
-        for (String pkg : romizedPackagesInclude) {
-            if (internalName.startsWith(pkg)) {
-                include = true;
-                break;
-            }
-        }
-        if (!include) {
-            return; // ignore this class
-        }
-
-        for (String pkg : romizedPackagesExclude) {
-            if (internalName.startsWith(pkg)) {
-                return; // ignore this class
-            }
+        if (!isRomizedClass(internalName)) {
+            return;// ignore this class
         }
 
         out.println("#define " + fix(klass.getName()) + " " + cid);

@@ -180,6 +180,29 @@ public class InstructionEmitter implements InstructionVisitor {
     final static String SYSTEM_CLASS_PREFIX = "com.sun.squawk.";
 
     /**
+     * A system class is a class whose methods must not be interrupted by thread
+     * reschedule (which implies can't be interrupted by GC).
+     * A system class must be part of the bootstrap suite.
+     * System classes are not preemptable, so long running system methods must call Thread.yield()
+     * every so often at safe points.
+     * 
+     * @return true if klass is a system class
+     */
+    private static boolean isSystemClass(Klass klass) {
+        String name = klass.getInternalName();
+        if (name.startsWith(SYSTEM_CLASS_PREFIX) 
+                //|| name.startsWith("java.")
+                //|| name.startsWith("javax.")
+                //|| name.startsWith("tests.")
+                ) {
+            // System.out.println("Found system class: " + name);
+            return true;
+        }
+        // System.out.println("Found APP class: " + name);
+        return false;
+    }
+
+    /**
      * Constructor.
      *
      * @param ir
@@ -194,23 +217,8 @@ public class InstructionEmitter implements InstructionVisitor {
         this.clearedSlots = clearedSlots;
         this.trace        = Translator.TRACING_ENABLED && Tracer.isTracing("emitter", method.toString());
 
-        /*
-         * Work out if the method is in a system class. A system class is one that is romized and
-         * in the bootstrap suite.
-         * System classes are not preemptable, but application classes must call Thread.yield()
-         * every so often.
-         */
         if (VM.getCurrentIsolate().getLeafSuite().isBootstrap()) {
-            String name = classFile.getDefinedClass().getInternalName();
-            if (name.startsWith(SYSTEM_CLASS_PREFIX) || name.startsWith("java.") || name.startsWith("com.sun.")  
-                    //|| name.startsWith("javax.")
-//                    || name.startsWith("tests.")
-                    ) {
-                isAppClass = false;
-                // System.out.println("Found system class: " + name);
-            } else {
-                // System.out.println("Found APP class: " + name);
-            }
+            isAppClass = !isSystemClass(classFile.getDefinedClass());
         }
     }
 
