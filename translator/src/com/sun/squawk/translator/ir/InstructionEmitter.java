@@ -191,7 +191,8 @@ public class InstructionEmitter implements InstructionVisitor {
     private static boolean isSystemClass(Klass klass) {
         String name = klass.getInternalName();
         if (name.startsWith(SYSTEM_CLASS_PREFIX) 
-                //|| name.startsWith("java.")
+                  || name.startsWith("java.")
+                  || name.startsWith("com.sun.")
                 //|| name.startsWith("javax.")
                 //|| name.startsWith("tests.")
                 ) {
