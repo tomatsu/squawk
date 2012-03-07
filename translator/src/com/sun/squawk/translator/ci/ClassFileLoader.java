@@ -144,6 +144,9 @@ public final class ClassFileLoader implements Context {
                 ioe.printStackTrace();
             }
             throw new NoClassDefFoundError(prefix(ioe.toString()));
+        }  catch (RuntimeException e) {
+            System.err.println("\n\nError while loading " + klass + "\n");
+            throw e;
         } finally {
             if (is != null) {
                 try {
@@ -979,6 +982,7 @@ public final class ClassFileLoader implements Context {
 
         String methodName = pool.getUtf8(nameIndex);
         String methodSig  = pool.getUtf8(descriptorIndex);
+        try {
 
         if (methodName.equals("<clinit>")) {
             /*
@@ -1094,6 +1098,11 @@ public final class ClassFileLoader implements Context {
         }
 
         return method;
+
+        } catch (RuntimeException ex) {
+            System.err.println("\nError while loading method " + methodName + methodSig);
+            throw ex;
+        }
     }
 
     /*---------------------------------------------------------------------------*\

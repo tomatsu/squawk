@@ -393,14 +393,6 @@ public final class ObjectGraphSerializer {
                         }
                         break;
                     }
-                    case CID.FLOAT_ARRAY: {
-                        float[] array = (float[])object;
-                        serializedObject = alloc(object, klass, array.length);
-                        for (int i = 0 ; i < array.length ; i++) {
-                            NativeUnsafe.setInt(serializedObject, i, Float.floatToIntBits(array[i]));
-                        }
-                        break;
-                    }
                     case CID.LONG_ARRAY: {
                         long[] array = (long[])object;
                         serializedObject = alloc(object, klass, array.length);
@@ -409,6 +401,16 @@ public final class ObjectGraphSerializer {
                         }
                         break;
                     }
+/*if[FLOATS]*/
+                    case CID.FLOAT_ARRAY: {
+                        float[] array = (float[])object;
+                        serializedObject = alloc(object, klass, array.length);
+                        for (int i = 0 ; i < array.length ; i++) {
+                            NativeUnsafe.setInt(serializedObject, i, Float.floatToIntBits(array[i]));
+                        }
+                        break;
+                    }
+                    
                     case CID.DOUBLE_ARRAY: {
                         double[] array = (double[])object;
                         serializedObject = alloc(object, klass, array.length);
@@ -417,6 +419,10 @@ public final class ObjectGraphSerializer {
                         }
                         break;
                     }
+/*else[FLOATS]*/
+//                  case CID.FLOAT_ARRAY:
+//                  case CID.DOUBLE_ARRAY:
+/*end[FLOATS]*/
                     case CID.GLOBAL_ARRAY:
                     case CID.LOCAL_ARRAY: {
                         Assert.shouldNotReachHere();
@@ -502,13 +508,21 @@ public final class ObjectGraphSerializer {
                     NativeUnsafe.setChar(serializedObject, field.getOffset(), value);
                     break;
                 }
+/*if[FLOATS]*/
                 case CID.FLOAT:
+/*else[FLOATS]*/
+//              case CID.FLOAT: Assert.shouldNotReachHere();
+/*end[FLOATS]*/
                 case CID.INT: {
                     int value = FieldReflector.getInt(object, field);
                     NativeUnsafe.setInt(serializedObject, field.getOffset(), value);
                     break;
                 }
+/*if[FLOATS]*/
                 case CID.DOUBLE:
+/*else[FLOATS]*/
+//              case CID.DOUBLE: Assert.shouldNotReachHere();
+/*end[FLOATS]*/
                 case CID.LONG: {
                     long value = FieldReflector.getLong(object, field);
                     NativeUnsafe.setLongAtWord(serializedObject, field.getOffset(), value);

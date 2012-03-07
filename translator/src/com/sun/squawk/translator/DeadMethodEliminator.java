@@ -207,7 +207,10 @@ public class DeadMethodEliminator {
         // effects of inherited methods and implemented interfaces:
         // This may populate more overrides and supermethods entries.
         for (int cno = 0; cno < suite.getClassCount(); cno++) {
-            methodDB.computeInheritedImplementorsInfo(suite.getKlass(cno));
+            Klass klass = suite.getKlass(cno);
+            if (klass != null) {
+                methodDB.computeInheritedImplementorsInfo(klass);
+            }
         }
         
         if (Klass.TRACING_ENABLED && Tracer.isTracing("callgraph")) {

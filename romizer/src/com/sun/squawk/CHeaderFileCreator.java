@@ -541,7 +541,9 @@ public final class CHeaderFileCreator {
         int classCount = suite.getClassCount();
         for (int cid = 0; cid != classCount; cid++) {
             Klass klass = suite.getKlass(cid);
-            writeKlassDecls(klass, cid, suite, out);
+            if (klass != null) {
+                writeKlassDecls(klass, cid, suite, out);
+            }
         }
 
         // Verify that the hard coded field and method offsets are correct

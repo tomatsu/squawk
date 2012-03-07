@@ -53,7 +53,9 @@ public abstract class StackProducer extends Instruction implements Mutator {
     public StackProducer(Klass type) {
         Assert.that(type != null);
         Assert.that(type != Klass.LONG2);
+/*if[FLOATS]*/
         Assert.that(type != Klass.DOUBLE2);
+/*end[FLOATS]*/
         this.type = type;
     }
 

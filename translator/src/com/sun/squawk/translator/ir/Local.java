@@ -103,7 +103,11 @@ public final class Local {
      * @return  true if it is
      */
     public boolean is64Bit() {
-        return type == Klass.LONG | type == Klass.DOUBLE | (Klass.SQUAWK_64 ? type.isSquawkPrimitive() : false);
+        return type == Klass.LONG 
+/*if[FLOATS]*/
+                | type == Klass.DOUBLE 
+/*end[FLOATS]*/
+                | (Klass.SQUAWK_64 ? type.isSquawkPrimitive() : false);
     }
 
     /**

@@ -291,7 +291,7 @@ public class Klass<T> {
      * @throws HostedPragma 
      */
     private static Object forNameDynamic(String className)  
-/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
+/*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
         throws HostedPragma
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
     {
@@ -2194,8 +2194,8 @@ T
                     offset += 8;
                     break;
                 }
-                case CID.INT:
-                case CID.FLOAT: {
+                case CID.FLOAT:
+                case CID.INT: {
                     int mod4 = offset % 4;
                     if (mod4 != 0) {
                         offset += (4 - mod4);
@@ -2986,7 +2986,7 @@ T
     }
     
     private Method findMethodDynamic(Object body)
-/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
+/*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
         throws HostedPragma
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
     {
@@ -3582,12 +3582,14 @@ T
      * The type for <code>int</code>.
      */
     public static final Klass INT;
-
+    
+/*if[FLOATS]*/
     /**
      * The type for <code>float</code>.
      */
     public static final Klass FLOAT;
-
+/*end[FLOATS]*/
+    
     /**
      * The type for <code>long</code>.
      */
@@ -3598,6 +3600,7 @@ T
      */
     public static final Klass LONG2;
 
+/*if[FLOATS]*/
     /**
      * The type for <code>double</code>.
      */
@@ -3607,7 +3610,8 @@ T
      * The type for the second word of a <code>double</code> value.
      */
     public static final Klass DOUBLE2;
-
+/*end[FLOATS]*/
+    
     /**
      * The type for <code>void</code>.
      */
@@ -3695,21 +3699,25 @@ T
      */
     public static final Klass INT_ARRAY;
 
+/*if[FLOATS]*/
     /**
      * The type for <code>float[]</code>.
      */
     public static final Klass FLOAT_ARRAY;
-
+/*end[FLOATS]*/
+    
     /**
      * The type for <code>long[]</code>.
      */
     public static final Klass LONG_ARRAY;
 
+/*if[FLOATS]*/
     /**
      * The type for <code>double[]</code>.
      */
     public static final Klass DOUBLE_ARRAY;
-
+/*end[FLOATS]*/
+    
     /**
      * The type for <code>com.sun.squawk.StringOfBytes</code>.
      */
@@ -3821,11 +3829,15 @@ T
         BYTE               = boot(INT,           "byte",                    CID.BYTE,              primitive);
         CHAR               = boot(INT,           "char",                    CID.CHAR,              primitive);
         SHORT              = boot(INT,           "short",                   CID.SHORT,             primitive);
+/*if[FLOATS]*/
         FLOAT              = boot(ONE_WORD,      "float",                   CID.FLOAT,             primitive);
+/*end[FLOATS]*/
         LONG               = boot(TWO_WORD,      "long",                    CID.LONG,              primitive2);
         LONG2              = boot(ONE_WORD,      "-long2-",                 CID.LONG2,             primitive2);
+/*if[FLOATS]*/
         DOUBLE             = boot(TWO_WORD,      "double",                  CID.DOUBLE,            primitive2);
         DOUBLE2            = boot(ONE_WORD,      "-double2-",               CID.DOUBLE2,           primitive2);
+/*end[FLOATS]*/
         VOID               = boot(TOP,           "void",                    CID.VOID,              synthetic);
 
         REFERENCE          = boot(ONE_WORD,      "-ref-",                   CID.REFERENCE,         synthetic); // only used by translator
@@ -3847,9 +3859,11 @@ T
         SHORT_ARRAY        = boot(OBJECT,        "[short",                  CID.SHORT_ARRAY,       synthetic); // only used by translator
         INT_ARRAY          = boot(OBJECT,        "[int",                    CID.INT_ARRAY,         synthetic); // only used by translator
         LONG_ARRAY         = boot(OBJECT,        "[long",                   CID.LONG_ARRAY,        synthetic); // only used by translator
+/*if[FLOATS]*/
         FLOAT_ARRAY        = boot(OBJECT,        "[float",                  CID.FLOAT_ARRAY,       synthetic); // only used by translator
         DOUBLE_ARRAY       = boot(OBJECT,        "[double",                 CID.DOUBLE_ARRAY,      synthetic); // only used by translator
-
+/*end[FLOATS]*/
+        
         // Ensure that all the reserved system classes are loaded if running in a hosted environment
         if (VM.isHosted()) {
             initBootstrapClassesHostedEarly();
@@ -3873,7 +3887,9 @@ T
         }
 
         Assert.that(Klass.LONG2.isPrimitive());
+/*if[FLOATS]*/
         Assert.that(Klass.DOUBLE2.isPrimitive());
+/*end[FLOATS]*/
     }
 
      /**
@@ -3900,12 +3916,24 @@ T
             Suite bootstrapSuite = isolate.getBootstrapSuite();
             TranslatorInterface translator = isolate.getTranslator();
             for (int systemID = 0; systemID <= CID.LAST_SYSTEM_ID; systemID++) {
-                Klass klass = bootstrapSuite.getKlass(systemID);
-                if (!klass.isArray() && !klass.isSynthetic()) {
-                    translator.load(klass);
-                }
-                if (klass.isArray() && klass.virtualMethods == null) {
-                    klass.virtualMethods = klass.superType.virtualMethods;
+               switch (systemID) {
+/*if[!FLOATS]*/
+                   case CID.FLOAT:
+                   case CID.FLOAT_ARRAY:
+                   case CID.DOUBLE:
+                   case CID.DOUBLE2:
+                   case CID.DOUBLE_ARRAY:
+                       break;
+/*end[FLOATS]*/
+                    default:
+                        Klass klass = bootstrapSuite.getKlass(systemID);
+                        if (!klass.isArray() && !klass.isSynthetic()) {
+                            translator.load(klass);
+                        }
+                        if (klass.isArray() && klass.virtualMethods == null) {
+                            klass.virtualMethods = klass.superType.virtualMethods;
+                        }
+                        break;
                 }
             }
         } catch (NoClassDefFoundError noClassDefFoundError) {
@@ -3946,8 +3974,15 @@ T
                 switch (first) {
                     case 'I': klass = Klass.INT;     break;
                     case 'J': klass = Klass.LONG;    break;
+/*if[FLOATS]*/
                     case 'F': klass = Klass.FLOAT;   break;
                     case 'D': klass = Klass.DOUBLE;  break;
+/*else[FLOATS]*/
+//                    case 'F':
+//                    case 'D':
+//                        Assert.shouldNotReachHere("floating point is not supported in this configuration: " + name);
+//                        return null;
+/*end[FLOATS]*/
                     case 'Z': klass = Klass.BOOLEAN; break;
                     case 'C': klass = Klass.CHAR;    break;
                     case 'S': klass = Klass.SHORT;   break;
@@ -4055,9 +4090,12 @@ T
      * @return  the type of the second word type of <code>type</code>
      */
     public static Klass getSecondWordType(Klass type) {
+/*if[FLOATS]*/
         if (type == DOUBLE) {
             return DOUBLE2;
-        } else {
+        } else 
+/*end[FLOATS]*/
+        {
             Assert.that(type == LONG); // Is not double word type.
             return LONG2;
         }

@@ -321,7 +321,11 @@ public final class Frame {
      * @return  the local variable type for storing values of type <code>type</code>
      */
     private Klass getParameterTypeFor(Klass type) {
-        if (type == Klass.LONG2 || type == Klass.DOUBLE2) {
+        if (type == Klass.LONG2 
+/*if[FLOATS]*/
+            || type == Klass.DOUBLE2
+/*end[FLOATS]*/
+            ) {
             return type;
         }
         return getLocalTypeFor(type);
@@ -756,7 +760,11 @@ public final class Frame {
             /*
              * The primitive one-word, non-float types are all assignment compatible with each other
              */
-            if (type.isPrimitive() && type != Klass.FLOAT) {
+            if (type.isPrimitive()
+/*if[FLOATS]*/
+                && type != Klass.FLOAT
+/*end[FLOATS]*/
+                ) {
                 type = Klass.INT;
             }
         }
@@ -903,7 +911,11 @@ public final class Frame {
                 if (isBackwardBranchTarget) {
                     for (int i = 0 ; i < recordedTypes.length ; i++) {
                         Klass recordedType = recordedTypes[i];
-                        if (recordedType != Klass.LONG2 && recordedType != Klass.DOUBLE2) {
+                        if (recordedType != Klass.LONG2
+/*if[FLOATS]*/
+                            && recordedType != Klass.DOUBLE2
+/*end[FLOATS]*/
+                            ) {
                             StackMerge merge = new StackMerge(recordedType);
                             // Sometimes we end up with old derivedStack[0] == a StackMerge with no producers.
                             Assert.that(derivedStack[0] == null || !derivedStack[0].isOnStack());

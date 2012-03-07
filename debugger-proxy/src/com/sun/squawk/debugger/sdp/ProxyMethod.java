@@ -174,8 +174,11 @@ public class ProxyMethod {
 
                for (int i = 0; i < argTypes.length; i++) {
                    lvt[i] = new ScopedLocalVariable("arg-"+i, argTypes[i], slot++, 0, Integer.MAX_VALUE);
-                   if (argTypes[i] == Klass.LONG ||
-                       argTypes[i] == Klass.DOUBLE) {
+                   if (argTypes[i] == Klass.LONG 
+/*if[FLOATS]*/
+                           || argTypes[i] == Klass.DOUBLE
+/*end[FLOATS]*/
+                           ) {
                        slot++;
                    }
                }
@@ -199,7 +202,11 @@ public class ProxyMethod {
                  Klass klass = argTypes[i];
                  argCount++;
                  if (!Klass.SQUAWK_64) {
-                     if (klass == Klass.LONG || klass == Klass.DOUBLE) {
+                     if (klass == Klass.LONG 
+/*if[FLOATS]*/
+                             || klass == Klass.DOUBLE
+/*end[FLOATS]*/
+                             ) {
                          argCount++;
                      }
                  }

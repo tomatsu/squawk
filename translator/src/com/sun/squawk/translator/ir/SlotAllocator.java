@@ -337,8 +337,12 @@ public final class SlotAllocator {
                 if (k.getSystemID() == CID.LONG) {
                     localTypes[index++] = Klass.LONG2;
                 } else {
+/*if[FLOATS]*/
                     Assert.that(k.getSystemID() == CID.DOUBLE);
                     localTypes[index++] = Klass.DOUBLE2;
+/*else[FLOATS]*/
+//                  Assert.shouldNotReachHere("floating point types not supported in this configuration");
+/*end[FLOATS]*/
                 }
             }
             localTypes[index++] = k;

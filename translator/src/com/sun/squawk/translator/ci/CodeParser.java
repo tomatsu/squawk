@@ -1320,8 +1320,13 @@ public final class CodeParser implements Context {
             case T_SHORT:   return Klass.SHORT_ARRAY;
             case T_INT:     return Klass.INT_ARRAY;
             case T_LONG:    return Klass.LONG_ARRAY;
+/*if[FLOATS]*/
             case T_FLOAT:   return Klass.FLOAT_ARRAY;
             case T_DOUBLE:  return Klass.DOUBLE_ARRAY;
+/*else[FLOATS]*/
+//            case T_FLOAT:
+//            case T_DOUBLE:  throw cfr.formatError("floating point types are not supported in this configuration");
+/*end[FLOATS]*/
             default:        throw verifyError("invalid array type");
         }
     }

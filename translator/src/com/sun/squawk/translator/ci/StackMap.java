@@ -254,6 +254,7 @@ public class StackMap {
                      ++size;
                      break;
                  }
+/*if[FLOATS]*/
                  case ITEM_Float: {
                      list[item] = Klass.FLOAT;
                      break;
@@ -263,6 +264,7 @@ public class StackMap {
                      ++size;
                      break;
                  }
+/*end[FLOATS]*/
                  case ITEM_Null: {
                      list[item] = Klass.NULL;
                      break;

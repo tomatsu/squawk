@@ -259,8 +259,10 @@ public final class IRBuilder {
                 case Opcode.opc_ldc2_w:          opc_constant(Constant.create(   codeParser.parseConstantPoolOperand( true,  true)));  break;
                 case Opcode.opc_iload:           opc_load(Klass.INT,             codeParser.parseLocalVariableOperand(false, false));  break;
                 case Opcode.opc_lload:           opc_load(Klass.LONG,            codeParser.parseLocalVariableOperand(false, true));   break;
+/*if[FLOATS]*/
                 case Opcode.opc_fload:           opc_load(Klass.FLOAT,           codeParser.parseLocalVariableOperand(false, false));  break;
                 case Opcode.opc_dload:           opc_load(Klass.DOUBLE,          codeParser.parseLocalVariableOperand(false, true));   break;
+/*end[FLOATS]*/
                 case Opcode.opc_aload:           opc_load(Klass.REFERENCE,       codeParser.parseLocalVariableOperand(false, false));  break;
                 case Opcode.opc_iload_0:         opc_load(Klass.INT,       0); break;
                 case Opcode.opc_iload_1:         opc_load(Klass.INT,       1); break;
@@ -270,6 +272,7 @@ public final class IRBuilder {
                 case Opcode.opc_lload_1:         opc_load(Klass.LONG,      1); break;
                 case Opcode.opc_lload_2:         opc_load(Klass.LONG,      2); break;
                 case Opcode.opc_lload_3:         opc_load(Klass.LONG,      3); break;
+/*if[FLOATS]*/
                 case Opcode.opc_fload_0:         opc_load(Klass.FLOAT,     0); break;
                 case Opcode.opc_fload_1:         opc_load(Klass.FLOAT,     1); break;
                 case Opcode.opc_fload_2:         opc_load(Klass.FLOAT,     2); break;
@@ -278,22 +281,27 @@ public final class IRBuilder {
                 case Opcode.opc_dload_1:         opc_load(Klass.DOUBLE,    1); break;
                 case Opcode.opc_dload_2:         opc_load(Klass.DOUBLE,    2); break;
                 case Opcode.opc_dload_3:         opc_load(Klass.DOUBLE,    3); break;
+/*end[FLOATS]*/
                 case Opcode.opc_aload_0:         opc_load(Klass.REFERENCE, 0); break;
                 case Opcode.opc_aload_1:         opc_load(Klass.REFERENCE, 1); break;
                 case Opcode.opc_aload_2:         opc_load(Klass.REFERENCE, 2); break;
                 case Opcode.opc_aload_3:         opc_load(Klass.REFERENCE, 3); break;
                 case Opcode.opc_iaload:          opc_arrayload(Klass.INT_ARRAY);    break;
                 case Opcode.opc_laload:          opc_arrayload(Klass.LONG_ARRAY);   break;
+/*if[FLOATS]*/
                 case Opcode.opc_faload:          opc_arrayload(Klass.FLOAT_ARRAY);  break;
                 case Opcode.opc_daload:          opc_arrayload(Klass.DOUBLE_ARRAY); break;
+/*end[FLOATS]*/
                 case Opcode.opc_aaload:          opc_arrayload(Klass.OBJECT_ARRAY); break;
                 case Opcode.opc_baload:          opc_arrayload(Klass.BYTE_ARRAY);   break;
                 case Opcode.opc_caload:          opc_arrayload(Klass.CHAR_ARRAY);   break;
                 case Opcode.opc_saload:          opc_arrayload(Klass.SHORT_ARRAY);  break;
                 case Opcode.opc_istore:          opc_store(Klass.INT,       codeParser.parseLocalVariableOperand(false, false)); break;
                 case Opcode.opc_lstore:          opc_store(Klass.LONG,      codeParser.parseLocalVariableOperand(false, true));  break;
+/*if[FLOATS]*/
                 case Opcode.opc_fstore:          opc_store(Klass.FLOAT,     codeParser.parseLocalVariableOperand(false, false)); break;
                 case Opcode.opc_dstore:          opc_store(Klass.DOUBLE,    codeParser.parseLocalVariableOperand(false, true));  break;
+/*end[FLOATS]*/
                 case Opcode.opc_astore:          opc_store(Klass.REFERENCE, codeParser.parseLocalVariableOperand(false, false)); break;
                 case Opcode.opc_istore_0:        opc_store(Klass.INT,       0);      break;
                 case Opcode.opc_istore_1:        opc_store(Klass.INT,       1);      break;
@@ -303,6 +311,7 @@ public final class IRBuilder {
                 case Opcode.opc_lstore_1:        opc_store(Klass.LONG,      1);      break;
                 case Opcode.opc_lstore_2:        opc_store(Klass.LONG,      2);      break;
                 case Opcode.opc_lstore_3:        opc_store(Klass.LONG,      3);      break;
+/*if[FLOATS]*/
                 case Opcode.opc_fstore_0:        opc_store(Klass.FLOAT,     0);      break;
                 case Opcode.opc_fstore_1:        opc_store(Klass.FLOAT,     1);      break;
                 case Opcode.opc_fstore_2:        opc_store(Klass.FLOAT,     2);      break;
@@ -311,14 +320,17 @@ public final class IRBuilder {
                 case Opcode.opc_dstore_1:        opc_store(Klass.DOUBLE,    1);      break;
                 case Opcode.opc_dstore_2:        opc_store(Klass.DOUBLE,    2);      break;
                 case Opcode.opc_dstore_3:        opc_store(Klass.DOUBLE,    3);      break;
+/*end[FLOATS]*/
                 case Opcode.opc_astore_0:        opc_store(Klass.REFERENCE, 0);      break;
                 case Opcode.opc_astore_1:        opc_store(Klass.REFERENCE, 1);      break;
                 case Opcode.opc_astore_2:        opc_store(Klass.REFERENCE, 2);      break;
                 case Opcode.opc_astore_3:        opc_store(Klass.REFERENCE, 3);      break;
                 case Opcode.opc_iastore:         opc_arraystore(Klass.INT_ARRAY);    break;
                 case Opcode.opc_lastore:         opc_arraystore(Klass.LONG_ARRAY);   break;
+/*if[FLOATS]*/
                 case Opcode.opc_fastore:         opc_arraystore(Klass.FLOAT_ARRAY);  break;
                 case Opcode.opc_dastore:         opc_arraystore(Klass.DOUBLE_ARRAY); break;
+/*end[FLOATS]*/
                 case Opcode.opc_aastore:         opc_arraystore(Klass.OBJECT_ARRAY); break;
                 case Opcode.opc_bastore:         opc_arraystore(Klass.BYTE_ARRAY);   break;
                 case Opcode.opc_castore:         opc_arraystore(Klass.CHAR_ARRAY);   break;
@@ -384,8 +396,10 @@ public final class IRBuilder {
                 case Opcode.opc_lookupswitch:    opc_lookupswitch();       fallsThrough = false; break;
                 case Opcode.opc_ireturn:         opc_return(Klass.INT);    fallsThrough = false; break;
                 case Opcode.opc_lreturn:         opc_return(Klass.LONG);   fallsThrough = false; break;
+/*if[FLOATS]*/
                 case Opcode.opc_freturn:         opc_return(Klass.FLOAT);  fallsThrough = false; break;
                 case Opcode.opc_dreturn:         opc_return(Klass.DOUBLE); fallsThrough = false; break;
+/*end[FLOATS]*/
                 case Opcode.opc_areturn:         opc_return(Klass.REFERENCE); fallsThrough = false; break;
                 case Opcode.opc_return:          opc_return(Klass.VOID);   fallsThrough = false; break;
                 case Opcode.opc_getstatic:       opc_getstatic(codeParser.parseFieldOperand(true,  opcode)); break;
@@ -1436,15 +1450,19 @@ public final class IRBuilder {
 
             case Opcode.opc_iload:  opc_load(Klass.INT,        codeParser.parseLocalVariableOperand(true, false)); break;
             case Opcode.opc_lload:  opc_load(Klass.LONG,       codeParser.parseLocalVariableOperand(true, true )); break;
-            case Opcode.opc_fload:  opc_load(Klass.FLOAT,      codeParser.parseLocalVariableOperand(true, false)); break;
-            case Opcode.opc_dload:  opc_load(Klass.DOUBLE,     codeParser.parseLocalVariableOperand(true, true )); break;
             case Opcode.opc_aload:  opc_load(Klass.REFERENCE,  codeParser.parseLocalVariableOperand(true, false)); break;
 
             case Opcode.opc_istore: opc_store(Klass.INT,       codeParser.parseLocalVariableOperand(true, false)); break;
             case Opcode.opc_lstore: opc_store(Klass.LONG,      codeParser.parseLocalVariableOperand(true, true )); break;
+            case Opcode.opc_astore: opc_store(Klass.REFERENCE, codeParser.parseLocalVariableOperand(true, false)); break;
+                
+/*if[FLOATS]*/
+            case Opcode.opc_fload:  opc_load(Klass.FLOAT,      codeParser.parseLocalVariableOperand(true, false)); break;
+            case Opcode.opc_dload:  opc_load(Klass.DOUBLE,     codeParser.parseLocalVariableOperand(true, true )); break;
+                
             case Opcode.opc_fstore: opc_store(Klass.FLOAT,     codeParser.parseLocalVariableOperand(true, false)); break;
             case Opcode.opc_dstore: opc_store(Klass.DOUBLE,    codeParser.parseLocalVariableOperand(true, true )); break;
-            case Opcode.opc_astore: opc_store(Klass.REFERENCE, codeParser.parseLocalVariableOperand(true, false)); break;
+/*end[FLOATS]*/
             default:                throw codeParser.verifyError("invalid wide opcode");
         }
     }
