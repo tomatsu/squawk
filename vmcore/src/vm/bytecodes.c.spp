@@ -3234,7 +3234,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
             } else {
                 int overflow = (sl + FP_FIXED_FRAME_SIZE) - (fp - nlocals - nstack);
                 assumeInterp(getUWord(ss, SC_guard) == 0);
-                if (com_sun_squawk_GC_traceFlags > 1) {
+                if (com_sun_squawk_GC_GC_TRACING_SUPPORTED && com_sun_squawk_GC_traceFlags > 1) {
                     fprintf(stderr, format(
                                             "*** Extending stack *** (stack size=%d, remaining stack=%d, nlocals=%d, nstack=%d, slotsToClear=%d, mp=0x%x)\n"),
                                             getArrayLength(ss),
@@ -5683,10 +5683,8 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
                 if (exception != NULL && getClass(exception) != NULL) {
                     printJavaStrSafely(com_sun_squawk_Klass_name(getClass(exception)), "class");
                     printJavaStrSafely(java_lang_Throwable_detailMessage(exception), "detail message");
-                } else {
-                    fprintf(stderr, "garbled exception object!\n");
                 }
-                fatalInterpreterError("interpreter state");
+                fatalInterpreterError("");
             } else {
                 UWord oldip = (UWord)ip;
                 Address exception = popAddress();
