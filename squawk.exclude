@@ -76,6 +76,8 @@ GCFSOCKETS_ENABLE=false                        com.sun.squawk.io.j2me.socket.*
 GCFSOCKETS_ENABLE=false                        com.sun.squawk.io.j2me.serversocket.*
 GCFSOCKETS_ENABLE=false                        com.sun.squawk.platform.GCFSockets
 
+ENABLE_ETHERNET_SUPPORT=false                  com.sun.squawk.io.j2me.http.*
+
 ###############################################
 # Classes that don't need to be on device, but on desktop:
 ###############################################
