@@ -92,9 +92,12 @@ public class MethodMetadata {
      * @return null if both lnt and lvt are null, otherwise creates a new MethodMetadata.
      */
      static MethodMetadata create(int offset, ScopedLocalVariable[] lvt, int[] lnt) {
+/*if[ENABLE_SDA_DEBUGGER]*/
         if (lvt != null) {
             return new FullMethodMetadata(offset, lvt, lnt);
-        } else if (lnt != null) {
+        } else 
+/*end[ENABLE_SDA_DEBUGGER]*/
+            if (lnt != null) {
             return new MethodMetadata(offset, lnt);
         } else {
             return null;
@@ -110,9 +113,12 @@ public class MethodMetadata {
      * @return the stripped copy of this object or null if <code>lnt == lvt == false</code>
      */
     final MethodMetadata strip(boolean lnt, boolean lvt) {
+/*if[ENABLE_SDA_DEBUGGER]*/
         if (lvt && this.getLocalVariableTable() != null) {
             return new FullMethodMetadata(this.offset, this.getLocalVariableTable(), lnt ? this.lnt : null);
-        } else  if (lnt && this.getLineNumberTable() != null) {
+        } else  
+/*end[ENABLE_SDA_DEBUGGER]*/
+            if (lnt && this.getLineNumberTable() != null) {
             return new MethodMetadata(this.offset, this.lnt);
         } else {
             return null;

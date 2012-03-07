@@ -66,8 +66,12 @@ public interface MethodOffsets {
     public final static int com_sun_squawk_VM$newarray                        = 21;
     public final static int com_sun_squawk_VM$newdimension                    = 22;
     public final static int com_sun_squawk_VM$_lcmp                           = 23;
+/*if[ENABLE_SDA_DEBUGGER]*/
     public final static int com_sun_squawk_VM$reportException                 = 24;
-
+    public final static int com_sun_squawk_VM$reportBreakpoint                = 25;
+    public final static int com_sun_squawk_VM$reportStepEvent                 = 26;
+/*end[ENABLE_SDA_DEBUGGER]*/
+    
     public final static int virtual$java_lang_Object$toString            = 8;
     public final static int virtual$java_lang_Object$abstractMethodError = 9;
     public final static int java_lang_Object$missingMethodError          = 1;

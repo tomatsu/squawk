@@ -262,44 +262,6 @@ public class JavaApplicationManager {
     }
 
     /**
-     * Shows the classes in the image.
-     *
-     * @param out  the print stream to use
-     * @param packagesOnly if true, only a listing of the packages in the image is shown
-     */
-    private static void showImageContents(PrintStream out, boolean packagesOnly) {
-        Suite bootstrapSuite = VM.getCurrentIsolate().getBootstrapSuite();
-        if (packagesOnly) {
-            out.println("Packages in image:");
-            Hashtable packages = new Hashtable();
-            int count = bootstrapSuite.getClassCount();
-            for (int i = 0; i != count; ++i) {
-                Klass klass = bootstrapSuite.getKlass(i);
-                if (klass != null && !klass.isSynthetic()) {
-                    String className = klass.getInternalName();
-                    int index = className.lastIndexOf('.');
-                    if (index != -1) {
-                        String packageName = className.substring(0, className.lastIndexOf('.'));
-                        if (packages.get(packageName) == null) {
-                            out.println("  " + packageName);
-                            packages.put(packageName, packageName);
-                        }
-                    }
-                }
-            }
-        } else {
-            out.println("Classes in image:");
-            int count = bootstrapSuite.getClassCount();
-            for (int i = 0; i != count; ++i) {
-                Klass klass = bootstrapSuite.getKlass(i);
-                if (klass != null && !klass.isSynthetic()) {
-                    out.println("  " + klass.getName());
-                }
-            }
-        }
-    }
-
-    /**
      * Process a VM command line option.
      *
      * @param arg the argument
@@ -317,14 +279,6 @@ public class JavaApplicationManager {
             GC.setExcessiveGC(true);
         } else if (arg.equals("-nogc")) {
             VM.allowUserGC(false);
-/*if[EXCLUDE]*/
-        } else if (arg.equals("-imageclasses")) {
-            showImageContents(System.err, false);
-            VM.stopVM(0);
-        } else if (arg.equals("-imagepackages")) {
-            showImageContents(System.err, true);
-            VM.stopVM(0);
-/*end[EXCLUDE]*/
         } else if (arg.startsWith("-isolateinit:")) {
             String initializer = arg.substring(13);
             VM.setIsolateInitializerClassName(initializer);
@@ -424,7 +378,7 @@ public class JavaApplicationManager {
         out.print(
                 "Usage: squawk [-options] class [args...] | [-MIDlet-x]\n" +
                 "\n" +
-                "if there is no class specified, then try MIDlet-1 property to find a MIDlet\n" +
+                "if there is no class specified, then load MIDlet-1\n" +
                 "where options include:\n" +
 /*if[ENABLE_DYNAMIC_CLASSLOADING]*/
                 "    -cp:<directories and jar/zip files separated by ':' (Unix) or ';' (Windows)>\n" +
@@ -437,10 +391,6 @@ public class JavaApplicationManager {
                 "    -spotsuite:<name>     suite name (without \"" + Suite.FILE_EXTENSION + "\") to load\n" +
 /*end[FLASH_MEMORY]*/
 /*end[ENABLE_SUITE_LOADING]*/
-/*if[EXCLUDE]*/
-                "    -imageclasses         show the classes in the boot image and exit\n" +
-                "    -imagepackages        show the packages in the boot image and exit\n" +
-/*end[EXCLUDE]*/
                 "    -isolateinit:<class>  class whose main will be invoked on Isolate start, single arg \"true\" if first Isolate being initialized\n" +
                 "    -MIDlet-x             which MIDlet-x property to use from " + Suite.PROPERTIES_MANIFEST_RESOURCE_NAME + "\n" +
                 "    -sampleStatData:url   poll VM.Stats every 500ms and send samples to url\n" +

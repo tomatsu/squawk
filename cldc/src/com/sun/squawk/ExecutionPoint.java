@@ -60,7 +60,7 @@ public final class ExecutionPoint {
 /*end[DEBUG_CODE_ENABLED]*/
     
     /**
-     * Return the klass that defined the method refered to by this ExecutionPoint.
+     * Return the klass that defined the method referred to by this ExecutionPoint.
      * @return the defining klass.
      */
     public Klass getKlass() {
@@ -75,7 +75,11 @@ public final class ExecutionPoint {
      * @return the Method or null if no metadata exists for the method.
      */
     public Method getMethod() {
+/*if[ENABLE_RUNTIME_METADATA]*/
         return getKlass().findMethod(mp);
+/*else[ENABLE_RUNTIME_METADATA]*/
+ //     return null;
+/*end[ENABLE_RUNTIME_METADATA]*/
     }
 
     private void printKnownMethod(PrintStream out, Klass klass, String methodName, int[] lnt) {
@@ -218,7 +222,7 @@ public final class ExecutionPoint {
 //            }
 /*end[ENABLE_RUNTIME_METADATA]*/
         } catch (Throwable e) {
-            VM.println("Exception thrown in StackTraceElement.printToVM()");
+            VM.println("Exception thrown in ExecutionPoint.printToVM()");
         }
     }
 
@@ -264,10 +268,12 @@ public final class ExecutionPoint {
 //            }
 /*end[ENABLE_RUNTIME_METADATA]*/
         } catch (Throwable e) {
+/*if[DEBUG_CODE_ENABLED]*/
             if (VM.isVerbose()) {
-                VM.printVMStackTrace(e, "***", "Exception thrown in StackTraceElement.print():");
+                VM.printVMStackTrace(e, "***", "Exception thrown in ExecutionPoint.print():");
             }
-            VM.print("*** Error decoding this StackTraceElement:\n    ");
+/*end[DEBUG_CODE_ENABLED]*/
+            VM.print("*** Error decoding this ExecutionPoint:\n    ");
             printToVM();
             // print it the simple way
             out.print("------");

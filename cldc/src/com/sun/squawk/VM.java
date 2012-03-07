@@ -584,6 +584,7 @@ public class VM implements GlobalStaticFields {
         return -1;
     }
 
+/*if[ENABLE_SDA_DEBUGGER]*/
     /**
      * Called when an exception that has been thrown on the current thread needs
      * to be reported to an attached debugger. The actual stack unwinding and
@@ -593,14 +594,10 @@ public class VM implements GlobalStaticFields {
      * @throws the original exception.
      */
     static void reportException() throws Throwable, InterpreterInvokedPragma {
-/*if[ENABLE_SDA_DEBUGGER]*/
         VMThread thread = VMThread.currentThread();
         Assert.that(thread.getHitBreakpoint() != null);
         Assert.that(thread.frameOffsetAsPointer(thread.getHitBreakpoint().hitOrThrowFO).eq(getPreviousFP(getFP())));
         thread.reportException(VM.getCurrentIsolate().getDebugger());
-/*else[ENABLE_SDA_DEBUGGER]*/
-//      Assert.shouldNotReachHere();
-/*end[ENABLE_SDA_DEBUGGER]*/
     }
 
     /**
@@ -612,7 +609,6 @@ public class VM implements GlobalStaticFields {
      * @param hitBCI  the bytecode index of the instruction at which the breakpoint was set
      */
     static void reportBreakpoint(Offset hitFO, Offset hitBCI) throws InterpreterInvokedPragma {
-/*if[ENABLE_SDA_DEBUGGER]*/
         VMThread thread = VMThread.currentThread();
         Debugger debugger = VM.getCurrentIsolate().getDebugger();
         Assert.always(debugger != null);
@@ -621,9 +617,6 @@ public class VM implements GlobalStaticFields {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-/*else[ENABLE_SDA_DEBUGGER]*/
-//      Assert.shouldNotReachHere();
-/*end[ENABLE_SDA_DEBUGGER]*/
     }
 
     /**
@@ -635,13 +628,10 @@ public class VM implements GlobalStaticFields {
      * @param bci  the bytecode index of the instruction stepped to
      */
     static void reportStepEvent(Offset fo, Offset bci) throws InterpreterInvokedPragma {
-/*if[ENABLE_SDA_DEBUGGER]*/
         VMThread thread = VMThread.currentThread();
         thread.reportStepEvent(fo, bci);
-/*else[ENABLE_SDA_DEBUGGER]*/
-//      Assert.shouldNotReachHere();
-/*end[ENABLE_SDA_DEBUGGER]*/
     }
+/*end[ENABLE_SDA_DEBUGGER]*/
 
     /**
      * Allocate and add a new dimension to an array.
@@ -2212,7 +2202,8 @@ hbp.dumpState();
      * @param object    the root of the object graph to copy
      * @param cb        the ObjectMemorySerializer.ControlBlock
      */
-    private native static void executeCOG(Object object, ObjectMemorySerializer.ControlBlock cb);
+    private native static void executeCOG(Object object, 
+                   Object /*untyped to avoid dragging in controlblock class when not used */ cb);
 
     /**
      * Gets the number of backward branch instructions the VM has executed.

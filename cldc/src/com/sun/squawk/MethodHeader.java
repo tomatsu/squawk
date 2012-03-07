@@ -459,9 +459,11 @@ public class MethodHeader {
                     case CID.UWORD:   types[slot]  = Klass.UWORD;   break;
                     case CID.LONG:    types[slot]  = Klass.LONG;
                                       types[slot2] = Klass.LONG2;   break;
+/*if[FLOATS]*/
                     case CID.FLOAT:   types[slot]  = Klass.FLOAT;   break;
                     case CID.DOUBLE:  types[slot]  = Klass.DOUBLE;
                                       types[slot2] = Klass.DOUBLE2; break;
+/*end[FLOATS]*/
                     default: Assert.shouldNotReachHere();
                 }
             }

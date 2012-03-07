@@ -1874,6 +1874,7 @@ public class Arrays {
         return arr;
     }
 
+/*if[FLOATS]*/
     /**
      * Make a new double array and initialize its contents from the contents
      * of a specified double array.
@@ -1919,7 +1920,8 @@ public class Arrays {
         System.arraycopy(src, srcPos, arr, destPos, length);
         return arr;
     }
-
+/*end[FLOATS]*/
+    
     /**
      * Make a new int array and initialize its contents from the contents
      * of a specified int array.
@@ -2392,12 +2394,14 @@ public class Arrays {
             if (a instanceof char[]) {
                 return equals((char[]) a, (char[]) b);
             }
+/*if[FLOATS]*/
             if (a instanceof double[]) {
                 return equals((double[]) a, (double[]) b);
             }
             if (a instanceof float[]) {
                 return equals((float[]) a, (float[]) b);
             }
+/*end[FLOATS]*/
             if (a instanceof long[]) {
                 return equals((long[]) a, (long[]) b);
             }

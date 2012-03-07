@@ -1014,12 +1014,20 @@ final class SymbolParser extends ByteBufferDecoder {
             case CID.BYTE:    return (byte)value;
             case CID.CHAR:    return (char)value;
             case CID.SHORT:   return (short)value;
+/*if[FLOATS]*/
             case CID.FLOAT:
+/*end[FLOATS]*/
             case CID.INT:     return (int)value;
-            case CID.LONG:
-            case CID.DOUBLE:  return value;
+/*if[FLOATS]*/
+            case CID.DOUBLE:
+/*end[FLOATS]*/
+            case CID.LONG:  return value;
             default:
-                Assert.shouldNotReachHere("id = " + id);
+                Assert.shouldNotReachHere(
+/*if[DEBUG_CODE_ENABLED]*/
+                                            "id = " + id
+/*end[DEBUG_CODE_ENABLED]*/
+                        );
                 return 0;
         }
     }

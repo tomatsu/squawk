@@ -274,9 +274,11 @@ public final class Method extends Member {
                 if (type == Klass.LONG) {
                     parameterTypes[j++] = Klass.LONG2;
                 }
+/*if[FLOATS]*/
                 if (type == Klass.DOUBLE) {
                     parameterTypes[j++] = Klass.DOUBLE2;
                 }
+/*end[FLOATS]*/
             }
         }
 
@@ -288,7 +290,11 @@ public final class Method extends Member {
             j = 0;
             for (int i = parameterTypes.length - 1 ; i >= 0 ; i--) {
                 Klass type = parameterTypes[i];
-                if (!Klass.SQUAWK_64 && (type == Klass.LONG2 || type == Klass.DOUBLE2)) {
+                if (!Klass.SQUAWK_64 && (type == Klass.LONG2 
+/*if[FLOATS]*/
+                        || type == Klass.DOUBLE2
+/*end[FLOATS]*/
+                        )) {
                     i--;
                     revparmtypes[j++] = parameterTypes[i];
                 }
