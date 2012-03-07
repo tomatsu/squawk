@@ -78,7 +78,7 @@ public final class ExecutionPoint {
 /*if[ENABLE_RUNTIME_METADATA]*/
         return getKlass().findMethod(mp);
 /*else[ENABLE_RUNTIME_METADATA]*/
- //     return null;
+//      return null;
 /*end[ENABLE_RUNTIME_METADATA]*/
     }
 
