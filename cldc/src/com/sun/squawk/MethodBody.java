@@ -507,7 +507,10 @@ public final class MethodBody {
         if (MethodHeader.decodeTypeTableSize(oop) == 0) {
             for (int i = 0 ; i < localTypes.length ; i++) {
                 Klass k = localTypes[i];
-                Assert.that(k != Klass.FLOAT && k != Klass.DOUBLE && k != Klass.LONG && !k.isSquawkPrimitive());
+/*if[FLOATS]*/
+                Assert.that(k != Klass.FLOAT && k != Klass.DOUBLE);
+/*end[FLOATS]*/
+                Assert.that(k != Klass.LONG && !k.isSquawkPrimitive());
             }
         } else {
             int size   = MethodHeader.decodeTypeTableSize(oop);
@@ -515,7 +518,11 @@ public final class MethodBody {
             VMBufferDecoder dec = new VMBufferDecoder(oop, offset);
             for (int i = 0 ; i < localTypes.length ; i++) {
                 Klass k = localTypes[i];
-                if (k == Klass.FLOAT || k == Klass.DOUBLE || k == Klass.LONG || k.isSquawkPrimitive()) {
+                if (k == Klass.LONG || k.isSquawkPrimitive()
+/*if[FLOATS]*/
+                    || k == Klass.FLOAT || k == Klass.DOUBLE
+/*end[FLOATS]*/
+                    ) {
                     Assert.that(dec.readUnsignedShort() == k.getSystemID());
                     Assert.that(dec.readUnsignedInt() == i);
                 }
