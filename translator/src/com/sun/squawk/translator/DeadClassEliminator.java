@@ -90,11 +90,13 @@ public class DeadClassEliminator {
         "com.sun.squawk.KlassMetadata$1", // used by metadata suites
         "com.sun.squawk.KlassMetadata$Full",
         "com.sun.squawk.MethodMetadata",
+/*if[ENABLE_SDA_DEBUGGER]*/
         "com.sun.squawk.FullMethodMetadata",
+/*end[ENABLE_SDA_DEBUGGER]*/
         "com.sun.squawk.vm.FieldOffsets",
         "com.sun.squawk.vm.MethodOffsets",
         "com.sun.squawk.util.ArrayHashtable",// used by metadata suites
-        "com.sun.squawk.ObjectMemorySerializer$ControlBlock",// used by metadata suites
+       // "com.sun.squawk.ObjectMemorySerializer$ControlBlock",// used by metadata suites
         "com.sun.squawk.StringOfBytes"
     };
 
