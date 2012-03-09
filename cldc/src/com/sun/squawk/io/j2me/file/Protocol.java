@@ -151,7 +151,7 @@ public class Protocol extends ConnectionBaseAdapter implements FileConnection {
         String realfileName = p.parse(name.substring(2));
 
         try {
-            if (mode == Connector.READ) {
+            if ((mode & Connector.READ) != 0) {
                 if (realfileName.endsWith("/")) {
                     throw new IllegalArgumentException("Directory listing not yet supported");
                 } else {
@@ -172,7 +172,8 @@ public class Protocol extends ConnectionBaseAdapter implements FileConnection {
                         }
                     }
                 }
-            } else if (mode == Connector.WRITE) {
+            } 
+            if ((mode & Connector.WRITE) != 0)  {
                 if (!p.path.isEmpty() /*&& !(new File(realfileName).isAbsolute()*/) {
                     boolean found = false;
                     Enumeration e = p.path.elements();
@@ -191,8 +192,6 @@ public class Protocol extends ConnectionBaseAdapter implements FileConnection {
                         throw new IOException();
                     }
                 }
-//            } else {
-//                throw new IllegalArgumentException("Bad mode");
             }
         } catch (IOException ex) {
             throw new ConnectionNotFoundException(name);

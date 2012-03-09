@@ -95,7 +95,7 @@ public class Protocol extends ConnectionBase implements StreamConnection {
 
 
         try {
-            if (mode == Connector.READ) {
+            if ((mode & Connector.READ) != 0) {
                 if (fileName.endsWith("/")) {
                     fis = getListingFor(fileName);
                 } else {
@@ -117,7 +117,8 @@ public class Protocol extends ConnectionBase implements StreamConnection {
                         }
                     }
                 }
-            } else if (mode == Connector.WRITE) {
+            }
+            if ((mode & Connector.WRITE) != 0) {
                 if (p.path.size() == 0 || new File(fileName).isAbsolute()) {
                     fos = new FileOutputStream(fileName, p.append);
                 } else {
@@ -134,8 +135,6 @@ public class Protocol extends ConnectionBase implements StreamConnection {
                         throw new IOException();
                     }
                 }
-            } else {
-                throw new IllegalArgumentException("Bad mode");
             }
         } catch (IOException ex) {
             throw new ConnectionNotFoundException(name);
