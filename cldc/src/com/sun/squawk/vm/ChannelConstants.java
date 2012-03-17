@@ -380,6 +380,8 @@ public final class ChannelConstants {
     public static final int ETHERNET_SET_SCKOPT                 = ETHERNET_OP + 22;
     public static final int ETHERNET_GET_SCKOPT                 = ETHERNET_OP + 23;
     public static final int GET_ETHERNET_EVENT                  = ETHERNET_OP + 24;
+    public static final int ETHERNET_DNS_SETSERVER              = ETHERNET_OP + 25;
+    public static final int ETHERNET_DNS_GETSERVER              = ETHERNET_OP + 26;
 /*end[ENABLE_ETHERNET_SUPPORT]*/
 
     /*
