@@ -223,10 +223,11 @@ public class DeadClassEliminator {
                 case Suite.LIBRARY:
                     // what can we do here
                     if (Modifier.isPackagePrivate(modifiers)) {
-                        // treat as internal?
+                        // treat as internal:
                         if (VM.isVerbose()) {
                             System.out.println("### FYI - Found package-private class: " + klass);
                         }
+                        return false;
                     }
                     return true;
                 default:

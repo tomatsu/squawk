@@ -589,6 +589,9 @@ public class VM {
      * @return true if the class symbols should NOT be stripped
      */
     public static boolean isExported(Klass klass) {
+        if (klass.isArray()) {
+            return isExported(klass.getComponentType());
+        }
 	    Matcher current = getMatcher(klass.getName());
         boolean exported = current == null || (current.action == Matcher.EXPORT);
         if (!exported && (current.action != Matcher.CROSS_SUITE_PRIVATE)) {
@@ -669,6 +672,9 @@ public class VM {
      * @return true if the class symbols should be stripped
      */
     public static boolean isDynamic(Klass klass) {
+        if (klass.isArray()) {
+            return isDynamic(klass.getComponentType());
+        }
         Matcher current = getMatcher(klass.getName());
         return current != null && (current.action == Matcher.DYNAMIC);
     }
@@ -680,6 +686,9 @@ public class VM {
      * @return true if the class symbols should be stripped
      */
     public static boolean isInternal(Klass klass) {
+        if (klass.isArray()) {
+            return isInternal(klass.getComponentType());
+        }
         Matcher current = getMatcher(klass.getName());
         return current != null && (current.action == Matcher.INTERNAL);
     }
