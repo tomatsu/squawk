@@ -1663,9 +1663,9 @@ void testUnaligned() {
     
     // -------- force unaligned -----------------
     buf = ((char*)&tmp) + 1;
-    const int REMAINDER_MASK = PLATFORM_BIG_ENDIAN ? 0x00FFFFFFLL: 0xFFFFFF00LL;
 
     {
+        const int REMAINDER_MASK = PLATFORM_BIG_ENDIAN ? 0x00FFFFFFLL: 0xFFFFFF00LL;
         jlong val;
 
         setUnalignedLong(buf, 0, PATTERN1);
