@@ -1,5 +1,6 @@
 /*
- * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This code is free software; you can redistribute it and/or modify
@@ -17,8 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  * 
- * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
- * Park, CA 94025 or visit www.sun.com if you need additional
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
 
@@ -28,7 +29,6 @@ import com.sun.squawk.util.*;
 import com.sun.squawk.vm.*;
 import com.sun.squawk.pragma.AllowInlinedPragma;
 import com.sun.squawk.pragma.NotInlinedPragma;
-
 
 /**
  * A collector based on the lisp 2 algorithm described in "Garbage Collection : Algorithms for Automatic Dynamic Memory Management"
@@ -93,7 +93,6 @@ import com.sun.squawk.pragma.NotInlinedPragma;
  */
 public final class Lisp2GenerationalCollector extends GarbageCollector {
 
-
     /**
      * The default size of the young generation as a percent of the heap size.
      */
@@ -111,9 +110,6 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
      * encoded class pointer.
      */
     static final class ClassWordTag {
-        private ClassWordTag() {
-            Assert.shouldNotReachHere();
-        }
 
         /**
          * The number of bits used for the tag.
@@ -183,6 +179,9 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
          */
         static boolean isROMOffset(UWord word) throws AllowInlinedPragma {
             return (word.and(UWord.fromPrimitive(MASK))).eq(UWord.fromPrimitive(ROM));
+        }
+
+        private ClassWordTag() {
         }
     }
 
@@ -836,9 +835,10 @@ public final class Lisp2GenerationalCollector extends GarbageCollector {
 
         // Phase 2: Insert forward pointers in unused near object bits
         // if doing a full collection (but not one forced by user), allow some slop in the dense prefix
-        Offset slopAllowed = Offset.fromPrimitive(GC.roundDownToWord(collectionEnd.diff(collectionStart).toInt() / 100)); // 1%
-
-slopAllowed = Offset.zero();
+        Offset slopAllowed = Offset.zero(); //disable slop code.
+        
+        //TODO: fix slop code. Still not working correctly
+        // slopAllowed = Offset.fromPrimitive(GC.roundDownToWord(collectionEnd.diff(collectionStart).toInt() / 100)); // 1%
         computeAddresses((forceFullGC || !isFullCollection()) ? Offset.zero() : slopAllowed);
         
         if (!firstMovingBlock.isZero()) {
@@ -900,6 +900,7 @@ slopAllowed = Offset.zero();
         VM.print(remarkPasses);
     }
 
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
     /**
      * Resets the 'oopMapWord' field of all the classes in the heap whose oop map was moved. This
      * field was used to record the old location of the oop map which is required so that instances
@@ -942,6 +943,7 @@ slopAllowed = Offset.zero();
 
         timer.finish(Timer.FIXUP_OOPMAPS);
     }
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
 
     /**
      * {@inheritDoc}
@@ -1399,9 +1401,9 @@ slopAllowed = Offset.zero();
             case WRITE_BARRIER_VERIFY_VISITOR: {
                 break;
             }
-/*end[DEBUG_CODE_ENABLED]*/
             default:
                 Assert.shouldNotReachHere("illegal oop traversal phase");
+/*end[DEBUG_CODE_ENABLED]*/
         }
     }
 
@@ -1457,7 +1459,7 @@ slopAllowed = Offset.zero();
         }
 
         // Visit the rest of the pointers
-        if (Klass.isSquawkArray(VM.asKlass(klass))) {
+        if (Klass.isSquawkArray(VM.asKlass(klass))) { // any kind of array
             traverseOopsInArrayObject(object, klass, visitor);
         } else {
             traverseOopsInNonArrayObject(object, klass, visitor);
@@ -1471,7 +1473,7 @@ slopAllowed = Offset.zero();
      * @param klass    the class of <code>object</code>. If the class has been forwarded, then this is its pre-forwarding address.
      * @param visitor  the visitor to apply to each pointer in <code>object</code>
      */
-    private void traverseOopsInArrayObject(Address object, Address klass, int visitor) {
+    private void traverseOopsInArrayObject(Address object, Address klass, int visitor) throws NotInlinedPragma {
         switch (Klass.getSystemID(VM.asKlass(klass))) {
             case CID.BOOLEAN_ARRAY:
             case CID.BYTE_ARRAY:
@@ -1538,7 +1540,7 @@ slopAllowed = Offset.zero();
             }
             default: { // Pointer array
                 int length = GC.getArrayLengthNoCheck(object);
-                 Assert.that(GC.inRam(object, object));
+                Assert.that(GC.inRam(object, object));
                 visitOops(visitor, object, length);
                 break;
             }
@@ -1688,7 +1690,7 @@ slopAllowed = Offset.zero();
      * @param visitor  the visitor to apply to each oop in the traversed objects
      * @param header   specifies if the header part of the stack chunk should be traversed
      */
-    private void traverseOopsInStackChunk(Address chunk, int visitor, boolean header) {
+    private void traverseOopsInStackChunk(Address chunk, int visitor, boolean header) throws NotInlinedPragma {
         GC.checkSC(chunk.toObject());
         Address fp = NativeUnsafe.getAddress(chunk, SC.lastFP);
 
@@ -3383,7 +3385,7 @@ slopAllowed = Offset.zero();
                 VM.println(klass.getInternalName());
             }
 
-            if (Klass.isSquawkArray(klass)) {
+            if (Klass.isSquawkArray(klass)) { // any kind of array
                 // Stack chunk pointers are scanned explicitly and therefore won't have their write barrier bits set
                 if (klass.getSystemID() != CID.LOCAL_ARRAY) {
                     traverseOopsInArrayObject(object, klassAddress, WRITE_BARRIER_VERIFY_VISITOR);
@@ -3452,7 +3454,7 @@ slopAllowed = Offset.zero();
             // Verify the pointer to the class or ObjectAssociation
             visitOop(VERIFY_VISITOR, object, HDR.klass);
 
-            if (Klass.isSquawkArray(klass)) {
+            if (Klass.isSquawkArray(klass)) { // any kind of array
                 // An dead stack chunk in the old generation will most likely have invalid pointers
                 if (klass.getSystemID() != CID.LOCAL_ARRAY || NativeUnsafe.getObject(object, SC.owner) != null) {
                     traverseOopsInArrayObject(object, klassAddress, VERIFY_VISITOR);

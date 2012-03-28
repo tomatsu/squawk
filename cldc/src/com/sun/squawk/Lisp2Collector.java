@@ -31,9 +31,10 @@ import com.sun.squawk.pragma.AllowInlinedPragma;
 import com.sun.squawk.pragma.NotInlinedPragma;
 
 /**
- * Collector based on the lisp 2 algorithm described in "Garbage Collection : Algorithms for Automatic Dynamic Memory Management"
- * by Richard Jones, Rafael Lins.
+ * A collector based on the lisp 2 algorithm described in "Garbage Collection : Algorithms for Automatic Dynamic Memory Management"
+ * by Richard Jones, Rafael Lins.<p>
  *
+ * <h3>Object Header Layout</h3>
  * For objects that move during a collection, forwarding offsets are installed in high bits
  * of the class word in the object's header. The class pointer is made relative to the space
  * in which the class lies (i.e. ROM, NVM or RAM) and this offset is stored in the lower bits.
@@ -41,23 +42,19 @@ import com.sun.squawk.pragma.NotInlinedPragma;
  * ('00' if not) and if so, where is the class located ('01' in the heap, '11' in NVM and '10'
  * in ROM). The forwarding offset is relative to the start of a "slice" with the absolute
  * offset of the slice stored in a fixed size "slice offset table".
- * <p><hr><blockquote><pre>
+ * 
+ * <p><blockquote><pre>
  *       <-------------- (W-C-2) ---------> <------ C ------> <-2->
  *      +----------------------------------+-----------------+-----+
  *      |  forwarding offset               | class offset    | tag |
  *      +----------------------------------+-----------------+-----+
  *       <--------------------------- w -------------------------->
  *                                          <-- sliceOffsetShift ->
- * </pre></blockquote><hr>
+ * </pre></blockquote>
  *
- */
-public final class Lisp2Collector extends GarbageCollector {
-
-    /*-----------------------------------------------------------------------*\
-     *                               Descripton                              *
-    \*-----------------------------------------------------------------------*/
-
-    /*
+ * <h3>Heap Layout</h3>
+ * <blockquote><pre>
+ 
                       memoryEnd ->
                                     Slice table
 
@@ -84,8 +81,13 @@ public final class Lisp2Collector extends GarbageCollector {
                                     Permanent space                                  |
                                                                                      |
             permanentMemoryStart ->                                                --+
-
-     */
+* </pre></blockquote>
+ *
+ * ENABLE_DYNAMIC_CLASSLOADING:
+ * If the build property ENABLE_DYNAMIC_CLASSLOADING is true, then GC has to handle Klasses in the heap,
+ * and forwarded klasses. Otherwise we can assume that a Klass is in ROM (or NVM).
+ */
+public final class Lisp2Collector extends GarbageCollector {
 
     /**
      * The marking stack.
@@ -479,7 +481,7 @@ public final class Lisp2Collector extends GarbageCollector {
             classOffsetMask = ((1 << classOffsetBits) - 1) << ClassWordTag.BIT_COUNT;
 
             // Determine the amount by which an encoded class word must be logically right shifted to
-            // extra the slice-relative offset (in words) to the forwarded object
+            // extract the slice-relative offset (in words) to the forwarded object
             sliceOffsetShift = classOffsetBits + ClassWordTag.BIT_COUNT;
 
             // Determine how many remaining bits in an encoded class word will be used for a slice-relative offset
@@ -862,17 +864,16 @@ public final class Lisp2Collector extends GarbageCollector {
 /*end[DEBUG_CODE_ENABLED]*/
     {
         Address object;
+        Assert.that(GC.inRam(base, base));
+        
         switch (visitor) {
             case MARK_VISITOR: {
-                object = NativeUnsafe.getAddress(base, offset);
-                if (!object.isZero()) {
-                    markObject(object);
+                markOop(base, offset);
+                return;
                 }
-                break;
-            }
             case UPDATE_VISITOR: {
                 updateOop(base, offset);
-                break;
+                return;
             }
 /*if[DEBUG_CODE_ENABLED]*/
             case VERIFY_VISITOR: {
@@ -901,11 +902,11 @@ public final class Lisp2Collector extends GarbageCollector {
                 if (GC.GC_TRACING_SUPPORTED && tracing()) {
                     VM.println();
                 }
-                break;
+                return;
             }
-/*end[DEBUG_CODE_ENABLED]*/
             default:
                 Assert.shouldNotReachHere("illegal oop traversal phase");
+/*end[DEBUG_CODE_ENABLED]*/
         }
     }
 
@@ -918,6 +919,7 @@ public final class Lisp2Collector extends GarbageCollector {
      */
     private void visitOops(int visitor, Address base, int len) {
         Address object;
+        Assert.that(GC.inRam(base, base));
 
         switch (visitor) {
             case MARK_VISITOR: {
@@ -971,7 +973,7 @@ public final class Lisp2Collector extends GarbageCollector {
     }
 
     /**
-     * Visits a pointer to within an object that will be moved.
+     * Visits a pointer to within an object that will be moved. For example, to visit the returnIP.
      *
      * @param base      the base address
      * @param offset    the offset (in words) from <code>base</code> of the internal pointer
@@ -1048,9 +1050,9 @@ public final class Lisp2Collector extends GarbageCollector {
                 Assert.always(size > ioffset.toPrimitive(), "internal pointer points outside of object");
                 break;
             }
-/*end[DEBUG_CODE_ENABLED]*/
             default:
                 Assert.shouldNotReachHere("illegal oop traversal phase");
+/*end[DEBUG_CODE_ENABLED]*/
         }
     }
 
@@ -1103,7 +1105,7 @@ public final class Lisp2Collector extends GarbageCollector {
         }
 
         // Visit the rest of the pointers
-        if (Klass.isSquawkArray(VM.asKlass(klass))) {
+        if (Klass.isSquawkArray(VM.asKlass(klass))) { // any kind of array
             traverseOopsInArrayObject(object, klass, visitor);
         } else {
             traverseOopsInNonArrayObject(object, klass, visitor);
@@ -1117,8 +1119,11 @@ public final class Lisp2Collector extends GarbageCollector {
      * @param klass    the class of <code>object</code>. If the class has been forwarded, then this is its pre-forwarding address.
      * @param visitor  the visitor to apply to each pointer in <code>object</code>
      */
-    private void traverseOopsInArrayObject(Address object, Address klass, int visitor) {
+    private void traverseOopsInArrayObject(Address object, Address klass, int visitor) throws NotInlinedPragma {
         switch (Klass.getSystemID(VM.asKlass(klass))) {
+/*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
+            case CID.BYTECODE_ARRAY:
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
             case CID.BOOLEAN_ARRAY:
             case CID.BYTE_ARRAY:
             case CID.CHAR_ARRAY:
@@ -1133,10 +1138,13 @@ public final class Lisp2Collector extends GarbageCollector {
             case CID.STRING_OF_BYTES: {
                 break;
             }
+            
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
             case CID.BYTECODE_ARRAY: {
-                visitOop(visitor, object, HDR.methodDefiningClass);
+                visitOop(visitor, object, HDR.methodDefiningClass); // this won't happen if not ENABLE_DYNAMIC_CLASSLOADING
                 break;
             }
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
             case CID.GLOBAL_ARRAY: {
                 Klass gaklass = VM.asKlass(NativeUnsafe.getObject(object, CS.klass));
                 if (gaklass == null) { // This can occur if a GC occurs when a class state is being allocated
@@ -1153,6 +1161,7 @@ public final class Lisp2Collector extends GarbageCollector {
                     }
                     // All the pointer static fields precede the non-pointer fields
                     int end = CS.firstVariable + Klass.getRefStaticFieldsSize(gaklass);
+                    Assert.that(GC.inRam(object, object));
                     visitOops(visitor, object, end);
                 }
                 break;
@@ -1179,6 +1188,7 @@ public final class Lisp2Collector extends GarbageCollector {
             }
             default: { // Pointer array
                 int length = GC.getArrayLengthNoCheck(object);
+                Assert.that(GC.inRam(object, object));
                 visitOops(visitor, object, length);
                 break;
             }
@@ -1204,10 +1214,8 @@ public final class Lisp2Collector extends GarbageCollector {
 //            if(Klass.isSubtypeOf(VM.asKlass(klass), HashTableKlass)) {
 //                NativeUnsafe.setAddress(object, (int)FieldOffsets.com_sun_squawk_util_SquawkHashtable$entryTable, Address.zero());
 //            }
-//
 //        }
 /*end[ENABLE_ISOLATE_MIGRATION]*/
-
 
 /*if[TRUSTED]*/
         Assert.shouldNotReachHere("need to extend test below to catch instances of TrustedKlass");
@@ -1236,7 +1244,7 @@ public final class Lisp2Collector extends GarbageCollector {
 //VM.printAddress(oopMap);
 //VM.println();
                     NativeUnsafe.setUWord(object, (int)FieldOffsets.com_sun_squawk_Klass$oopMapWord, oopMap.toUWord());
-                    movedOopMaps = movedOopMaps + 1;
+                    movedOopMaps += 1;
                 }
             }
         }
@@ -1262,8 +1270,6 @@ public final class Lisp2Collector extends GarbageCollector {
                 int/*S64*/ word = NativeUnsafe.getUWord(oopMap, i).toPrimitive();
                 traverseOopsForBitmapWord(object, visitor, word, i * HDR.BITS_PER_WORD);
             }
-
-
         } else {
             int/*S64*/ word = oopMapWord.toPrimitive();
             traverseOopsForBitmapWord(object, visitor, word, 0);
@@ -1327,7 +1333,7 @@ public final class Lisp2Collector extends GarbageCollector {
      * @param visitor  the visitor to apply to each oop in the traversed objects
      * @param header   specifies if the header part of the stack chunk should be traversed
      */
-    private void traverseOopsInStackChunk(Address chunk, int visitor, boolean header) {
+    private void traverseOopsInStackChunk(Address chunk, int visitor, boolean header) throws NotInlinedPragma {
         GC.checkSC(chunk.toObject());
         Address fp = NativeUnsafe.getAddress(chunk, SC.lastFP);
 
@@ -1344,7 +1350,7 @@ public final class Lisp2Collector extends GarbageCollector {
          * Traverse the pointers in the header part of the stack chunk
          */
         if (header) {
-            Assert.always(NativeUnsafe.getAddress(chunk, SC.next).isZero());
+            Assert.that(NativeUnsafe.getAddress(chunk, SC.next).isZero());
             visitOop(visitor, chunk, SC.owner);
         }
 
@@ -1376,6 +1382,7 @@ public final class Lisp2Collector extends GarbageCollector {
         Address mp  = NativeUnsafe.getAddress(fp, FP.method);
         Address returnFP = VM.getPreviousFP(fp);
         Address returnIP = VM.getPreviousIP(fp);
+        Assert.that(GC.inRam(fp, fp));
 
         /*
          * Trace.
@@ -1405,6 +1412,7 @@ public final class Lisp2Collector extends GarbageCollector {
 /*if[ENABLE_DYNAMIC_CLASSLOADING]*/
             visitInternalPointer(visitor, fp, FP.returnIP, returnMP);
 /*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//          Assert.that(!inHeap(returnIP));
 //          Assert.that(!inHeap(returnMP)); // returnMP will never move, and will always be live.
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         } else {
@@ -1510,7 +1518,7 @@ public final class Lisp2Collector extends GarbageCollector {
         // Process the weak reference queue
         if (references != null) {
 
-            // Mark objects for removal
+            // Mark the weak references whose referent will die
             processWeakReferences();
 
             // Mark the references queue
@@ -1667,7 +1675,7 @@ public final class Lisp2Collector extends GarbageCollector {
             }
 
             // Clear the referent to denote to postProcessWeakReferences() that the
-            // Ref object should be reomved from the global list of Ref objects
+            // Ref object should be removed from the global list of Ref objects
             if (!keep) {
                 ref.referent = Address.zero();
             }
@@ -1680,8 +1688,6 @@ public final class Lisp2Collector extends GarbageCollector {
             VM.println();
         }
     }
-
-
 
     /**
      * Provides more detail for the mark phase. Should only be enabled when debugging the collector.
@@ -2318,17 +2324,23 @@ public final class Lisp2Collector extends GarbageCollector {
      * test relies on the fact that an object's class will always be at a lower address
      * in the heap or not in the heap at all.
      *
+     * If !ENABLE_DYNAMIC_CLASSLOADING, then classes will never be in heap, so use simpler test
+     *
      * @param object              an object's address
      * @param classOrAssociation  the value of the class pointer word in <code>object</code>'s header
      * @return true if <code>classOrAssociation</code> is a pointer outside of the heap or to a heap address lower than <code>object</code>
      */
     private static boolean isClassPointer(Address object, Address classOrAssociation) throws AllowInlinedPragma {
         Assert.that(classOrAssociation.ne(object));
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
         return !GC.inRam(classOrAssociation) || classOrAssociation.lo(object);
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//      return !GC.inRam(classOrAssociation);
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
     }
 
     /**
-     * Gets the class of an object.
+     * Gets the class of an (potentially forwarded) object.
      *
      * @param object  an object
      * @return the address of <code>object</code>'s class which may itself be forwarded
@@ -2340,6 +2352,8 @@ public final class Lisp2Collector extends GarbageCollector {
         } else {
             classOrAssociation = NativeUnsafe.getAddress(object, HDR.klass);
         }
+        Assert.that(!classOrAssociation.isZero());
+        Assert.that(!classOrAssociation.eq(Address.fromPrimitive(0xDEADBEEF)));
 
         Address klass = NativeUnsafe.getAddress(classOrAssociation, (int)FieldOffsets.com_sun_squawk_Klass$self);
 //        if (!isClassPointer(object, classOrAssociation)) {
@@ -2396,7 +2410,6 @@ public final class Lisp2Collector extends GarbageCollector {
 //        return index;
 //    }
 /*end[ASSUME_SIMPLE_SLICE_TABLE]*/
-
 
     /*---------------------------------------------------------------------------*\
      *                            Update routines                                *
@@ -2592,10 +2605,9 @@ public final class Lisp2Collector extends GarbageCollector {
             // Verify the pointer to the class or ObjectAssociation
             visitOop(VERIFY_VISITOR, object, HDR.klass);
 
-            if (Klass.isSquawkArray(klass)) {
+            if (Klass.isSquawkArray(klass)) { // any kind of array
                 traverseOopsInArrayObject(object, klassAddress, VERIFY_VISITOR);
             } else {
-
                 if (klass.getSystemID() == CID.KLASS) {
                     int instanceSize = Klass.getInstanceSize(klass);
                     if (instanceSize > HDR.BITS_PER_WORD) {
@@ -2935,7 +2947,7 @@ public final class Lisp2Collector extends GarbageCollector {
 //            // Update the pointer to the class or ObjectAssociation
 //            visitOop(UPDATE_VISITOR, object, HDR.klass);
 //
-//            if (klass.isSquawkArray(klass)) {
+//            if (klass.isSquawkArray(klass)) { // any kind of array
 //                traverseOopsInArrayObject(object, klassAddress, UPDATE_VISITOR);
 //            } else {
 //                traverseOopsInNonArrayObject(object, klassAddress, UPDATE_VISITOR);
@@ -2972,7 +2984,6 @@ public final class Lisp2Collector extends GarbageCollector {
 //        }
 //    }
 /*end[ENABLE_ISOLATE_MIGRATION]*/
-
 
     /*---------------------------------------------------------------------------*\
      *                            Compaction routines                            *
@@ -3096,7 +3107,7 @@ public final class Lisp2Collector extends GarbageCollector {
      *                           Marking stack                                   *
     \*---------------------------------------------------------------------------*/
 
-    static final class MarkingStack {
+    final static class MarkingStack {
 
         /**
          * The minimum number of words to be reserved for the marking stack. The actual size of
@@ -3170,7 +3181,7 @@ public final class Lisp2Collector extends GarbageCollector {
             if (index == 0) {
                 return Address.zero();
             } else {
-                index = index - 1;
+                index -= 1;
                 return NativeUnsafe.getAddress(base, index);
             }
         }
