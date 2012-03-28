@@ -1617,6 +1617,40 @@ public class Build {
             }
         });
         
+        // Add the "preprocess" command
+        addCommand(new Command(this, "preprocess") {
+            public String getDescription() {
+                return "preprocess a set of Java source code";
+            }
+
+            public void usage(String errMsg) {
+                if (errMsg != null) {
+                    System.err.println(errMsg);
+                }
+                System.err.println("Usage: preprocess base-dir extra-srcs .... ");
+                System.err.println("   Preprocess the source code in the \"src\" directory in \"base-dir\",");
+                System.err.println("   creating a \"preprocessed\"  directory in \"base-dir\".");
+                System.err.println("   Only preprocess a file if src is newer than processed version.");
+            }
+                        
+            public void run(String[] args) {
+                if (args.length < 1) {
+                    throw new CommandException(this, "base directory not specified");
+                } else if (args[0].indexOf('-') == 0) {
+                    throw new CommandException(this, "no options allowed for preprocess");
+                }
+                File baseDir = new File(args[0]);
+                log(brief, "[preprocess source code in " + baseDir + ']');
+                File[] sources = new File[args.length];
+                sources[0] = new File(baseDir, "src");
+                for (int i = 1; i < sources.length; i++) {
+                    sources[i] = new File(baseDir, args[i]);
+                }
+
+                preprocess(baseDir, sources, true, false);
+            }
+        });
+        
         // Add the "JNAGen" command
         addCommand(new JNAGenCommand(this));
                 
