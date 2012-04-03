@@ -1705,9 +1705,10 @@ void testWordAt() {
     const int   PATTERN3_SWAP = 0x88776655;
     jlong tmp;
     Address buf = &tmp;
+    jlong val;
 
     setLongAtWord(buf, 0, PATTERN1);
-    jlong val = getLongAtWord(buf, 0);
+    val = getLongAtWord(buf, 0);
     assertEquals8("getLongAtWord", PATTERN1, val);
     swap8(buf);
     val = getLongAtWord(buf, 0);
