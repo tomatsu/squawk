@@ -35,6 +35,8 @@ import com.sun.squawk.vm.Native;
  *
  */
 public class VM {
+    // TO DO: tried this, but had issues with missing classes. Need to fix
+    private final static boolean TREAT_ARRAY_CLASS_BASED_ON_ELEMENT_CLASS = false;
 
     /*
      * Create the dummy isolate for romizing.
@@ -590,7 +592,7 @@ public class VM {
      */
     public static boolean isExported(Klass klass) {
         if (klass.isArray()) {
-            return isExported(klass.getComponentType());
+			//            return isExported(klass.getComponentType());
         }
 	    Matcher current = getMatcher(klass.getName());
         boolean exported = current == null || (current.action == Matcher.EXPORT);
@@ -673,7 +675,7 @@ public class VM {
      */
     public static boolean isDynamic(Klass klass) {
         if (klass.isArray()) {
-            return isDynamic(klass.getComponentType());
+			//           return isDynamic(klass.getComponentType());
         }
         Matcher current = getMatcher(klass.getName());
         return current != null && (current.action == Matcher.DYNAMIC);
@@ -687,7 +689,7 @@ public class VM {
      */
     public static boolean isInternal(Klass klass) {
         if (klass.isArray()) {
-            return isInternal(klass.getComponentType());
+			//           return isInternal(klass.getComponentType());
         }
         Matcher current = getMatcher(klass.getName());
         return current != null && (current.action == Matcher.INTERNAL);
