@@ -1055,6 +1055,9 @@ public class Build {
                 protected String findLibrary(String libname) {
                     String mappedName = System.mapLibraryName(libname);
                     URL url = findResource(mappedName);
+                    if (url == null) {
+                        return null; // give up, let default classloader try...
+                    }
                     try {
                         File file = new File(url.toURI());
                         return file.getAbsolutePath();
