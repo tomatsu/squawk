@@ -26,14 +26,11 @@
 package com.sun.squawk;
 
 import java.io.*;
-import java.util.Hashtable;
-
 import javax.microedition.io.Connector;
 
 import com.sun.squawk.util.Tracer;
 import com.sun.squawk.util.ArgsUtilities;
 import com.sun.squawk.util.Assert;
-import com.sun.squawk.util.StringTokenizer;
 
 /**
  * The Java application manager is the master isolate used to coordinate application execution.
@@ -137,6 +134,7 @@ public class JavaApplicationManager {
         long startTime = System.currentTimeMillis();
         int exitCode = 999;
         
+/*if[ENABLE_MULTI_ISOLATE]*/
         try {
             /*
              * Create the application isolate and run it.
@@ -195,7 +193,6 @@ public class JavaApplicationManager {
                 e.printStackTrace();
             }
         }
-
         /*
          * Show execution statistics if requested
          */
@@ -203,9 +200,9 @@ public class JavaApplicationManager {
             long endTime = System.currentTimeMillis();
             System.out.println();
             System.out.println("=============================");
-            System.out.println("Squawk VM exiting with code "+exitCode);
+            System.out.println("Squawk VM exiting with code " + exitCode);
             GC.getCollector().dumpTimings(System.out);
-            System.out.println("Execution time " + (endTime-startTime) + " ms");
+            System.out.println("Execution time " + (endTime - startTime) + " ms");
             System.out.println("=============================");
             System.out.println();
         }
@@ -214,6 +211,36 @@ public class JavaApplicationManager {
          * Stop the VM.
          */
         VM.stopVM(exitCode);
+        
+/*else[ENABLE_MULTI_ISOLATE]*/
+//        AppThread appThread = null;
+//        try {
+//            /*
+//             * Create the application thread and run it.
+//             */
+//            if (mainClassName != null) {
+//                // create raw isolate
+//                appThread = new AppThread(mainClassName, javaArgs);
+//            } else {
+//                // create midlet
+//                args = new String[1];
+//                args[0] = "MIDlet-" + midletPropertyNum;
+//                appThread = new AppThread(Isolate.MIDLET_WRAPPER_CLASS, args);
+//            }
+//            
+//            VM.getCurrentIsolate().morphBootstrapInto(null, classPath, parentSuiteURI);
+//            /*
+//             * Start the application thread and wait for it to complete.
+//             */
+//            appThread.start();
+//            //appThread.join(); // note that this isnt waiting for all app threads to finish, just this thread.
+//        } catch (Error e) {
+//            System.err.println(e);
+//            if (VM.isVerbose()) {
+//                e.printStackTrace();
+//            }
+//        }
+/*end[ENABLE_MULTI_ISOLATE]*/        
     }
 
     /**
@@ -422,4 +449,18 @@ public class JavaApplicationManager {
         VM.stopVM(0);
     }
 
+}
+
+class AppThread extends Thread {
+    String mainClass;
+    String[] args;
+    
+    AppThread(String mainClass, String[] args) {
+        this.mainClass = mainClass;
+        this.args = args;
+    }
+    
+    public void run() {
+        Isolate.runMain(mainClass, args);
+    }
 }

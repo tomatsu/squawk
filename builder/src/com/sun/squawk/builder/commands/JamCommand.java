@@ -235,7 +235,6 @@ public class JamCommand extends Command {
      * @throws BuildException
      */
     protected boolean parseArg(String arg, String[] args, int i) throws BuildException {
-
         if (arg.startsWith(PROFILE_ARG)) {
             profile = arg.substring(PROFILE_ARG.length());
         } else if (arg.equals("-repeat")) {

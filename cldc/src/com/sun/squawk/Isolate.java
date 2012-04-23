@@ -221,7 +221,7 @@ public final class Isolate implements Runnable {
     /**
      * The source URI of the direct parent suite of the leaf suite.
      */
-    private final String parentSuiteSourceURI;
+    private String parentSuiteSourceURI;
 
 /*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
 /*else[ENABLE_DYNAMIC_CLASSLOADING]*/
@@ -370,6 +370,33 @@ public final class Isolate implements Runnable {
 
         VM.registerIsolate(this);
         Assert.always(VM.getCurrentIsolate() == null);
+    }
+    
+    public void morphBootstrapInto(Hashtable properties, String classPath, String parentSuiteSourceURI) {
+/*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
+/*else[ENABLE_DYNAMIC_CLASSLOADING]*/
+//      this.classPath            = classPath;
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
+        this.parentSuiteSourceURI = parentSuiteSourceURI;
+
+        /*
+         * Copy in command line properties and passed in properties now.
+         * Do this eagerly instead of at getProperty() time to preserve
+         * isolate hygene - we need to create copies of "external" strings that are
+         * in RAM. We can safely share Strings in ROM though.
+         */
+        // add in properties from the command line:
+        addProperties(VM.getCommandLineProperties());
+        // now add in specified properties (may override the command line properties)
+        addProperties(properties);
+
+        try {
+           updateLeafSuite(true); // TO DO: Also updated in run, but that is too late to find the main class
+        } catch (Error e) {
+            // note errors releated to loading the suites
+            System.err.println("Error morphing " + isolateInfoStr());
+            throw e;
+        }
     }
 
     /**
@@ -1352,7 +1379,7 @@ public final class Isolate implements Runnable {
      * Start the primordial isolate.
      */
     void primitiveThreadStart() {
-        VMThread.asVMThread(new CrossIsolateThread(this, "primitve-thread")).primitiveThreadStart();
+        VMThread.asVMThread(new CrossIsolateThread(this, "primitive-thread")).primitiveThreadStart();
     }
 
     /**
@@ -1574,7 +1601,16 @@ public final class Isolate implements Runnable {
         }
 /*end[ENABLE_SDA_DEBUGGER]*/
 
-        // Find the main class and call it's main().
+        runMain(mainClassName, args);
+    }
+    
+    /** 
+     * Find the main class and call it's main().
+     * 
+     * @param mainClassName
+     * @param args 
+     */
+    static void runMain(String mainClassName, String[] args) {
         Klass klass = null;
         try {
             klass = Klass.forName(mainClassName);
@@ -1584,14 +1620,14 @@ public final class Isolate implements Runnable {
             System.err.flush();
         } catch (ClassNotFoundException ex) {
             System.err.println("No main class " + mainClassName + ": " + ex);
-            exit(999);
+            VM.getCurrentIsolate().exit(999);
         }
     }
 
     /**
      * Waits for all the other threads and child isolates belonging to this isolate to stop.
      *
-     * WARNING: Only one thread can join an isolate, becuase this method clears the childIsolates list
+     * WARNING: Only one thread can join an isolate, because this method clears the childIsolates list
      */
     public void join() {
 

@@ -521,6 +521,9 @@ public class Jam extends Thread {
                 		out.println("  " + jarFile.getName() +" executeSuite: " + descriptor.jarFileUrlString);
                 	}
                     executeSuite(suitePath, descriptor.mainClassName);
+                } catch (BuildException e) {
+                    System.err.println("Error building test:");
+                    System.err.println("    " + e.getMessage());
                 } finally {
                 }
             } finally {
@@ -530,14 +533,14 @@ public class Jam extends Thread {
                 		out.println("  " + jarFile.getName() +" cleanup: " + descriptor.jarFileUrlString);
                 	}
                     doCleanup(jarFile, suitePath);
-                    if (jarFile != null) {
-                        jarFile.delete();
-                    }
-                    if (suitePath != null) {
-                        new File(suitePath + MakeAPI.SUITE_FILE_EXTENSION).delete();
-                        new File(suitePath + MakeAPI.SUITE_FILE_EXTENSION + MakeAPI.SUITE_FILE_EXTENSION_API).delete();
-                        new File(suitePath + ".bintemp").delete();
-                    }
+//                    if (jarFile != null) {
+//                        jarFile.delete();
+//                    }
+//                    if (suitePath != null) {
+//                        new File(suitePath + MakeAPI.SUITE_FILE_EXTENSION).delete();
+//                        new File(suitePath + MakeAPI.SUITE_FILE_EXTENSION + MakeAPI.SUITE_FILE_EXTENSION_API).delete();
+//                        new File(suitePath + ".bintemp").delete();
+//                    }
                 }
             }
             Thread.yield();

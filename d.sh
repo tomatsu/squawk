@@ -189,9 +189,15 @@ fi
 #----------------------------------------------------------#
 
 if [ $# -gt 0 -a "X$1" = "Xspotplugin" ]; then
-    ant -f javatest-spot-builder/build.xml
-    $builder -plugins:javatest-spot-builder/javatest-spot-builder.properties javatest-spot-device
+	echo "=== Building javatest-spot-builder..."
+    ant -f javatest-spot-builder/build.xml build-plugin
+	echo "=== Building javatest-mbed-device..."
+	cd javatest-mbed-device
+	ant clean compile
+	cd ..
+   # $builder -verbose -plugins:javatest-spot-builder/javatest-spot-builder.properties -verbose javatest-mbed-device
     shift
+	echo "=== Running JamSpot javatest-mbed-device..."
     exec $builder -plugins:javatest-spot-builder/javatest-spot-builder.properties $*
 fi
 

@@ -335,6 +335,14 @@ public class Romizer {
         return excludes;
     }
 
+    static void traceRomize(String[] args) {
+        System.out.println("Running romize with args:");
+        for (String arg : args) {
+            System.out.println("    " + arg);
+
+        }
+    }
+    
     /**
      * Command line interface.
      *
@@ -356,6 +364,7 @@ public class Romizer {
 	            }
 		        while (argsLeft != null) {
 		            romizer = new Romizer(romizer);
+                    traceRomize(argsLeft);
 		            argsLeft = romizer.run(argsLeft);
 		        }
 		        return;

@@ -242,10 +242,12 @@ public class VM implements GlobalStaticFields {
      */
     private static boolean safePrintToVM;
 
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
     /**
      * System-global cache of TaskExecutors
      */
     private static Stack taskCache;
+/*end[PLATFORM_TYPE_BARE_METAL]*/
     
     private static int timeAdjustmentsLo;
     private static int timeAdjustmentsHi;
@@ -304,8 +306,9 @@ public class VM implements GlobalStaticFields {
          */
         GC.copyCStringArray(argv, args);
 
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
         taskCache = new Stack();
-
+/*end[PLATFORM_TYPE_BARE_METAL]*/
         /*
          * Start the isolate guarded with an exception handler. Once the isolate
          * has been started enter the service operation loop.
@@ -2864,7 +2867,11 @@ hbp.dumpState();
      * @return Stack of TaskExecutors
      */
     public static Stack getTaskCache() {
-        return taskCache;
+/*if[PLATFORM_TYPE_BARE_METAL]*/
+        return null;
+/*else[PLATFORM_TYPE_BARE_METAL]*/
+//      return taskCache;
+/*end[PLATFORM_TYPE_BARE_METAL]*/
     }
 
     /**
@@ -4154,13 +4161,6 @@ hbp.dumpState();
         }
 
         /**
-         * Enable heap statistics data structures to be GCed.
-         */
-        static void clearHeapStats() {
-            GC.clearHeapStats();
-        }
-
-        /**
          * Do heap walk from start object (or whole heap is startObj is null).
          * Count how many instances, and how many bytes are used, by all objects that are the same age or youngre than
          * startObj. Print out statistics of each class that has at least one instance in the set found in the heap walk.
@@ -4170,7 +4170,17 @@ hbp.dumpState();
          * @param printInstances 
          */
         public static void printHeapStats(Object startObj, boolean printInstances) {
-            GC.printHeapStats(startObj, printInstances);
+            GC.printHeapStats(startObj, printInstances, true);
+        }
+        
+        /**
+         * Do heap walk from start object (or whole heap is startObj is null).
+         * Print info on each object.
+         * 
+         * @param startObj the object to start walking from , or null
+         */
+        public static void printHeap(Object startObj) {
+            GC.printHeapStats(startObj, true, false);
         }
         
         /**

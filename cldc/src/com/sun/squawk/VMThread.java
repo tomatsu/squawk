@@ -693,10 +693,14 @@ public final class VMThread implements GlobalStaticFields {
          * Add the current thread if it is in this isolate.
          */
         if (currentThread.isolate == isolate) {
+/*if[ENABLE_MULTI_ISOLATE]*/
             Assert.that(currentThread.nextThread == null);
             currentThread.setInQueue(VMThread.Q_HIBERNATEDRUN);
             isolate.addToHibernatedRunThread(currentThread);
             reschedule();
+/*else[ENABLE_MULTI_ISOLATE]*/
+//          VM.stopVM(isolate.getExitCode());
+/*end[ENABLE_MULTI_ISOLATE]*/
         }
     }
 
@@ -1339,7 +1343,6 @@ VM.println();
         stack = newStack(stackSize, this, true);
         if (stack == null) {
 VM.println("creating stack:");
-
             throw VM.getOutOfMemoryError();
         }
 

@@ -105,4 +105,5 @@ VERIFY_SIGNATURES=false                         com.sun.squawk.security.verifier
 com.sun.cldc.io.connections.HttpConnection
 com.sun.squawk.ClassTunnel
 
-
+# We are useing our won CldcAgent2, not this
+com.sun.tck.cldc.javatest.agent.CldcAgent
