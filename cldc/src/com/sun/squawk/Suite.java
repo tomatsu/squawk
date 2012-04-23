@@ -440,6 +440,30 @@ public final class Suite {
     }
 
     /**
+     * Copy the boot classes from the original bootstrap suite to new bootstrap suite.
+     * If during romize process (like in tck run), a malformed class is detected, we re-run the romizer. 
+     * We need to copy over the 
+     * 
+     * @param originalbootstrap 
+     */
+    public void reinstallBootClasses(Suite originalbootstrap) {
+        checkWrite();
+        Isolate isolate = VM.getCurrentIsolate();
+        TranslatorInterface translator = isolate.getTranslator();
+        for (int i = 0; i <= CID.LAST_SYSTEM_ID; i++) {
+            Klass klass = originalbootstrap.getKlass(i);
+            classes[klass.getSuiteID()] = klass;
+        }
+        for (int i = 0; i <= CID.LAST_SYSTEM_ID; i++) {
+            Klass klass = originalbootstrap.getKlass(i);
+            if (klass != null) {
+                klass.resetBootKlass();
+                klass.bootLoad(translator);
+            }
+        }
+    }
+
+    /**
      * DCE can remove classes, but we want to keep IDs constant, so install
      * dummy entries...
      */

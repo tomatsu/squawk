@@ -504,14 +504,11 @@ public final class Translator implements TranslatorInterface {
             changed = false;
             for (int cno = 0 ; cno < suite.getClassCount() ; cno++) {
                 Klass klass = suite.getKlass(cno);
-                
-/*if[FLOATS]*/
-                Assert.always(klass != null);
-/*else[FLOATS]*/
-//              if (klass == null) {
-//                  continue;  // if not floats, there can be some missing classes
-//              }
-/*end[FLOATS]*/
+
+                if (klass == null) {
+                    continue;  // if not floats, or if deferred errors, there can be some missing classes
+                }
+
                 if (klass.getState() < Klass.STATE_LOADED) {
                     load(klass);
                     changed = true;

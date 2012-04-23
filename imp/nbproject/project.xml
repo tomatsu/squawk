@@ -49,6 +49,16 @@
                     <target>jar</target>
                 </action>
             </ide-actions>
+            <export>
+                <type>jar</type>
+                <location>classes.jar</location>
+                <build-target>jar</build-target>
+            </export>
+            <export>
+                <type>jar</type>
+                <location>classes.jar</location>
+                <build-target>jar</build-target>
+            </export>
             <view>
                 <items>
                     <source-folder style="packages">
@@ -79,7 +89,7 @@
         <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/2">
             <compilation-unit>
                 <package-root>src</package-root>
-                <classpath mode="compile">../cldc/classes.jar:classes.jar</classpath>
+                <classpath mode="compile">../cldc/classes.jar</classpath>
                 <built-to>classes.jar</built-to>
                 <source-level>1.5</source-level>
             </compilation-unit>

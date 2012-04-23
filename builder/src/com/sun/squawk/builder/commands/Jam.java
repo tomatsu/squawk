@@ -100,7 +100,7 @@ public class Jam extends Thread {
      * 
      * 
      */
-    protected class ApplicationDescriptor {
+    class ApplicationDescriptor {
         public String applicationName;
         public String jarFileUrlString;
         public int jarFileSize;
@@ -108,6 +108,22 @@ public class Jam extends Thread {
         public String midlet1Property;
         public boolean useOnce;
         public Properties jadProperties;
+        
+        void printDescriptor() {
+                System.out.println("applicationName: " + applicationName);
+                System.out.println("jarFileUrlString: " + jarFileUrlString);
+                System.out.println("jarFileSize: " + jarFileSize);
+                System.out.println("mainClassName: " + mainClassName);
+                System.out.println("midlet1Property: " + midlet1Property);
+                System.out.println("useOnce: " + useOnce);
+                
+                Enumeration e = jadProperties.keys();
+                while (e.hasMoreElements()) {
+                    Object key = e.nextElement();
+                    Object value = jadProperties.get(key);
+                    System.out.println("    " + key + "=" + value);
+                }
+        }
     }
 
     /**
@@ -275,7 +291,8 @@ public class Jam extends Thread {
                     }
                 }
             }
-
+//System.out.println("Application descriptor: ");
+//descriptor.printDescriptor();
             suceededAtLeastOnceToGetNextApplicationDescriptor = true;
             return descriptor;
         } catch (IOException e) {

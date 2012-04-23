@@ -375,7 +375,7 @@ public final class Isolate implements Runnable {
     public void morphBootstrapInto(Hashtable properties, String classPath, String parentSuiteSourceURI) {
 /*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
 /*else[ENABLE_DYNAMIC_CLASSLOADING]*/
-//      this.classPath            = classPath;
+//      Assert.shouldNotReachHere(); // morphBootstrapInto not suppored in this case...
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         this.parentSuiteSourceURI = parentSuiteSourceURI;
 

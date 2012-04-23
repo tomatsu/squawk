@@ -389,10 +389,24 @@ public class KlassMetadata {
         }
 
         if (type == Suite.APPLICATION) {
-            if (Klass.TRACING_ENABLED && Tracer.isTracing("stripping")) {
-                Tracer.traceln("Discarded all metadata for " + suite);
+            boolean anyRuntimeStaticsRequired = false;
+            for (int i = 0; i != metadatas.length; ++i) {
+                Klass klass = metadatas[i].getDefinedClass();
+                if ((klass.getModifiers() & Modifier.COMPLETE_RUNTIME_STATICS) != 0) {
+                    anyRuntimeStaticsRequired = true;
+                    if (Klass.TRACING_ENABLED && Tracer.isTracing("stripping")) {
+                        Tracer.traceln("COMPLETE_RUNTIME_STATICS required for " + klass + " in " + suite);
+                    }
+                    break;
+                }
             }
-            return null;
+            
+            if (!anyRuntimeStaticsRequired) {
+                if (Klass.TRACING_ENABLED && Tracer.isTracing("stripping")) {
+                    Tracer.traceln("Discarded all metadata for " + suite);
+                }
+                return null;
+            }
         }
 
         KlassMetadata[] newMetadatas = new KlassMetadata[metadatas.length];
@@ -405,6 +419,7 @@ public class KlassMetadata {
                     break;
                 case Suite.LIBRARY:
                 case Suite.EXTENDABLE_LIBRARY:
+                case Suite.APPLICATION: // COMPLETE_RUNTIME_STATICS case
                     newMetadatas[i] = metadata.strip(type);
                     break;
                 default:
@@ -414,6 +429,10 @@ public class KlassMetadata {
         return newMetadatas;
     }
 
+    public static boolean isExternaltoSuite(Klass klass, int stripType) {
+        return (stripType != Suite.APPLICATION) && VM.isExported(klass);
+    }
+    
     /**
      * Prunes the symbols based on a given suite type.
      *
@@ -423,8 +442,8 @@ public class KlassMetadata {
         if (Klass.TRACING_ENABLED && Tracer.isTracing("stripping")) {
             Tracer.traceln("Processing metadata for " + definedClass);
         }
-
-        if (!VM.isExported(definedClass)) {
+        boolean internalClass = !isExternaltoSuite(definedClass, type);
+        if (internalClass && ((definedClass.getModifiers() & Modifier.COMPLETE_RUNTIME_STATICS) == 0)) {
             if (Klass.TRACING_ENABLED && Tracer.isTracing("stripping")) {
                 Tracer.traceln("  discarded all metadata");
             }

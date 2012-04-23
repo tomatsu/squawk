@@ -891,6 +891,14 @@ T
 
     }
 
+    void resetBootKlass() {
+        if (!isSynthetic()) {
+            state = STATE_DEFINED;
+            virtualMethods = null;
+            staticMethods = null;
+        }
+    }
+    
     /**
      * Only used by UninitializedObjectClass constructor.
      *
@@ -3902,6 +3910,15 @@ T
         boot(INT,           "-bytecode-",                  CID.BYTECODE,          synthetic);
     }
 
+    void bootLoad(TranslatorInterface translator) {
+        if (!isArray() && !isSynthetic()) {
+            translator.load(this);
+        }
+        if (isArray() && virtualMethods == null) {
+            virtualMethods = superType.virtualMethods;
+        }
+    }
+    
     /**
      * Ensure that all the reserved system classes are loaded if running in a hosted environment.
      */
@@ -3926,13 +3943,7 @@ T
                        break;
 /*end[FLOATS]*/
                     default:
-                        Klass klass = bootstrapSuite.getKlass(systemID);
-                        if (!klass.isArray() && !klass.isSynthetic()) {
-                            translator.load(klass);
-                        }
-                        if (klass.isArray() && klass.virtualMethods == null) {
-                            klass.virtualMethods = klass.superType.virtualMethods;
-                        }
+                        bootstrapSuite.getKlass(systemID).bootLoad(translator);
                         break;
                 }
             }
