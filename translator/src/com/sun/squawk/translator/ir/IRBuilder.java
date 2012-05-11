@@ -1674,7 +1674,7 @@ public final class IRBuilder {
             if (VM.getCurrentIsolate().getLeafSuite().contains(field.getDefiningClass())) {
                 // Class structure can be modified so set the flag indicating that it
                 // should reify its constant fields when it is initialized.
-            	// Assume that a class defined in anther suite is NOT modifiable.
+            	// Assume that a class defined in another suite is NOT modifiable.
                 field.getDefiningClass().updateModifiers(Modifier.COMPLETE_RUNTIME_STATICS);
             } else {
                 // The Class object is read-only so replace 'getstatic' with

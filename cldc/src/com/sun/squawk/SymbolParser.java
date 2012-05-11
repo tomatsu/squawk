@@ -366,6 +366,18 @@ final class SymbolParser extends ByteBufferDecoder {
         return symbolsBuffer.toByteArray();
     }
 
+    private boolean keepForRuntimeStatics(Klass klass, Klass fieldType, int category) {
+        if ((klass.getModifiers() & Modifier.COMPLETE_RUNTIME_STATICS) != 0
+                && (category == STATIC_FIELDS)
+                && Modifier.hasConstant(modifiers)
+                && (fieldType != null)
+                && (fieldType.isPrimitive() || fieldType == Klass.STRING_OF_BYTES)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     /**
      * Prunes the fields based on a given suite type.
      *
@@ -373,7 +385,7 @@ final class SymbolParser extends ByteBufferDecoder {
      * @param type      specifies a closed suite type. Must be {@link Suite#LIBRARY} or {@link Suite#EXTENDABLE_LIBRARY}.
      * @param category  specifies instance or static fields
      * @param types     the collection to which the types in the signatures of the remaining fields should be added
-     * @return an integer with the only the bit in position 'category' set if at least one field was not stripped othwerwise 0
+     * @return an integer with the only the bit in position 'category' set if at least one field was not stripped otherwise 0
      */
     private int stripFields(Klass klass, int type, int category, SquawkVector types) {
         Assert.that(category == INSTANCE_FIELDS || category == STATIC_FIELDS);
@@ -383,7 +395,9 @@ final class SymbolParser extends ByteBufferDecoder {
             for (int i = 0; i != count; ++i) {
                 select(category, i);
                 Klass fieldType = getSignatureType(getSignatureAt(0));
-                if (retainMember(type, modifiers, fieldType) && VM.isExported(klass.getField(i, category == STATIC_FIELDS))) {
+                Field field = klass.getField(i, category == STATIC_FIELDS);
+                if (keepForRuntimeStatics(klass, fieldType, category)
+                        || (retainMember(type, modifiers, fieldType) && VM.isExported(field))) {
                     if (!keptAtLeastOne) {
                         symbolsBuffer.addUnsignedByte(category);
                         keptAtLeastOne = true;
