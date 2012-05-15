@@ -2147,6 +2147,22 @@ public class GC implements GlobalStaticFields {
             } else if (Klass.getSystemID(klass) == CID.LOCAL_ARRAY) {
                 VM.print(" Local variables for thread ");
                 VM.printAddress(NativeUnsafe.getObject(obj, SC.owner));
+             } else if (klass.getComponentType().isReferenceType()) {
+                VM.print(" @");
+                VM.printAddress(obj);
+                VM.println();
+                Object[] array = (Object[])obj;
+                for (int i = 0; i < array.length; i++) {
+                    VM.print("    [");
+                    VM.print(i);
+                    VM.print("] ");
+                    if (array[i] != null) {
+                        printObject(array[i]);
+                    } else {
+                        VM.println("null");
+                    }
+                }
+                return; // don't do final println
             } else {
                 VM.print(" @");
                 VM.printAddress(obj);
@@ -2164,6 +2180,18 @@ public class GC implements GlobalStaticFields {
             VM.print(size);
             VM.print(", @");
             VM.printAddress(obj);
+       } else if (obj instanceof SquawkHashtable) {
+            SquawkHashtable table = (SquawkHashtable) obj;
+            VM.print("SquawkHashtable:");
+            VM.print(" object size: ");
+            VM.print(size);
+            VM.print(", table size : ");
+            VM.print(table.size());
+            VM.print(", @");
+            VM.printAddress(obj);
+            VM.println();
+            SquawkHashtable.printTable(table);
+            return; // don't do final println
         } else {
             VM.print(klass.getInternalName());
             VM.print(" size: ");
@@ -2174,7 +2202,7 @@ public class GC implements GlobalStaticFields {
         VM.println();
     }
 
-    static void printObject(Object obj) {
+    public static void printObject(Object obj) {
         Klass klass = GC.getKlass(obj);
         int blkSize = GC.getBodySize(klass, Address.fromObject(obj));
         int objSize = blkSize + (klass.isArray() ? HDR.arrayHeaderSize : HDR.basicHeaderSize);

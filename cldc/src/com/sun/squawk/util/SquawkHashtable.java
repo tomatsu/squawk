@@ -24,6 +24,8 @@
 
 package com.sun.squawk.util;
 
+import com.sun.squawk.GC;
+import com.sun.squawk.VM;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
@@ -630,6 +632,27 @@ public class SquawkHashtable<K, V> {
 /*end[JAVA5SYNTAX]*/
             }
             throw new NoSuchElementException();
+        }
+    }
+    
+    public static void printTable(SquawkHashtable table) {
+        HashtableEntry[] array = table.entryTable;
+        for (int i = 0; i < array.length; i++) {
+            HashtableEntry entry = array[i];
+            if (entry != null) {
+                VM.print("    key: ");
+                if (entry.key != null) {
+                    GC.printObject(entry.key);
+                } else {
+                    VM.print("null");
+                }
+                VM.print("    value: ");
+                if (entry.value != null) {
+                    GC.printObject(entry.value);
+                } else {
+                    VM.print("null");
+                }
+            }
         }
     }
 }
