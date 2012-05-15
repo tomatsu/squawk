@@ -117,6 +117,8 @@ import com.sun.squawk.vm.*;
 public final class Isolate implements Runnable {
 
     private final static boolean DEBUG_CODE_ENABLED = /*VAL*/false/*DEBUG_CODE_ENABLED*/;
+    
+    private final static boolean ENABLE_MULTI_ISOLATE = /*VAL*/false/*ENABLE_MULTI_ISOLATE*/;
 
     /**
      * Constant denoting that an isolate has been created but not yet {@link #start() started}.
@@ -192,16 +194,8 @@ public final class Isolate implements Runnable {
      * The child threads of the isolate.
      */
     private SquawkHashtable childThreads = new SquawkHashtable();
+    
 
-    /**
-     * The parent isolate that created and started this isolate.
-     */
-    private Isolate parentIsolate;
-
-    /**
-     * The child isolates of the isolate.
-     */
-    private SquawkHashtable childIsolates;
 
     /**
      * Flag to show that class Klass has been initialized.
@@ -244,6 +238,7 @@ public final class Isolate implements Runnable {
 //    private byte[] hibernatedChannelContext;
 /*end[ENABLE_ISOLATE_MIGRATION]*/
 
+/*if[ENABLE_MULTI_ISOLATE]*/
     /**
      * List of threads ready to run after return from hibernated state.
      */
@@ -253,6 +248,7 @@ public final class Isolate implements Runnable {
      * List of threads to be placed on the timer queue after return from hibernated state.
      */
     private VMThread hibernatedTimerThreads;
+/*end[ENABLE_MULTI_ISOLATE]*/
 
 /*if[!ENABLE_CHANNEL_GUI]*/
 /*else[ENABLE_CHANNEL_GUI]*/
@@ -290,11 +286,6 @@ public final class Isolate implements Runnable {
     private SquawkHashtable internedStrings;
 
     /**
-     * List of threads waiting for the isolate to exit or hibernate.
-     */
-    private VMThread joiners;
-
-    /**
      * Properties that can be set by the owner of the isolate.
      */
     private SquawkHashtable properties;
@@ -312,6 +303,7 @@ public final class Isolate implements Runnable {
      */
     private int transitioningState;
 
+/*if[NEW_IIC_MESSAGES]*/
     /**
      * Table of registered & anonymous mailboxes owned by this isolate.
      * This is a table of all inward links to this isolate.
@@ -325,11 +317,24 @@ public final class Isolate implements Runnable {
      * referred to by a MailboxAddress may in fact be local to the isolate.)
      */
     private SquawkHashtable mailboxAddresses;
-
+/*end[NEW_IIC_MESSAGES]*/
+    
     /**
      * Isolate lifecycle callback handlers.
      */
     private CallbackManager shutdownHooks;
+    
+/*if[ENABLE_MULTI_ISOLATE]*/
+        /**
+     * The parent isolate that created and started this isolate.
+     */
+    private Isolate parentIsolate;
+
+    /**
+     * The child isolates of the isolate.
+     */
+    private SquawkHashtable childIsolates;
+    
     private CallbackManager suspendHooks;
     private CallbackManager resumeHooks;
 
@@ -338,6 +343,12 @@ public final class Isolate implements Runnable {
      */
     private Runnable shutdownHook;
 
+    /**
+     * List of threads waiting for the isolate to exit or hibernate.
+     */
+    private VMThread joiners;
+/*end[ENABLE_MULTI_ISOLATE]*/
+    
     /**
      * name for isolate
      */
@@ -450,8 +461,12 @@ public final class Isolate implements Runnable {
 
         Isolate currentIsolate = VM.getCurrentIsolate();
         Assert.that(currentIsolate != null);
+/*if[ENABLE_MULTI_ISOLATE]*/
         currentIsolate.addIsolate(this);
         bootstrapSuite = parentIsolate.bootstrapSuite;
+/*else[ENABLE_MULTI_ISOLATE]*/
+//      bootstrapSuite = null;
+/*end[ENABLE_MULTI_ISOLATE]*/
 
         /*
          * Copy in command line properties and passed in properties now.
@@ -518,12 +533,14 @@ public final class Isolate implements Runnable {
      * @return true if the current thread is not owned by this isolate
      */
     private boolean isCurrentThreadExternal() {
+/*if[ENABLE_MULTI_ISOLATE]*/
         if(!VM.isHosted()) {
             VMThread currentThread = VMThread.currentThread();
             if (currentThread != null && currentThread.getThreadNumber() != 0 && currentThread.getIsolate() != this) {
                 return true;
             }
         }
+/*end[ENABLE_MULTI_ISOLATE]*/
         return false;
     }
 
@@ -537,7 +554,7 @@ public final class Isolate implements Runnable {
      * @return the original or copy of <code>s</code>
      */
     private String copyIfCurrentThreadIsExternal(String s) {
-        if (s != null && GC.inRam(s) && isCurrentThreadExternal()) {
+        if (ENABLE_MULTI_ISOLATE && s != null && GC.inRam(s) && isCurrentThreadExternal()) {
             return new String(s);
         } else {
             return s;
@@ -551,7 +568,7 @@ public final class Isolate implements Runnable {
      * @return the original or copy of <code>arr</code>
      */
     private String[] copyIfCurrentThreadIsExternal(String[] arr) {
-        if (arr != null && isCurrentThreadExternal()) {
+        if (ENABLE_MULTI_ISOLATE && arr != null && isCurrentThreadExternal()) {
             String[] result = new String[arr.length];
             for (int i = 0; i != arr.length; ++i) {
                 result[i] = copyIfCurrentThreadIsExternal(arr[i]);
@@ -606,11 +623,17 @@ public final class Isolate implements Runnable {
      * @return the Isolate objects present at the time of the call
      */
     public static Isolate[] getIsolates() {
+/*if[ENABLE_MULTI_ISOLATE]*/
         SquawkVector set = new SquawkVector();
         VM.copyIsolatesInto(set);
         Isolate[] isolates = new Isolate[set.size()];
         set.copyInto(isolates);
         return isolates;
+/*else[ENABLE_MULTI_ISOLATE]*/
+//        Isolate[] isolates = new Isolate[1];
+//        isolates[0] = VM.getCurrentIsolate();
+//        return isolates;
+/*end[ENABLE_MULTI_ISOLATE]*/
     }
 
     /**
@@ -862,8 +885,12 @@ public final class Isolate implements Runnable {
      */
     public final static int UNHIBERNATE_EVENT_MASK = 4;
 
+/*if[ENABLE_MULTI_ISOLATE]*/
     public final static int SUPPORTED_EVENTS = SHUTDOWN_EVENT_MASK | HIBERNATE_EVENT_MASK | UNHIBERNATE_EVENT_MASK;
-
+/*else[ENABLE_MULTI_ISOLATE]*/
+//  public final static int SUPPORTED_EVENTS = SHUTDOWN_EVENT_MASK;
+/*end[ENABLE_MULTI_ISOLATE]*/
+    
     /**
      * Monitor isolate lifecycle events such as shutdown, hibernate, and unhibernate. Isolate life-cycle events can be
      * monitored by implementing LifecycleListener, and registering it with the isolate using
@@ -893,10 +920,15 @@ public final class Isolate implements Runnable {
         switch (eventKind) {
             case SHUTDOWN_EVENT_MASK: {
                 if (shutdownHooks == null) {
-                    shutdownHooks = new CallbackManager(true);
+                    if (ENABLE_MULTI_ISOLATE) {
+                        shutdownHooks = new CallbackManager(true);
+                    } else {
+                        shutdownHooks = VM.shutdownHooks; // just one level of shutdown...
+                    }
                 }
                 return shutdownHooks;
             }
+/*if[ENABLE_MULTI_ISOLATE]*/
             case HIBERNATE_EVENT_MASK: {
                 if (suspendHooks == null) {
                     suspendHooks = new CallbackManager(false);
@@ -909,6 +941,7 @@ public final class Isolate implements Runnable {
                 }
                 return resumeHooks;
             }
+/*end[ENABLE_MULTI_ISOLATE]*/
             default:
                 throw new IllegalArgumentException();
         }
@@ -1045,11 +1078,14 @@ public final class Isolate implements Runnable {
         if ((eventSet & SHUTDOWN_EVENT_MASK) != 0) {
             addLifecycleListener0(listener, SHUTDOWN_EVENT_MASK);
         }
-        if ((eventSet & HIBERNATE_EVENT_MASK) != 0) {
-            addLifecycleListener0(listener, HIBERNATE_EVENT_MASK);
-        }
-        if ((eventSet & UNHIBERNATE_EVENT_MASK) != 0) {
-            addLifecycleListener0(listener, UNHIBERNATE_EVENT_MASK);
+
+        if (ENABLE_MULTI_ISOLATE) {
+            if ((eventSet & HIBERNATE_EVENT_MASK) != 0) {
+                addLifecycleListener0(listener, HIBERNATE_EVENT_MASK);
+            }
+            if ((eventSet & UNHIBERNATE_EVENT_MASK) != 0) {
+                addLifecycleListener0(listener, UNHIBERNATE_EVENT_MASK);
+            }
         }
     }
 
@@ -1070,12 +1106,16 @@ public final class Isolate implements Runnable {
             // add (wrapper) hook to local isolate
             cbm.add(currentIsolate, new LocalListenerWrapper(listener, eventKind));
         } else {
+/*if[ENABLE_MULTI_ISOLATE]*/
             RemoteListenerWrapper rlw = new RemoteListenerWrapper(this, listener, eventKind);
             // add cleanup hook in current isolate
             currentIsolate.getCallbackManager(SHUTDOWN_EVENT_MASK).add(currentIsolate, rlw.getCleanupHook());
 
             // add (wrapper) hook to remote isolate
             cbm.add(currentIsolate, rlw);
+/*else[ENABLE_MULTI_ISOLATE]*/
+//          throw new IllegalStateException();
+/*end[ENABLE_MULTI_ISOLATE]*/
         }
     }
 
@@ -1099,11 +1139,14 @@ public final class Isolate implements Runnable {
         if ((eventSet & SHUTDOWN_EVENT_MASK) != 0) {
             result &= removeLifecycleListener0(listener, SHUTDOWN_EVENT_MASK);
         }
-        if ((eventSet & HIBERNATE_EVENT_MASK) != 0) {
-            result &= removeLifecycleListener0(listener, HIBERNATE_EVENT_MASK);
-        }
-        if ((eventSet & UNHIBERNATE_EVENT_MASK) != 0) {
-            result &= removeLifecycleListener0(listener, UNHIBERNATE_EVENT_MASK);
+
+        if (ENABLE_MULTI_ISOLATE) {
+            if ((eventSet & HIBERNATE_EVENT_MASK) != 0) {
+                result &= removeLifecycleListener0(listener, HIBERNATE_EVENT_MASK);
+            }
+            if ((eventSet & UNHIBERNATE_EVENT_MASK) != 0) {
+                result &= removeLifecycleListener0(listener, UNHIBERNATE_EVENT_MASK);
+            }
         }
         return result;
     }
@@ -1125,7 +1168,7 @@ public final class Isolate implements Runnable {
         if (hw == null) {
             return false;
         }
-
+/*if[ENABLE_MULTI_ISOLATE]*/
         if (this == currentIsolate) { // local
             // remove (wrapper) hook in this Isolate
             Assert.that(!(hw instanceof RemoteListenerWrapper));
@@ -1137,9 +1180,15 @@ public final class Isolate implements Runnable {
 
             // remove remote hook in this Isolate
             return cbm.remove(rlw);
-        } else {
-           throw Assert.shouldNotReachHere();
-        }
+        } 
+/*else[ENABLE_MULTI_ISOLATE]*/
+//        if (this == currentIsolate) { // local
+//            // remove (wrapper) hook in this Isolate
+//            return cbm.remove(hw);
+//        }
+/*end[ENABLE_MULTI_ISOLATE]*/
+
+        throw Assert.shouldNotReachHere();
     }
 
 
@@ -1389,7 +1438,8 @@ public final class Isolate implements Runnable {
      */
     public void start() {
         transitioningState = ALIVE;
-        Thread t = new CrossIsolateThread(this, mainClassName + " - main");
+        String isoname = new StringBuffer(mainClassName).append(" - main").toString();
+        Thread t = new CrossIsolateThread(this, isoname);
         t.start();
     }
 
@@ -1501,6 +1551,7 @@ public final class Isolate implements Runnable {
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
     }
 
+/*if[ENABLE_MULTI_ISOLATE]*/
     /**
      * When isolate starts or unhibernates, call this to add the VM shutdown hook.
      */
@@ -1524,7 +1575,8 @@ public final class Isolate implements Runnable {
             shutdownHook = null;
         }
     }
-
+/*end[ENABLE_MULTI_ISOLATE]*/
+    
     /**
      * Starts running this isolate.
      *
@@ -1572,8 +1624,10 @@ public final class Isolate implements Runnable {
             System.out.println("]");
         }
 
+/*if[ENABLE_MULTI_ISOLATE]*/
         addVMShutdownHook();
-
+/*end[ENABLE_MULTI_ISOLATE]*/
+        
         // Invoke the main of the specified Isolate initializer specified on command line as -isolateinit:
         if (initializerClassName != null) {
             Klass klass = null;
@@ -1624,6 +1678,7 @@ public final class Isolate implements Runnable {
         }
     }
 
+/*if[ENABLE_MULTI_ISOLATE]*/
     /**
      * Waits for all the other threads and child isolates belonging to this isolate to stop.
      *
@@ -1663,7 +1718,6 @@ public final class Isolate implements Runnable {
      * @param childIsolate  the child isolate
      */
     void addIsolate(Isolate childIsolate) {
-
         Assert.that(childIsolate.parentIsolate == null && childIsolate != this);
         childIsolate.parentIsolate = this;
 
@@ -1673,6 +1727,7 @@ public final class Isolate implements Runnable {
         Assert.that(!childIsolates.containsKey(childIsolate));
         childIsolates.put(childIsolate, childIsolate);
     }
+/*end[ENABLE_MULTI_ISOLATE]*/
 
     /**
      * Add a thread to the isolate.
@@ -1726,6 +1781,7 @@ public final class Isolate implements Runnable {
         return classKlassInitialized;
     }
 
+/*if[ENABLE_MULTI_ISOLATE]*/
     private void runHooks(CallbackManager cbm, String label) {
         if (DEBUG_CODE_ENABLED && VM.isVerbose()) {
             System.out.print("Running isolate");
@@ -1756,7 +1812,8 @@ public final class Isolate implements Runnable {
             }
         }
     }
-
+/*end[ENABLE_MULTI_ISOLATE]*/
+    
     /**
      * Stop the isolate. The <code>handleLifecycleListenerEvent()</code> method will be called on any {@link LifecycleListener LifecycleListeners} registered
      * to handle <code>EXIT</code> events on this isolate.
@@ -1896,6 +1953,7 @@ public final class Isolate implements Runnable {
 //    }
 /*end[ENABLE_ISOLATE_MIGRATION]*/
 
+/*if[ENABLE_MULTI_ISOLATE]*/
     /**
      * Hibernate the isolate. The <code>handleLifecycleListenerEvent()</code> method will be called on any {@link LifecycleListener LifecycleListeners} registered
      * to handle <code>HIBERNATE</code> events on this isolate.  Any Channel I/O will be hibernated, and inter-isolate communication {@link com.sun.squawk.io.mailboxes.Channel channels} will be broken.
@@ -1921,7 +1979,8 @@ public final class Isolate implements Runnable {
 
         hibernate(HIBERNATED, true);
     }
-
+/*end[ENABLE_MULTI_ISOLATE]*/
+    
     /**
      * Modifies the state of this isolate.
      *
@@ -1944,6 +2003,7 @@ public final class Isolate implements Runnable {
         if ((state != newState) && (newState > transitioningState)) {
             // note that while in transition to exit, a concurrent call to exit or hibernate will be ignored.
             transitioningState = newState; // we are in process of moving to newState;
+/*if[ENABLE_MULTI_ISOLATE]*/
             if (doHooks) {
                 switch (newState) {
                     case HIBERNATED: {
@@ -1960,16 +2020,22 @@ public final class Isolate implements Runnable {
                         throw new IllegalArgumentException();
                 }
             }
+            
             removeVMShutdownHook();
+/*end[ENABLE_MULTI_ISOLATE]*/
 
 /*if[NEW_IIC_MESSAGES]*/
             cleanupMailboxes();
 /*end[NEW_IIC_MESSAGES]*/
 
-            int channelContextToSave = getChannelContext();
+            int channelContextToSave = 0;
 
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
+            if (Platform.IS_DELEGATING || Platform.IS_SOCKET) {
+                channelContextToSave = getChannelContext();
+            }
 /*else[ENABLE_ISOLATE_MIGRATION]*/
+//            channelContextToSave = getChannelContext();
 //            /*
 //             * Serialize the underlying context if this is not an exiting isolate
 //             */
@@ -1990,6 +2056,7 @@ public final class Isolate implements Runnable {
                 this.channelContext = 0;
             }
 
+/*if[ENABLE_MULTI_ISOLATE]*/
            /*
             * Remove this isolate from its parent's list of children. The parentIsolate pointer
             * will be null for the bootstrap isolate as well as for unhibernated isolates
@@ -1998,7 +2065,8 @@ public final class Isolate implements Runnable {
                 parentIsolate.childIsolates.remove(this);
                 parentIsolate = null;
             }
-
+/*end[ENABLE_MULTI_ISOLATE]*/
+            
             /*
              * Hibernate all the executing threads.
              */
@@ -2006,6 +2074,7 @@ public final class Isolate implements Runnable {
         }
     }
 
+/*if[ENABLE_MULTI_ISOLATE]*/
     /*
      * Add a thread to the list of hibernated run threads.
      *
@@ -2027,7 +2096,7 @@ public final class Isolate implements Runnable {
         thread.nextTimerThread = hibernatedTimerThreads;
         hibernatedTimerThreads = thread;
     }
-
+    
     /**
      * Unhibernate the isolate. The <code>handleLifecycleListenerEvent()</code> method will be called on any {@link LifecycleListener LifecycleListeners} registered
      * to handle <code>UNHIBERNATE</code> events on this isolate.
@@ -2076,16 +2145,30 @@ public final class Isolate implements Runnable {
         hibernatedTimerThreads = null;
         return res;
     }
-
+/*else[ENABLE_MULTI_ISOLATE]*/
+//    // dummy versions
+//    void addToHibernatedRunThread(VMThread thread) {
+//        Assert.that(thread.nextThread == null);
+//    }
+//
+//    void addToHibernatedTimerThread(VMThread thread) {
+//        Assert.that(thread.nextTimerThread == null);
+//    }
+/*end[ENABLE_MULTI_ISOLATE]*/
+    
     /**
      * Determines if this isolate is {@link #hibernate() hibernated}.
      *
      * @return true if it is
      */
     public boolean isHibernated() {
-        return state == HIBERNATED;
+        if (ENABLE_MULTI_ISOLATE) {
+            return state == HIBERNATED;
+        } else {
+            return false;
+        }
     }
-
+    
     /**
      * Determines if this isolate has been (re)started and not yet (re)hibernated or exited.
      *
@@ -2170,6 +2253,8 @@ public final class Isolate implements Runnable {
 //    }
 /*end[FINALIZATION]*/
 
+
+/*if[ENABLE_MULTI_ISOLATE]*/
     /**
      * Add a thread to the list of threads waiting for the isolate to finish.
      *
@@ -2192,7 +2277,13 @@ public final class Isolate implements Runnable {
         joiners = null;
         return res;
     }
-
+/*else[ENABLE_MULTI_ISOLATE]*/
+//    // dummy version
+//    VMThread getJoiners() {
+//        return null;
+//    }
+/*end[ENABLE_MULTI_ISOLATE]*/
+    
     /**
      * Get the string representation of the isolate.
      *
@@ -2204,7 +2295,7 @@ public final class Isolate implements Runnable {
             res = res.append("ALIVE");
         } else if (isExited()) {
             res = res.append("EXITED");
-        } else if (isHibernated()) {
+        } else if (ENABLE_MULTI_ISOLATE && isHibernated()) {
             res = res.append("HIBERNATED");
         } else {
             res = res.append("NEW");
@@ -2457,7 +2548,7 @@ public final class Isolate implements Runnable {
     }
 
     private void addStream(MulticastOutputStream mos, String url) {
-        if (isCurrentThreadExternal()) {
+        if (ENABLE_MULTI_ISOLATE && isCurrentThreadExternal()) {
             url = new String(url);
             mos.add(url, new DelayedURLOutputStream(url));
         } else {
