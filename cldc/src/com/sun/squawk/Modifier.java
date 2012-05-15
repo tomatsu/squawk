@@ -25,6 +25,7 @@
 package com.sun.squawk;
 
 import com.sun.squawk.pragma.AllowInlinedPragma;
+import com.sun.squawk.pragma.HostedPragma;
 
 /**
  * The Modifier class provides
@@ -212,7 +213,6 @@ public final class Modifier {
         return (mod & STRICT) != 0;
     }
 
-/*if[DEBUG_CODE_ENABLED]*/
     /**
      * Return a string describing the access modifier flags in
      * the specified modifier. For example:
@@ -245,7 +245,11 @@ public final class Modifier {
      * @return  a string representation of the set of modifers
      * represented by <code>mod</code>
      */
-    public static String toString(int mod) {
+    public static String toString(int mod) 
+/*if[!DEBUG_CODE_ENABLED]*/
+            throws HostedPragma
+/*end[DEBUG_CODE_ENABLED]*/
+    {
         StringBuffer sb = new StringBuffer();
         int len;
 
@@ -257,19 +261,44 @@ public final class Modifier {
         if ((mod & ABSTRACT) != 0)      sb.append("abstract ");
         if ((mod & STATIC) != 0)        sb.append("static ");
         if ((mod & FINAL) != 0)         sb.append("final ");
-        if ((mod & TRANSIENT) != 0)     sb.append("transient ");
-        if ((mod & VOLATILE) != 0)      sb.append("volatile ");
-        if ((mod & SYNCHRONIZED) != 0)  sb.append("synchronized ");
-        if ((mod & NATIVE) != 0)        sb.append("native ");
+
         if ((mod & STRICT) != 0)        sb.append("strictfp ");
         if ((mod & INTERFACE) != 0)     sb.append("interface ");
 
+        // class bits:
+        if (mustClinit(mod))            sb.append("mustClinit ");
+        if (hasClinit(mod))             sb.append("hasClinit ");
+        if (hasDefaultConstructor(mod)) sb.append("hasDefaultConstructor ");
+        if (hasMain(mod))               sb.append("hasMain ");
+        if (isPrimitive(mod))           sb.append("isPrimitive ");
+        if (isSynthetic(mod))           sb.append("isSynthetic ");
+        if (isSourceSynthetic(mod))     sb.append("isSourceSynthetic ");
+        
+        if ((mod & SUPER) != 0)         sb.append("SUPER ");
+        if (isDoubleWord(mod))          sb.append("isDoubleWord ");
+        if (isArray(mod))               sb.append("isArray ");
+        if (isSquawkArray(mod))         sb.append("isSquawkArray ");
+        if (isSquawkPrimitive(mod))     sb.append("isSquawkPrimitive ");
+        if (hasGlobalStatics(mod))      sb.append("hasGlobalStatics ");
+        if (isSuitePrivate(mod))        sb.append("isSuitePrivate ");
+        if ((mod & COMPLETE_RUNTIME_STATICS) != 0) sb.append("COMPLETE_RUNTIME_STATICS ");
+
+//        // field bits:
+//        if (hasConstant(mod))           sb.append("hasConstant ");           
+//        if ((mod & TRANSIENT) != 0)     sb.append("transient ");
+//        if ((mod & VOLATILE) != 0)      sb.append("volatile ");
+//        
+//        // method bits:
+////        if (isConstructor(mod))         sb.append("isConstructor ");
+////        if (hasPragmas(mod))            sb.append("hasPragmas ");
+//        if ((mod & SYNCHRONIZED) != 0)  sb.append("synchronized ");
+//        if ((mod & NATIVE) != 0)        sb.append("native ");
+ 
         if ((len = sb.length()) > 0) {   /* trim trailing space */
             return sb.toString().substring(0, len-1);
         }
         return "";
     }
-/*end[DEBUG_CODE_ENABLED]*/
     
     /*
      * Access modifier flag constants from <em>The Java Virtual

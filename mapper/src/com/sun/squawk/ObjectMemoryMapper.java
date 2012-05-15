@@ -1392,7 +1392,7 @@ public class ObjectMemoryMapper {
 
     private String classWordAnnotation(Address object) {
         Address classOrAssociation = NativeUnsafe.getAddress(object, HDR.klass);
-        return "    { classOrAssociation = " + classOrAssociation + " }";
+        return "    { class = " + classOrAssociation + " }";
     }
 
     /**
@@ -1649,6 +1649,31 @@ public class ObjectMemoryMapper {
         return oopEnd;
     }
 
+    private int modifiersSeen;
+    
+    private String classFieldAnnotation(String name, final Address fieldAddress) {
+        String annotation = "";
+        if (name.equals("modifiers")) {
+            modifiersSeen = NativeUnsafe.getInt(fieldAddress, 0);
+            annotation = " (" + Modifier.toString(NativeUnsafe.getInt(fieldAddress, 0)) + ")";
+        } else if (name.equals("oopMapWord")) {
+            annotation = " (" + Integer.toBinaryString(NativeUnsafe.getInt(fieldAddress, 0)) + ")";
+        } else if (name.equals("dataMapWord")) {
+            annotation = " (" + Integer.toBinaryString(NativeUnsafe.getInt(fieldAddress, 0)) + ")";
+        } else if (modifiersSeen != -1
+                && Modifier.hasDefaultConstructor(modifiersSeen)
+                && name.equals("initModifiers")) {
+            annotation = " (" + Modifier.toString(NativeUnsafe.getByte(fieldAddress, 0)) + ")";
+        } else if (name.equals("state") && NativeUnsafe.getByte(fieldAddress, 0) == Klass.STATE_CONVERTED) {
+            annotation = " (converted)"; // all classes in suite should be converted....
+        } else if (name.equals("id")) {
+            int id = NativeUnsafe.getShort(fieldAddress, 0);
+            int suiteID = id >= 0 ? id : -(id + 1);
+            annotation = " (suite index = " + suiteID + ")";
+        }
+        return annotation;
+    }
+    
     /**
      * Print the fields of an instance for a given class in the hierarchy of the instance.
      *
@@ -1661,6 +1686,7 @@ public class ObjectMemoryMapper {
     private Address printFields(final Address oop, final Address firstField, Klass klass, boolean isStatic) {
         int size = (isStatic ? klass.getStaticFieldsSize() + CS.firstVariable : klass.getInstanceSize()) * BYTES_PER_WORD;
         Address nextField = firstField;
+        modifiersSeen = -1;
 
         // Dump the class pointer and next pointer
         if (isStatic && showObjects) {
@@ -1692,17 +1718,22 @@ public class ObjectMemoryMapper {
             }
 
             if (showObjects) {
+                String annotation = "";
+                if (klass == Klass.KLASS) { // do more decoding of fields...
+                    annotation = classFieldAnnotation(name, fieldAddress);
+                }
+                
                 switch (type.getSystemID()) {
-                    case CID.BOOLEAN:   printPrimitiveLine(fieldAddress, fsize, "bool",   name, ""+NativeUnsafe.getByte(fieldAddress, 0));  break;
-                    case CID.BYTE:      printPrimitiveLine(fieldAddress, fsize, "byte",   name, ""+NativeUnsafe.getByte(fieldAddress, 0));  break;
-                    case CID.CHAR:      printPrimitiveLine(fieldAddress, fsize, "char",   name, ""+NativeUnsafe.getChar(fieldAddress, 0));  break;
-                    case CID.SHORT:     printPrimitiveLine(fieldAddress, fsize, "short",  name, ""+NativeUnsafe.getShort(fieldAddress, 0)); break;
-                    case CID.INT:       printPrimitiveLine(fieldAddress, fsize, "int",    name, ""+NativeUnsafe.getInt(fieldAddress, 0));   break;
-                    case CID.FLOAT:     printPrimitiveLine(fieldAddress, fsize, "float",  name, ""+Float.intBitsToFloat(NativeUnsafe.getInt(fieldAddress, 0)));   break;
-                    case CID.LONG:      printPrimitiveLine(fieldAddress, fsize, "long",   name, ""+NativeUnsafe.getLong(fieldAddress, 0));  break;
-                    case CID.DOUBLE:    printPrimitiveLine(fieldAddress, fsize, "double", name, ""+Double.longBitsToDouble(NativeUnsafe.getLong(fieldAddress, 0)));  break;
-                    case CID.UWORD:     printPrimitiveLine(fieldAddress, fsize, "uword",  name, ""+NativeUnsafe.getUWord(fieldAddress, 0));  break;
-                    case CID.OFFSET:    printPrimitiveLine(fieldAddress, fsize, "offset", name, ""+NativeUnsafe.getUWord(fieldAddress, 0));  break;
+                    case CID.BOOLEAN:   printPrimitiveLine(fieldAddress, fsize, "bool",   name, NativeUnsafe.getByte(fieldAddress, 0) + annotation);  break;
+                    case CID.BYTE:      printPrimitiveLine(fieldAddress, fsize, "byte",   name, NativeUnsafe.getByte(fieldAddress, 0) + annotation);  break;
+                    case CID.CHAR:      printPrimitiveLine(fieldAddress, fsize, "char",   name, NativeUnsafe.getChar(fieldAddress, 0) + annotation);  break;
+                    case CID.SHORT:     printPrimitiveLine(fieldAddress, fsize, "short",  name, NativeUnsafe.getShort(fieldAddress, 0) + annotation); break;
+                    case CID.INT:       printPrimitiveLine(fieldAddress, fsize, "int",    name, NativeUnsafe.getInt(fieldAddress, 0) + annotation);   break;
+                    case CID.FLOAT:     printPrimitiveLine(fieldAddress, fsize, "float",  name, Float.intBitsToFloat(NativeUnsafe.getInt(fieldAddress, 0)) + annotation);   break;
+                    case CID.LONG:      printPrimitiveLine(fieldAddress, fsize, "long",   name, NativeUnsafe.getLong(fieldAddress, 0) + annotation);  break;
+                    case CID.DOUBLE:    printPrimitiveLine(fieldAddress, fsize, "double", name, Double.longBitsToDouble(NativeUnsafe.getLong(fieldAddress, 0)) + annotation);  break;
+                    case CID.UWORD:     printPrimitiveLine(fieldAddress, fsize, "uword",  name, NativeUnsafe.getUWord(fieldAddress, 0) + annotation);  break;
+                    case CID.OFFSET:    printPrimitiveLine(fieldAddress, fsize, "offset", name, NativeUnsafe.getUWord(fieldAddress, 0) + annotation);  break;
                     default: {
                         printPointerLine(fieldAddress, name, type);
                         break;
