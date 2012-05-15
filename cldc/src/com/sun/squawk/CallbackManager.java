@@ -314,7 +314,7 @@ final class CallbackGroup {
      */
     CallbackGroup(Isolate iso) {
         this.iso = iso;
-        this.hooks = new SquawkVector();
+        this.hooks = new SquawkVector(3);
     }
 
     /**

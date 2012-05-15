@@ -86,7 +86,8 @@ public class MIDletMainWrapper {
         
         // Give the Isolate and thread sensible names...
         iso.setName(className);
-        VMThread.currentThread().setName(className + " - main");
+        String thrname = new StringBuffer(className).append(" - main").toString();
+        VMThread.currentThread().setName(thrname);
         
         try {
             klass = Klass.forName(className);

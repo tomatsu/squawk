@@ -318,7 +318,7 @@ public class Connector {
 
     // support for class caching in openPrim().
     private final static String NO_CLASS_FOUND = "NO PROTOCOL CLASS";
-    private final static Hashtable protocolTable = new Hashtable();
+    private final static Hashtable protocolTable = new Hashtable(3);
 
     /**
      * Create and open a connection input stream.

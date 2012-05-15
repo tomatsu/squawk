@@ -41,11 +41,12 @@ import java.io.*;
  *
  */
 public final class MulticastOutputStream extends OutputStream {
+    private final static int DEFAULT_SIZE = 3;
 
     /**
      * The streams to which output should be sent.
      */
-    private Hashtable streams = new Hashtable();
+    private Hashtable streams = new Hashtable(DEFAULT_SIZE);
 
     /**
      * Creates a MulticastOutputStream.
@@ -112,7 +113,7 @@ public final class MulticastOutputStream extends OutputStream {
                 ioe = ex;
             }
         }
-        streams = new Hashtable();
+        streams = new Hashtable(DEFAULT_SIZE);
         if (ioe != null) {
             throw ioe;
         }
@@ -171,7 +172,7 @@ public final class MulticastOutputStream extends OutputStream {
      */
     public Enumeration removeAll() {
         Hashtable t = streams;
-        streams = new Hashtable();
+        streams = new Hashtable(DEFAULT_SIZE);
         return t.elements();
     }
 
