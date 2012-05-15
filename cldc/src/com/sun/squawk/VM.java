@@ -230,7 +230,7 @@ public class VM implements GlobalStaticFields {
     /**
      * Manage shutdown hooks
      */
-    private static CallbackManager shutdownHooks;
+    static CallbackManager shutdownHooks;
     
     /**
      * Count the number of exceptions thrown.
@@ -851,8 +851,9 @@ public class VM implements GlobalStaticFields {
      *                       Global isolate management                       *
     \*-----------------------------------------------------------------------*/
 
+/*if[ENABLE_MULTI_ISOLATE]*/
     /**
-     * Used to allocate isolate identifiers. A simple increasing postive counter
+     * Used to allocate isolate identifiers. A simple increasing positive counter
      * should suffice as it allows for more isolates than the VM could ever fit
      * in memory.
      */
@@ -906,13 +907,6 @@ public class VM implements GlobalStaticFields {
      * The weak list of isolates.
      */
     private static WeakIsolateListEntry isolates;
-
-/*if[FLASH_MEMORY]*/
-    /**
-	 * Address of the 64 bit millisecond counter
-	 */
-    private static Address timeAddr;
-/*end[FLASH_MEMORY]*/
 
     /**
      * Registers a newly created isolate.
@@ -971,6 +965,25 @@ public class VM implements GlobalStaticFields {
         isolates = head;
 //VM.println("VM::pruneIsolateList --- start --");
     }
+    
+/*else[ENABLE_MULTI_ISOLATE]*/
+//    static int allocateIsolateID() {
+//        return 1;
+//    }
+//
+//    static void registerIsolate(Isolate isolate) {
+//    }
+//
+//    static void pruneIsolateList() {
+//    }
+/*end[ENABLE_MULTI_ISOLATE]*/
+    
+/*if[FLASH_MEMORY]*/
+    /**
+	 * Address of the 64 bit millisecond counter
+	 */
+    private static Address timeAddr;
+/*end[FLASH_MEMORY]*/
     
     /**
      * The squawk parameters specified on the command line (-Dfoo.bar=true).
@@ -3351,7 +3364,7 @@ hbp.dumpState();
      * @param origExcName klass name of exception to report
      * @param message the exception's message
      */
-    static void printVMStackTrace(Throwable exc, String origExcName, String message) {
+    public static void printVMStackTrace(Throwable exc, String origExcName, String message) {
         VM.print(origExcName);
         if (message != null) {
             VM.print(": ");

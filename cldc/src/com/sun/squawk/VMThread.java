@@ -56,6 +56,11 @@ public final class VMThread implements GlobalStaticFields {
     private final static int INITIAL_STACK_SIZE = 168;
 
     /**
+     * Limit stack size growth when stack would be 1/MAX_STACK_GROWTH_FRACTION of the heap. 
+     */
+    private final static int MAX_STACK_GROWTH_FRACTION = 8;
+
+    /**
      * The minimum size (in words) of a thread's stack. This constant accounts for the
      * number of slots required for the meta-info slots at the beginning of the chunk
      * plus the slots required to successfully make the initial call to VM.do_callRun()
@@ -153,6 +158,11 @@ public final class VMThread implements GlobalStaticFields {
      * and other values as 1..Int.MAX_VALUE.
      */
     private static int max_wait; // initialized to -1 in initializeThreading().
+    
+    /**
+     * If true, only schedule threads with system priority.
+     */
+    static boolean systemThreadsOnly;
 
 
     /*-----------------------------------------------------------------------*\
@@ -517,6 +527,18 @@ public final class VMThread implements GlobalStaticFields {
     }
 
     /**
+     * If true, only schedule threads with system priority. Can only be set by a thread with system priority.
+     * @param systemOnly 
+     */
+    public static void setSystemThreadsOnly(boolean systemOnly) {
+        if (currentThread.priority > MAX_PRIORITY) {
+            systemThreadsOnly = systemOnly;
+        } else {
+            throw new IllegalStateException();
+        }
+    }
+
+    /**
      * Returns this thread's priority.
      *
      * @return  this thread's name.
@@ -565,6 +587,7 @@ public final class VMThread implements GlobalStaticFields {
         }
     }
 
+/*if[ENABLE_MULTI_ISOLATE]*/
     /**
      * Waits for an isolate to stop.
      *
@@ -581,7 +604,8 @@ public final class VMThread implements GlobalStaticFields {
             reschedule();
         }
     }
-
+/*end[ENABLE_MULTI_ISOLATE]*/
+    
     /**
      * Handle case where thread of one isolate is waiting for monitor owned by other isolate, while 
      * isolate is is being hibernated.
@@ -704,6 +728,7 @@ public final class VMThread implements GlobalStaticFields {
         }
     }
 
+/*if[ENABLE_MULTI_ISOLATE]*/
     /**
      * Unhibernate the isolate.
      *
@@ -737,7 +762,8 @@ public final class VMThread implements GlobalStaticFields {
             addToRunnableThreadsQueue(thread);
         }
     }
-
+/*end[ENABLE_MULTI_ISOLATE]*/
+    
     /**
      * Gets the name of this thread. If {@link #setName} has never been called for this
      * thread, the return value will be of the from "Thread-<n>" where 'n' is a unique numeric
@@ -1573,22 +1599,34 @@ VM.println("creating stack:");
         Assert.always(VM.isCurrentIsolateInitialized()); // "cannot extend stack until com.sun.squawk.Class is initialized"
         Assert.always(currentThread == VMThread.serviceThread);
 
-        /*
-         * Allocate a new stack and copy the contents of the old stack.
-         */
+        // figure out first size to try:
         final int oldSize = GC.getArrayLength(otherThread.stack);
-        int minSize = oldSize + overflow;
+        final int minSize = oldSize + overflow;
         int newSize = oldSize * 2;
         if (newSize < minSize) {
             newSize = minSize * 2;
         }
+        // don't double in size when approaching fraction of heap
+        if (newSize > (GC.totalMemory() / MAX_STACK_GROWTH_FRACTION)) {
+            newSize = Math.max(oldSize + (overflow * 4), (int)(GC.totalMemory() / MAX_STACK_GROWTH_FRACTION));
+        }
+        
+        /*
+         * Allocate a new stack and copy the contents of the old stack.
+         */
         Object newStack = newStack(newSize, otherThread, false);
+        if (newStack == null) {
+            newSize = minSize;
+            newStack = newStack(newSize, otherThread, false);
+        }
+
         if (newStack == null) {
             return false;
         } else {
             Object oldStack = otherThread.stack;
             GC.stackCopy(oldStack, newStack);
             otherThread.stack = newStack;
+            oldStack = null;
             Assert.that(GC.getKlass(NativeUnsafe.getAddress(NativeUnsafe.getAddress(newStack, SC.lastFP), FP.method)) == Klass.BYTECODE_ARRAY);
             return true;
         }
@@ -2847,6 +2885,10 @@ final class ThreadQueue {
 /*else[ENABLE_SDA_DEBUGGER]*/
 //      final VMThread skipped = null;
 /*end[ENABLE_SDA_DEBUGGER]*/
+        
+        if (VMThread.systemThreadsOnly && thread.priority <= VMThread.MAX_PRIORITY) {
+            return null;
+        }
 
         if (thread != null) {
             thread.setNotInQueue(VMThread.Q_RUN);
