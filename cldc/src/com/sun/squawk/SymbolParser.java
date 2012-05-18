@@ -371,7 +371,7 @@ final class SymbolParser extends ByteBufferDecoder {
                 && (category == STATIC_FIELDS)
                 && Modifier.hasConstant(modifiers)
                 && (fieldType != null)
-                && (fieldType.isPrimitive() || fieldType == Klass.STRING_OF_BYTES)) {
+                && (fieldType.isPrimitive() || fieldType == Klass.STRING)) {
             return true;
         } else {
             return false;

@@ -89,17 +89,25 @@ public class VM {
     }
 
     protected static boolean isVerbose;
+    protected static boolean isVeryVerbose;
     
     public static boolean isVerbose() {
         return isVerbose;
     }
     
     public static void setVerbose(boolean verbose) {
+        if (verbose) {
+            if (isVerbose) {
+                isVeryVerbose = true;
+            }
+        } else {
+            isVeryVerbose = false;
+        }
         isVerbose = verbose;
     }
 
     public static boolean isVeryVerbose() {
-        return isVerbose;
+        return isVeryVerbose;
     }
 
     /**

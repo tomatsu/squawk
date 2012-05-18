@@ -28,7 +28,7 @@ import com.sun.squawk.util.Assert;
 
 /**
  * Class that manages callbacks for occasional events, which might be notified by
- * isolate's other than the one that regsistered the callback objects.
+ * isolate's other than the one that registered the callback objects.
  *
  * This class manages executing callbacks in the context of the isolate that registered the callback.
  */
@@ -52,11 +52,11 @@ public final class CallbackManager {
     /**
      * Creates a new instance of CallbackManager
      *
-     * @param runOnce if true clean up agressively while executing run()
+     * @param runOnce if true clean up aggressively while executing run()
      */
     public CallbackManager(boolean runOnce) {
         this.runOnce = runOnce;
-        this.hooks = new SquawkVector();
+        this.hooks = new SquawkVector(Isolate.ENABLE_MULTI_ISOLATE ? 3 : 1);
     }
 
     /**
@@ -235,7 +235,7 @@ public final class CallbackManager {
 
         for (int i = 0; i < grps.length; i++) {
             CallbackGroup cbg = grps[i];
-            if (cbg.iso.isAlive()) {
+            if (!Isolate.ENABLE_MULTI_ISOLATE || cbg.iso.isAlive()) {
                 cbg.run();
             } else {
                 System.err.println("Tried to execute callbacks in the context of an isolate that is no longer alive: " + cbg.iso);
@@ -308,7 +308,7 @@ final class CallbackGroup {
     SquawkVector hooks;
 
     /**
-     * Creat a proup.
+     * Create a group.
      *
      * @param iso the isolate context to run all this group's callbacks.
      */
@@ -414,7 +414,7 @@ final class CallbackGroup {
      */
     void run() {
 //        System.out.println("Running hooks " + count() + " in CallbackGroup");
-        if (Isolate.currentIsolate() == iso) {
+        if (!Isolate.ENABLE_MULTI_ISOLATE || Isolate.currentIsolate() == iso) {
             runAllHooksInContext();
         } else {
             Thread thr = new CallbackThread(this);
@@ -427,4 +427,5 @@ final class CallbackGroup {
 
         }
     }
+
 }
