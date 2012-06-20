@@ -37,7 +37,7 @@ public class GccCompiler extends CCompiler {
 
     public GccCompiler(String name, Build env, Platform platform) {
         super(name, env, platform);
-        allowGCSections = !(platform.isMacOsX() || platform.getHostOsName().startsWith("sunos"));
+        allowGCSections = !(platform.isMacOsX() || platform.getHostOsName().toLowerCase().startsWith("sunos"));
     }
 
     public GccCompiler(Build env, Platform platform) {
