@@ -32,9 +32,12 @@ import java.io.*;
  * The interface for the "gcc" compiler.
  */
 public class GccCompiler extends CCompiler {
+    
+    boolean allowGCSections;
 
     public GccCompiler(String name, Build env, Platform platform) {
         super(name, env, platform);
+        allowGCSections = !(platform.isMacOsX() || platform.getHostOsName().startsWith("sunos"));
     }
 
     public GccCompiler(Build env, Platform platform) {
@@ -47,13 +50,13 @@ public class GccCompiler extends CCompiler {
     public String options(boolean disableOpts) {
         StringBuffer buf = new StringBuffer();
         if (!disableOpts) {
-            if (options.o1)                 { buf.append("-O1 ");               }
-            if (options.o2)              { buf.append("-O2 ");               }
-            // if (options.o2)                 { buf.append(" -Os  -finline-functions -finline-limit=55 --param max-inline-insns-single=55 -Winline  ");               }
+            if (options.o1)             { buf.append("-O1 ");               }
+            if (options.o2)             { buf.append("-O2 ");               }
+            // if (options.o2)          { buf.append(" -Os  -finline-functions -finline-limit=55 --param max-inline-insns-single=55 -Winline  ");               }
             // think about -frtl-abstract-sequences, not in gcc 4.0.1 though.
-            if (options.o3)                 { buf.append("-DMAXINLINE -O3 ");   }
-//          if (options.o3)                 { buf.append("-DMAXINLINE -O3 -Winline ");   }
-            buf.append("  -ffunction-sections -fdata-sections ");
+            if (options.o3)             { buf.append("-DMAXINLINE -O3 ");   }
+//          if (options.o3)             { buf.append("-DMAXINLINE -O3 -Winline ");   }
+            if (allowGCSections)        { buf.append("  -ffunction-sections -fdata-sections "); }
         }
         if (options.tracing)            { buf.append("-DTRACE ");           }
         if (options.profiling)          { buf.append("-DPROFILING ");       }
@@ -210,7 +213,10 @@ public class GccCompiler extends CCompiler {
             exec = "-o " + output + " " + getSharedLibrarySwitch();
         } else {
             output = out + platform.getExecutableExtension();
-            exec = "-Wl,--gc-sections -o " + output;
+            exec = "-o " + output;
+            if (allowGCSections) {
+                exec = "-Wl,--gc-sections " + exec;
+            }
         }
         exec += " " + Build.join(objects) + " " + getLinkSuffix();
         env.exec("gcc " + exec);
