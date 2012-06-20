@@ -523,7 +523,8 @@ public final class StringBuffer {
      */
 
     public StringBuffer append(int i) {
-       return append(String.valueOf(i));
+       return Integer.toStringBuffer(this, i, 10);
+       //return append(String.valueOf(i));
     }
 
     /**

@@ -1998,12 +1998,18 @@ T
             modifiers |= Modifier.COMPLETE_RUNTIME_STATICS;
         }
 
+        int tempStaticFieldsSize;
         // Initialize the 'staticFieldsSize' and 'refStaticFieldsSize' values
-        staticFieldsSize    = (short)(constantOffset + constantSize);
+        if ((modifiers & Modifier.COMPLETE_RUNTIME_STATICS) != 0) {
+            tempStaticFieldsSize    = (short)(constantOffset + constantSize);
+        } else {
+            tempStaticFieldsSize    = (short)(constantOffset); // can skip reifying constant fields...
+        }
+        staticFieldsSize    = (short) tempStaticFieldsSize;
         refStaticFieldsSize = (short) primitiveOffset;
 
         // Ensure that the offsets all fit in 16 bits
-        if ((staticFieldsSize & 0xFFFF) != (constantOffset + constantSize)) {
+        if ((staticFieldsSize & 0xFFFF) != tempStaticFieldsSize) {
             throw new NoClassDefFoundError("static fields overflow");
         }
 

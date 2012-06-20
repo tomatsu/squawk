@@ -1770,7 +1770,8 @@ void fpTest() {
     }
 
 #if C_FP_CONVERSIONS_OK
-    // see if the functions float2l, float2ll, double2l, double2ll are needed on this platform:
+    // Test that the normal C conversions are OK to use, or if the 
+    // functions float2l, float2ll, double2l, double2ll are needed on this platform:
 
     //fprintf(vmOut, "Running C_FP_CONVERSIONS_OK tests...\n");
     assertEquals4("float2l(1.0f)", float2l_slow(1.0f), (int)1.0f);
@@ -1804,6 +1805,8 @@ void fpTest() {
     assertEquals8("double2ll(D_H_NEG_NAN)", double2ll_slow(lb2d(D_H_NEG_NAN)), (jlong)(lb2d(D_H_NEG_NAN)));
     assertEquals8("double2ll(D_POS_INFINITY)", double2ll_slow(lb2d(D_POS_INFINITY)), (jlong)(lb2d(D_POS_INFINITY)));
     assertEquals8("double2ll(D_NEG_INFINITY)", double2ll_slow(lb2d(D_NEG_INFINITY)), (jlong)(lb2d(D_NEG_INFINITY)));
+
+    assertEquals8("(jlong)1E+100D == max long",     (jlong)1E+100D, 0x7fffffffffffffffLL);
 #endif
 }
 /*else[FLOATS]*/

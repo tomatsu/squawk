@@ -2626,8 +2626,8 @@ public class GC implements GlobalStaticFields {
                         VM.print("collectHeapStats - unknown class: ");
                         VM.println(klass.getInternalName());
                     }
-                    cs.update(objSize);
                 }
+                cs.update(objSize);
             }
             if (printInstances) {
                 printObject(object.toObject(), klass, objSize);
@@ -2652,7 +2652,7 @@ public class GC implements GlobalStaticFields {
     
    /**
      * Do actual heap walk, from start object, or whole heap is startObj is null.
-     * Count how many instances, and how many bytes are used, by all objects that are the same aage or youngre than
+     * Count how many instances, and how many bytes are used, by all objects that are the same age or younger than
      * startObj. Print out statistics of each class that has at least one instance in the set found in the heap walk.
      * Statistics are NOT sorted.
      *

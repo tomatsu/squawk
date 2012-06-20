@@ -33,13 +33,13 @@ import com.sun.squawk.util.SquawkVector;
  *
  */
 public class PeripheralRegistry {
+    private final static int DEFAULT_SIZE = 3;
     
-    protected SquawkVector registeredPeripherals;
+    protected final SquawkVector registeredPeripherals;
     protected SquawkHashtable peripheralArraysByType;
     
     public PeripheralRegistry() {
-        registeredPeripherals = new SquawkVector();
-        peripheralArraysByType = new SquawkHashtable();
+        registeredPeripherals = new SquawkVector(DEFAULT_SIZE);
     }
     
     public void add(IPeripheral peripheral) {
@@ -62,7 +62,7 @@ public class PeripheralRegistry {
      */
     public IPeripheral[] getAll(Class type) {
         if (peripheralArraysByType == null) {
-            peripheralArraysByType = new SquawkHashtable();
+            peripheralArraysByType = new SquawkHashtable(DEFAULT_SIZE);
         }
         IPeripheral[] peripherals = (IPeripheral[]) peripheralArraysByType.get(type);
         if (peripherals == null) {

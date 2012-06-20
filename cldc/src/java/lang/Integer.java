@@ -135,6 +135,48 @@ public final class Integer {
 
         return new String(buf, charPos, (33 - charPos));
     }
+    
+    /** 
+     * Append value directly into StringBuffer
+     * @param buffer
+     * @param i
+     * @param radix
+     * @return 
+     */
+    static StringBuffer toStringBuffer(StringBuffer buffer, int i, int radix) {
+        // This strategy first writes characters backwards, then reverses them.
+        if (radix < Character.MIN_RADIX || radix > Character.MAX_RADIX)
+            radix = 10;
+
+        boolean negative = (i < 0);
+        int start = buffer.length();
+
+        if (!negative) {
+            i = -i;
+        }
+
+        while (i <= -radix) {
+            buffer.append(digits[-(i % radix)]);
+            i = i / radix;
+        }
+         buffer.append(digits[-i]);
+
+        if (negative) {
+            buffer.append('-');
+        }
+        
+        // now reverse in place:
+        int end = buffer.length() - 1;
+        int count = buffer.length() - start;
+        
+        for (int j = 0; j < count / 2; j++) {
+            char c = buffer.charAt(start + j);
+            buffer.setCharAt(start + j, buffer.charAt(end - j));
+            buffer.setCharAt(end - j, c);
+        }
+
+        return buffer;
+    }
 
     /**
      * Creates a string representation of the integer argument as an

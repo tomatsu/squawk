@@ -158,13 +158,13 @@ public class TimeZoneImpl extends GMTImpl {
                          int endDayOfWeek, int endTime, int dstSavings) {
         this.ID             = ID;
         this.rawOffset      = rawOffset;
-        this.startMonth     = startMonth;
-        this.startDay       = startDay;
-        this.startDayOfWeek = startDayOfWeek;
+        this.startMonth     = (byte)startMonth;
+        this.startDay       = (byte)startDay;
+        this.startDayOfWeek = (byte)startDayOfWeek;
         this.startTime      = startTime;
-        this.endMonth       = endMonth;
-        this.endDay         = endDay;
-        this.endDayOfWeek   = endDayOfWeek;
+        this.endMonth       = (byte)endMonth;
+        this.endDay         = (byte)endDay;
+        this.endDayOfWeek   = (byte)endDayOfWeek;
         this.endTime        = endTime;
         this.dstSavings     = dstSavings;
         decodeRules();
@@ -693,7 +693,7 @@ public class TimeZoneImpl extends GMTImpl {
      * <p>If <code>useDaylight</code> is false, this value is ignored.
      * @serial
      */
-    private int startMonth;
+    private byte startMonth;
 
     /**
      * This field has two possible interpretations:
@@ -718,7 +718,7 @@ public class TimeZoneImpl extends GMTImpl {
      * <p>If <code>useDaylight</code> is false, this value is ignored.
      * @serial
      */
-    private int startDay;
+    private byte startDay;
 
     /**
      * The day of the week on which daylight savings time starts.  This value
@@ -728,7 +728,7 @@ public class TimeZoneImpl extends GMTImpl {
      * <code>startMode == DAY_OF_MONTH</code>, this value is ignored.
      * @serial
      */
-    private int startDayOfWeek;
+    private byte startDayOfWeek;
 
     /**
      * The time in milliseconds after midnight at which daylight savings
@@ -747,7 +747,7 @@ public class TimeZoneImpl extends GMTImpl {
      * <p>If <code>useDaylight</code> is false, this value is ignored.
      * @serial
      */
-    private int endMonth;
+    private byte endMonth;
 
     /**
      * This field has two possible interpretations:
@@ -772,7 +772,7 @@ public class TimeZoneImpl extends GMTImpl {
      * <p>If <code>useDaylight</code> is false, this value is ignored.
      * @serial
      */
-    private int endDay;
+    private byte endDay;
 
     /**
      * The day of the week on which daylight savings time ends.  This value
@@ -782,7 +782,7 @@ public class TimeZoneImpl extends GMTImpl {
      * <code>endMode == DAY_OF_MONTH</code>, this value is ignored.
      * @serial
      */
-    private int endDayOfWeek;
+    private byte endDayOfWeek;
 
     /**
      * The time in milliseconds after midnight at which daylight savings
@@ -800,7 +800,7 @@ public class TimeZoneImpl extends GMTImpl {
      * <p>If <code>useDaylight</code> is false, this value is ignored.
      * @serial
      */
-    private int startYear;
+    private short startYear;
 
     /**
      * The offset in milliseconds between this zone and GMT.  Negative offsets
@@ -845,7 +845,7 @@ public class TimeZoneImpl extends GMTImpl {
      * @serial
      * @since JDK1.1.4
      */
-    private int startMode;
+    private byte startMode;
 
     /**
      * Variables specifying the mode of the end rule.  Takes the following
@@ -874,7 +874,7 @@ public class TimeZoneImpl extends GMTImpl {
      * @serial
      * @since JDK1.1.4
      */
-    private int endMode;
+    private byte endMode;
 
     /**
      * A positive value indicating the amount of time saved during DST in
@@ -1001,11 +1001,11 @@ public class TimeZoneImpl extends GMTImpl {
                 if (startDayOfWeek > 0) {
                     startMode = DOW_IN_MONTH_MODE;
                 } else {
-                    startDayOfWeek = -startDayOfWeek;
+                    startDayOfWeek = (byte)-startDayOfWeek;
                     if (startDay > 0) {
                         startMode = DOW_GE_DOM_MODE;
                     } else {
-                        startDay = -startDay;
+                        startDay = (byte)-startDay;
                         startMode = DOW_LE_DOM_MODE;
                     }
                 }
@@ -1043,11 +1043,11 @@ public class TimeZoneImpl extends GMTImpl {
                 if (endDayOfWeek > 0) {
                     endMode = DOW_IN_MONTH_MODE;
                 } else {
-                    endDayOfWeek = -endDayOfWeek;
+                    endDayOfWeek = (byte)-endDayOfWeek;
                     if (endDay > 0) {
                         endMode = DOW_GE_DOM_MODE;
                     } else {
-                        endDay = -endDay;
+                        endDay = (byte)-endDay;
                         endMode = DOW_LE_DOM_MODE;
                     }
                 }

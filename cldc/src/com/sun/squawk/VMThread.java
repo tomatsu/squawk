@@ -1902,6 +1902,8 @@ VM.println("creating stack:");
         VM.outPrintln(out);
     }
     
+    
+/*if[DEBUG_CODE_ENABLED]*/
     /**
      * This is a (SLOW) method to try to find the monitor that a thread is trying to lock.
      * @return the monitor that this thread is trying to lock, or null.
@@ -1922,7 +1924,8 @@ VM.println("creating stack:");
         }
         return null;
     }
-    
+/*end[DEBUG_CODE_ENABLED]*/
+
     /**
      * Print a stack trace for this thread.<p>
      * 
@@ -2260,13 +2263,13 @@ VM.println("creating stack:");
     }
 
     /**
-     * After a thread failes to get a monitor, or ends a monitorWait, it must try to aquire the monitor.
+     * After a thread fails to get a monitor, or ends a monitorWait, it must try to aquire the monitor.
      * On exit, the currentThread will be the owner of the monitor. Note that the monitor may have 
      * been been deleted and replaced since we came back from a reschedule, so get the monitor
      * from the object again.
      *
      * Only two methods actually claim ownership of a monitor. 
-     *  1) monitorEnter() if monitor is unowned
+     *  1) monitorEnter() if monitor is un-owned
      *  2) retryMonitor() after contention in monitorEnter(), and waking up after a monitorWait().
      *
      * @param object the object with the monitor we are trying to acquire.
