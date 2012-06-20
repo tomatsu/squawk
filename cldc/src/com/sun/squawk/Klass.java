@@ -2036,7 +2036,7 @@ T
                     encounteredRef = true;
                 }
                 currentOffset = field.getOffset();
-                int nextOffset = ((i+1) >= sortedFields.length)?staticFieldsSize:sortedFields[i+1].getOffset();
+                int nextOffset = ((i+1) >= sortedFields.length && !encounteredConstant)?staticFieldsSize:sortedFields[i+1].getOffset();
                 Assert.that(nextOffset >= currentOffset, "static field offsets should go consistently up");
                 int intendedSizeOfSlot;
                 if(type.isReferenceType()) {
