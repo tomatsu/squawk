@@ -210,7 +210,7 @@ public class GccCompiler extends CCompiler {
             exec = "-o " + output + " " + getSharedLibrarySwitch();
         } else {
             output = out + platform.getExecutableExtension();
-            exec = "--gc-sections -o " + output;
+            exec = "-Wl,--gc-sections -o " + output;
         }
         exec += " " + Build.join(objects) + " " + getLinkSuffix();
         env.exec("gcc " + exec);
