@@ -118,7 +118,7 @@ public final class Isolate implements Runnable {
 
     private final static boolean DEBUG_CODE_ENABLED = /*VAL*/false/*DEBUG_CODE_ENABLED*/;
     
-    final static boolean ENABLE_MULTI_ISOLATE = /*VAL*/false/*ENABLE_MULTI_ISOLATE*/;
+    public final static boolean ENABLE_MULTI_ISOLATE = /*VAL*/false/*ENABLE_MULTI_ISOLATE*/;
 
     /**
      * Constant denoting that an isolate has been created but not yet {@link #start() started}.

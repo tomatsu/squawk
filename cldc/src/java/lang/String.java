@@ -496,7 +496,13 @@ public final class String {
      */
     public byte[] getBytes() {
         //@todo  think about special casing these conversions - the default encoding simply copies the bytes to a char arrray,
-        // and then the chars to a byte array! 
+        // and then the chars to a byte array!
+        // TODO: Try this...
+//        if (isEightBit()) {
+//            byte[] result = new byte[length()];
+//            stringcopy(this, 0, result, 0, result.length);
+//            return result;
+//        }
         return Helper.charToByteArray(toCharArray(), 0, length());
     }
 
