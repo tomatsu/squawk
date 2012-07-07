@@ -342,21 +342,14 @@ public final class ChannelConstants {
 
     public static final int GET_RECORDED_OUTPUT                 = MISC_OPCODES + 20;
     public static final int GET_VAR_ADDR                        = MISC_OPCODES + 21;
-    public static final int ADC_INIT                            = MISC_OPCODES + 22;
-    public static final int ADC_SET_THRESHOLD                   = MISC_OPCODES + 23;
-    public static final int ADC_GET_HIGH_THRESHOLD              = MISC_OPCODES + 24;
-    public static final int ADC_GET_LOW_THRESHOLD               = MISC_OPCODES + 25;
-    public static final int ADC_CHECK_INTERRUPT                 = MISC_OPCODES + 26;
-    public static final int ADC_ENABLE_THRESHOLD                = MISC_OPCODES + 27;
-    public static final int ADC_ARE_THRESHOLD_ENABLE            = MISC_OPCODES + 28;
 
-    public static final int GET_SYSTEM_CORE_CLOCK               = MISC_OPCODES + 29;
+    public static final int GET_SYSTEM_CORE_CLOCK               = MISC_OPCODES + 22;
 
 /*if[ENABLE_ETHERNET_SUPPORT]*/
     /*
      * Ethernet related OPCODES
      */
-    public static final int ETHERNET_OP                         = MISC_OPCODES + 30;
+    public static final int ETHERNET_OP                         = MISC_OPCODES + 23;
     public static final int ETHERNET_INIT                       = ETHERNET_OP + 0;
     public static final int ETHERNET_CONFIG_NETIF               = ETHERNET_OP + 1;
     public static final int ETHERNET_START_PROCESS              = ETHERNET_OP + 2;
