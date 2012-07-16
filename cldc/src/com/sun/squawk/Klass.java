@@ -3598,12 +3598,10 @@ T
      */
     public static final Klass INT;
     
-/*if[FLOATS]*/
     /**
      * The type for <code>float</code>.
      */
     public static final Klass FLOAT;
-/*end[FLOATS]*/
     
     /**
      * The type for <code>long</code>.
@@ -3615,7 +3613,6 @@ T
      */
     public static final Klass LONG2;
 
-/*if[FLOATS]*/
     /**
      * The type for <code>double</code>.
      */
@@ -3625,7 +3622,6 @@ T
      * The type for the second word of a <code>double</code> value.
      */
     public static final Klass DOUBLE2;
-/*end[FLOATS]*/
     
     /**
      * The type for <code>void</code>.
@@ -3714,24 +3710,20 @@ T
      */
     public static final Klass INT_ARRAY;
 
-/*if[FLOATS]*/
     /**
      * The type for <code>float[]</code>.
      */
     public static final Klass FLOAT_ARRAY;
-/*end[FLOATS]*/
     
     /**
      * The type for <code>long[]</code>.
      */
     public static final Klass LONG_ARRAY;
 
-/*if[FLOATS]*/
     /**
      * The type for <code>double[]</code>.
      */
     public static final Klass DOUBLE_ARRAY;
-/*end[FLOATS]*/
     
     /**
      * The type for <code>com.sun.squawk.StringOfBytes</code>.
@@ -3844,15 +3836,11 @@ T
         BYTE               = boot(INT,           "byte",                    CID.BYTE,              primitive);
         CHAR               = boot(INT,           "char",                    CID.CHAR,              primitive);
         SHORT              = boot(INT,           "short",                   CID.SHORT,             primitive);
-/*if[FLOATS]*/
         FLOAT              = boot(ONE_WORD,      "float",                   CID.FLOAT,             primitive);
-/*end[FLOATS]*/
         LONG               = boot(TWO_WORD,      "long",                    CID.LONG,              primitive2);
         LONG2              = boot(ONE_WORD,      "-long2-",                 CID.LONG2,             primitive2);
-/*if[FLOATS]*/
         DOUBLE             = boot(TWO_WORD,      "double",                  CID.DOUBLE,            primitive2);
         DOUBLE2            = boot(ONE_WORD,      "-double2-",               CID.DOUBLE2,           primitive2);
-/*end[FLOATS]*/
         VOID               = boot(TOP,           "void",                    CID.VOID,              synthetic);
 
         REFERENCE          = boot(ONE_WORD,      "-ref-",                   CID.REFERENCE,         synthetic); // only used by translator
@@ -3874,10 +3862,8 @@ T
         SHORT_ARRAY        = boot(OBJECT,        "[short",                  CID.SHORT_ARRAY,       synthetic); // only used by translator
         INT_ARRAY          = boot(OBJECT,        "[int",                    CID.INT_ARRAY,         synthetic); // only used by translator
         LONG_ARRAY         = boot(OBJECT,        "[long",                   CID.LONG_ARRAY,        synthetic); // only used by translator
-/*if[FLOATS]*/
         FLOAT_ARRAY        = boot(OBJECT,        "[float",                  CID.FLOAT_ARRAY,       synthetic); // only used by translator
         DOUBLE_ARRAY       = boot(OBJECT,        "[double",                 CID.DOUBLE_ARRAY,      synthetic); // only used by translator
-/*end[FLOATS]*/
         
         // Ensure that all the reserved system classes are loaded if running in a hosted environment
         if (VM.isHosted()) {
@@ -3902,9 +3888,7 @@ T
         }
 
         Assert.that(Klass.LONG2.isPrimitive());
-/*if[FLOATS]*/
         Assert.that(Klass.DOUBLE2.isPrimitive());
-/*end[FLOATS]*/
     }
 
      /**
