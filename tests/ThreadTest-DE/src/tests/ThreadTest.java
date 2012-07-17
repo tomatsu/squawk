@@ -192,10 +192,12 @@ public class ThreadTest extends MiniTestHelper {
         delay(ADJUST_INTERVAL);
 
         // move time up little:
+        currentSlop = SLOP + ADJUST1;
         setSystemClockMock(System.currentTimeMillis() + ADJUST1);
         delay(ADJUST_INTERVAL);
 
         // move time back little:
+        currentSlop = SLOP;
         setSystemClockMock(System.currentTimeMillis() - ADJUST1);
         delay(ADJUST_INTERVAL);
 
