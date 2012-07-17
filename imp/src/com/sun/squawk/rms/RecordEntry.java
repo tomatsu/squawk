@@ -97,8 +97,8 @@ public class RecordEntry extends RmsEntry implements IRecordEntry {
     }
     
     public void setBytes(byte[] bytes, int offset, int length) {
-        if (bytes == null) {
-            throw new IllegalArgumentException("null bytes");
+        if (bytes == null && length != 0) {
+            throw new NullPointerException("illegal arguments: null bytes, length > 0");
         }
         if (offset < 0) {
             throw new IllegalArgumentException("negative offset: " + offset);
@@ -106,7 +106,7 @@ public class RecordEntry extends RmsEntry implements IRecordEntry {
         if (length < 0) {
             throw new IllegalArgumentException("negative length: " + length);
         }
-        if (offset + length > bytes.length) {
+        if (bytes != null && (offset + length > bytes.length)) {
             throw new IllegalArgumentException("offset and length too large for array ");
         }
         this.bytes = bytes;
