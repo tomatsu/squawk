@@ -113,7 +113,7 @@ public final class ObjectGraphSerializer {
         // Fix up the class pointers of the objects in the Squawk memory
         NativeUnsafe.resolveClasses(objectMap);
 
-        ObjectMemorySerializer.ControlBlock cb = new ObjectMemorySerializer.ControlBlock();
+        ObjectMemorySerializer.ControlBlock cb = ObjectMemorySerializer.ControlBlock.createControlBlock();
         
         cb.root = ((Address) objectMap.get(object)).diff(start).toInt();
 

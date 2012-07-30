@@ -2566,7 +2566,7 @@ hbp.dumpState();
 //         */
 //        collectGarbage(true);
 //
-//        ObjectMemorySerializer.ControlBlock cb = new ObjectMemorySerializer.ControlBlock();
+//        ObjectMemorySerializer.ControlBlock cb = ObjectMemorySerializer.ControlBlock.createControlBlock();
 //
 //        int graphSize = (int)(GC.totalMemory() - GC.freeMemory());
 //        byte[] bits = new byte[GC.calculateOopMapSizeInBytes(graphSize)];

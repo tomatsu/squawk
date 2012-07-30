@@ -51,7 +51,7 @@ public class ObjectMemorySerializer {
      * that serializes an object graph.
      */
     static final class ControlBlock {
-        ControlBlock() {
+        private ControlBlock() {
         }
 
         /**
@@ -74,6 +74,10 @@ public class ObjectMemorySerializer {
          * The offset in the serialized graph to the root of the graph.
          */
         public int root;
+        
+        public static ControlBlock createControlBlock() {
+            return new ControlBlock();
+        }
     }
 
 
