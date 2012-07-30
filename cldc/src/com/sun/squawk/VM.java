@@ -1223,12 +1223,14 @@ hbp.dumpState();
         Object mp    = getMP(fp);
         Klass klass = (Klass)NativeUnsafe.getObject(mp, HDR.methodDefiningClass);
 
+/*if[ENABLE_SDA_DEBUGGER]*/
         Object throwMP = mp;
         Offset throwFO = throwingThread.framePointerAsOffset(fp);
         Offset throwBCI = NativeUnsafe.getUWord(throwingStack, SC.lastBCI).toOffset();
 
         // Rewind BCI by 1 to be within the instruction that caused the exception
         throwBCI = throwBCI.sub(1);
+/*end[ENABLE_SDA_DEBUGGER]*/
 
         /*
          * Loop looking for an exception handler. (The VM must put a catch-all
@@ -1240,12 +1242,11 @@ hbp.dumpState();
              * Setup the preallocated VMBufferDecoder to decode the header
              * of the method for the frame being tested.
              */
-            int size   = MethodHeader.decodeExceptionTableSize(mp);
             int offset = MethodHeader.decodeExceptionTableOffset(mp);
             vmbufferDecoder.reset(mp, offset);
-            int end = offset + size;
+            int end = offset + MethodHeader.decodeExceptionTableSize(mp);
 
-            UWord start_bci;
+            UWord start_bci; // allocate outside loop to avoid mixing UWord and Address slots...
             UWord end_bci;
             UWord handler_bci;
 

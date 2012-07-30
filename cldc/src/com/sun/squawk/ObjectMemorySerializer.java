@@ -50,7 +50,9 @@ public class ObjectMemorySerializer {
      * calling the <code>copyObjectGraph</code> low level routine
      * that serializes an object graph.
      */
-    public static final class ControlBlock {
+    static final class ControlBlock {
+        ControlBlock() {
+        }
 
         /**
          * The buffer containing the serialized object graph.

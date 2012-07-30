@@ -414,21 +414,14 @@ T
 //Object
 /*end[JAVA5SYNTAX]*/
 	newInstance() /* throws InstantiationException, IllegalAccessException */ {
-        Assert.always(!(isSquawkArray() || isInterface() || isAbstract()) && hasDefaultConstructor());
+        int constructorIndex = getDefaultConstructorIndex();
+        Assert.always(constructorIndex >= 0);
 /*if[JAVA5SYNTAX]*/
         T res = (T) GC.newInstance(this);
 /*else[JAVA5SYNTAX]*/
 //        Object res = GC.newInstance(this);
 /*end[JAVA5SYNTAX]*/
-        try {
-            VM.callStaticOneParm(this, getDefaultConstructorIndex(), res);
-        } catch (NoClassDefFoundError e) {
-            if (e.getMessage() != null && e.getMessage().equals("static method missing")) {
-                throw new NoClassDefFoundError("Error calling default constructor in newInstance() for class " + getName() + "\n error: " + e.toString());
-            } else {
-                throw e;
-            }
-        }
+        VM.callStaticOneParm(this, constructorIndex, res);
         return res;
     }
 
@@ -1717,7 +1710,13 @@ T
             Assert.that(virtualMethods != null);
         } else if (state == STATE_CONVERTED) {
             if (!isSynthetic() && this != Klass.OBJECT) {
-                if (!isInterface()) {
+                if (isInterface()) {
+                    // interfaces don't need a vtable...
+                    for (int i = 0; i != virtualMethods.length; i++) {
+                        Assert.that(virtualMethods[i] == null);
+                    }
+                    virtualMethods = NO_METHODS;
+                } else {
                     for (int i = 0; i != virtualMethods.length; i++) {
                         if (virtualMethods[i] == null && i < superType.virtualMethods.length) {
                             virtualMethods[i] = superType.virtualMethods[i];
@@ -2848,14 +2847,14 @@ T
      * @return the metadata for this class
      */
     private KlassMetadata getMetadata() {
-/*if[ENABLE_RUNTIME_METADATA]*/
+/*if[ENABLE_RUNTIME_METADATA_FOR_COMPLETE_STATICS]*/
         return getMetadata0();
-/*else[ENABLE_RUNTIME_METADATA]*/
+/*else[ENABLE_RUNTIME_METADATA_FOR_COMPLETE_STATICS]*/
 //        if (VM.isHosted()) {
 //            return getMetadata0();
 //        }
 //        return null;
-/*end[ENABLE_RUNTIME_METADATA]*/
+/*end[ENABLE_RUNTIME_METADATA_FOR_COMPLETE_STATICS]*/
     }
     
     /**
@@ -2866,9 +2865,9 @@ T
      * @return the metadata for this class
      */
     private KlassMetadata getMetadata0()
-/*if[!ENABLE_RUNTIME_METADATA]*/
+/*if[!ENABLE_RUNTIME_METADATA_FOR_COMPLETE_STATICS]*/
         throws HostedPragma
-/*end[ENABLE_RUNTIME_METADATA]*/
+/*end[ENABLE_RUNTIME_METADATA_FOR_COMPLETE_STATICS]*/
     {
         if (isSynthetic() || isArray()) {
             return null;
@@ -3362,6 +3361,36 @@ T
         }
     }
 
+/*if[ENABLE_RUNTIME_METADATA_FOR_COMPLETE_STATICS]*/
+    final void initializeFinalsWithMetaData() {
+        int count = getFieldCount(true);
+        for (int i = 0; i != count; ++i) {
+            Field field = getField(i, true);
+            if (field.hasConstant()) {
+                Object cs = getInitializationClassState();
+                int offset = field.getOffset() + CS.firstVariable;
+                if (field.getType().isPrimitive()) {
+                    long value = field.getPrimitiveConstantValue();
+                    switch (field.getType().getSystemID()) {
+                        case CID.LONG:  NativeUnsafe.setLongAtWord(cs, offset, value); break;
+/*if[FLOATS]*/
+                        case CID.DOUBLE: NativeUnsafe.setLongAtWord(cs, offset, value); break;
+                        case CID.FLOAT:  NativeUnsafe.setUWord(cs, offset, UWord.fromPrimitive((int)value)); break;
+/*else[FLOATS]*/
+//                      case CID.DOUBLE:
+//                      case CID.FLOAT: throw Assert.shouldNotReachHere();
+/*end[FLOATS]*/
+                        default: NativeUnsafe.setUWord(cs, offset, UWord.fromPrimitive((int)value)); break;
+                    }
+                } else {
+                    String value = field.getStringConstantValue();
+                    NativeUnsafe.setObject(cs, offset, value);
+                }
+            }
+        }
+    }
+/*end[ENABLE_RUNTIME_METADATA_FOR_COMPLETE_STATICS]*/
+            
     /**
      * Initializes this class. This method implements the detailed class
      * initialization procedure described in section 2.17.5 (page 53) of
@@ -3441,35 +3470,11 @@ T
          */
         try {
 
-/*if[ENABLE_RUNTIME_METADATA]*/
+/*if[ENABLE_RUNTIME_METADATA_FOR_COMPLETE_STATICS]*/
             if ((modifiers & Modifier.COMPLETE_RUNTIME_STATICS) != 0) {
-                int count = getFieldCount(true);
-                for (int i = 0; i != count; ++i) {
-                    Field field = getField(i, true);
-                    if (field.hasConstant()) {
-                        Object cs = getInitializationClassState();
-                        int offset = field.getOffset() + CS.firstVariable;
-                        if (field.getType().isPrimitive()) {
-                            long value = field.getPrimitiveConstantValue();
-                            switch (field.getType().getSystemID()) {
-                                case CID.LONG:  NativeUnsafe.setLongAtWord(cs, offset, value); break;
-/*if[FLOATS]*/
-                                case CID.DOUBLE: NativeUnsafe.setLongAtWord(cs, offset, value); break;
-                                case CID.FLOAT:  NativeUnsafe.setUWord(cs, offset, UWord.fromPrimitive((int)value)); break;
-/*else[FLOATS]*/
-//                              case CID.DOUBLE:
-//                              case CID.FLOAT: throw Assert.shouldNotReachHere();
-/*end[FLOATS]*/
-                                default: NativeUnsafe.setUWord(cs, offset, UWord.fromPrimitive((int)value)); break;
-                            }
-                        } else {
-                            String value = field.getStringConstantValue();
-                            NativeUnsafe.setObject(cs, offset, value);
-                        }
-                    }
-                }
+                initializeFinalsWithMetaData();
             }
-/*end[ENABLE_RUNTIME_METADATA]*/
+/*end[ENABLE_RUNTIME_METADATA_FOR_COMPLETE_STATICS]*/
             
             clinit();
             /*

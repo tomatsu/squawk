@@ -2277,11 +2277,6 @@ public final class Isolate implements Runnable {
         joiners = null;
         return res;
     }
-/*else[ENABLE_MULTI_ISOLATE]*/
-//    // dummy version
-//    VMThread getJoiners() {
-//        return null;
-//    }
 /*end[ENABLE_MULTI_ISOLATE]*/
     
     /**

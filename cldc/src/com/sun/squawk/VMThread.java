@@ -266,6 +266,7 @@ public final class VMThread implements GlobalStaticFields {
         this.threadNumber = nextThreadNumber++;
         this.state        = NEW;
         this.stackSize    = INITIAL_STACK_SIZE;
+/*if[ENABLE_MULTI_ISOLATE]*/
         Object target = NativeUnsafe.getObject(apiThread, (int)FieldOffsets.java_lang_Thread$target);
         if (target instanceof Isolate) {
             if (apiThread instanceof CrossIsolateThread) {
@@ -276,6 +277,10 @@ public final class VMThread implements GlobalStaticFields {
         } else {
             this.isolate  = VM.getCurrentIsolate();
         }
+/*else[ENABLE_MULTI_ISOLATE]*/
+//      this.isolate  = VM.getCurrentIsolate();
+/*end[ENABLE_MULTI_ISOLATE]*/
+
         if (currentThread != null) {
             priority = (byte)currentThread.getPriority();
             if (priority > MAX_PRIORITY) {
@@ -606,6 +611,7 @@ public final class VMThread implements GlobalStaticFields {
     }
 /*end[ENABLE_MULTI_ISOLATE]*/
     
+/*if[ENABLE_MULTI_ISOLATE]*/
     /**
      * Handle case where thread of one isolate is waiting for monitor owned by other isolate, while 
      * isolate is is being hibernated.
@@ -649,6 +655,7 @@ public final class VMThread implements GlobalStaticFields {
         }
 /*end[DEBUG_CODE_ENABLED]*/
     }
+/*end[ENABLE_MULTI_ISOLATE]*/
     
     /**
      * Hibernate all the threads in the isolate.
@@ -656,14 +663,14 @@ public final class VMThread implements GlobalStaticFields {
      * @param isolate the isolate whose threads are to be hibernated
      */
     private static void hibernateIsolate0(Isolate isolate) {
-
+/*if[ENABLE_MULTI_ISOLATE]*/
         handleCrossIsolateSynchronization(isolate);
         /*
          * Enable all the threads waiting for the isolate to stop.
          */
         VMThread list = isolate.getJoiners();
         startJoiners(list, VMThread.Q_ISOLATEJOIN);
-
+/*end[ENABLE_MULTI_ISOLATE]*/
         /*
          * Prune the runnable threads and add them to the isolate.
          */
@@ -713,19 +720,19 @@ public final class VMThread implements GlobalStaticFields {
          */
         hibernateIsolate0(isolate);
 
+/*if[ENABLE_MULTI_ISOLATE]*/
         /*
          * Add the current thread if it is in this isolate.
          */
         if (currentThread.isolate == isolate) {
-/*if[ENABLE_MULTI_ISOLATE]*/
             Assert.that(currentThread.nextThread == null);
             currentThread.setInQueue(VMThread.Q_HIBERNATEDRUN);
             isolate.addToHibernatedRunThread(currentThread);
             reschedule();
-/*else[ENABLE_MULTI_ISOLATE]*/
-//          VM.stopVM(isolate.getExitCode());
-/*end[ENABLE_MULTI_ISOLATE]*/
         }
+/*else[ENABLE_MULTI_ISOLATE]*/
+//      VM.stopVM(isolate.getExitCode());
+/*end[ENABLE_MULTI_ISOLATE]*/
     }
 
 /*if[ENABLE_MULTI_ISOLATE]*/
@@ -905,6 +912,7 @@ public final class VMThread implements GlobalStaticFields {
      */
     private SingleStep step;
 /*end[ENABLE_SDA_DEBUGGER]*/
+    
     /**
      * The monitor when the thread is in the condvar queue.
      */
@@ -1607,8 +1615,9 @@ VM.println("creating stack:");
             newSize = minSize * 2;
         }
         // don't double in size when approaching fraction of heap
-        if (newSize > (GC.totalMemory() / MAX_STACK_GROWTH_FRACTION)) {
-            newSize = Math.max(oldSize + (overflow * 4), (int)(GC.totalMemory() / MAX_STACK_GROWTH_FRACTION));
+        int fraction = (int)((GC.totalMemory() / (HDR.BYTES_PER_WORD * MAX_STACK_GROWTH_FRACTION)));
+        if (newSize > fraction) {
+            newSize = Math.max(oldSize + (overflow * 4), fraction);
         }
         
         /*
@@ -1623,10 +1632,8 @@ VM.println("creating stack:");
         if (newStack == null) {
             return false;
         } else {
-            Object oldStack = otherThread.stack;
-            GC.stackCopy(oldStack, newStack);
+            GC.stackCopy(otherThread.stack, newStack);
             otherThread.stack = newStack;
-            oldStack = null;
             Assert.that(GC.getKlass(NativeUnsafe.getAddress(NativeUnsafe.getAddress(newStack, SC.lastFP), FP.method)) == Klass.BYTECODE_ARRAY);
             return true;
         }

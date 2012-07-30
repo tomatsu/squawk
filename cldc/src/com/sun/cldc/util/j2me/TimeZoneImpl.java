@@ -542,7 +542,7 @@ public class TimeZoneImpl extends GMTImpl {
 
         // check the id string, not the computed string
         for (int i = 0; i < zones.length; i++) {
-            TimeZoneImpl tzi = (TimeZoneImpl) zones[i];
+            TimeZoneImpl tzi = zones[i];
 
             if (tzi.ID.equals(ID))
                 return zones[i];
@@ -662,7 +662,7 @@ public class TimeZoneImpl extends GMTImpl {
             // use the actual String, rather than the
             // derived TimeZone ID
             for (int i = 0; i < zones.length; i++) {
-                TimeZoneImpl tzi = (TimeZoneImpl) zones[i];
+                TimeZoneImpl tzi = zones[i];
                 ids[i] = tzi.ID;
             }
         }

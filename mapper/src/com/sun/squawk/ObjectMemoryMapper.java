@@ -2023,7 +2023,7 @@ public class ObjectMemoryMapper {
         if (!klass.isArray() && methods != Address.zero()) {
             int length = GC.getArrayLengthNoCheck(methods);
             int cfLength = (isStatic ? klass.getStaticMethods() : klass.getVirtualMethods()).length;
-            if (cfLength != length) {
+            if (!klass.isInterface() && cfLength != length) {
                 System.err.println("version skew detected: " + (isStatic ? "static" : "virtual") +
                         " method table length for " + klass + " in suite file ("+length+") differs from " +
                         "the same table in the class file ("+cfLength+") loaded from the class path");
