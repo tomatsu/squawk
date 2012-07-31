@@ -161,7 +161,7 @@ public class ObjectMemoryFileEndianessConverter {
         // save memory in correct format
         DataOutputStream dos = new DataOutputStream(new FileOutputStream(out));
 
-        ObjectMemorySerializer.ControlBlock cb = new ObjectMemorySerializer.ControlBlock();
+        ObjectMemorySerializer.ControlBlock cb = ObjectMemorySerializer.ControlBlock.createControlBlock();
         cb.root = Address.fromObject(om.getRoot()).diff(om.getStart()).toInt();
 
         int size = om.getSize();
