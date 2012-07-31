@@ -1610,14 +1610,20 @@ VM.println("creating stack:");
         // figure out first size to try:
         final int oldSize = GC.getArrayLength(otherThread.stack);
         final int minSize = oldSize + overflow;
-        int newSize = oldSize * 2;
-        if (newSize < minSize) {
-            newSize = minSize * 2;
-        }
+        int newSize;
+        
         // don't double in size when approaching fraction of heap
         int fraction = (int)((GC.totalMemory() / (HDR.BYTES_PER_WORD * MAX_STACK_GROWTH_FRACTION)));
-        if (newSize > fraction) {
-            newSize = Math.max(oldSize + (overflow * 4), fraction);
+        if (minSize > fraction) {
+            newSize = oldSize + (oldSize / 2);
+            if (newSize < minSize) {
+                newSize = minSize + (minSize / 2);
+            }
+        } else {
+            newSize = oldSize * 2;
+            if (newSize < minSize) {
+                newSize = minSize * 2;
+            }
         }
         
         /*
