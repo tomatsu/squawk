@@ -96,7 +96,9 @@ public class DeadClassEliminator {
         "com.sun.squawk.vm.FieldOffsets",
         "com.sun.squawk.vm.MethodOffsets",
         "com.sun.squawk.util.ArrayHashtable",// used by metadata suites
+/*if[ENABLE_SUITE_LOADING]*/
         "com.sun.squawk.ObjectMemorySerializer$ControlBlock",// used by metadata suites (when multi-suites used)
+/*end[ENABLE_SUITE_LOADING]*/
         "com.sun.squawk.StringOfBytes"
     };
 
