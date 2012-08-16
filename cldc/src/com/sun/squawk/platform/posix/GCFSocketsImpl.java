@@ -249,6 +249,9 @@ public class GCFSocketsImpl implements GCFSockets {
                     if (newSocket < 0) {
                         throw newError(fd, "accept");
                     }
+                } else {
+// BUG! 
+                    throw newError(fd, "accept");
                 }
             }
         } finally {

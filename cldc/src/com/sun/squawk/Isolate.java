@@ -483,7 +483,11 @@ public final class Isolate implements Runnable {
            updateLeafSuite(true); // TO DO: Also updated in run, but that is too late to find the main class
         } catch (Error e) {
             // note errors releated to loading the suites
-            System.err.println("Error constructing " + isolateInfoStr());
+            if (DEBUG_CODE_ENABLED) {
+                System.err.println("Error constructing " + isolateInfoStr());
+            } else {
+                System.err.println("Error constructing suite");
+            }
             throw e;
         }
 
@@ -1665,9 +1669,8 @@ public final class Isolate implements Runnable {
      * @param args 
      */
     static void runMain(String mainClassName, String[] args) {
-        Klass klass = null;
         try {
-            klass = Klass.forName(mainClassName);
+            Klass klass = Klass.forName(mainClassName);
             klass.main(args);
 
             System.out.flush();
