@@ -90,7 +90,7 @@ void diagnosticWithValue(char * msg, int val) {
 #elif PLATFORM_TYPE_SOCKET
 #define IODOTC "io_socket.c"
 #elif PLATFORM_TYPE_BARE_METAL
- /* There is no OS or Java VM to talk to, so don't bother with code in io.c.*/
+/* Different bare metal platforms handle this differently. Most use io_metal.c though.*/
 #else
 #error "unspecified platform type"
 #endif

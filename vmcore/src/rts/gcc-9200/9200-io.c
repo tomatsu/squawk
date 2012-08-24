@@ -28,38 +28,14 @@
 #include "flash.h"
 #include "avr.h"
 #include "system.h"
-#include "9200-io.h"
-
-// Forward declarations
-int getEvent(int, int);
-static int check_irq(int irq_mask, int clear_flag);
-INLINE boolean checkForMessageEvent();
-
-// General helper method
-long long rebuildLongParam(int i1, int i2) {
-	return ((long long)i1 << 32) | ((long long)i2 & 0xFFFFFFFF);
-}
-
-extern int dma_buffer_size;
-extern char* dma_buffer_address;
-volatile long long last_device_interrupt_time;
-extern volatile long long clock_counter;
 
 /**************************************************************************
  * Sleep support
  **************************************************************************/
-int deepSleepEnabled = 0; // indicates whether the feature is currently enabled (=1)
-int sleepManagerRunning = 1;	   // assume that sleepManager is running until it calls WAIT_FOR_DEEP_SLEEP
-int outstandingDeepSleepEvent = 0; // whether the sleep manager thread should be unblocked at the next reschedule
-long long storedDeepSleepWakeupTarget; // The millis that the next deep sleep should end at
-long long minimumDeepSleepMillis = 0x7FFFFFFFFFFFFFFFLL;
- 		// minimum time we're prepared to deep sleep for: avoid deep sleeping initially.
-long long totalShallowSleepTime; // total time the SPOT has been shallow sleeping
 
 #define SHALLOW_SLEEP_CLOCK_SWITCH_THRESHOLD 20
 static const int peripheral_bus_speed[] = {PERIPHERAL_BUS_SPEEDS};
 int shallow_sleep_clock_mode = SHALLOW_SLEEP_CLOCK_MODE_NORMAL;
-
 
 /*
  * Enter deep sleep
@@ -132,36 +108,9 @@ static void doShallowSleep(long long targetMillis) {
 	totalShallowSleepTime += (last_time - start_time);
 }
 
-static void setDeepSleepEventOutstanding(long long target) {
-	storedDeepSleepWakeupTarget = target;
-	outstandingDeepSleepEvent = 1;
-}
-
-/**
- * Sleep Squawk for specified milliseconds
- */
-void osMilliSleep(long long millisecondsToWait) {
-    long long target = ((long long) getMilliseconds()) + millisecondsToWait;
-    if (target <= 0) {
-        target = 0x7FFFFFFFFFFFFFFFLL; // overflow detected
-    }
-//  diagnosticWithValue("GLOBAL_WAITFOREVENT - deepSleepEnabled", deepSleepEnabled);
-//	diagnosticWithValue("GLOBAL_WAITFOREVENT - sleepManagerRunning", sleepManagerRunning);
-//	diagnosticWithValue("GLOBAL_WAITFOREVENT - minimumDeepSleepMillis", minimumDeepSleepMillis);
-    if (deepSleepEnabled && !sleepManagerRunning && (millisecondsToWait >= minimumDeepSleepMillis)) {
-//	    diagnosticWithValue("GLOBAL_WAITFOREVENT - deep sleeping for", (int)millisecondsToWait);
-        setDeepSleepEventOutstanding(target);
-    } else {
-//	    diagnosticWithValue("GLOBAL_WAITFOREVENT - shallow sleeping for", (int)millisecondsToWait);
-        doShallowSleep(target);
-    }
-}
-
 /******************************************************************
  * Serial port support
  ******************************************************************/
-#define WAIT_FOR_DEEP_SLEEP_EVENT_NUMBER (DEVICE_LAST+1)
-#define FIRST_IRQ_EVENT_NUMBER (WAIT_FOR_DEEP_SLEEP_EVENT_NUMBER+1)
 int serialPortInUse[] = {0,0,0,0,0,0};
 
 /* Java has requested serial chars */
@@ -186,7 +135,9 @@ void freeSerialPort(int device_type) {
  * ****************************************************************
  */
 
-unsigned int java_irq_status = 0; // bit set = that irq has outstanding interrupt request
+#define WAIT_FOR_DEEP_SLEEP_EVENT_NUMBER (DEVICE_LAST+1)
+#define FIRST_IRQ_EVENT_NUMBER (WAIT_FOR_DEEP_SLEEP_EVENT_NUMBER+1)
+#define SLEEP_MANAGER_ENABLED_IRQS (1 << AT91C_ID_FIQ)
 
 void usb_state_change()	{
 	int cpsr = disableARMInterrupts();
@@ -197,10 +148,6 @@ void usb_state_change()	{
 #endif
     setARMInterruptBits(cpsr);
 }
-
-IrqRequest *irqRequests;
-
-extern void java_irq_hndl();
 
 void setup_java_interrupts() {
 	// This routine is called from os.c
@@ -216,141 +163,12 @@ void setup_java_interrupts() {
 	}
 }
 
-/*
- * Java has requested wait for an interrupt. Store the request,
- * and each time Java asks for events, signal the event if the interrupt has happened
- *
- * @return the event number
- */
-int storeIrqRequest (int irq_mask) {
-        IrqRequest* newRequest = (IrqRequest*)malloc(sizeof(IrqRequest));
-        if (newRequest == NULL) {
-        	//TODO set up error message for GET_ERROR and handle
-        	//one per channel and clean on new requests.
-        	return ChannelConstants_RESULT_EXCEPTION;
-        }
-
-        newRequest->next = NULL;
-        newRequest->irq_mask = irq_mask;
-#if AT91SAM9G20
-    diagnosticWithValue("storeIrqRequest  - irqRequests", (int)irqRequests);
-    diagnosticWithValue("storeIrqRequest  - newRequest", (int)newRequest);
-#endif
-        if (irqRequests == NULL) {
-        	irqRequests = newRequest;
-        	newRequest->eventNumber = FIRST_IRQ_EVENT_NUMBER;
-        } else {
-        	IrqRequest* current = irqRequests;
-        	while (current->next != NULL) {
-        		current = current->next;
-        	}
-        	current->next = newRequest;
-        	newRequest->eventNumber = current->eventNumber + 1;
-        }
-        return newRequest->eventNumber;
+void systemGetEventHandler() {
+    // since this function gets called frequently it's a good place to put
+    // the call that periodically resyncs our clock with the power controller
+    maybeSynchroniseWithAVRClock();
 }
 
-/* ioPostEvent is a no-op for us */
-static void ioPostEvent(void) { }
-
-/*
- * If there are outstanding irqRequests and one of them is for an interrupt that has
- * occurred return its eventNumber. Otherwise return 0
- */
-int checkForEvents() {
-        return getEvent(0, false);
-}
-
-static void printOutstandingEvents() {
-	IrqRequest* current = irqRequests;
-	while (current != NULL) {
-    	diagnosticWithValue("event request", current->irq_mask);
-    	current = current->next;
-    }
-}
-
-/*
- * If there are outstanding irqRequests and one of them is for an interrupt that has
- * occurred return its eventNumber. If removeEventFlag is true, then
- * also remove the event from the queue. If no requests match the interrupt status
- * return 0.
- */
-int getEvent(int removeEventFlag, int fiqOnly) {
-    int res = 0;
-    int device_type;
-    
-    if (irqRequests != NULL) {
-    	IrqRequest* current = irqRequests;
-        IrqRequest* previous = NULL;
-        while (current != NULL) {
-        	if ((!fiqOnly || (current->irq_mask & (1 << AT91C_ID_FIQ)) != 0) && check_irq(current->irq_mask, removeEventFlag)) {
-        		res = current->eventNumber;
-        		//unchain
-        		if (removeEventFlag) {
-        			if (previous == NULL) {
-        				irqRequests = current->next;
-        			} else {
-        				previous->next = current->next;
-        			}
-        			free(current);
-        		}
-        		break;
-        	} else {
-        		previous = current;
-        		current = current->next;
-        	}
-        }
-    }
-    if (res == 0 && !fiqOnly) {
-    	// check for serial chars available
-    	for (device_type = DEVICE_FIRST; device_type<=DEVICE_LAST; device_type++) {
-	    	if (isSerialPortInUse(device_type) && sysAvailable(device_type)) {
-	    		res = device_type;
-	    		if (removeEventFlag) {
-	    			freeSerialPort(device_type);
-	    		}
-		    	break;
-	    	}
-    	}
-    }
-
-   	if (res == 0) {
-    	if (outstandingDeepSleepEvent) {
-    		sleepManagerRunning = 1;
-    		res = WAIT_FOR_DEEP_SLEEP_EVENT_NUMBER;
-    	}
-   	}
-	if (removeEventFlag) {
-		// always clear the deep sleep event, as we will want to reconsider
-		// whether deep sleep is appropriate after any event.
-		outstandingDeepSleepEvent = 0;
-	}
-    return res;
-}
-
-/**
- * Check if an irq bit is set in the status, return 1 if yes
- * Also, clear bit if it is set and clear_flag = 1
- */
-static int check_irq(int irq_mask, int clear_flag) {
-        int result;
-        disableARMInterrupts();
-        if ((java_irq_status & irq_mask) != 0) {
-        	if (clear_flag) {
-            	java_irq_status = java_irq_status & ~irq_mask;
-        	}
-            result = 1;
-        } else {
-        	result = 0;
-        }
-        enableARMInterrupts();
-        return result;
-}
-
-
-
-
-int retValue = 0;  // holds the value to be returned on the next "get result" call
 int avr_low_result = 0;
 
 /**
@@ -369,10 +187,10 @@ int avr_low_result = 0;
  * @param  receive
  * @return the operation result
  */
- static void ioExecute(void) {
-	int     context = com_sun_squawk_ServiceOperation_context;
+ static void ioExecuteSys(void) {
+//  int     context = com_sun_squawk_ServiceOperation_context;
     int     op      = com_sun_squawk_ServiceOperation_op;
-    int     channel = com_sun_squawk_ServiceOperation_channel;
+//  int     channel = com_sun_squawk_ServiceOperation_channel;
     int     i1      = com_sun_squawk_ServiceOperation_i1;
     int     i2      = com_sun_squawk_ServiceOperation_i2;
     int     i3      = com_sun_squawk_ServiceOperation_i3;
@@ -385,63 +203,6 @@ int avr_low_result = 0;
     int res = ChannelConstants_RESULT_OK;
 
     switch (op) {
-    	case ChannelConstants_GLOBAL_CREATECONTEXT:
-            res = 1; //let all Isolates share a context for now
-            break;
-    	case ChannelConstants_CONTEXT_GETCHANNEL: {
-                int channelType = i1;
-                if (channelType == ChannelConstants_CHANNEL_IRQ) {
-                    res = 1;
-                } else if (channelType == ChannelConstants_CHANNEL_SPI) {
-                    res = 2;
-                } else {
-                    res = ChannelConstants_RESULT_BADPARAMETER;
-                }
-            }
-            break;
-    	case ChannelConstants_IRQ_WAIT: {
-                int irq_no = i1;
-                if (check_irq(irq_no, 1)) {
-                    res = 0;
-                } else {
-                    res = storeIrqRequest(irq_no);
-                }
-            }
-            break;
-    		
-    	case ChannelConstants_AVAILABLE_SERIAL_CHARS: {
-                int deviceType = i1;
-                res = sysAvailable(deviceType);
-            }
-    	    break;
-
-        case ChannelConstants_GET_SERIAL_CHARS: {
-                int deviceType = i3;
-                if (sysAvailable(deviceType)) {
-                    // Return 0 if there are chars available (which we will return in the receive param)
-                    res = 0;
-                    int offset = i1;
-                    int len = i2;
-                    int* countBuf = send;
-                    char* buf = receive;
-                    *countBuf = sysReadSeveral(buf + offset, len, deviceType);
-                    freeSerialPort(deviceType); // free serial port for future use
-                } else {
-                    // Otherwise return event number to say there might be later
-                    res = getSerialPortEvent(deviceType);
-                }
-            }
-            break;
-
-        case ChannelConstants_WRITE_SERIAL_CHARS: {
-                int offset = i1;
-                int len = i2;
-                int deviceType = i3;
-                char* buf = send;
-                sysWriteSeveral(buf + offset, len, deviceType);
-                res = 0;
-            }
-            break;
 
         case ChannelConstants_SPI_SEND_RECEIVE_8:
             // CE pin in i1
@@ -547,10 +308,6 @@ int avr_low_result = 0;
             res = i2c_probe(i1, i2);
             break;
 
-        case ChannelConstants_GET_HARDWARE_REVISION:
-        	res = get_hardware_revision();
-    		break;
-
         case ChannelConstants_FLASH_ERASE:
             data_cache_disable();
             res = flash_erase_sector((Flash_ptr)i2);
@@ -568,105 +325,10 @@ int avr_low_result = 0;
                 synchroniseWithAVRClock();
             }
             break;
+            
     	case ChannelConstants_USB_GET_STATE:
             res = usb_get_state();
             break;
-
-    	case ChannelConstants_CONTEXT_GETERROR:
-            res = *((char*) retValue);
-            if (res == 0)
-                retValue = 0;
-            else
-                retValue++;
-            break;
-    		
-    	case ChannelConstants_CONTEXT_GETRESULT:
-    	case ChannelConstants_CONTEXT_GETRESULT_2:
-            res = retValue;
-            retValue = 0;
-            break;
-    	case ChannelConstants_GLOBAL_GETEVENT:
-            // since this function gets called frequently it's a good place to put
-            // the call that periodically resyncs our clock with the power controller
-            maybeSynchroniseWithAVRClock();
-            // don't return any events other than FIQ while sleep manager is running because
-            // the sleep manager might call SHALLOW_SLEEP and any threads
-            // unblocked before that point will end up waiting for sleep to
-            // finish even though they are runnable
-            res = getEvent(true, sleepManagerRunning);
-            // improve fairness of thread scheduling - see bugzilla #568
-            bc = -TIMEQUANTA;
-            break;
-    	case ChannelConstants_GLOBAL_WAITFOREVENT: {
-                long long millisecondsToWait = rebuildLongParam(i1, i2);
-                osMilliSleep(millisecondsToWait);
-                res = 0;
-            }
-            break;
-    	case ChannelConstants_CONTEXT_DELETE:
-    		// TODO delete all the outstanding events on the context
-    		// But will have to wait until we have separate contexts for each isolate
-    		res=0;
-    		break;
-        case ChannelConstants_CONTEXT_HIBERNATE:
-            // TODO this is faked, we have no implementation currently.
-            res = ChannelConstants_RESULT_OK;
-            break;
-        case ChannelConstants_CONTEXT_GETHIBERNATIONDATA:
-            // TODO this is faked, we have no implementation currently.
-            res = ChannelConstants_RESULT_OK;
-            break;
-        case ChannelConstants_DEEP_SLEEP: {
-        	doDeepSleep(rebuildLongParam(i1, i2), i3);
-    		res = 0;
-	        } 
-            break;
-        case ChannelConstants_SHALLOW_SLEEP: {
-    		long long target = rebuildLongParam(i1, i2);
-    		if (target <= 0) target = 0x7FFFFFFFFFFFFFFFLL; // overflow detected
-    		doShallowSleep(target);
-    		res = 0;
-	        } 
-            break;
-        case ChannelConstants_WAIT_FOR_DEEP_SLEEP:
-    		minimumDeepSleepMillis = rebuildLongParam(i1, i2);
-    		sleepManagerRunning = 0;
-    		res = WAIT_FOR_DEEP_SLEEP_EVENT_NUMBER;
-        	break;
-
-        case ChannelConstants_DEEP_SLEEP_TIME_MILLIS_HIGH:
-        	res = (int) (storedDeepSleepWakeupTarget >> 32);
-        	break;
-
-        case ChannelConstants_DEEP_SLEEP_TIME_MILLIS_LOW:
-        	res = (int) (storedDeepSleepWakeupTarget & 0xFFFFFFFF);
-        	break;
-        	
-        case ChannelConstants_TOTAL_SHALLOW_SLEEP_TIME_MILLIS_HIGH:
-        	res = (int) (totalShallowSleepTime >> 32);
-        	break;
-
-        case ChannelConstants_TOTAL_SHALLOW_SLEEP_TIME_MILLIS_LOW:
-        	res = (int) (totalShallowSleepTime & 0xFFFFFFFF);
-        	break;
-        	
-        case ChannelConstants_SET_MINIMUM_DEEP_SLEEP_TIME:
-    		minimumDeepSleepMillis = rebuildLongParam(i1, i2);
-    		res = 0;
-        	break;
-        	
-        case ChannelConstants_SET_SHALLOW_SLEEP_CLOCK_MODE:
-        	shallow_sleep_clock_mode = i1;
-    		res = 0;
-        	break;
-        	
-        case ChannelConstants_GET_LAST_DEVICE_INTERRUPT_TIME_ADDR:
-        	res = (int) &last_device_interrupt_time;
-        	break;
-
-        case ChannelConstants_GET_CURRENT_TIME_ADDR:
-        	res = (int) &clock_counter;
-        	break;
 
         case ChannelConstants_AVR_GET_TIME_HIGH: {
         	jlong avr_time = avrGetTime();
@@ -682,12 +344,7 @@ int avr_low_result = 0;
         case ChannelConstants_AVR_GET_STATUS:
         	res = avrGetOutstandingEvents();
         	break;
-        	
-        case ChannelConstants_SET_DEEP_SLEEP_ENABLED:
-        	deepSleepEnabled = i1;
-        	res = 0;
-        	break;
-        	
+
         case ChannelConstants_WRITE_SECURED_SILICON_AREA:
         	data_cache_disable();
         	write_secured_silicon_area((Flash_ptr)i1, (short)i2);
@@ -700,33 +357,17 @@ int avr_low_result = 0;
         	data_cache_enable();
         	break;
         	
-        case ChannelConstants_SET_SYSTEM_TIME:
-    		setMilliseconds(rebuildLongParam(i1, i2));
-    		res = 0;
-        	break;
-        	
         case ChannelConstants_ENABLE_AVR_CLOCK_SYNCHRONISATION:
     		enableAVRClockSynchronisation(i1);
     		res = 0;
         	break;
-        	
-		case ChannelConstants_OPENCONNECTION:
-			res = ChannelConstants_RESULT_EXCEPTION;
-			retValue = (int)"javax.microedition.io.ConnectionNotFoundException";
-			break;
-			
-		case ChannelConstants_GET_PUBLIC_KEY: {
-		    	int maximum_length = i1;
-		    	char* buffer_to_write_public_key_into = send;		    	
-		    	res = retrieve_public_key(buffer_to_write_public_key_into, maximum_length);
-    		}
+
+        case ChannelConstants_GET_PUBLIC_KEY: {
+            int maximum_length = i1;
+            char* buffer_to_write_public_key_into = send;
+            res = retrieve_public_key(buffer_to_write_public_key_into, maximum_length);
+        }
     	    break;
-    	case ChannelConstants_COMPUTE_CRC16_FOR_MEMORY_REGION:{
-			int address=i1;
-			int numberOfBytes=i2;
-			res = crc(address, numberOfBytes);
-			}
-			break;
     	    
     	case ChannelConstants_REPROGRAM_MMU: {
     		reprogram_mmu(FALSE);
@@ -753,8 +394,9 @@ int avr_low_result = 0;
             res = read_recorded_output(buf, len, just_last);
             }
             break;
+            
         default:
-    		res = ChannelConstants_RESULT_BADPARAMETER;
+            res = ChannelConstants_RESULT_BADPARAMETER;
     }
     com_sun_squawk_ServiceOperation_result = res;
 }

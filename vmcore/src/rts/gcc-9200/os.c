@@ -31,7 +31,6 @@
 #include "syscalls-impl.h"
 #include "spi.h"
 #include "avr.h"
-#include "9200-io.h"
 #include "mmu_fat.h"
 
 // Define the maximum number of user-supplied command line args we can accept
@@ -45,6 +44,7 @@
 #define DEFAULT_NVM_SIZE   0
 
 #define SERVICE_CHUNK_SIZE (8*1024)
+#include <io_metal.c>
 #define IODOTC "9200-io.c"
 
 #include <stdlib.h>
