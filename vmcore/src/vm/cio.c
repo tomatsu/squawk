@@ -58,7 +58,18 @@ INLINE void returnAddressResult(Address value) {
     com_sun_squawk_ServiceOperation_addressResult = value;
 }
 
+#if PLATFORM_TYPE_BARE_METAL
+#include "metal_sleep.h"
+#include "io_metal.h"
+#endif
+
 #include IODOTC
+
+#if PLATFORM_TYPE_BARE_METAL
+/* Different bare metal platforms handle this differently - eg set IODOTC to a specific file.
+ * Also include io_metal.c*/
+#include "io_metal.c"
+#endif
 
 #ifdef OLD_IIC_MESSAGES
 /*

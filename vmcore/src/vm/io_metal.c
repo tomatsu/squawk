@@ -1,6 +1,6 @@
 /*
  * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
- * Copyright 2011 Oracle. All Rights Reserved.
+ * Copyright 2011-2012 Oracle. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This code is free software; you can redistribute it and/or modify
@@ -29,11 +29,6 @@ long long rebuildLongParam(int i1, int i2) {
     return ((long long)i1 << 32) | ((long long)i2 & 0xFFFFFFFF);
 }
 
-/**************************************************************************
- * DMA support
- **************************************************************************/
-extern int dma_buffer_size;
-extern char* dma_buffer_address;
 
 /**************************************************************************
  * Sleep support
@@ -78,10 +73,14 @@ void osMilliSleep(long long millisecondsToWait) {
 // set in java_irq_hndl() (.c or .s)
 volatile long long last_device_interrupt_time;
 
-// set in systemtimer.c:
-extern volatile long long clock_counter;
-
 unsigned int java_irq_status = 0; // bit set = that irq has outstanding interrupt request
+
+struct irqRequest {
+        int eventNumber;
+        int irq_mask;
+        struct irqRequest *next;
+};
+typedef struct irqRequest IrqRequest;
 
 IrqRequest *irqRequests;
 

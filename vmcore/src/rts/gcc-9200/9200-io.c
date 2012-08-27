@@ -40,7 +40,7 @@ int shallow_sleep_clock_mode = SHALLOW_SLEEP_CLOCK_MODE_NORMAL;
 /*
  * Enter deep sleep
  */
-static void doDeepSleep(long long targetMillis, int remain_powered) {
+void doDeepSleep(long long targetMillis, int remain_powered) {
 	long long millisecondsToWait = targetMillis - getMilliseconds();
 	if (remain_powered) {
 		avrSetAlarmAndWait(millisecondsToWait);
@@ -55,7 +55,7 @@ static void doDeepSleep(long long targetMillis, int remain_powered) {
 /*
  * Enter shallow sleep
  */
-static void doShallowSleep(long long targetMillis) {
+void doShallowSleep(long long targetMillis) {
 	long long start_time;
 	long long last_time;
 	int cpsr;

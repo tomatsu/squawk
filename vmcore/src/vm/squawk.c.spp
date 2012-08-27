@@ -90,7 +90,8 @@ void diagnosticWithValue(char * msg, int val) {
 #elif PLATFORM_TYPE_SOCKET
 #define IODOTC "io_socket.c"
 #elif PLATFORM_TYPE_BARE_METAL
-/* Different bare metal platforms handle this differently. Most use io_metal.c though.*/
+/* Different bare metal platforms handle this differently - eg set IODOTC to a specific file.
+ * Also include io_metal.c*/
 #else
 #error "unspecified platform type"
 #endif
