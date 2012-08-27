@@ -44,7 +44,7 @@
 #define DEFAULT_NVM_SIZE   0
 
 #define SERVICE_CHUNK_SIZE (8*1024)
-#include <io_metal.c>
+#include "io_metal.c"
 #define IODOTC "9200-io.c"
 
 #include <stdlib.h>
