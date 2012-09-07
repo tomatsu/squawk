@@ -44,6 +44,8 @@ int shallow_sleep_clock_mode = SHALLOW_SLEEP_CLOCK_MODE_NORMAL;
 static void setDeepSleepEventOutstanding(long long target) {
     storedDeepSleepWakeupTarget = target;
     outstandingDeepSleepEvent = 1;
+    diagnosticWithValue("setDeepSleepEventOutstanding  - hi", (int)(target >> 32));
+    diagnosticWithValue("setDeepSleepEventOutstanding  - lo", (int)(target & 0xFFFFFFFFL));
 }
 
 /**
@@ -114,7 +116,8 @@ int storeIrqRequest (int irq_mask) {
     newRequest->irq_mask = irq_mask;
 
     diagnosticWithValue("storeIrqRequest  - irqRequests", (int)irqRequests);
-    diagnosticWithValue("storeIrqRequest  - newRequest", (int)newRequest);
+    diagnosticWithValue("    - newRequest", (int)newRequest);
+    diagnosticWithValue("    - irq_mask", irq_mask);
 
     if (irqRequests == NULL) {
         irqRequests = newRequest;
@@ -126,7 +129,10 @@ int storeIrqRequest (int irq_mask) {
         }
         current->next = newRequest;
         newRequest->eventNumber = current->eventNumber + 1;
+        assume(newRequest->eventNumber >= 0);
     }
+    
+    diagnosticWithValue("    - eventNumber", newRequest->eventNumber);
     return newRequest->eventNumber;
 }
 
@@ -138,13 +144,13 @@ static void ioPostEvent(void) { }
  * occurred return its eventNumber. Otherwise return 0
  */
 int checkForEvents() {
-    return getEvent(0, false);
+    return getEvent(false, false);
 }
 
 static void printOutstandingEvents() {
 	IrqRequest* current = irqRequests;
 	while (current != NULL) {
-    	diagnosticWithValue("event request", current->irq_mask);
+    	diagnosticWithValue("    - eventNumber", current->irq_mask);
     	current = current->next;
     }
 }
@@ -158,6 +164,8 @@ static void printOutstandingEvents() {
 int getEvent(int removeEventFlag, int fiqOnly) {
     int res = 0;
     int device_type;
+    
+    diagnosticWithValue("getEvent - removeEventFlag|fiqOnly:", (((removeEventFlag & 0xFFFF) << 16)) | (fiqOnly & 0xFFFF));
     
     if (irqRequests != NULL) {
     	IrqRequest* current = irqRequests;
@@ -181,6 +189,7 @@ int getEvent(int removeEventFlag, int fiqOnly) {
         	}
         }
     }
+    
     if (res == 0 && !fiqOnly) {
     	// check for serial chars available
     	for (device_type = DEVICE_FIRST; device_type<=DEVICE_LAST; device_type++) {
@@ -214,10 +223,16 @@ int getEvent(int removeEventFlag, int fiqOnly) {
 		// whether deep sleep is appropriate after any event.
 		outstandingDeepSleepEvent = 0;
 	}
+    
+    if (res == 0) {
+        diagnostic("    - no events. Waiting events:");
+        // printOutstandingEvents();
+    } else {
+        diagnosticWithValue("    - got eventNumber", res);
+    }
     return res;
 }
 
-/*OK*/
 /**
  * Check if an irq bit is set in the status, return 1 if yes
  * Also, clear bit if it is set and clear_flag = 1
@@ -421,6 +436,7 @@ static void ioExecute(void) {
             minimumDeepSleepMillis = rebuildLongParam(i1, i2);
             sleepManagerRunning = 0;
             res = WAIT_FOR_DEEP_SLEEP_EVENT_NUMBER;
+            diagnosticWithValue("WAIT_FOR_DEEP_SLEEP -- ", i2);
             break;
         }
 
@@ -497,6 +513,7 @@ static void ioExecute(void) {
         
         default: {
             ioExecuteSys(); // do platform-specific
+            res = com_sun_squawk_ServiceOperation_result; // result set by ioExecuteSys.
             break;
         }
     }
