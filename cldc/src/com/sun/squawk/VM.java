@@ -2405,32 +2405,17 @@ hbp.dumpState();
     public static void setSystemClockMockInit(long newTime) {
         long curTime = getTimeMillis();
         long delta = newTime - curTime;
-//        VM.println("delta (init): " + delta);
-//        VM.println("   hi: " + getHi(delta));
-//        VM.println("   lo: " + getLo(delta));
-//        VM.println("  cur: " + curTime);
-//        VM.println("  adj: " + makeLong(debugClockAdjustmentsHi, debugClockAdjustmentsLo));
-        
         debugClockAdjustmentsHi = getHi(delta);
         debugClockAdjustmentsLo = getLo(delta);
-//        VM.println("  new: " + getTimeMillis());
     }
         
     public static void setSystemClockMock(long newTime) {
         long curTime = getTimeMillis();
         long delta = newTime - curTime;
-//        VM.println("delta: " + delta);
-//        VM.println("   hi: " + getHi(delta));
-//        VM.println("   lo: " + getLo(delta));
-//        VM.println("  cur: " + curTime);
-//        VM.println("  adj: " + makeLong(debugClockAdjustmentsHi, debugClockAdjustmentsLo));
-        
         long adj = makeLong(debugClockAdjustmentsHi, debugClockAdjustmentsLo) + delta;
         
         debugClockAdjustmentsHi = getHi(adj);
         debugClockAdjustmentsLo = getLo(adj);
-//        Assert.that(VM.makeLong(debugClockAdjustmentsHi, debugClockAdjustmentsLo) == adj);
-//        VM.println("  new: " + getTimeMillis());
         adjustSystemTime(delta);
     }
 /*end[DEBUG_CODE_ENABLED]*/

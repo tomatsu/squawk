@@ -37,6 +37,7 @@ import com.sun.squawk.VM;
 import com.sun.squawk.flash.IMemoryHeapBlock;
 import com.sun.squawk.flash.INorFlashMemoryHeap;
 import com.sun.squawk.flash.INorFlashMemoryHeapScanner;
+import com.sun.squawk.flash.NorFlashMemoryHeap;
 
 /**
  * Keeps track of multiple records stores (by name). Also handles case where owning midlet has changed,
@@ -51,7 +52,7 @@ public class RecordStoreManager implements IRecordStoreManager {
     protected IRmsEntryVisitor scanVisitor;
     protected IRmsEntryVisitor reScanVisitor;
     
-    protected RecordStoreManager() {
+    protected RecordStoreManager() {  // used by testing
     }
 
     public RecordStoreManager(INorFlashMemoryHeap memoryHeap) throws RecordStoreException {
@@ -60,6 +61,7 @@ public class RecordStoreManager implements IRecordStoreManager {
         init();
     }
     
+    // is this used?
     public RecordStoreManager(INorFlashMemoryHeap memoryHeap, INorFlashMemoryHeapScanner memoryHeapScanner, IRmsEntryVisitor scanVisitor, IRmsEntryVisitor reScanVisitor) throws RecordStoreException {
         this.memoryHeap = memoryHeap;
         this.memoryHeapScanner = memoryHeapScanner;
@@ -140,7 +142,13 @@ public class RecordStoreManager implements IRecordStoreManager {
             entry.readFrom(block);
             return entry;
         } catch (IOException e) {
-            throw new RecordStoreException(e.getMessage());
+            String msg = "Error parsing record at: " + block.getAddress().toUWord().toPrimitive() + ".\n    Enclosed error: " + e.toString();
+            if (NorFlashMemoryHeap.CONTINUE_PAST_ERRORS) {
+                System.err.println("[RMS] " + msg);
+                return null;
+            } else {
+                throw new RecordStoreException(msg);
+            }
         }
     }
     
@@ -256,10 +264,22 @@ public class RecordStoreManager implements IRecordStoreManager {
         }
     }
     
+    /**
+     * Mark the block at "address" as "STALE". Updates actual flash memory.
+     * @param address of RmsEntry to free
+     * @throws RecordStoreException 
+     */
     public void invalidateEntryAt(Address address) throws RecordStoreException {
         memoryHeap.freeBlockAt(address);
     }
     
+    /**
+     * Write the RmsEntry type byte, RmsEntry data, and optional pad byte.
+     * 
+     * @param entry RmsEntry to write
+     * @return address of the written RmsEntry
+     * @throws RecordStoreException 
+     */
     public Address logEntry(IRmsEntry entry) throws RecordStoreException {
         ByteArrayOutputStream bytesOut = new ByteArrayOutputStream(64);
         DataOutputStream output = new DataOutputStream(bytesOut);
