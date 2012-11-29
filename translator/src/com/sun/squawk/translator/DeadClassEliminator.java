@@ -46,9 +46,18 @@ import com.sun.squawk.translator.ir.Instruction;
  * @author dw29446
  */
 public class DeadClassEliminator {
+    /**
+     * If true, then be more selective about keeping classes around. In theory you really only need to keep classes directly referenced by bytecodes:
+     * new, some invokes, get/put static. findslot, etc (look at the bytecodes), plus the defining classes of methods, a classes superclasses and interfaces, etc.
+     *  
+     * In reality, we also need to keep alive any classes referenced by the metadata suite, which includes method parameter and return types, and field types.
+     * We can't turn this one until metadata suite issue is resolved.
+     */
+    public final static boolean AGGRESSIVE_DCE = false;
 
-    private Translator translator;
-    private Hashtable referencedClasses = new Hashtable();
+    private final Translator translator;
+    private final Hashtable referencedClasses = new Hashtable();
+    private final boolean dmeEnabled;
 
     public boolean isMarked(Klass klass) {
         return referencedClasses.get(klass) != null;
@@ -73,6 +82,7 @@ public class DeadClassEliminator {
      */
     public DeadClassEliminator(Translator translator) {
         this.translator = translator;
+        dmeEnabled = Arg.get(Arg.DEAD_METHOD_ELIMINATION).getBool();
     }
 
     /*---------------------------------------------------------------------------*\
@@ -250,18 +260,22 @@ public class DeadClassEliminator {
         }
     }
 
-    private void scanMethod(ClassFile classFile, Code code, Method m) {
+    private boolean methodIsUsed(Method m) {
+        return (!dmeEnabled || translator.dme.isMarkedUsed(m));
+    }
+    
+    private void scanMethod(Code code, Method m) {
         boolean dontExpectCode = m.isHosted() || m.isAbstract() || m.isNative();
         Assert.always(dontExpectCode || code != null, "code for method " + m);
         Assert.always(m != null, "method for code " + code);
 
-        if (code != null && m != null
-                && (!Arg.get(Arg.DEAD_METHOD_ELIMINATION).getBool() ||
-                    translator.dme.isMarkedUsed(m))) {
-            shallowMark(m.getReturnType());
-            Klass[] parameters = m.getParameterTypes();
-            for (int j = 0; j < parameters.length; j++) {
-                shallowMark(parameters[j]);
+        if (code != null && m != null && methodIsUsed(m)) {
+            if (!AGGRESSIVE_DCE) {
+                shallowMark(m.getReturnType());
+                Klass[] parameters = m.getParameterTypes();
+                for (int j = 0; j < parameters.length; j++) {
+                    shallowMark(parameters[j]);
+                }
             }
             ClassReferenceRecordingVisitor visitor = new ClassReferenceRecordingVisitor(this);
             IR ir = code.getIR();
@@ -289,10 +303,10 @@ public class DeadClassEliminator {
         }
 
         for (int i = 0; i < classFile.getStaticMethodCount(); i++) {
-            scanMethod(classFile, classFile.getStaticMethod(i), klass.getMethod(i, true));
+            scanMethod(classFile.getStaticMethod(i), klass.getMethod(i, true));
         }
         for (int i = 0; i < classFile.getVirtualMethodCount(); i++) {
-            scanMethod(classFile, classFile.getVirtualMethod(i), klass.getMethod(i, false));
+            scanMethod(classFile.getVirtualMethod(i), klass.getMethod(i, false));
         }
     }
 
@@ -302,11 +316,13 @@ public class DeadClassEliminator {
      * @param klass
      */
     public void scanClassFields(Klass klass) {
-        for (int i = 0; i < klass.getFieldCount(true); i++) {
-            shallowMark(klass.getField(i, true).getType());
-        }
-        for (int i = 0; i < klass.getFieldCount(false); i++) {
-            shallowMark(klass.getField(i, false).getType());
+        if (!AGGRESSIVE_DCE) {
+            for (int i = 0; i < klass.getFieldCount(true); i++) {
+                shallowMark(klass.getField(i, true).getType());
+            }
+            for (int i = 0; i < klass.getFieldCount(false); i++) {
+                shallowMark(klass.getField(i, false).getType());
+            }
         }
     }
 
@@ -449,8 +465,12 @@ class ClassReferenceRecordingVisitor extends ReferenceRecordingVisitor {
     }
 
     protected void recordField(Field field) {
-        dce.shallowMark(field.getDefiningClass());
-        dce.shallowMark(field.getType());
+        if (DeadClassEliminator.AGGRESSIVE_DCE && field.isStatic()) {
+            dce.shallowMark(field.getDefiningClass());
+        } else {
+            dce.shallowMark(field.getDefiningClass());
+            dce.shallowMark(field.getType());
+        }
     }
 
 }
