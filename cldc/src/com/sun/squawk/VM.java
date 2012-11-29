@@ -836,13 +836,6 @@ public class VM implements GlobalStaticFields {
 /*if[JAVA5SYNTAX]*/
     @Vm2c(root="VM_inRam")
 /*end[JAVA5SYNTAX]*/
-    /**
-     * Lookup the position of a value in a sorted array of numbers.
-     *
-     * @param key the value to look for
-     * @param array the array
-     * @return the index or -1 if the lookup fails
-     */
     static boolean inRam(Object object) throws AllowInlinedPragma {
         return GC.inRam(object);
     }
