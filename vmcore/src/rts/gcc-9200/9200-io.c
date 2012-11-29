@@ -35,7 +35,7 @@
 
 #define SHALLOW_SLEEP_CLOCK_SWITCH_THRESHOLD 20
 static const int peripheral_bus_speed[] = {PERIPHERAL_BUS_SPEEDS};
-int shallow_sleep_clock_mode = SHALLOW_SLEEP_CLOCK_MODE_NORMAL;
+extern int shallow_sleep_clock_mode;
 
 /*
  * Enter deep sleep
@@ -134,6 +134,9 @@ void freeSerialPort(int device_type) {
  * See comment in AT91_AIC.java for details
  * ****************************************************************
  */
+
+unsigned int java_irq_status; 
+extern void java_irq_hndl();
 
 #define WAIT_FOR_DEEP_SLEEP_EVENT_NUMBER (DEVICE_LAST+1)
 #define FIRST_IRQ_EVENT_NUMBER (WAIT_FOR_DEEP_SLEEP_EVENT_NUMBER+1)
