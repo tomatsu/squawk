@@ -42,7 +42,9 @@ public abstract class StreamReader extends Reader {
      * @param in
      * @return this Reader
      */
-    public Reader open(InputStream in) {
+    public Reader open(InputStream in, String enc)
+        throws UnsupportedEncodingException {
+
         this.in = in;
         return this;
     }

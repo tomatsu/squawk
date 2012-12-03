@@ -53,7 +53,7 @@ public class Helper {
      * If set to true, then ONLY support ISO8859_1 encodings,
      * although aliases (such as "US_ASCII") are allowed.
      */
-    public static final boolean ISO8859_1_ONLY_SUPPORTED = true;
+    public static final boolean ISO8859_1_ONLY_SUPPORTED = false;
 
     /**
      * Default path to the J2ME classes. Hardcode for Squawk.
@@ -76,10 +76,15 @@ public class Helper {
             throw new NullPointerException();
         }
 
-        StreamReader fr = new ISO8859_1_Reader();
+        ISO8859_1_Reader fr = new ISO8859_1_Reader();
 
         /* Open the connection and return*/
-        return fr.open(is);
+		try {
+			return fr.open(is, defaultEncoding);
+		} catch (UnsupportedEncodingException e) {
+			// should never happen
+			throw new RuntimeException();
+		}
     }
 
     /**
@@ -107,7 +112,7 @@ public class Helper {
             StreamReader fr = (StreamReader) getStreamReaderOrWriter(name, true);
 
             /* Open the connection and return*/
-            return fr.open(is);
+            return fr.open(is, name);
         }
     }
 
@@ -132,9 +137,9 @@ public class Helper {
              return clazz.newInstance();
         } catch(ClassNotFoundException x) {
             throw new UnsupportedEncodingException(
-/*if[VERBOSE_EXCEPTIONS]*/
+												   ///*if[VERBOSE_EXCEPTIONS]*/
                                          "Encoding "+name+" not found"
-/*end[VERBOSE_EXCEPTIONS]*/
+										 ///*end[VERBOSE_EXCEPTIONS]*/
             );
         } catch(InstantiationException x) {
             throw new RuntimeException(
@@ -164,10 +169,15 @@ public class Helper {
         }
 
         /* Get the writer from the encoding */
-        StreamWriter sw = new ISO8859_1_Writer();
+        ISO8859_1_Writer sw = new ISO8859_1_Writer();
 
         /* Open it on the output stream and return */
-        return sw.open(os);
+		try {
+			return sw.open(os, defaultEncoding);
+		} catch (UnsupportedEncodingException e) {
+			// should never happen
+			throw new RuntimeException();
+		}
     }
 
 
@@ -188,7 +198,7 @@ public class Helper {
             }
         } else {
             /* Test for null arguments */
-            if (os == null) {
+            if (os == null || name == null) {
                 throw new NullPointerException();
             }
 
@@ -196,7 +206,7 @@ public class Helper {
             StreamWriter sw = (StreamWriter) getStreamReaderOrWriter(name, false);
 
             /* Open it on the output stream and return */
-            return sw.open(os);
+            return sw.open(os, name);
         }
     }
 
@@ -246,7 +256,6 @@ public class Helper {
     private static String lastReaderEncoding;
     private static StreamReader  lastReader;
 
-
     /**
      * Convert a byte array to a char array
      *
@@ -266,7 +275,7 @@ public class Helper {
             }
             return value;
         } else if (ISO8859_1_ONLY_SUPPORTED) {
-            throw new UnsupportedEncodingException(enc);
+            throw new UnsupportedEncodingException("ISO8859_1_ONLY_SUPPORTED: " + enc);
         } else {
             return byteToCharArray0(buffer, offset, length, enc);
         }
@@ -289,7 +298,7 @@ public class Helper {
         char[] outbuf = new char[size];
 
         /* Open the reader on a ByteArrayInputStream */
-        lastReader.open(new ByteArrayInputStream(buffer, offset, length));
+        lastReader.open(new ByteArrayInputStream(buffer, offset, length), enc);
 
         try {
             /* Read the input */
@@ -312,7 +321,6 @@ public class Helper {
         /* And return the buffer */
         return outbuf;
     }
-
 
     /*
      * Cached variables for charToByteArray
@@ -337,7 +345,7 @@ public class Helper {
         ByteArrayOutputStream os = new ByteArrayOutputStream(size);
 
         /* Open the writer */
-        lastWriter.open(os);
+        lastWriter.open(os, enc);
 
         try {
             /* Convert */
@@ -386,7 +394,7 @@ public class Helper {
             }
             return value;
         } else if (ISO8859_1_ONLY_SUPPORTED) {
-            throw new UnsupportedEncodingException(enc);
+            throw new UnsupportedEncodingException("ISO8859_1_ONLY_SUPPORTED: " + enc);
         } else {
             return charToByteArray0(buffer, offset, length, enc);
         }

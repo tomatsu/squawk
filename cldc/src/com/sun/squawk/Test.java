@@ -106,6 +106,7 @@ public class Test {
         x50();
         x51();
         x52();
+        x53();
         randomTimeTest();
 	sleepTest();
 
@@ -711,6 +712,9 @@ public class Test {
         
     }
 
+
+		
+
     public interface IDictionary {
     }
 
@@ -742,6 +746,83 @@ public class Test {
         Runnable r = new Concrete1();
         r.run();
     }
+
+	static void convertBytes(String enc) {
+		byte[] bytes = new byte[2048];
+
+		int b = '0';
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = (byte)b++;
+			if (b > 127) {
+				b = '0';
+			}
+		}
+		System.gc();
+		long tm = System.currentTimeMillis();
+		try {
+			for (int i = 0; i < 10; i++) {
+				String str = new String(bytes, enc);
+			}
+		} catch (java.io.UnsupportedEncodingException ex) {
+			System.out.println(enc + " encoder not supported in this configuration: " + ex);
+		}
+		tm = System.currentTimeMillis() - tm;
+		System.out.println(enc + " conversions took" + tm + "ms");
+	}
+		
+	static void x53() {
+		final String ASCII_STR = "Hello World!";
+		final String NON_ASCII_STR = "¿¿¿   ∆£≈∆¢   ???";
+		final String UTF_8_ENCODER = "UTF-8";
+		final String DEFAULT_ENCODER = "ISO8859_1";
+
+		String tmp;
+		boolean result = true;
+		byte[] bytes;
+
+		bytes = ASCII_STR.getBytes();
+		if (bytes.length != ASCII_STR.length()) {
+			System.out.println("default encoder looks broken");
+			result = false;
+		}
+		tmp = new String(bytes);
+		if (!ASCII_STR.equals(tmp)) {
+			System.out.println("default encoder/decoder looks broken: " + tmp);
+			result = false;
+		}
+
+		convertBytes(DEFAULT_ENCODER);
+
+		try {
+			bytes = ASCII_STR.getBytes(UTF_8_ENCODER);
+			if (bytes.length != ASCII_STR.length()) {
+				System.out.println("utf-8 encoder looks broken");
+				result = false;
+			}
+			tmp = new String(bytes, UTF_8_ENCODER);
+			if (!ASCII_STR.equals(tmp)) {
+				System.out.println("utf-8 encoder/decoder looks broken: " + tmp);
+				result = false;
+			}
+
+			bytes = NON_ASCII_STR.getBytes(UTF_8_ENCODER);
+			if (bytes.length == NON_ASCII_STR.length()) {
+				System.out.println("utf-8 encoder looks broken (b)");
+				result = false;
+			}
+			tmp = new String(bytes, UTF_8_ENCODER);
+			if (!NON_ASCII_STR.equals(tmp)) {
+				System.out.println("utf-8 encoder/decoder looks broken: " + tmp);
+				result = false;
+			}
+			convertBytes(UTF_8_ENCODER);
+		
+		} catch (java.io.UnsupportedEncodingException ex) {
+			System.out.println("UTF-8 encoder not supported in this configuration: " + ex);
+		}
+
+		result("x53", result);
+	}
 
     static void sleepTest() {
 

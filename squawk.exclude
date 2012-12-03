@@ -95,6 +95,18 @@ FLASH_MEMORY=false                            com.sun.cldc.jna.platform.Spot
 ###############################################
 VERIFY_SIGNATURES=false                         com.sun.squawk.security.verifier.*
 
+##############################################
+# from phoneme, but not needed?
+##############################################
+com.sun.cldc.i18n.j2me.Gen_Reader
+com.sun.cldc.i18n.j2me.Gen_Writer
+com.sun.cldc.i18n.j2me.UTF_16_Reader
+com.sun.cldc.i18n.j2me.UTF_16_Writer
+com.sun.cldc.i18n.j2me.UTF_16BE_Reader
+com.sun.cldc.i18n.j2me.UTF_16BE_Writer
+com.sun.cldc.i18n.j2me.UTF_16LE_Reader
+com.sun.cldc.i18n.j2me.UTF_16LE_Writer
+
 ###############################################
 # Obsolete properties?
 ###############################################

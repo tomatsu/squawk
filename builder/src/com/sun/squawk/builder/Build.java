@@ -1424,6 +1424,9 @@ public class Build {
             	copy(phoneMeSourceRoot + "midp/src/rms/rms_api/classes", "imp/phoneme", "imp/src", "javax/microedition/rms");
             	copy(phoneMeSourceRoot + "midp/src/rms/rms_api/reference/classes", "imp/phoneme", "imp/src", "javax/microedition/rms");
             	copy(phoneMeSourceRoot + "midp/src/rms/rms_exc/reference/classes", "imp/phoneme", "imp/src", "javax/microedition/rms");
+
+            	copy(phoneMeSourceRoot + "midp/src/i18n/i18n_main/reference/classes", "imp/phoneme", "imp/src", "com/sun/cldc/i18n/j2me");
+
             }
         });
 

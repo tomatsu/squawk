@@ -41,7 +41,9 @@ public abstract class StreamWriter extends Writer {
      * @param out
      * @return this Writer
      */
-    public Writer open(OutputStream out) {
+    public Writer open(OutputStream out, String enc)
+        throws UnsupportedEncodingException {
+
         this.out = out;
         return this;
     }
@@ -52,7 +54,9 @@ public abstract class StreamWriter extends Writer {
      * @exception  IOException  If an I/O error occurs
      */
     public void flush() throws IOException {
-        out.flush();   
+        if (out != null) {
+            out.flush();   
+        }
     }
 
     /**
