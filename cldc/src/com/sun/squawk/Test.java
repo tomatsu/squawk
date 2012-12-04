@@ -779,7 +779,7 @@ public class Test {
     
 	static void x53() {
 		final String ASCII_STR = "Hello World!";
-		final String NON_ASCII_STR = "¿¿¿   ∆£≈∆¢   ???";
+		final String NON_ASCII_STR = new StringBuffer().append('\u00BF').append(' ').append('\u0394').append('\u00A3').append('\u00AC').append('\u0394').append('\u20AC').append('?').toString();
 		final String UTF_8_ENCODER = "UTF-8";
 		final String DEFAULT_ENCODER = "ISO8859_1";
 
