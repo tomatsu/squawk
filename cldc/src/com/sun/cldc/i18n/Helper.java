@@ -269,6 +269,9 @@ public class Helper {
     public static char[] byteToCharArray(byte[] buffer, int offset, int length, String enc) throws UnsupportedEncodingException {
         //Because most cases use ISO8859_1 encoding, we can optimize this case.
         if(isISO8859_1(enc)) {
+            if (length < 0) {
+                throw new IndexOutOfBoundsException();
+            }
             char[] value = new char[length];
             for(int i=0; i<length; i++) {
                 value[i] = (char)(buffer[i+offset] & 0xff);
@@ -385,7 +388,9 @@ public class Helper {
         Arrays.boundsCheck(buffer.length, offset, length);
         //Because most cases use ISO8859_1 encoding, we can optimize this case.
         if (isISO8859_1(enc)) {
-            char c;
+            if (length < 0) {
+                throw new IndexOutOfBoundsException();
+            }
             byte[] value = new byte[length];
             for(int i=0; i<length; i++) {
                 //c = buffer[i+offset];
