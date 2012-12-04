@@ -195,8 +195,6 @@ public final class Isolate implements Runnable {
      */
     private SquawkHashtable childThreads = new SquawkHashtable();
     
-
-
     /**
      * Flag to show that class Klass has been initialized.
      */

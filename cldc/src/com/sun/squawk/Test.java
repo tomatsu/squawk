@@ -767,9 +767,16 @@ public class Test {
 			System.out.println(enc + " encoder not supported in this configuration: " + ex);
 		}
 		tm = System.currentTimeMillis() - tm;
-		System.out.println(enc + " conversions took" + tm + "ms");
+		System.out.println(enc + " conversions took " + tm + "ms");
 	}
 		
+    static void printArray(byte[] b) {
+        for (int i = 0; i < b.length; i++) {
+            System.err.print(b[i]);
+            System.err.print(' ');
+        }
+    }
+    
 	static void x53() {
 		final String ASCII_STR = "Hello World!";
 		final String NON_ASCII_STR = "¿¿¿   ∆£≈∆¢   ???";
@@ -807,7 +814,10 @@ public class Test {
 
 			bytes = NON_ASCII_STR.getBytes(UTF_8_ENCODER);
 			if (bytes.length == NON_ASCII_STR.length()) {
-				System.out.println("utf-8 encoder looks broken (b)");
+				System.out.println("utf-8 encoder looks broken (b). NON_ASCII_STR: " + NON_ASCII_STR);
+				System.out.println("    NON_ASCII_STR.length: " + NON_ASCII_STR.length());
+				System.out.println("    bytes.length: " + bytes.length);
+                printArray(bytes);
 				result = false;
 			}
 			tmp = new String(bytes, UTF_8_ENCODER);
