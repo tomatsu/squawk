@@ -396,7 +396,7 @@ System.out.println("filePathelements=" + filePathelements);
      * @param parentURI   the value of the 'parent_uri' item in the object memory file
      * @param memorySize  the value of the 'size' item in the object memory file
      */
-    static int calculateMemoryPadding(String parentURI, int memorySize) {
+    public static int calculateMemoryPadding(String parentURI, int memorySize) {
         int sizeSoFar = 4 +   // u4 magic
                         2 +   // u2 minor_version
                         2 +   // major_version
