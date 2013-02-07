@@ -152,7 +152,20 @@ public class Suite {
 		for (int i = 0; i != objectMemory.length; ++i) {
 			hash += objectMemory[i];
 		}
+        
+        //logHeader("stream");
 	}
+
+    public void logHeader(String name) {
+        System.out.println("SuiteReloInfo: " + name);
+        System.out.println("canonicalStart: 0x" + Integer.toHexString(canonicalStart));
+        System.out.println("canonicalEnd: 0x" + Integer.toHexString(canonicalStart + memorySize));
+        System.out.println("parentURL: " + parentURL);
+        System.out.println("rootOffset: 0x" + Integer.toHexString(rootOffset));
+        System.out.println("size: " + memorySize);
+        System.out.println("unpadded header size: " + unpaddedHdrSize);
+        System.out.println("header size: " + ((unpaddedHdrSize + 3) / 4));
+    }
 
 	private int readParentHash(DataInputStream dis) throws IOException {
 		return dis.readInt();
@@ -402,6 +415,7 @@ public class Suite {
 		FileInputStream fis = new FileInputStream(inputFile);
 		loadFromStream(new DataInputStream(fis), bootstrapFilename);
 		fis.close();
+        //logHeader(filename);
 	}
 
 	private int calculateOopMapSizeInBytes(int size) {
