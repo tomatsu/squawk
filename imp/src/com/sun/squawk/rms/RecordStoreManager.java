@@ -44,6 +44,7 @@ import com.sun.squawk.flash.NorFlashMemoryHeap;
  * so store has to be erased.
  */
 public class RecordStoreManager implements IRecordStoreManager {
+    private final static boolean DO_VERSION_CHECKS = false; // app rollback means that we might be going backwards intentionally
 
     protected INorFlashMemoryHeap memoryHeap;
     protected IRecordStoreEntry[] currentRecordStores;
@@ -90,12 +91,16 @@ public class RecordStoreManager implements IRecordStoreManager {
         if (!vendorInstalled.equals(vendorFound)) {
             return "Erasing RMS, since installed MIDlet-Vendor: " + vendorInstalled + " does not match prior -Vendor: " + vendorFound;
         }
-        if (versionInstalled == null) {
-            if (versionFound == null) {
+        if (!DO_VERSION_CHECKS) {
+            return null;
+        } else {
+            if (versionInstalled == null) {
+                if (versionFound == null) {
+                    return null;
+                }
+            } else if (versionInstalled.compareTo(versionFound) >= 0) {
                 return null;
             }
-        } else if (versionInstalled.compareTo(versionFound) >= 0) {
-            return null;
         }
         return "Erasing RMS, since installed MIDlet-Version: " + versionInstalled + " does not match prior -Version: " + versionFound;
     }
