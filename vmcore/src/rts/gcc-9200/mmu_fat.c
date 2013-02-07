@@ -225,6 +225,7 @@ int get_allocated_file_size(int required_virtual_address) {
 		}
 		recordStatus = recordStatus = read_number(fat_ptr, 2);
 	}
+    return -1;
 }
 
 
