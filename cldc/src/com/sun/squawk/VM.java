@@ -4362,7 +4362,26 @@ hbp.dumpState();
     }
 
     /**
+     * Gets the value of a JAD or manifest property for the current Isolate.
+     * This is a static version of MIDlet.getAppProperty(), for convenience.
+     *
+     * @param key the name of the property whose value is to be retrieved
+     * @return the property value
+     */
+    public static String getAppProperty(String key) {
+        if (key == null) {
+            throw new NullPointerException();
+        }
+        String result = Isolate.currentIsolate().getJADProperty(key);
+        if (result != null) {
+            return result;
+        }
+        return VM.getManifestProperty(key);
+    }
+    
+    /**
      * Gets the value of a manifest property embedded in the suite (from META-INF/MANIFEST.MF).
+     * Most general callers should use getAppProperty() instead of getManifestProperty().
      *
      * @param name the name of the property whose value is to be retrieved
      * @return the property value

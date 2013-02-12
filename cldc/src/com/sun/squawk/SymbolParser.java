@@ -438,6 +438,8 @@ final class SymbolParser extends ByteBufferDecoder {
 
     /**
      * Prunes the methods based on a given suite type.
+     * 
+     * @todo Now we're keeping symbols for all methods if lnt is true. But we can strip symbols for methods that have been eliminated.
      *
      * @param klass     the enclosing class
      * @param type      specifies a closed suite type. Must be {@link Suite#LIBRARY} or {@link Suite#EXTENDABLE_LIBRARY}.
@@ -455,8 +457,9 @@ final class SymbolParser extends ByteBufferDecoder {
                 String name = getName();
                 if (!PragmaException.isHosted(pragmas) &&               // strip methods called only in hosted VM mode
                     !PragmaException.isInterpreterInvoked(pragmas) &&   // strip methods called from the interpreter
-                    retainMember(type, modifiers, null) &&
-                    VM.isExported(klass.getMethod(i, category == STATIC_METHODS)))
+                    (MethodMetadata.lineNumberTablesKept() ||           // if we want line numbers then we want method names too...
+                        (retainMember(type, modifiers, null) &&
+                        VM.isExported(klass.getMethod(i, category == STATIC_METHODS)))))
                 {
                     // keeping this method:
                     if (!keptAtLeastOne) {

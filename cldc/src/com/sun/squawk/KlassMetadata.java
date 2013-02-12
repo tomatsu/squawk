@@ -388,7 +388,7 @@ public class KlassMetadata {
             return null;
         }
 
-        if (type == Suite.APPLICATION) {
+        if (type == Suite.APPLICATION && !MethodMetadata.lineNumberTablesKept()) {
             boolean anyRuntimeStaticsRequired = false;
             for (int i = 0; i != metadatas.length; ++i) {
                 Klass klass = metadatas[i].getDefinedClass();

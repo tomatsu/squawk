@@ -736,7 +736,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             String proxyReqAdd = "";
 
             /* Determine port number */
-            String httpProxy = VM.getManifestProperty(HTTP_PROXY_MANIFEST_PROPERTY);
+            String httpProxy = VM.getAppProperty(HTTP_PROXY_MANIFEST_PROPERTY);
             if (httpProxy == null) {
                 // Try to get the property from the Isolates properties
                 httpProxy = Isolate.currentIsolate().getProperty(HTTP_PROXY_MANIFEST_PROPERTY);

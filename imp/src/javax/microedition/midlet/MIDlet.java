@@ -249,7 +249,7 @@ public abstract class MIDlet {
         if(key == null){
             throw new NullPointerException();
         }
-        return VM.getManifestProperty(key);
+        return VM.getAppProperty(key);
     }
 
     /**

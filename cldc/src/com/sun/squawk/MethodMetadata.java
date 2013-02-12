@@ -54,6 +54,21 @@ public class MethodMetadata {
         preserveLocalVariableTables = true;
     }
 
+    
+    /**
+     * @see #strip(MethodMetadata[])
+     */
+    static boolean lineNumberTablesKept() {
+        return preserveLineNumberTables;
+    }
+
+    /**
+     * @see #strip(MethodMetadata[])
+     */
+    static boolean localVariableTablesKept() {
+        return preserveLocalVariableTables;
+    }
+    
     /**
      * The line number table.
      *
