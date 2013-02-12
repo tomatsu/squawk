@@ -498,12 +498,17 @@ public class Romizer {
 
         Suite parentSuite = null;
         String key = null;
+        boolean userAskedForDCE = false;
+        
         while (argc != args.length) {
             String arg = args[argc];
-
             if (arg == null || arg.charAt(0) != '-') {
                 break;
-            } else if (arg.startsWith("-D")) {
+            } else if (arg.equalsIgnoreCase("-deadClassElimination:true")) {
+                userAskedForDCE = true;
+            }
+            
+            if (arg.startsWith("-D")) {
                 try {
                     String name = arg.substring("-D".length(), arg.indexOf('='));
                     String value = arg.substring(arg.indexOf('=') + 1);
@@ -644,18 +649,22 @@ public class Romizer {
         File file = new File(suiteName + "." + (suiteType == Suite.EXTENDABLE_LIBRARY ? "extendable.library" : "library") + ".properties");
         if (file.exists()) {
             VM.resetSymbolsStripping(file);
-        } else if (suiteType == Suite.APPLICATION) {
-            VM.resetSymbolsStrippingForApp();
-            if (VM.isVerbose()) {
-                System.out.println("Suite export properties file \"" + file.getPath() + "\" not found. Treating all application symbols as internal.");
-            }
         } else {
-            if (VM.isVerbose()) {
-                System.out.println("Suite export properties file \"" + file.getPath() + "\" not found. Dead-class elimination option disabled.");
+            if (suiteType == Suite.APPLICATION) {
+                VM.resetSymbolsStrippingForApp();
             }
-            VM.setProperty("translator.deadClassElimination", "false");
+            if (userAskedForDCE) {
+                if (VM.isVerbose()) {
+                    System.out.println("Suite export properties file \"" + file.getPath() + "\" not found. Treating all application symbols as internal.");
+                }
+            } else {
+                if (VM.isVerbose()) {
+                    System.out.println("Suite export properties file \"" + file.getPath() + "\" not found. Dead-class elimination option disabled.");
+                }
+                VM.setProperty("translator.deadClassElimination", "false");
+            }
         }
-
+        
         // Parse class name args (if any)
         while (argc != args.length) {
             String classArg = args[argc++];
