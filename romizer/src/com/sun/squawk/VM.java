@@ -1,22 +1,22 @@
 /*
  * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
  * only, as published by the Free Software Foundation.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included in the LICENSE file that accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 16 Network Circle, Menlo
  * Park, CA 94025 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -47,8 +47,8 @@ public class VM {
      * Flag to show if the extend bytecode can be executed.
      */
     static boolean extendsEnabled;
-    
-    
+
+
      /**
      * Flag to show if should be a bigEndian system
      */
@@ -90,11 +90,11 @@ public class VM {
 
     protected static boolean isVerbose;
     protected static boolean isVeryVerbose;
-    
+
     public static boolean isVerbose() {
         return isVerbose;
     }
-    
+
     public static void setVerbose(boolean verbose) {
         if (verbose) {
             if (isVerbose) {
@@ -120,7 +120,7 @@ public class VM {
         return true;
     }
 
-    
+
     /**
      * On a hosted system , this calls System.setProperty(), otherwise calls Isolate.currentIsolate().setProperty()
      * @param name property name
@@ -129,7 +129,7 @@ public class VM {
     public static void setProperty(String name, String value) {
         System.setProperty(name, value);
     }
-    
+
     /**
      * Get the endianess.
      *
@@ -138,7 +138,7 @@ public class VM {
     public static boolean isBigEndian() {
         return bigEndian;
     }
-    
+
     /**
      * Set the endianess.
      *
@@ -168,7 +168,7 @@ public class VM {
 
     static void registerIsolate(Isolate isolate) {
     }
-    
+
     /**
      * Set the isolate of the currently executing thread.
      *
@@ -206,7 +206,7 @@ public class VM {
             return fqn.substring(pindex + 1, fqn.length());
         }
     }
-    
+
     /**
      * Given a fully-qualified name, return the member part.
      * @param fqn such as "java.lang.String#length"
@@ -219,11 +219,12 @@ public class VM {
 
     static abstract class Matcher {
 
+        public static final int PRECEDENCE_DEFAULT = -1;
         public static final int PRECEDENCE_PACKAGE = 0;
         public static final int PRECEDENCE_CLASS_WILDPACKAGE = 1;
         public static final int PRECEDENCE_CLASS = 2;
         public static final int PRECEDENCE_MEMBER = 3;
-        
+
         public static final int EXPORT = 0;
         public static final int INTERNAL = 1;
         public static final int CROSS_SUITE_PRIVATE = 2;
@@ -302,7 +303,7 @@ public class VM {
                 return s.indexOf('.') == -1;
             }
         }
-        
+
         public String toString() {
             return "PackageMatcher [" + pkg + (recursive ? ".*" : "") + ']';
         }
@@ -376,9 +377,33 @@ public class VM {
             }
             return pattern.equals(s);
         }
-        
+
         public String toString() {
             return "ClassMatcher [" + pattern + ']';
+        }
+    }
+
+    static class DefaultMatcher extends Matcher {
+        private static DefaultMatcher singleton;
+
+        DefaultMatcher(int action) {
+            super(action, PRECEDENCE_DEFAULT);
+            if (singleton != null) {
+                throw new IllegalArgumentException("A DefaultMatcher already exists: " + singleton);
+            }
+            singleton = this;
+        }
+
+        boolean moreSpecificThan(Matcher m) {
+            return false;
+        }
+
+        public boolean matches(String s) {
+            return true;
+        }
+
+        public String toString() {
+            return "DefaultMatcher [" + action + ']';
         }
     }
 
@@ -391,7 +416,7 @@ public class VM {
         public boolean matches(String s) {
             return pattern.equals(s);
         }
-        
+
         public String toString() {
             return "ClassOnlyMatcher [" + pattern + ": " + action + ']';
         }
@@ -422,7 +447,7 @@ public class VM {
             }
             return s.startsWith(pattern);
         }
-        
+
         public String toString() {
             return "MemberMatcher [" + pattern + ']';
         }
@@ -439,7 +464,7 @@ public class VM {
      * <p>
      * The key of each property in the file specifies a pattern that will be used to match
      * a class, field or method that may be stripped.
-     * 
+     *
      * The value of each property in the file specifies how to handle symbols that match the pattern:
      *
      *  export: Keep the symbols that match the pattern. If pattern is a class pattern, then export members (methods and fields) also.
@@ -458,7 +483,7 @@ public class VM {
      *            even if not called within the suite. This is used when multiple suites are compiled together.
      *            The child suites can call methods even though symbols were stripped.
      *
-     * 
+     *
      * There are 4 different types of patterns that can be specified:
      *
      * 1. A package pattern ends with ".*" or ".**". The former is used to match an
@@ -575,6 +600,15 @@ public class VM {
     }
 
     /**
+     * Setup default symbol stripping for applications.
+     */
+    static void resetSymbolsStrippingForApp() {
+        stripMatchers.clear();
+        Matcher matcher = new DefaultMatcher(Matcher.INTERNAL);
+        stripMatchers.add(matcher);
+    }
+
+    /**
      * Determines the symbol's matcher
      *
      * @param s   a class, field or method identifier
@@ -638,7 +672,7 @@ public class VM {
         }
         return s;
     }
-    
+
     /**
      * Determines if all the symbolic information for a field or method should be stripped. This
      * is used during the bootstrap process by the romizer to strip certain fields and methods
@@ -651,7 +685,7 @@ public class VM {
 	    Matcher current = getMatcher(getSymbolString(member));
         return current == null || (current.action == Matcher.EXPORT);
     }
-    
+
     /**
      * Determines if the field or method is internal, so should be retained (even if symbol gets stripped)
      *
@@ -663,7 +697,7 @@ public class VM {
         Matcher current = getMatcher(s);
         return current != null && (current.action == Matcher.CROSS_SUITE_PRIVATE);
     }
-    
+
     /**
      * Determines if the klass is internal, so should be retained (even if symbol gets stripped)
      *
@@ -702,7 +736,7 @@ public class VM {
         Matcher current = getMatcher(klass.getName());
         return current != null && (current.action == Matcher.INTERNAL);
     }
-    
+
     /**
      * Determines if the member is internal (not exported or CROSS_SUITE_PRIVATE)
      *
@@ -713,7 +747,7 @@ public class VM {
 	    Matcher current = getMatcher(getSymbolString(member));
         return current != null && (current.action == Matcher.INTERNAL);
     }
-    
+
     /**
      * Support routine to get the object representing the class of a given object.
      * This takes into account whether or not the VM is running in hosted mode or
@@ -919,19 +953,19 @@ public class VM {
    /**
      * VM-private version of System.arraycopy for arrays of primitives that does little error checking.
      */
-    public static void arraycopyPrimitive0(Object src, int src_position, Object dst, int dst_position, 
+    public static void arraycopyPrimitive0(Object src, int src_position, Object dst, int dst_position,
                                            int totalLength, int dataSize) {
         System.arraycopy(src, src_position, dst, dst_position, totalLength);
     }
-    
+
     /**
      * VM-private version of System.arraycopy for arrays of objects that does little error checking.
      */
-    public static void arraycopyObject0(Object src, int src_position, Object dst, int dst_position, 
+    public static void arraycopyObject0(Object src, int src_position, Object dst, int dst_position,
                                            int length) {
         System.arraycopy(src, src_position, dst, dst_position, length);
     }
-    
+
     /*=======================================================================*\
      *                          Native method lookup                         *
     \*=======================================================================*/
@@ -1044,5 +1078,5 @@ public class VM {
 
     private VM() {
     }
-    
+
 }

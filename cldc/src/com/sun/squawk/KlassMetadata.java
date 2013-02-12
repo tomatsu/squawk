@@ -443,7 +443,7 @@ public class KlassMetadata {
             Tracer.traceln("Processing metadata for " + definedClass);
         }
         boolean internalClass = !isExternaltoSuite(definedClass, type);
-        if (internalClass && ((definedClass.getModifiers() & Modifier.COMPLETE_RUNTIME_STATICS) == 0)) {
+        if (internalClass && ((definedClass.getModifiers() & Modifier.COMPLETE_RUNTIME_STATICS) == 0) && !MethodMetadata.lineNumberTablesKept()) {
             if (Klass.TRACING_ENABLED && Tracer.isTracing("stripping")) {
                 Tracer.traceln("  discarded all metadata");
             }

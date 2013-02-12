@@ -644,6 +644,11 @@ public class Romizer {
         File file = new File(suiteName + "." + (suiteType == Suite.EXTENDABLE_LIBRARY ? "extendable.library" : "library") + ".properties");
         if (file.exists()) {
             VM.resetSymbolsStripping(file);
+        } else if (suiteType == Suite.APPLICATION) {
+            VM.resetSymbolsStrippingForApp();
+            if (VM.isVerbose()) {
+                System.out.println("Suite export properties file \"" + file.getPath() + "\" not found. Treating all application symbols as internal.");
+            }
         } else {
             if (VM.isVerbose()) {
                 System.out.println("Suite export properties file \"" + file.getPath() + "\" not found. Dead-class elimination option disabled.");
