@@ -1,5 +1,6 @@
 /*
  * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2013 Oracle Corporation. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This code is free software; you can redistribute it and/or modify
@@ -149,7 +150,11 @@ void arm_main(int cmdLineParamsAddr, unsigned int outstandingAvrStatus) {
 
 	// Record status bits from bootloader that may require processing by Java.
 #if AT91SAM9G20
+#if REV8
 	avrSetOutstandingEvents(outstandingAvrStatus & ((1<<POWER_CHANGE_EVENT) | (1<<STATUS_SENSOR_EVENT) | (1<<STATUS_BUTTON_EVENT) | (1<<STATUS_WATCHDOG_EVENT)));
+#else
+	avrSetOutstandingEvents(outstandingAvrStatus & ((1<<FAULT_EVENT) | (1<<STATUS_SENSOR_EVENT) | (1<<STATUS_BUTTON_EVENT) | (1<<WATCHDOG_EVENT) | (1<<SUPERCAP_CHARGED) | (1<<USB_EVENT)));
+#endif
 #else
 	avrSetOutstandingEvents(outstandingAvrStatus & ((1<<BATTERY_POWER_EVENT) | (1<<STATUS_LOW_BATTERY_EVENT) | (1<<STATUS_EXTERNAL_POWER_EVENT)));
 #endif
