@@ -93,7 +93,7 @@ FLASH_MEMORY=false                            com.sun.cldc.jna.platform.Spot
 ###############################################
 # Other Property-dependant classes
 ###############################################
-VERIFY_SIGNATURES=false                         com.sun.squawk.security.verifier.*
+CHAIN_VERIFY_SIGNATURES=false                  com.sun.squawk.security.verifier.*
 
 ##############################################
 # from phoneme, but not needed?

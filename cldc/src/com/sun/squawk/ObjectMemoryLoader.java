@@ -24,38 +24,38 @@
 
 package com.sun.squawk;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
+import java.io.*;
 import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.io.Connector;
-
 import com.sun.squawk.pragma.HostedPragma;
-/*if[VERIFY_SIGNATURES]*/
-import com.sun.squawk.security.verifier.SignatureVerifier;
-import com.sun.squawk.security.verifier.SignatureVerifierException;
-/*end[VERIFY_SIGNATURES]*/
-import com.sun.squawk.util.Arrays;
-import com.sun.squawk.util.Assert;
-import com.sun.squawk.util.BitSet;
-import com.sun.squawk.util.StringTokenizer;
-import com.sun.squawk.util.StructuredFileInputStream;
-import com.sun.squawk.util.Tracer;
+import com.sun.squawk.util.*;
 import com.sun.squawk.vm.ChannelConstants;
 import com.sun.squawk.vm.HDR;
-
+/*if[SIMPLE_VERIFY_SIGNATURES]*/
+import com.sun.squawk.security.verifier.SignatureVerifier;
+import com.sun.squawk.security.verifier.SignatureVerifierException;
+/*end[SIMPLE_VERIFY_SIGNATURES]*/
 
 /**
  * This class facilitates loading a serialized object graph from a URI
  * and relocating it.
- *
  */
-public class ObjectMemoryLoader {
+public abstract class ObjectMemoryLoader {
+    public final static int NO_SIGNATURE        = 0;
+    public final static int SIMPLE_SIGNATURE    = 1;
+    public final static int CHAINED_SIGNATURE   = 2;
+    
+/*if[SIMPLE_VERIFY_SIGNATURES]*/
+    public final static int SIGNATURE_SCHEME    = SIMPLE_SIGNATURE;
+/*else[SIMPLE_VERIFY_SIGNATURES]*/
+///*if[CHAIN_VERIFY_SIGNATURES]*/
+//  public final static int SIGNATURE_SCHEME    = CHAINED_SIGNATURE;
+///*else[CHAIN_VERIFY_SIGNATURES]*/
+////  public final static int SIGNATURE_SCHEME    = NO_SIGNATURE;
+///*end[CHAIN_VERIFY_SIGNATURES]*/
+/*end[SIMPLE_VERIFY_SIGNATURES]*/
  
-/*if[VERIFY_SIGNATURES]*/
+/*if[SIMPLE_VERIFY_SIGNATURES]*/
     private static boolean signatureVerifierInitialised = false;
     private static boolean noPublicKeyInstalled = false;
     
@@ -82,7 +82,44 @@ public class ObjectMemoryLoader {
             }
         }
     }
-/*end[VERIFY_SIGNATURES]*/
+    
+    private static String signatureVerificationErrorMessage(String uri, Exception e) {
+        String signatureVerificationErrorMessage;
+        if (uri.endsWith("library")) {
+            signatureVerificationErrorMessage = "Signature verification of the library (" + uri + ") failed.\n"
+                    + "Use \"ant flashlibrary\" to reinstall the library from the same SDK used to flash the "
+                    + "current application. ";
+        } else {
+            signatureVerificationErrorMessage = "Signature verification of the application (" + uri + ") failed.\n"
+                    + "Use \"ant deploy\" to reinstall the application via USB.";
+        }
+        return signatureVerificationErrorMessage + ((VM.isVerbose()) ? ("\n\t" + e.getMessage()) : "");
+    }
+    
+    private static void verifySignatureOnLoad(String uri) {
+        ensurePublicKeyInitialised();
+
+        try {
+            InputStream suiteIn = Connector.openInputStream(uri);
+            try {
+                if (!SignatureVerifier.isVerifiedSuite(suiteIn) && !noPublicKeyInstalled) {
+                    if (VM.isVerbose()) {
+                        System.out.println("Verifying signature of suite (" + uri + ")");
+                    }
+                    SignatureVerifier.verifySuite(suiteIn);
+                } else {
+                    //System.out.println("NOT verifying suite with uri " + uri);
+                }
+            } catch (SignatureVerifierException e) {
+                throw new Error(signatureVerificationErrorMessage(uri, e));
+            } finally {
+                suiteIn.close();
+            }
+        } catch (IOException e) {
+            throw new Error(signatureVerificationErrorMessage(uri, e));
+        }
+    }
+/*end[SIMPLE_VERIFY_SIGNATURES]*/
     
     /**
      * Calculates the hash of an array of bytes.
@@ -90,9 +127,7 @@ public class ObjectMemoryLoader {
      * @param arr   the byte array to hash
      * @return      the hash of <code>arr</code>
      */
-    protected int getHash(byte[] arr) {
-    	return hash(arr);
-    }
+    abstract int getHash(byte[] arr);
 
     public static int hash(byte[] arr) {
         int hash = arr.length;
@@ -117,18 +152,18 @@ public class ObjectMemoryLoader {
      * Specifies if the object memory is to be moved to read-only memory once it
      * has been loaded and relocated.
      */
-    private final boolean loadIntoReadOnlyMemory;
+    protected final boolean loadIntoReadOnlyMemory;
 
     /**
      * Specifies if the suite data is required to be changed to conform
      * with the endianess of this platform.
      */
-    private boolean requiresEndianSwap;
+    protected boolean requiresEndianSwap;
 
     /**
      * Specifies if "-traceoms" was enabled.
      */
-    private boolean tracing;
+    protected boolean tracing;
 
     /**
      * Constructor.
@@ -216,48 +251,12 @@ System.out.println("filePathelements=" + filePathelements);
      */
     private static ObjectMemoryFile load0(DataInputStream dis, String uri, boolean loadIntoReadOnlyMemory, boolean headerOnly) {
         ObjectMemoryLoader loader;
-/*if[VERIFY_SIGNATURES]*/
-        if (uri.startsWith("spotsuite:")) {
-        	ensurePublicKeyInitialised();
-            InputStream suiteIn;
-            String signatureVerificationErrorMessage = "";
-            if (uri.endsWith("library")) {
-            	signatureVerificationErrorMessage = "Signature verification of the library ("+uri+") failed.\n" +
-            		"Use \"ant flashlibrary\" to reinstall the library from the same SDK used to flash the " +
-            		"current application. ";
-            } else {
-            	signatureVerificationErrorMessage = "Signature verification of the application ("+uri+") failed.\n" +
-            		"Use \"ant deploy\" to reinstall the application via USB.";
-            }
-            try {
-            	suiteIn = Connector.openInputStream(uri);
-                try {
-                	if (!SignatureVerifier.isVerifiedSuite(suiteIn) && !noPublicKeyInstalled) {
-                		if (VM.isVerbose()) {
-                			System.out.println("Verifying signature of suite ("+uri+")");
-                        }
-                		SignatureVerifier.verifySuite(suiteIn);
-                	} else {
-                		//System.out.println("NOT verifying suite with uri " + uri);
-                	}
-                	
-				} catch (SignatureVerifierException e) {
-                    throw new Error(signatureVerificationErrorMessage+((VM.isVerbose())?("\n\t"+e.getMessage()):""));
-                } finally {
-                    suiteIn.close();
-                }
-                
-            } catch (IOException e) {
-            	throw new Error(signatureVerificationErrorMessage+((VM.isVerbose())?("\n\t"+e.getMessage()):""));
-            }
-            ObjectMemoryReader reader = new FlashObjectMemoryReader(dis, uri);
-            loader = new FlashObjectMemoryLoader(reader, loadIntoReadOnlyMemory);
-        } else
-/*end[VERIFY_SIGNATURES]*/
-        {
-            ObjectMemoryReader reader = new ObjectMemoryReader(dis, uri);
-            loader = new ObjectMemoryLoader(reader, loadIntoReadOnlyMemory);
-        }
+/*if[FLASH_MEMORY]*/
+        loader = load0Flash(dis, uri, loadIntoReadOnlyMemory, headerOnly);
+/*else[FLASH_MEMORY]*/
+//      loader = load0Standard(dis, uri, loadIntoReadOnlyMemory, headerOnly);
+/*end[FLASH_MEMORY]*/
+        
         ObjectMemoryFile omf = loader.load(headerOnly);
 
         if (VM.isVerbose()) {
@@ -270,6 +269,36 @@ System.out.println("filePathelements=" + filePathelements);
             GC.registerReadOnlyObjectMemory(omf.objectMemory);
         }
         return omf;
+    }
+    
+/*if[FLASH_MEMORY]*/
+    private static ObjectMemoryLoader load0Flash(DataInputStream dis, String uri, boolean loadIntoReadOnlyMemory, boolean headerOnly) {
+        if (!uri.startsWith("spotsuite:")) {
+            if (VM.isHosted()) {
+                return load0Hosted(dis, uri, loadIntoReadOnlyMemory, headerOnly);
+            } else {
+                throw new Error("URI is not a SPOT suite: " + uri);
+            }
+        }
+  
+/*if[SIMPLE_VERIFY_SIGNATURES]*/
+        verifySignatureOnLoad(uri);
+/*end[SIMPLE_VERIFY_SIGNATURES]*/
+        
+        ObjectMemoryReader reader = new FlashObjectMemoryReader(dis, uri);
+        return new FlashObjectMemoryLoader(reader, loadIntoReadOnlyMemory);
+    }
+/*end[FLASH_MEMORY]*/
+   
+    private static ObjectMemoryLoader load0Hosted(DataInputStream dis, String uri, boolean loadIntoReadOnlyMemory, boolean headerOnly) 
+    throws HostedPragma {
+        // go through this dance to allow the standard code to be stripped on device
+        return load0Standard(dis, uri, loadIntoReadOnlyMemory, headerOnly);
+    }
+    
+    private static ObjectMemoryLoader load0Standard(DataInputStream dis, String uri, boolean loadIntoReadOnlyMemory, boolean headerOnly) {
+        ObjectMemoryReader reader = new ObjectMemoryReader(dis, uri);
+        return new StandardObjectMemoryLoader(reader, loadIntoReadOnlyMemory);
     }
 
 /*if[TYPEMAP]*/
@@ -421,10 +450,7 @@ System.out.println("filePathelements=" + filePathelements);
      * @param parentURI   the value of the 'parent_uri' item in the object memory file
      * @param memorySize  the value of the 'size' item in the object memory file
      */
-    protected void skipMemoryPadding(String parentURI, int memorySize) {
-        int pad = calculateMemoryPadding(parentURI, memorySize);
-        reader.skip(pad, "padding");
-    }
+    abstract void skipMemoryPadding(String parentURI, int memorySize);
 
     /**
      * Loads the non-parent components of an object memory from the input stream.
@@ -548,7 +574,19 @@ System.out.println("filePathelements=" + filePathelements);
             if (result == null) {
                 result = "file://squawk.suite";
             }
+        } else if (false && SIGNATURE_SCHEME == CHAINED_SIGNATURE && !uri.equals("file://squawk.suite")) {
+            // romizer can't handle signed parent suite, so search for unsigned library suite instead...
+            if (uri.indexOf("unsigned-") < 0 && uri.indexOf(Suite.FILE_EXTENSION_METADATA) < 0 ) {
+            // find root of suite name:
+                int index = uri.lastIndexOf('/');
+                String newURI = uri.substring(0, index + 1) + "unsigned-" + uri.substring(index + 1);
+                result = newURI;
+                if (true || VM.isVerbose()) {
+                    System.out.println("[loading from " + newURI + " instead of " + uri);
+                }
+            }
         }
+        
         return result;
     }
 
@@ -592,6 +630,45 @@ System.out.println("filePathelements=" + filePathelements);
      * @param size   the size of memory as specified by the 'size' element of the objct memory
      * @return the bit set encapsulating the oop map
      */
+    abstract BitSet loadOopMap(int size);
+
+    /**
+     * Loads the 'memory' component of the object memory from the input stream.
+     *
+     * @param size      the size of memory as specified by the 'size' element of the objct memory
+     * @return          the contents of the 'memory' component
+     */
+    abstract byte[] loadMemory(int size);
+
+    /**
+     * Relocates the memory.
+     *
+     * @param parent     the loaded/resolved parent object memory
+     * @param buffer     the contents of the 'memory' component
+     * @param oopMap     the bit set encapsulating the 'oopmap' component
+     * @return the address of the relocated memory buffer
+     */
+    abstract Address relocateMemory(ObjectMemory parent, byte[] buffer, BitSet oopMap);
+}
+
+/**
+ * This class facilitates loading a serialized object graph from a URI
+ * and relocating it.
+ */
+class StandardObjectMemoryLoader extends ObjectMemoryLoader {
+    StandardObjectMemoryLoader(ObjectMemoryReader reader, boolean loadIntoReadOnlyMemory) {
+        super(reader, loadIntoReadOnlyMemory);
+    }
+    
+    protected int getHash(byte[] arr) {
+    	return hash(arr);
+    }
+    
+    protected void skipMemoryPadding(String parentURI, int memorySize) {
+        int pad = calculateMemoryPadding(parentURI, memorySize);
+        reader.skip(pad, "padding");
+    }
+    
     protected BitSet loadOopMap(int size) {
         // Load the oop map
         byte[] bits = new byte[GC.calculateOopMapSizeInBytes(size)];
@@ -603,12 +680,6 @@ System.out.println("filePathelements=" + filePathelements);
         return oopMap;
     }
 
-    /**
-     * Loads the 'memory' component of the object memory from the input stream.
-     *
-     * @param size      the size of memory as specified by the 'size' element of the objct memory
-     * @return          the contents of the 'memory' component
-     */
     protected byte[] loadMemory(int size) {
        // Load the 'memory' component into a byte array
         byte[] buffer = new byte[size];
@@ -616,16 +687,7 @@ System.out.println("filePathelements=" + filePathelements);
         return buffer;
     }
 
-    /**
-     * Relocates the memory.
-     *
-     * @param parent     the loaded/resolved parent object memory
-     * @param buffer     the contents of the 'memory' component
-     * @param oopMap     the bit set encapsulating the 'oopmap' component
-     * @return the address of the relocated memory buffer
-     */
     protected Address relocateMemory(ObjectMemory parent, byte[] buffer, BitSet oopMap) {
-
         String url = reader.getFileName();
         int size = buffer.length;
 
@@ -683,18 +745,12 @@ System.out.println("filePathelements=" + filePathelements);
     }
 }
 
-
-
-
 /**
  * An instance of <code>ObjectMemoryReader</code> is used to read an input
  * stream opened on an object memory file.
- *
  */
 class ObjectMemoryReader extends StructuredFileInputStream {
 
-    
-    
     /**
      * Creates a <code>ObjectMemoryReader</code> that reads object memory file components
      * from a given input stream.
@@ -702,10 +758,9 @@ class ObjectMemoryReader extends StructuredFileInputStream {
      * @param   in        the input stream
      * @param   filePath  the file from which <code>in</code> was created
      */
-    public ObjectMemoryReader(InputStream in, String filePath) {
+    ObjectMemoryReader(InputStream in, String filePath) {
         super(in, filePath, "oms");
     }
-
 
     /**
      * {@inheritDoc}

@@ -1,4 +1,4 @@
-//if[VERIFY_SIGNATURES]
+//if[FLASH_MEMORY]
 /*
  * Copyright 2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -205,7 +205,6 @@ public class SignatureVerifier {
      * @throws SignatureVerifierException
      * @throws IOException 
 	 */
-	
 	public static void verifySuite(InputStream suiteIn) throws SignatureVerifierException, IOException {
 /*if[NATIVE_VERIFICATION]*/
 		verifySuite(suiteIn, true);
@@ -519,7 +518,7 @@ public class SignatureVerifier {
 	}
 	
 	
-	  /**
+	/**
      * Verifies the signature with an externally computed sha1 hash. 
      *  
      * <p>

@@ -601,7 +601,13 @@ public class Romizer {
                 System.setProperty("bootstrap.suite.url", suiteUrl);
             } else if (arg.startsWith("-parent:")) {
                 String parentSuiteName = arg.substring("-parent:".length());
-                String suiteUrl = "file://" + parentSuiteName + Suite.FILE_EXTENSION;
+                String suiteUrl;
+                if (false && ObjectMemoryLoader.SIGNATURE_SCHEME == ObjectMemoryLoader.CHAINED_SIGNATURE) {
+                    // suites normally signed, but romizer can't handle that yet. So use unsigned suite...
+                    suiteUrl = "file://unsigned-" + parentSuiteName + Suite.FILE_EXTENSION;
+                } else {
+                    suiteUrl = "file://" + parentSuiteName + Suite.FILE_EXTENSION;
+                }
                 try {
                     parentSuite = objectGraphLoader.loadSuite(suiteUrl);
                 } catch (IOException e) {

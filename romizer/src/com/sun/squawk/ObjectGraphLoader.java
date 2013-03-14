@@ -299,6 +299,15 @@ public class ObjectGraphLoader {
                 }
         		// Load the .metadata suite
                 String metadataUrl = (suite.isBootstrap()?bootstrapSuiteProperty:eachObjectMemory.getURI()) + Suite.FILE_EXTENSION_METADATA;
+                if (false && ObjectMemoryLoader.SIGNATURE_SCHEME == ObjectMemoryLoader.CHAINED_SIGNATURE) {
+                    // we loaded the "unisgned-" version of teh suite, but the medata suite does not have that name (it is never signed), so look for correct name.
+                    int index = metadataUrl.indexOf("unsigned-");
+                    int len = "unsigned-".length();
+                    if (index > 0) {
+                        String newURL = metadataUrl.substring(0, index) + metadataUrl.substring(index + len);
+                        metadataUrl = newURL;
+                    }
+                }
             	try {
                 	int memorySizePrior = NativeUnsafe.getMemorySize();
 	            	ObjectMemory metadataObjectMemory = ObjectMemoryLoader.load(metadataUrl, false).objectMemory;
