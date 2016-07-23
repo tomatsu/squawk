@@ -22,7 +22,7 @@
  * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
-
+#define USELABELS
 
 // Size of class to class state cache.
 #define CLASS_CACHE_SIZE 6
@@ -1919,6 +1919,11 @@ fprintf(stderr, format("VM.pause called after %L branches (kernelMode %d)\n"), g
  * @param gp the global pointer
  */
 void Squawk_continue(Globals *gp) {
+
+#ifdef USELABELS
+#include "opclabels.h"
+#endif
+
     int opcode = -1;
 #if TRACE
     int opcodeCopy = opcode;
@@ -1997,31 +2002,33 @@ void Squawk_continue(Globals *gp) {
 #endif /* PROFILING */
         next:
 #include "switch.c"
-            continue;
+#ifndef USELABELS
+        continue;
+#endif
 
 #ifdef MACROIZE
         threadswitchstart: {
             threadswitchmain();
-            continue;
+            CONTINUE;
         }
 
         invokenativestart: {
             invokenativemain();
-            continue;
+            CONTINUE;
         }
 
         throw_nullPointerException: {
             saveContextRegisters();
             resetStackPointer();
             call(com_sun_squawk_VM_nullPointerException);
-            continue;
+            CONTINUE;
         }
 
         throw_arrayIndexOutOfBoundsException: {
             saveContextRegisters();
             resetStackPointer();
             call(com_sun_squawk_VM_arrayIndexOutOfBoundsException);
-            continue;
+            CONTINUE;
         }
 
 #endif /* MACROIZE */

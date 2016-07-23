@@ -481,7 +481,7 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
          */
 /*DEF*/ void do_escape() {
             opcode = fetchUByte() + 256;
-            goto next;
+            GOTO_NEXT;
         }
 
         /**
@@ -491,7 +491,7 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
 /*DEF*/ void do_wide_n(int $n) {
             opcode = fetchUByte() + OPC_Properties_WIDE_DELTA;
             iparm  = fetchUByte() | ($n<<8);
-            goto next;
+            GOTO_NEXT;
         }
 
         /**
@@ -503,7 +503,7 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
             opcode = fetchUByte() + OPC_Properties_WIDE_DELTA;
             fetchShort();
             iparm = fparm;
-            goto next;
+            GOTO_NEXT;
         }
 
         /**
@@ -515,7 +515,7 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
             opcode = fetchUByte() + OPC_Properties_WIDE_DELTA;
             fetchInt();
             iparm = fparm;
-            goto next;
+            GOTO_NEXT;
         }
 
         /**
@@ -525,7 +525,7 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
 /*DEF*/ void do_escape_wide_n(int $n) {
             opcode = fetchUByte() + 256 + OPC_Properties_ESCAPE_WIDE_DELTA;
             iparm  = fetchUByte() | ($n<<8);
-            goto next;
+            GOTO_NEXT;
         }
 
         /**
@@ -537,7 +537,7 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
             opcode = fetchUByte() + 256 + OPC_Properties_ESCAPE_WIDE_DELTA;
             fetchShort();
             iparm = fparm;
-            goto next;
+            GOTO_NEXT;
         }
 
         /**
@@ -549,7 +549,7 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
             opcode = fetchUByte() + 256 + OPC_Properties_ESCAPE_WIDE_DELTA;
             fetchInt();
             iparm = fparm;
-            goto next;
+            GOTO_NEXT;
         }
 
 
