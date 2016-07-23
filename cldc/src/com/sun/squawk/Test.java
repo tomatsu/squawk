@@ -1,4 +1,4 @@
-//if[!FLASH_MEMORY]
+//if[!PLATFORM_TYPE_BARE_METAL]
 /*
  * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
  * Copyright 2011 Oracle Corporation. All Rights Reserved.
