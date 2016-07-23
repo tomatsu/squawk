@@ -103,7 +103,7 @@
 #    ifndef O_BINARY
 #        define O_BINARY 0 /* for compatibility with open() and close() on Windows */
 #    endif /* O_BINARY */
-#    ifndef FLASH_MEMORY
+#    if !defined(FLASH_MEMORY) && !PLATFORM_TYPE_BARE_METAL
 #	    include <sys/mman.h>
 #    endif /* FLASH_MEMORY */
 #    ifdef __GNUC__
@@ -111,6 +111,8 @@
 #        undef  ujlong
 #        ifdef sun
 #            define ujlong uint64_t
+#        elif __arm__
+#            define ujlong unsigned long long
 #        else /* sun */
 #            define ujlong u_int64_t
 #        endif /* sun */

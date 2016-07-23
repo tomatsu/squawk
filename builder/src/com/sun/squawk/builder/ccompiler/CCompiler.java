@@ -111,6 +111,13 @@ public abstract class CCompiler {
         public String cflags = "";
         
         /**
+         * Extra flags to be passed to the linker.
+         */
+        public String ldflags = "";
+
+        public String ldsuffixes = "";
+	
+        /**
          * Specifies the kind of platform squawk will use.
          */
         public String platformType = null;

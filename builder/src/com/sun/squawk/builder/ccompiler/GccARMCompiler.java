@@ -29,19 +29,18 @@ import com.sun.squawk.builder.platform.*;
 import java.io.*;
 
 /**
- * The interface for the "gcc" compiler.
+ * The interface for the "gcc-arm" compiler.
  */
-public class GccCompiler extends CCompiler {
+public class GccARMCompiler extends CCompiler {
     
-    boolean allowGCSections;
+    boolean allowGCSections = true;
 
-    public GccCompiler(String name, Build env, Platform platform) {
+    public GccARMCompiler(String name, Build env, Platform platform) {
         super(name, env, platform);
-        allowGCSections = !(platform.isMacOsX() || platform.getHostOsName().toLowerCase().startsWith("sunos"));
     }
 
-    public GccCompiler(Build env, Platform platform) {
-        this("gcc", env, platform);
+    public GccARMCompiler(Build env, Platform platform) {
+        this("gcc-arm", env, platform);
     }
 
     /**
@@ -50,7 +49,7 @@ public class GccCompiler extends CCompiler {
     public String options(boolean disableOpts) {
         StringBuffer buf = new StringBuffer();
         if (!disableOpts) {
-            if (options.o1)             { buf.append("-O1 ");               }
+            if (options.o1)             { buf.append("-Os ");               }
             if (options.o2)             { buf.append("-O2 ");               }
             // if (options.o2)          { buf.append(" -Os  -finline-functions -finline-limit=55 --param max-inline-insns-single=55 -Winline  ");               }
             // think about -frtl-abstract-sequences, not in gcc 4.0.1 though.
@@ -78,7 +77,7 @@ public class GccCompiler extends CCompiler {
         buf.append("-DSQUAWK_64=" + options.is64).
             append(' ').
             append(get64BitOption()).append(' ');
-
+	/*
         if (isTargetX86Architecture()) {
             // getting correct (for Java semantics) FP behavior is tricky on x86.
             // This used to be sufficent on gcc < 4.0:
@@ -91,14 +90,14 @@ public class GccCompiler extends CCompiler {
                 buf.append("-ffloat-store ");
             }
         }
-
-        buf.append("-DPLATFORM_BIG_ENDIAN=" + platform.isBigEndian()).append(' ');
-        buf.append("-DPLATFORM_UNALIGNED_LOADS=" + platform.allowUnalignedLoads()).append(' ');
+	*/
+        buf.append("-DPLATFORM_BIG_ENDIAN=false ");
+	buf.append("-DPLATFORM_UNALIGNED_LOADS=false ");
 
         return buf.append(options.cflags).append(' ').toString();
     }
 
-    protected int defaultSizeofPointer = -1;
+    protected int defaultSizeofPointer = 4;
 
     /**
      * Compiles a small C program to determine the default pointer size of this version of gcc.
@@ -106,33 +105,6 @@ public class GccCompiler extends CCompiler {
      * @return  the size (in bytes) of a pointer compiled by this version of gcc
      */
     protected int getDefaultSizeofPointer() {
-        if (defaultSizeofPointer == -1) {
-            try {
-                File cFile = File.createTempFile("sizeofpointer", ".c");
-                PrintStream out = new PrintStream(new FileOutputStream(cFile));
-                out.println("#include <stdlib.h>");
-                out.println("int main (int argc, char **argv) {");
-                out.println("    exit(sizeof(char *));");
-                out.println("}");
-                out.close();
-
-                String exePath = cFile.getPath();
-                File exe = new File(exePath.substring(0, exePath.length() - 2));
-
-                env.exec("gcc -o " + exe.getPath() + " " + cFile.getPath());
-                cFile.delete();
-
-                try {
-                    env.exec(exe.getPath());
-                } catch (BuildException e) {
-                    exe.delete();
-                    return defaultSizeofPointer = e.exitValue;
-                }
-                throw new BuildException("gcc pointer size test returned 0");
-            } catch (IOException ioe) {
-                throw new BuildException("could run pointer size gcc test", ioe);
-            }
-        }
         return defaultSizeofPointer;
     }
 
@@ -142,12 +114,7 @@ public class GccCompiler extends CCompiler {
      * @return word size compiler option
      */
     public String get64BitOption() {
-        int pointerSize = getDefaultSizeofPointer();
-        if (options.is64) {
-            return pointerSize == 8 ? "" : "-m64 ";
-        } else {
-            return pointerSize == 4 ? "" : "-m32 ";
-        }
+	return "";
     }
 
     /**
@@ -156,28 +123,7 @@ public class GccCompiler extends CCompiler {
      * @return the linkage options that must come after the input object files
      */
     public String getLinkSuffix() {
-        String suffix = " " + get64BitOption();
-        if (options.isPlatformType(Options.DELEGATING)) {
-            String jvmLib = env.getPlatform().getJVMLibraryPath();
-            suffix = suffix + " -L" + jvmLib.replaceAll(File.pathSeparator, " -L") + " -ljvm";
-        } else if (options.isPlatformType(Options.SOCKET) || options.isPlatformType(Options.NATIVE)) {
-            if (platform.getName().toLowerCase().startsWith("linux")) {
-                suffix = suffix +  " -lnsl -lpthread";
-            } else {
-                suffix = suffix + " -lsocket" + " -lnsl";
-            }
-        }
-
-        if (options.kernel && options.hosted) {
-            /* Hosted by HotSpot and so need to interpose on signal handling. */
-            suffix = suffix + " -ljsig";
-        }
-
-        if (options.floatsSupported) {
-            return " -ldl -lm" + suffix;
-        } else {
-            return " -ldl" + suffix;
-        }
+	return "";
     }
 
     /**
@@ -186,7 +132,7 @@ public class GccCompiler extends CCompiler {
      * @return the platform-dependant gcc switch used to produce a shared library
      */
     public String getSharedLibrarySwitch() {
-        return "-shared";
+        return "";
     }
 
     /**
@@ -194,7 +140,7 @@ public class GccCompiler extends CCompiler {
      */
     public File compile(File[] includeDirs, File source, File dir, boolean disableOpts) {
         File object = new File(dir, source.getName().replaceAll("\\.c", "\\.o"));
-        env.exec("gcc -c " +
+        env.exec("arm-none-eabi-gcc -c " +
                  options(disableOpts) + " " +
                  include(includeDirs, "-I") +
                  " -o " + object + " " + source);
@@ -209,19 +155,18 @@ public class GccCompiler extends CCompiler {
         String exec;
 
         if (dll) {
-            output = System.mapLibraryName(out);
-            exec = "-o " + output + " " + getSharedLibrarySwitch();
+	    throw new RuntimeException();
         } else {
             output = out + platform.getExecutableExtension();
             exec = "-o " + output;
             if (allowGCSections) {
-                exec = "-Wl,--gc-sections " + exec;
+                exec += " -Wl,--gc-sections ";
             }
         }
 	exec += " " + options.ldflags;
         exec += " " + Build.join(objects) + " " + getLinkSuffix();
-	exec += " " + options.ldsuffixes;	
-        env.exec("gcc " + exec);
+	exec += " " + options.ldsuffixes;
+        env.exec("arm-none-eabi-gcc " + exec);
         return new File(output);
     }
 
@@ -229,7 +174,7 @@ public class GccCompiler extends CCompiler {
      * {@inheritDoc}
      */
     public String getArchitecture() {
-        return "X86";
+        return "ARM";
     }
 
     /**
@@ -238,7 +183,7 @@ public class GccCompiler extends CCompiler {
      * @return boolean
      */
     public boolean useSSE2Math() {
-        return true;
+        return false;
     }
 
 }

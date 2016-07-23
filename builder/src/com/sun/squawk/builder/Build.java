@@ -2534,6 +2534,8 @@ public class Build {
             ccompiler = new MscCompiler(this, platform);
         } else if (name.equals("gcc")) {
             ccompiler = new GccCompiler(this, platform);
+        } else if (name.equals("gcc-arm")) {
+            ccompiler = new GccARMCompiler(this, platform);
         } else if (name.equals("gcc-macox")) {
             ccompiler = new GccMacOSXCompiler(this, platform);
         } else if (name.equals("cc")) {
@@ -2711,6 +2713,10 @@ public class Build {
                 processBuilderDotPropertiesFiles(dotPropertiesFiles);
             } else if (arg.startsWith("-cflags:")) {
                 cOptions.cflags += " " + arg.substring("-cflags:".length());
+            } else if (arg.startsWith("-ldflags:")) {
+                cOptions.ldflags += " " + arg.substring("-ldflags:".length());
+            } else if (arg.startsWith("-ldsuffixes:")) {
+                cOptions.ldsuffixes += " " + arg.substring("-ldsuffixes:".length());
             } else if (arg.startsWith("-jpda:")) {
                 String port = arg.substring("-jpda:".length());
                 javaOptions += " -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=" + port;
