@@ -109,7 +109,8 @@ public class DeadClassEliminator {
 /*if[ENABLE_SUITE_LOADING]*/
         "com.sun.squawk.ObjectMemorySerializer$ControlBlock",// used by metadata suites (when multi-suites used)
 /*end[ENABLE_SUITE_LOADING]*/
-        "com.sun.squawk.StringOfBytes"
+        "com.sun.squawk.StringOfBytes",
+	"com.sun.squawk.io.j2me.debug.Protocol"	
     };
 
     static {
@@ -394,7 +395,11 @@ public class DeadClassEliminator {
                     if (trace) {
                         foundClasses.addElement(klass.toString());
                     }
-                    scanClassDeep(klass);
+		    if (translator.getSuiteType() == Suite.LIBRARY) {
+			if (klass.getName().startsWith("java")){
+			    scanClassDeep(klass);
+			}
+		    }
                 }
             }
         }

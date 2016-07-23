@@ -297,6 +297,11 @@ public final class Translator implements TranslatorInterface {
                 dce.computeClassesUsed();
             }
 
+            if (Arg.get(Arg.DEAD_METHOD_ELIMINATION).getBool()) {
+                dme = new DeadMethodEliminator(this);
+                dme.computeMethodsUsed();
+            }
+	    
             if (verbose()) {
                 time = System.currentTimeMillis() - time;
                 Tracer.traceln(time + "ms.]");

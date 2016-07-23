@@ -342,6 +342,13 @@ public class DeadMethodEliminator {
      */
     private void markMethodUsed(MethodDB.Entry mw) {
         if (!isMarkedUsed(mw)) {
+
+	    if (translator.dce != null){
+		if (mw.m != null && !translator.dce.isMarked(mw.m.getDefiningClass())) {
+		    return;
+		}
+	    }
+	    
             // then unmarked so far, now mark it.
             usedMethods.put(mw, mw);
 
