@@ -22,7 +22,9 @@
  * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
+#ifdef __GNUC__ 
 #define USELABELS
+#endif
 
 // Size of class to class state cache.
 #define CLASS_CACHE_SIZE 6
