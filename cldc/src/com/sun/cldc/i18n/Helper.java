@@ -53,8 +53,12 @@ public class Helper {
      * If set to true, then ONLY support ISO8859_1 encodings,
      * although aliases (such as "US_ASCII") are allowed.
      */
-    public static final boolean ISO8859_1_ONLY_SUPPORTED = false;
-
+/*if[ISO8859_1_ONLY]*/
+    public static final boolean ISO8859_1_ONLY_SUPPORTED = true;
+/*else[ISO8859_1_ONLY]*/
+//    public static final boolean ISO8859_1_ONLY_SUPPORTED = false;
+/*end[ISO8859_1_ONLY]*/
+    
     /**
      * Default path to the J2ME classes. Hardcode for Squawk.
      */
