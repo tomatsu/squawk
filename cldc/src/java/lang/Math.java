@@ -177,7 +177,7 @@ public final strictfp class Math {
      *          and is equal to a mathematical integer.
      * @since   CLDC 1.1
      */
-    public static double floor(double a)                     { return VM.math(MathOpcodes.FLOOR, a, 0);        }
+    public static double floor(double a)                     { return VM.floor(a);        }
 /*end[FLOATS]*/
 
     /**

@@ -366,6 +366,12 @@ INLINE int    d2f(jlong l)                 { return f2ib((float)lb2d(l));       
  *                                Math functions                             *
 \*---------------------------------------------------------------------------*/
 
+jlong math_floor(jlong rs1_l) {
+    double rs1 = lb2d(rs1_l);
+    double res = JFP_lib_floor(rs1);
+    return d2lb(res);
+}
+
 jlong math(int op, jlong rs1_l, jlong rs2_l) {
     double rs1 = lb2d(rs1_l);
     double rs2 = lb2d(rs2_l);
@@ -376,7 +382,7 @@ jlong math(int op, jlong rs1_l, jlong rs2_l) {
         case MathOpcodes_TAN:            res = JFP_lib_tan(rs1);                       break;
         case MathOpcodes_SQRT:           res = JFP_lib_sqrt(rs1);                      break;
         case MathOpcodes_CEIL:           res = JFP_lib_ceil(rs1);                      break;
-        case MathOpcodes_FLOOR:          res = JFP_lib_floor(rs1);                     break;
+//        case MathOpcodes_FLOOR:          res = JFP_lib_floor(rs1);                     break;
 /*if[JDK1.0]*/
         case MathOpcodes_ASIN:           res = asin(rs1);                      break;
         case MathOpcodes_ACOS:           res = acos(rs1);                      break;

@@ -924,6 +924,10 @@ public class Romizer {
         ObjectMemory memory = ObjectMemoryLoader.load(Connector.openDataInputStream(url), url, false).objectMemory;
 
         printSymFile(memory, symbols);
+	File u = new File("vmcore/src/vm/unused.h");
+	PrintStream st = new PrintStream(new FileOutputStream(u));
+	VM.listUnusedNativeMethods(st);
+	st.close();
     }
 
     private void printSymFile(ObjectMemory memory, PrintStream symbols) throws IOException {

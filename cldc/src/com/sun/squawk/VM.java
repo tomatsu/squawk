@@ -1329,6 +1329,8 @@ hbp.dumpState();
      */
     public native static double math(int code, double a, double b);
 
+    public native static double floor(double a);
+	
     /**
      * Converts a float into bits.
      *

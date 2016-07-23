@@ -1065,15 +1065,17 @@ public class VM {
     	for (Map.Entry<String, Integer> entry : methodTable.entrySet()) {
             out.println("NATIVE." + entry.getKey() + ".NAME=" + entry.getValue());
         }
+    }
 
-
-/* Uncomment to get list of apparently unused native methods */
-/*
-        Enumeration keys = unused.keys();
-        while (keys.hasMoreElements()) {
-            System.err.println("Warning: Unused native method "+keys.nextElement());
+    public static void listUnusedNativeMethods(PrintStream out) {
+    	for (Map.Entry<String, Integer> entry : methodTable.entrySet()) {
+		String key = entry.getKey();
+		if (unused.get(key) != null) {
+			out.println("#define Mask_"+key.replace('.', '_') + "(b)");
+		} else {
+			out.println("#define Mask_"+key.replace('.', '_') + "(b) b");
+		}
         }
-*/
     }
 
     private VM() {
