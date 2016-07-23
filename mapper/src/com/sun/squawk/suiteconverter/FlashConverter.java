@@ -39,6 +39,8 @@ public class FlashConverter {
     private String outFile;
     private int libraryAddress;
     private int bootstrapAddress;
+    private boolean generateRelocatableCArray;
+    private final static String relocatableCArraySymbol = "/*VAL*/_bootstrap/*BOOTSTRAP_SUITE_ADDR_SYM*/";
 
     /**
      * Prints the usage message.
@@ -119,6 +121,8 @@ public class FlashConverter {
             } else if (arg.equals("-verbose") | arg.equals("-v")) {
                 VM.setVerbose(true);
                 VM.setVeryVerbose(true);
+            } else if (arg.equals("-c")) {
+		generateRelocatableCArray = true;
             } else if (arg.equals("-h")) {
                 usage(null);
                 return false;
@@ -175,6 +179,24 @@ public class FlashConverter {
      * Execute the mapper and produce the dump.
      */
     private void run() throws IOException {
+	if (generateRelocatableCArray) {
+	    generateRelocatableCArray();
+	} else {
+	    relocateMemory();
+	}
+    }
+    
+    private void generateRelocatableCArray() throws IOException {
+        int[] memoryAddrs = getMemoryAddrs();
+	Suite suite = new Suite();
+	suite.loadFromFile(suiteFilePath, new File(bootstrapSuitePath).getPath());
+
+	FileOutputStream oc = new FileOutputStream(suiteFilePath + ".c");
+	suite.generateRelocatableCArray(memoryAddrs, relocatableCArraySymbol, oc);
+	oc.close();
+    }
+    
+    private void relocateMemory() throws IOException {
         File binFilePath = new File(outFile);
         int[] memoryAddrs = getMemoryAddrs();
         if (VM.isVerbose()) {

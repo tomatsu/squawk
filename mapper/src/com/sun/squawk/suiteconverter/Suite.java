@@ -61,22 +61,22 @@ public class Suite {
     public final static int FLASH_SUITE_MINOR_VERSION = 0;
     public final static int FLASH_SUITE_MAJOR_VERSION = 2;
 
-	private String parentURL;
-	private int rootOffset;
-	private int memorySize;
-	private byte[] oopMap;
-	private byte[] objectMemory;
-	private int canonicalStart;
-	private Suite parentSuite = null;
-	private int outputHeaderSize;
-	private short version_minor;
-	private short version_major;
-	private int unpaddedHdrSize;
-	private int hash;
+    private String parentURL;
+    private int rootOffset;
+    private int memorySize;
+    private byte[] oopMap;
+    private byte[] objectMemory;
+    private int canonicalStart;
+    private Suite parentSuite = null;
+    private int outputHeaderSize;
+    private short version_minor;
+    private short version_major;
+    private int unpaddedHdrSize;
+    private int hash;
 
     private static boolean isBigEndian = false; // ARM target is little endian
 
-	public static final int EXPECTED_SUITE_VERSION_MAJOR = ObjectMemorySerializer.CURRENT_MAJOR_VERSION;
+    public static final int EXPECTED_SUITE_VERSION_MAJOR = ObjectMemorySerializer.CURRENT_MAJOR_VERSION;
     public static final int EXPECTED_SUITE_VERSION_MINOR = ObjectMemorySerializer.CURRENT_MINOR_VERSION;;
 
     /* copied from ConfigPage: */
@@ -90,72 +90,72 @@ public class Suite {
         isBigEndian = value;
     }
 
-	/**
-	 * Load a suite file from a {@link DataInputStream}. See also {@link #loadFromFile(String, String, int[])}
-	 *
-	 * @param dis The {@link DataInputStream} to read the suite from
-	 * @param bootstrapFilename A filepath to read the bootstrap suite from (note that this is NOT typically
-	 * this suite's parent.
-	 * @throws IOException
-	 */
-	public void loadFromStream(DataInputStream dis, String bootstrapFilename) throws IOException {
-		int magic = dis.readInt();
-		if (magic != 0xDEADBEEF) {
-			throw new IOException("Suite file has wrong magic word: " + Integer.toHexString(magic));
-		}
-		version_minor = dis.readShort();
-		version_major = dis.readShort();
-		if ((version_major != EXPECTED_SUITE_VERSION_MAJOR)
-				|| (version_minor != EXPECTED_SUITE_VERSION_MINOR))
-			throw new RuntimeException("Unsupported suite file version: "
-					+ version_major + "." + version_minor + ". Expected "
-					+ EXPECTED_SUITE_VERSION_MAJOR + "."
-					+ EXPECTED_SUITE_VERSION_MINOR);
+    /**
+     * Load a suite file from a {@link DataInputStream}. See also {@link #loadFromFile(String, String, int[])}
+     *
+     * @param dis The {@link DataInputStream} to read the suite from
+     * @param bootstrapFilename A filepath to read the bootstrap suite from (note that this is NOT typically
+     * this suite's parent.
+     * @throws IOException
+     */
+    public void loadFromStream(DataInputStream dis, String bootstrapFilename) throws IOException {
+	int magic = dis.readInt();
+	if (magic != 0xDEADBEEF) {
+	    throw new IOException("Suite file has wrong magic word: " + Integer.toHexString(magic));
+	}
+	version_minor = dis.readShort();
+	version_major = dis.readShort();
+	if ((version_major != EXPECTED_SUITE_VERSION_MAJOR)
+	    || (version_minor != EXPECTED_SUITE_VERSION_MINOR))
+	    throw new RuntimeException("Unsupported suite file version: "
+				       + version_major + "." + version_minor + ". Expected "
+				       + EXPECTED_SUITE_VERSION_MAJOR + "."
+				       + EXPECTED_SUITE_VERSION_MINOR);
 
-		dis.readInt(); // attributes
-		readParentHash(dis);
-		parentURL = dis.readUTF();
-		rootOffset = dis.readInt();
-		memorySize = dis.readInt();
+	dis.readInt(); // attributes
+	readParentHash(dis);
+	parentURL = dis.readUTF();
+	rootOffset = dis.readInt();
+	memorySize = dis.readInt();
 
-		int oopMapSize = calculateOopMapSizeInBytes(memorySize);
-		oopMap = new byte[oopMapSize];
-		dis.readFully(oopMap);
+	int oopMapSize = calculateOopMapSizeInBytes(memorySize);
+	oopMap = new byte[oopMapSize];
+	dis.readFully(oopMap);
 
-		if (hasParent()) {
-			parentSuite = new Suite();
-			if (parentURL.equals("memory:bootstrap")) {
-				parentSuite.loadFromFile(bootstrapFilename, null);
-			} else {
-				// skip "file://"
-				// System.out.println(parentURL);
-			    // EAT:
-			    // Using the path to the bootstrap is not really the right way to go, we should have a mechanism for setting
-			    // the path to use to find suites when we need them.  This used to work as the suite written out by SuiteCreator
-			    // would have a full path to the original suite.  I didn't think that was a good idea and therefore introduced
-			    // concept of suite class path type of thing.  In order to adapt your concept of Suite to fit this, I would have
-			    // to have changed a lot of classes, and wanted to limit scope of changes I was making.
-			    String parentFileName = new File(new File(bootstrapFilename).getParent(), new File(parentURL.substring("file://".length())).getName()).getAbsolutePath();
-				parentSuite.loadFromFile(parentFileName, bootstrapFilename);
-			}
-			canonicalStart = parentSuite.getCanonicalEnd();
-			unpaddedHdrSize = 24 + 2 + getSpotParentURL().length() + oopMapSize;
-			outputHeaderSize = ((unpaddedHdrSize + 3) / 4) * 4;
-		} else {
-			outputHeaderSize = 12;
-		}
+	if (hasParent()) {
+	    parentSuite = new Suite();
+	    if (parentURL.equals("memory:bootstrap")) {
+		parentSuite.loadFromFile(bootstrapFilename, null);
+	    } else {
+		// skip "file://"
+		// System.out.println(parentURL);
+		// EAT:
+		// Using the path to the bootstrap is not really the right way to go, we should have a mechanism for setting
+		// the path to use to find suites when we need them.  This used to work as the suite written out by SuiteCreator
+		// would have a full path to the original suite.  I didn't think that was a good idea and therefore introduced
+		// concept of suite class path type of thing.  In order to adapt your concept of Suite to fit this, I would have
+		// to have changed a lot of classes, and wanted to limit scope of changes I was making.
+		String parentFileName = new File(new File(bootstrapFilename).getParent(), new File(parentURL.substring("file://".length())).getName()).getAbsolutePath();
+		parentSuite.loadFromFile(parentFileName, bootstrapFilename);
+	    }
+	    canonicalStart = parentSuite.getCanonicalEnd();
+	    unpaddedHdrSize = 24 + 2 + getSpotParentURL().length() + oopMapSize;
+	    outputHeaderSize = ((unpaddedHdrSize + 3) / 4) * 4;
+	} else {
+	    outputHeaderSize = 12;
+	}
 
-		// skip padding
-		dis.skipBytes((4 - ((oopMapSize + parentURL.length() + 2) % 4)) % 4);
-		objectMemory = new byte[memorySize];
-		dis.readFully(objectMemory);
-		hash = objectMemory.length;
-		for (int i = 0; i != objectMemory.length; ++i) {
-			hash += objectMemory[i];
-		}
+	// skip padding
+	dis.skipBytes((4 - ((oopMapSize + parentURL.length() + 2) % 4)) % 4);
+	objectMemory = new byte[memorySize];
+	dis.readFully(objectMemory);
+	hash = objectMemory.length;
+	for (int i = 0; i != objectMemory.length; ++i) {
+	    hash += objectMemory[i];
+	}
         
         //logHeader("stream");
-	}
+    }
 
     public void logHeader(String name) {
         System.out.println("SuiteReloInfo: " + name);
@@ -168,23 +168,23 @@ public class Suite {
         System.out.println("header size: " + ((unpaddedHdrSize + 3) / 4));
     }
 
-	private int readParentHash(DataInputStream dis) throws IOException {
-		return dis.readInt();
-	}
+    private int readParentHash(DataInputStream dis) throws IOException {
+	return dis.readInt();
+    }
 
-	/**
-	 * Write the suite to a stream
-	 * @param dos the data output stream
-	 * @throws IOException
-	 */
-	public void writeToStream(DataOutputStream dos) throws IOException {
-///*if[!SIMPLE_VERIFY_SIGNATURES]*/
+    /**
+     * Write the suite to a stream
+     * @param dos the data output stream
+     * @throws IOException
+     */
+    public void writeToStream(DataOutputStream dos) throws IOException {
+	///*if[!SIMPLE_VERIFY_SIGNATURES]*/
         DataOutputStream output = dos;
         final int MAX_HEADER_SIZE = Integer.MAX_VALUE;
-///*else[SIMPLE_VERIFY_SIGNATURES]*/
-//      SigningOutputStream output = new SigningOutputStream(dos);
-//      final int MAX_HEADER_SIZE = SignatureVerifier.MAXIMUM_HEADER_SIZE;
-///*end[SIMPLE_VERIFY_SIGNATURES]*/
+	///*else[SIMPLE_VERIFY_SIGNATURES]*/
+	//      SigningOutputStream output = new SigningOutputStream(dos);
+	//      final int MAX_HEADER_SIZE = SignatureVerifier.MAXIMUM_HEADER_SIZE;
+	///*end[SIMPLE_VERIFY_SIGNATURES]*/
 
         if (hasParent()) {
             if (VM.isVerbose()) {
@@ -213,12 +213,12 @@ public class Suite {
             writePad(output, outputHeaderSize - unpaddedHdrSize);
             if ((outputHeaderSize - oopMap.length) > MAX_HEADER_SIZE) {
                 throw new RuntimeException(
-                        "Header size of suite is too large. For compatibility with SuiteSignatureVerifier header size "
-                        + "must not be larger than "
-                        + MAX_HEADER_SIZE
-                        + " bytes, but it is "
-                        + outputHeaderSize
-                        + " bytes");
+					   "Header size of suite is too large. For compatibility with SuiteSignatureVerifier header size "
+					   + "must not be larger than "
+					   + MAX_HEADER_SIZE
+					   + " bytes, but it is "
+					   + outputHeaderSize
+					   + " bytes");
             }
         } else {
             if (VM.isVerbose()) {
@@ -233,194 +233,254 @@ public class Suite {
         }
         output.write(objectMemory);
 
-///*if[!SIMPLE_VERIFY_SIGNATURES]*/
+	///*if[!SIMPLE_VERIFY_SIGNATURES]*/
         output.flush();
-///*else[SIMPLE_VERIFY_SIGNATURES]*/
-//		if (hasParent())
-//		// If this is not the bootstrap suite write the hash
-//		// and sign the suite.
-//		{
-//			output.writeInt(getHash());
-//			output.flushAndAppendSignature();
-//		}else{
-//			output.flushWithoutSignature();
-//		}
-///*end[SIMPLE_VERIFY_SIGNATURES]*/
-	}
-
-	/**
-	 * Answer a parent URL for use on the SPOT bootstrap's parent is null - same
-	 * as the host lib's parent is memory:bootstrap - same as the host apps's
-	 * parent (all other cases!) is different and defined as flash://<lib addr>
-	 */
-	private String getSpotParentURL() {
-		if (parentURL.equals("memory:bootstrap") || (parentURL == null)) {
-			return parentURL;
-		} else {
-//			return ConfigPage.LIBRARY_URI;
-			return LIBRARY_URI;
-		}
-	}
-
-	/**
-	 * @return The calculated hash of this Suite.
-	 */
-	public int getHash() {
-		return hash;
-	}
-
-	/**
-	 * @param dos
-	 * @param i
-	 * @throws IOException
-	 */
-	private void writeLittleEndianInt(DataOutput dos, int i)
-			throws IOException {
-		dos.write((i >>> 0) & 0xFF);
-		dos.write((i >>> 8) & 0xFF);
-		dos.write((i >>> 16) & 0xFF);
-		dos.write((i >>> 24) & 0xFF);
-	}
-
-	/**
-	 * @param
-	 * @throws IOException
-	 *
-	 */
-	private void writePad(DataOutput dos, int padCount)
-			throws IOException {
-		for (int i = 0; i < padCount; i++) {
-			dos.writeByte(0);
-		}
-	}
-
-	/**
-	 * Relocate the suite's object memory in accordance with the memory addresses supplied
-	 * @param memoryAddrs  An array of virtual memory addresses at which to assume suites will be mapped on the SPOT
-	 * device. The first will be this suite's address, the second its parent, and so on until the the bootstrap address.
-	 */
-	public void relocateMemory(int[] memoryAddrs) {
-		byte[] result = new byte[objectMemory.length];
-		System.arraycopy(objectMemory, 0, result, 0, objectMemory.length);
-		for (int i = 0; i < oopMap.length; i++) {
-			byte currentByte = oopMap[i];
-			for (int j = 0; j < 8; j++) {
-				if (((currentByte >> j) & 1) == 1) {
-					int index = 4 * ((i * 8) + j);
-					int pointer = getObjectMemoryWord(objectMemory, index);
-					writeObjectMemoryWord(result, index, this.mapPointer(
-							pointer, memoryAddrs));
-				}
-			}
-		}
-		objectMemory = result;
-	}
-
-	/**
-	 * pointer is canonical. If it points into our memory space, then assume our
-	 * flash memory base is the first element of memoryAddrs and adjust
-	 * accordingly. If it doesn't then delegate to our parent, having stripped
-	 * our flash memory base from the array.
-	 *
-	 * @param pointer value to relocate
-	 * @param memoryAddrs array of actual base addresses for this suite, and for each parent suite.
-	 * @param offset offset to the memory address (in memoryAddrs) that goes with "this" suite
-	 * @return
-	 */
-	private int mapPointer(int pointer, int[] memoryAddrs, int offset) {
-		if (pointer == 0) {
-			return 0;
-		} else {
-			if (pointer < canonicalStart) {
-				// map pointer against parent memory address
-				return getParent().mapPointer(pointer, memoryAddrs, offset + 1);
-			} else {
-				// map pointer against our memory address
-				return memoryAddrs[offset] - canonicalStart + pointer
-						+ outputHeaderSize;
-			}
-		}
-	}
+	///*else[SIMPLE_VERIFY_SIGNATURES]*/
+	//		if (hasParent())
+	//		// If this is not the bootstrap suite write the hash
+	//		// and sign the suite.
+	//		{
+	//			output.writeInt(getHash());
+	//			output.flushAndAppendSignature();
+	//		}else{
+	//			output.flushWithoutSignature();
+	//		}
+	///*end[SIMPLE_VERIFY_SIGNATURES]*/
+    }
 
     /**
-	 * pointer is canonical. If it points into our memory space, then assume our
-	 * flash memory base is the first element of memoryAddrs and adjust
-	 * accordingly. If it doesn't then delegate to our parent, having stripped
-	 * our flash memory base from the array.
-	 *
-	 * @param pointer
-	 * @param parentMemoryAddrs
-	 * @return
-	 */
-	private int mapPointer(int pointer, int[] memoryAddrs) {
+     * Answer a parent URL for use on the SPOT bootstrap's parent is null - same
+     * as the host lib's parent is memory:bootstrap - same as the host apps's
+     * parent (all other cases!) is different and defined as flash://<lib addr>
+     */
+    private String getSpotParentURL() {
+	if (parentURL.equals("memory:bootstrap") || (parentURL == null)) {
+	    return parentURL;
+	} else {
+	    //			return ConfigPage.LIBRARY_URI;
+	    return LIBRARY_URI;
+	}
+    }
+
+    /**
+     * @return The calculated hash of this Suite.
+     */
+    public int getHash() {
+	return hash;
+    }
+
+    /**
+     * @param dos
+     * @param i
+     * @throws IOException
+     */
+    private void writeLittleEndianInt(DataOutput dos, int i)
+	throws IOException {
+	dos.write((i >>> 0) & 0xFF);
+	dos.write((i >>> 8) & 0xFF);
+	dos.write((i >>> 16) & 0xFF);
+	dos.write((i >>> 24) & 0xFF);
+    }
+
+    /**
+     * @param
+     * @throws IOException
+     *
+     */
+    private void writePad(DataOutput dos, int padCount)
+	throws IOException {
+	for (int i = 0; i < padCount; i++) {
+	    dos.writeByte(0);
+	}
+    }
+
+    /**
+     * Relocate the suite's object memory in accordance with the memory addresses supplied
+     * @param memoryAddrs  An array of virtual memory addresses at which to assume suites will be mapped on the SPOT
+     * device. The first will be this suite's address, the second its parent, and so on until the the bootstrap address.
+     */
+    public void relocateMemory(int[] memoryAddrs) {
+	byte[] result = new byte[objectMemory.length];
+	System.arraycopy(objectMemory, 0, result, 0, objectMemory.length);
+	for (int i = 0; i < oopMap.length; i++) {
+	    byte currentByte = oopMap[i];
+	    for (int j = 0; j < 8; j++) {
+		if (((currentByte >> j) & 1) == 1) {
+		    int index = 4 * ((i * 8) + j);
+		    int pointer = getObjectMemoryWord(objectMemory, index);
+		    writeObjectMemoryWord(result, index, this.mapPointer(
+									 pointer, memoryAddrs));
+		}
+	    }
+	}
+	objectMemory = result;
+    }
+
+    static void toHex(StringBuffer sbuf, int x) {
+	toHex(sbuf, x, 2);
+    }
+    static void toHex(StringBuffer sbuf, int x, int n) {
+	String s = Integer.toHexString(x);
+	int len = s.length();
+	for (int i = 0; i < n - len; i++) {
+	    sbuf.append('0');
+	}
+	sbuf.append(s);
+    }
+    
+    public void generateRelocatableCArray(int[] memoryAddrs, String var, java.io.OutputStream o) throws IOException {
+	java.io.PrintStream out = new java.io.PrintStream(o);
+	out.print("#define p(a) (unsigned int)((char*)_" + var + ".memory+a)\n");
+	out.print("const struct {\n");
+	out.print("  unsigned int off;\n");
+	out.print("  unsigned int hash;\n");
+	out.print("  unsigned int size;\n");
+	out.print("  unsigned int memory[];\n");
+	out.print("} _" + var + " = {\n");
+
+	StringBuffer sbuf = new StringBuffer();
+	sbuf.append("0x");
+	toHex(sbuf, rootOffset + outputHeaderSize, 8);
+	sbuf.append(",0x");
+	toHex(sbuf, getHash(), 8);
+	sbuf.append(",0x");
+	toHex(sbuf, memorySize, 8);
+	sbuf.append(",");
+	out.println(sbuf);
+		
+	for (int i = 0; i < oopMap.length; i++) {
+	    byte currentByte = oopMap[i];
+	    sbuf = new StringBuffer();
+	    for (int j = 0; j < 8; j++) {
+		int index = 4 * ((i * 8) + j);
+		if (index + 3 > objectMemory.length) continue;
+		int pointer = getObjectMemoryWord(objectMemory, index);
+		if (pointer != 0 && ((currentByte >> j) & 1) == 1) {
+		    sbuf.append("p(");
+		}
+		sbuf.append("0x");
+		toHex(sbuf, (pointer >> 24) & 0xff);
+		toHex(sbuf, (pointer >> 16) & 0xff);
+		toHex(sbuf, (pointer >> 8) & 0xff);
+		toHex(sbuf, (pointer >> 0) & 0xff);
+		if (pointer != 0 && ((currentByte >> j) & 1) == 1) {
+		    sbuf.append(")");
+		}
+		sbuf.append(",");
+	    }
+	    sbuf.append("\n");
+	    out.print(sbuf.toString());
+	}
+	out.println("};");
+	out.println("const unsigned int* " + var + " = (unsigned int*)&_" + var + ";");
+    }
+
+    
+    /**
+     * pointer is canonical. If it points into our memory space, then assume our
+     * flash memory base is the first element of memoryAddrs and adjust
+     * accordingly. If it doesn't then delegate to our parent, having stripped
+     * our flash memory base from the array.
+     *
+     * @param pointer value to relocate
+     * @param memoryAddrs array of actual base addresses for this suite, and for each parent suite.
+     * @param offset offset to the memory address (in memoryAddrs) that goes with "this" suite
+     * @return
+     */
+    private int mapPointer(int pointer, int[] memoryAddrs, int offset) {
+	if (pointer == 0) {
+	    return 0;
+	} else {
+	    if (pointer < canonicalStart) {
+		// map pointer against parent memory address
+		return getParent().mapPointer(pointer, memoryAddrs, offset + 1);
+	    } else {
+		// map pointer against our memory address
+		return memoryAddrs[offset] - canonicalStart + pointer
+		    + outputHeaderSize;
+	    }
+	}
+    }
+
+    /**
+     * pointer is canonical. If it points into our memory space, then assume our
+     * flash memory base is the first element of memoryAddrs and adjust
+     * accordingly. If it doesn't then delegate to our parent, having stripped
+     * our flash memory base from the array.
+     *
+     * @param pointer
+     * @param parentMemoryAddrs
+     * @return
+     */
+    private int mapPointer(int pointer, int[] memoryAddrs) {
         return mapPointer(pointer, memoryAddrs, 0);
+    }
+
+    /**
+     * @param result
+     * @param index
+     * @param replacementPointer
+     */
+    private void writeObjectMemoryWord(byte[] memory, int index, int value) {
+	if (isTargetBigEndian()) {
+	    memory[index + 0] = (byte) (value >> 24);
+	    memory[index + 1] = (byte) (value >> 16);
+	    memory[index + 2] = (byte) (value >> 8);
+	    memory[index + 3] = (byte) (value >> 0);
+	} else {
+	    memory[index + 0] = (byte) (value >> 0);
+	    memory[index + 1] = (byte) (value >> 8);
+	    memory[index + 2] = (byte) (value >> 16);
+	    memory[index + 3] = (byte) (value >> 24);
 	}
 
-	/**
-	 * @param result
-	 * @param index
-	 * @param replacementPointer
-	 */
-	private void writeObjectMemoryWord(byte[] memory, int index, int value) {
-		if (isTargetBigEndian()) {
-			memory[index + 0] = (byte) (value >> 24);
-			memory[index + 1] = (byte) (value >> 16);
-			memory[index + 2] = (byte) (value >> 8);
-			memory[index + 3] = (byte) (value >> 0);
-		} else {
-			memory[index + 0] = (byte) (value >> 0);
-			memory[index + 1] = (byte) (value >> 8);
-			memory[index + 2] = (byte) (value >> 16);
-			memory[index + 3] = (byte) (value >> 24);
-		}
+    }
 
+    static private int getObjectMemoryWord(byte[] memory, int index) {
+	int b0 = memory[index + 0] & 0xFF;
+	int b1 = memory[index + 1] & 0xFF;
+	int b2 = memory[index + 2] & 0xFF;
+	int b3 = memory[index + 3] & 0xFF;
+	if (isTargetBigEndian()) {
+	    return (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
+	} else {
+	    return (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
 	}
+    }
 
-	static private int getObjectMemoryWord(byte[] memory, int index) {
-		int b0 = memory[index + 0] & 0xFF;
-		int b1 = memory[index + 1] & 0xFF;
-		int b2 = memory[index + 2] & 0xFF;
-		int b3 = memory[index + 3] & 0xFF;
-		if (isTargetBigEndian()) {
-			return (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
-		} else {
-			return (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
-		}
-	}
+    private int getCanonicalEnd() {
+	return memorySize + canonicalStart;
+    }
 
-	private int getCanonicalEnd() {
-		return memorySize + canonicalStart;
-	}
+    private boolean hasParent() {
+	return parentURL.length() != 0;
+    }
 
-	private boolean hasParent() {
-		return parentURL.length() != 0;
-	}
+    /**
+     * @return The loaded parent suite of this Suite
+     */
+    public Suite getParent() {
+	return parentSuite;
+    }
 
-	/**
-	 * @return The loaded parent suite of this Suite
-	 */
-	public Suite getParent() {
-		return parentSuite;
-	}
-
-	/**
-	 * Load a suite file from a {@link File}. See also {@link #loadFromStream(DataInputStream, String)}
-	 *
-	 * @param filename The filepath to read the suite from
-	 * @param bootstrapFilename A filepath to read the bootstrap suite from (note that this is NOT typically
-	 * this suite's parent.
-	 * @throws IOException
-	 */
-	public void loadFromFile(String filename, String bootstrapFilename) throws IOException {
-		File inputFile = new File(filename);
-		FileInputStream fis = new FileInputStream(inputFile);
-		loadFromStream(new DataInputStream(fis), bootstrapFilename);
-		fis.close();
+    /**
+     * Load a suite file from a {@link File}. See also {@link #loadFromStream(DataInputStream, String)}
+     *
+     * @param filename The filepath to read the suite from
+     * @param bootstrapFilename A filepath to read the bootstrap suite from (note that this is NOT typically
+     * this suite's parent.
+     * @throws IOException
+     */
+    public void loadFromFile(String filename, String bootstrapFilename) throws IOException {
+	File inputFile = new File(filename);
+	FileInputStream fis = new FileInputStream(inputFile);
+	loadFromStream(new DataInputStream(fis), bootstrapFilename);
+	fis.close();
         //logHeader(filename);
-	}
+    }
 
-	private int calculateOopMapSizeInBytes(int size) {
-		return ((size / 4) + 7) / 8;
-	}
+    private int calculateOopMapSizeInBytes(int size) {
+	return ((size / 4) + 7) / 8;
+    }
 
 }

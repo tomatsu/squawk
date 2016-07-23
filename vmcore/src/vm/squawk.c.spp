@@ -39,8 +39,10 @@
  */
 const char *format(const char* fmt);
 
+#if PLATFORM_TYPE_NATIVE
 /* used by io.c...*/
 #include "io_native.h"
+#endif
 
 #include "os.c"
 
@@ -92,6 +94,7 @@ void diagnosticWithValue(char * msg, int val) {
 #elif PLATFORM_TYPE_BARE_METAL
 /* Different bare metal platforms handle this differently - eg set IODOTC to a specific file.
  * Also include io_metal.c*/
+extern unsigned int* /*VAL*/_bootstrap/*BOOTSTRAP_SUITE_ADDR_SYM*/;
 #else
 #error "unspecified platform type"
 #endif
@@ -198,21 +201,23 @@ static Address lookupStaticMethod(int cid, int methodOffset);
  * The default GC chunk, NVM and RAM sizes.
  */
 #ifndef SERVICE_CHUNK_SIZE
-#define SERVICE_CHUNK_SIZE (24*1024)
+#define SERVICE_CHUNK_SIZE (1*1024)
 #endif
 
 #define TWOWORDS (HDR_BYTES_PER_WORD * 2)
 #define SERVICE_CHUNK_SIZE_MINUS2WORDS (SERVICE_CHUNK_SIZE - TWOWORDS)
 
 #ifndef DEFAULT_RAM_SIZE
-#define DEFAULT_RAM_SIZE   (8*1024*1024)
+//#define DEFAULT_RAM_SIZE   (8*1024*1024)
+#define DEFAULT_RAM_SIZE   (24*1024)
 #endif
 
 /*
  * Note that DEFAULT_NVM_SIZE = 0 means don't support nvm at all
  */
 #ifndef DEFAULT_NVM_SIZE
-#define DEFAULT_NVM_SIZE   (8*1024*1024)
+//#define DEFAULT_NVM_SIZE   (8*1024*1024)
+#define DEFAULT_NVM_SIZE   0
 #endif
 #define TIMEQUANTA 1000
 
@@ -271,7 +276,7 @@ NORETURN void stopVM(int);
 /*
  * Size of buffer used for pre-formatting printf/fprintf format specifications.
  */
-#define FORMAT_BUF_LEN 1000
+#define FORMAT_BUF_LEN 256
 
 #ifdef _MSC_VER
 #    define FORMAT_64  buf[bufPos++] = 'I'; buf[bufPos++] = '6'; buf[bufPos++] = '4';
@@ -302,7 +307,7 @@ const char *format(const char* fmt) {
     int fmtLen = strlen(fmt);
 
     while (fmtPos < fmtLen) {
-        assume(bufPos < 1000);
+        assume(bufPos < FORMAT_BUF_LEN);
 
         if (fmt[fmtPos] != '%') {
             buf[bufPos++] = fmt[fmtPos++];
@@ -1086,7 +1091,7 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     diagnosticWithValue("setupMemory: ram size", ramSize);
     diagnosticWithValue("setupMemory: nvmSize size", nvmSize);
 
-#ifdef FLASH_MEMORY
+#if defined(FLASH_MEMORY) || PLATFORM_TYPE_BARE_METAL
     memorySize = roundUp(ramSize - (pageSize-1), pageSize);
     ramSize = memorySize - roundUp(serviceChunkSize, pageSize) - roundUp(argvTotalSize, pageSize) - roundUp(nvmSize, pageSize);
     diagnosticWithValue("ram size", ramSize);
@@ -1115,6 +1120,11 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     // Allocate the memory buffer
     memory = newBuffer(realMemorySize, "memory", true);
     memoryEnd = Address_add(memory, memorySize);
+#if PLATFORM_TYPE_BARE_METAL
+    bootstrapSize = loadBootstrapSuiteFromFlash(/*VAL*/_bootstrap/*BOOTSTRAP_SUITE_ADDR_SYM*/, &com_sun_squawk_VM_romStart, &suite, &com_sun_squawk_VM_bootstrapHash);
+    com_sun_squawk_VM_bootstrapStart = com_sun_squawk_VM_romStart; 
+    com_sun_squawk_VM_romEnd = Address_add(com_sun_squawk_VM_romStart, bootstrapSize);
+#else
 #ifdef FLASH_MEMORY
     bootstrapSize = loadBootstrapSuiteFromFlash(bootstrapSuiteFile, &com_sun_squawk_VM_romStart, &suite, &com_sun_squawk_VM_bootstrapHash);
     com_sun_squawk_VM_bootstrapStart = com_sun_squawk_VM_romStart;
@@ -1134,9 +1144,10 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     bootstrapSize = loadBootstrapSuite(bootstrapSuiteFile, memory, memorySize, &suite, &com_sun_squawk_VM_bootstrapHash);
     com_sun_squawk_VM_romEnd = Address_add(com_sun_squawk_VM_romStart, bootstrapSize);
 #endif /* FLASH_MEMORY */
+#endif
     com_sun_squawk_VM_bootstrapEnd = Address_add(com_sun_squawk_VM_bootstrapStart, bootstrapSize);
 
-#ifdef FLASH_MEMORY
+#if defined(FLASH_MEMORY) || PLATFORM_TYPE_BARE_METAL
     // NVM starts at the beginning of the memory buffer
     com_sun_squawk_GC_nvmStart = (Address)roundUp((UWord)memory, pageSize);
 #else
@@ -1255,6 +1266,8 @@ void preprocessArgs(char *argv[], int *argc,
 }
 #endif /* KERNEL_SQUAWK */
 
+
+#if !PLATFORM_TYPE_BARE_METAL
 #ifndef FLASH_MEMORY
 /********* SIGNAL HANDLING *********
  * Use OS provided signal handling to catch interrupts, bus errors, and segmentation violations.
@@ -1349,7 +1362,7 @@ void setupSignals() {
 
 #endif  // the new way
 #endif // FLASH_MEMORY
-
+#endif
 
 /**
  * Process the command line arguments.
@@ -1476,6 +1489,7 @@ Address processArgs(char *argv[], const int argc) {
 //    newIndex = argc;
 /*end[EMULATOR_LAUNCHER]*/
 
+#if !PLATFORM_TYPE_BARE_METAL
 #ifndef FLASH_MEMORY
     if (!notrap) {
         setupSignals();
@@ -1483,6 +1497,7 @@ Address processArgs(char *argv[], const int argc) {
         printf("Trap handling disabled\n");
     }
 #endif /* FLASH_MEMORY */
+#endif
 
 #if PLATFORM_TYPE_DELEGATING
     /*

@@ -192,6 +192,7 @@ public class RomCommand extends Command {
 
                 if (module.endsWith(".jar") || module.endsWith(".zip")) {
                     classesLocations.add(new Target.FilePair(new File(module)));
+		    java5ClassesLocations.add(new Target.FilePair(new File(module)));
                     module = new File(module).getName();
                     if (module.endsWith("_classes.jar")) {
                         // This is most likely the jar file build by a previous execution of the romizer
@@ -433,7 +434,10 @@ public class RomCommand extends Command {
         if (noNeedToCompile) {
             return;
         }
-        
+	if (env.getBooleanProperty("PLATFORM_TYPE_BARE_METAL")) {
+	    runFlashConverter();
+	}
+	
         JDK jdk = env.getJDK();
         String options;
         if (compilationEnabled) {
@@ -531,6 +535,12 @@ public class RomCommand extends Command {
             env.log(env.brief, "[compiling '" + VM_SRC_FILE + "' ...]");
             objectFiles.add(ccompiler.compile(includeDirs, VM_SRC_FILE, VM_BLD_DIR, false));
 
+	    if (env.getBooleanProperty("PLATFORM_TYPE_BARE_METAL")) {
+		File bootstrapSuiteSourceFile = new File(bootstrapSuiteName + ".suite.c");
+		env.log(env.brief, "[compiling '" + bootstrapSuiteSourceFile + "' ...]");
+		objectFiles.add(ccompiler.compile(includeDirs, bootstrapSuiteSourceFile, VM_BLD_DIR, false));
+	    }
+	    
             env.log(env.brief, "[linking '" + bootstrapSuiteName + "' ...]");
             ccompiler.link((File[])objectFiles.toArray(new File[objectFiles.size()]), bootstrapSuiteName, env.dll);
 
@@ -558,6 +568,11 @@ public class RomCommand extends Command {
             env.runCommand("romize", args);
         }
         return args;
+    }
+
+    public void runFlashConverter() {
+        // Only run the romizer if there are arguments passed to this command
+	env.runCommand("flashconv", new String[]{"-c", bootstrapSuiteName + ".suite", "0"});
     }
 
     /**

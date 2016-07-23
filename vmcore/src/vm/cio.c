@@ -61,14 +61,15 @@ INLINE void returnAddressResult(Address value) {
 #if PLATFORM_TYPE_BARE_METAL
 #include "metal_sleep.h"
 #include "io_metal.h"
-#endif
-
+#else
 #include IODOTC
+#endif
 
 #if PLATFORM_TYPE_BARE_METAL
 /* Different bare metal platforms handle this differently - eg set IODOTC to a specific file.
  * Also include io_metal.c*/
-#include "io_metal.c"
+//#include "io_metal.c"
+#include "io_simple.c"
 #endif
 
 #ifdef OLD_IIC_MESSAGES

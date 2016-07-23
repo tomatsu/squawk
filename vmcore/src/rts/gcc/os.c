@@ -39,7 +39,25 @@
 #define sysPlatformName() "linux"
 #endif
 
+#if !PLATFORM_TYPE_BARE_METAL
 #include "os_posix.c"
+#else
+#define sysGetPageSize() 128
+#define sysToggleMemoryProtection(x,y,z)
+//#define ioExecute() 
+#define sysValloc(s) memalign(sysGetPageSize(),s)
+#define sysVallocFree(p) free(p)
+
+jlong sysTimeMicros() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    /* We adjust to 1000 ticks per second */
+    return (jlong)tv.tv_sec * 1000000 + tv.tv_usec;
+}
+jlong sysTimeMillis(void) {
+    return sysTimeMicros() / 1000;
+}
+#endif
 
 /** 
  * Return another path to find the bootstrap suite with the given name.

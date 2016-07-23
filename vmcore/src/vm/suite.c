@@ -32,18 +32,27 @@
 // Set to true to enable tracing of the bootstrap suite file as it's read
 #define TRACE_SUITE false
 
-#ifdef FLASH_MEMORY
+#if defined(FLASH_MEMORY) | PLATFORM_TYPE_BARE_METAL
 
 // the next definition needs to be kept in sync with suite converter
 #define NUMBER_OF_BYTES_IN_BYTECODE_HEADER (3 * sizeof(UWord))
 
 UWord loadBootstrapSuiteFromFlash(
+#if PLATFORM_TYPE_BARE_METAL
+    unsigned int* base,
+#else
 						char	*bootstrapSuiteFile,
+#endif						
                         Address *romStart,
                         Address *suite,
                         int     *hash) {
 	 // ROM starts at the flash address set on command line
+#if PLATFORM_TYPE_BARE_METAL
+//    printf("base=%p *base=%x\n", base, *(unsigned int*)base);
+    Address javabytecodesbase = (Address) base;
+#else
     Address javabytecodesbase = (Address) atoi(bootstrapSuiteFile);
+#endif
     *suite = (void *)(getUWord(javabytecodesbase, 0) + javabytecodesbase);
     *hash = (int)getUWord(javabytecodesbase, 1);
     UWord size=getUWord(javabytecodesbase, 2);
