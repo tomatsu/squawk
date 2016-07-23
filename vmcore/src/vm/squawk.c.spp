@@ -22,8 +22,10 @@
  * Shores, CA 94065 or visit www.oracle.com if you need additional
  * information or have any questions.
  */
-#ifdef __GNUC__ 
+#ifdef __GNUC__
+/*if[GCC_OPTIMIZE_INTERPRETER_LOOP]*/
 #define USELABELS
+/*end[GCC_OPTIMIZE_INTERPRETER_LOOP]*/
 #endif
 
 // Size of class to class state cache.
