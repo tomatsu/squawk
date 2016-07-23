@@ -424,9 +424,12 @@ public class GC implements GlobalStaticFields {
         Assert.that(size == roundUpToWord(size));
         Address block  = nvmAllocationPointer;
         Address next = nvmAllocationPointer.add(size);
+/*if[ENABLE_HOSTED]*/
         if (VM.isHosted()) {
         	nvmEnd = next;
-        } else if (next.hi(nvmEnd)) {
+        } else
+/*end[ENABLE_HOSTED]*/
+	if (next.hi(nvmEnd)) {
             throw VM.getOutOfMemoryError();
         }
         nvmAllocationPointer = next;
@@ -563,8 +566,10 @@ public class GC implements GlobalStaticFields {
      * Initialize the memory system.
      */
     static void initialize(Suite bootstrapSuite) {
+/*if[ENABLE_HOSTED]*/	
         Assert.that(!VM.isHosted());
-
+/*end[ENABLE_HOSTED]*/
+	
         // Get the pointers rounded correctly.
         Assert.always(ramStart.eq(ramStart.roundUpToWord())); // "RAM limit is not word aligned"
         Assert.always(ramEnd.eq(ramEnd.roundDownToWord()));   // "RAM limit is not word aligned"
@@ -662,9 +667,12 @@ public class GC implements GlobalStaticFields {
      * @return  true if <code>object</code> is an instance in RAM
      */
     public static boolean inRam(Object object) throws ForceInlinedPragma {
+/*if[ENABLE_HOSTED]*/		
         if (VM.isHosted()) {
             return inRamHosted(object);
-        } else {
+        } else
+/*end[ENABLE_HOSTED]*/
+	{
             Address ptr = Address.fromObject(object);
             if (ptr.loeq(ramStart)) {
                 return false;
@@ -808,12 +816,14 @@ public class GC implements GlobalStaticFields {
         /*
          * When romizing, allocation always bumps the ram end pointer.
          */
+/*if[ENABLE_HOSTED]*/	
         if (VM.isHosted()) {
             allocEnd = allocTop.add(size);
             NativeUnsafe.setMemorySize(allocTop.toUWord().toOffset().add(size).toInt());
             return allocatePrimHosted(size, klass, arrayLength);
         }
-
+/*end[ENABLE_HOSTED]*/
+	
         Object oop = VM.allocate(size, klass, arrayLength);
 
         /*
@@ -897,7 +907,11 @@ public class GC implements GlobalStaticFields {
         }
         // The Lisp2Collector relies on instances always being at a higher address
         // than their class if the klass is itself in RAM
+/*if[ENABLE_HOSTED]*/	
         Assert.that(VM.isHosted() || !inRam(klass) || Address.fromObject(klass).lo(Address.fromObject(oop)));
+/*else[ENABLE_HOSTED]*/	
+//        Assert.that(!inRam(klass) || Address.fromObject(klass).lo(Address.fromObject(oop)));
+/*end[ENABLE_HOSTED]*/		
         return oop;
     }
 
@@ -1143,14 +1157,19 @@ public class GC implements GlobalStaticFields {
      */
     static Object newInstance(Klass klass) {
         Object oop = allocate((klass.getInstanceSize() * HDR.BYTES_PER_WORD) + HDR.basicHeaderSize, klass, -1);
-
+/*if[ENABLE_HOSTED]*/	
+	boolean isHosted = VM.isHosted();
+/*else[ENABLE_HOSTED]*/	
+//	boolean isHosted = false;
+/*end[ENABLE_HOSTED]*/	
+	
 /*if[!FINALIZATION]*/
 /*else[FINALIZATION]*/
 //        /*
 //         * If the object requires finalization and it is in RAM then allocate
 //         * a Finalizer for it. (Objects in ROM or NVM cannot be finalized.)
 //         */
-//        if (!VM.isHosted() && klass.hasFinalizer() && GC.inRam(oop)) {
+//        if (!isHosted && klass.hasFinalizer() && GC.inRam(oop)) {
 //            collector.addFinalizer(new Finalizer(oop));
 //        }
 /*end[FINALIZATION]*/
@@ -1399,7 +1418,9 @@ public class GC implements GlobalStaticFields {
      * @exception OutOfMemoryError if allocation fails
      */
     static Object newMethod(Object definingClass, MethodBody body) {
+/*if[ENABLE_HOSTED]*/
         boolean isHosted = VM.isHosted();
+/*end[ENABLE_HOSTED]*/
 
         /*
          * Get a ByteBufferEncoder and write the method header into it.
@@ -1456,10 +1477,13 @@ public class GC implements GlobalStaticFields {
         /*
          * Zero the padding bytes.
          */
-        if (isHosted) {
+/*if[ENABLE_HOSTED]*/	
+        if (VM.isHosted()) {
             // Clear the pointer to Klass.BYTE_ARRAY
             NativeUnsafe.clearObject(block, 1);
-        } else {
+        } else
+/*end[ENABLE_HOSTED]*/
+	{
             for (int i = 0; i < padding; i++) {
                 NativeUnsafe.setByte(block, i + HDR.BYTES_PER_WORD, 0);
             }
@@ -1499,7 +1523,11 @@ public class GC implements GlobalStaticFields {
          * Write the symbol table entries.
          */
 /*if[!FLASH_MEMORY]*/
+/*if[ENABLE_HOSTED]*/
         if (isHosted || VM.isVerbose()) {
+/*else[ENABLE_HOSTED]*/
+//        if (VM.isVerbose()) {
+/*end[ENABLE_HOSTED]*/
             Method method = body.getDefiningMethod();
             String name = method.toString();
             String file = body.getDefiningClass().getSourceFilePath();
@@ -1780,8 +1808,11 @@ public class GC implements GlobalStaticFields {
         
         // The Lisp2Collector relies on ObjectAssociations always being at a higher address
         // than the object with which they are associated
+/*if[ENABLE_HOSTED]*/
         Assert.that(VM.isHosted() || Address.fromObject(object).lo(Address.fromObject(assn)));
-        
+/*else[ENABLE_HOSTED]*/
+//        Assert.that(Address.fromObject(object).lo(Address.fromObject(assn)));
+/*end[ENABLE_HOSTED]*/	
         NativeUnsafe.setObject(object, HDR.klass, assn);
         return assn;
     }

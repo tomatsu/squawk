@@ -169,7 +169,11 @@ public final class MethodBody {
      * @return the string
      */
     public String toString() {
+/*if[ENABLE_HOSTED]*/
         return "[bytecode for "+definingMethod.getDefiningClass().getName()+"."+definingMethod.getName();
+/*else[ENABLE_HOSTED]*/
+//	return super.toString();
+/*end[ENABLE_HOSTED]*/		
     }
 
     /**

@@ -232,9 +232,12 @@ public abstract class Member {
      * Gets a String representation of this field or method.
      */
     public final String toString() {
+/*if[ENABLE_HOSTED]*/	
         if (VM.isHosted()) {
             return Klass.toString(this, true);
-        } else {
+        } else
+/*end[ENABLE_HOSTED]*/	    
+	{
             return super.toString();
         }
     }

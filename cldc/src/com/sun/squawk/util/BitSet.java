@@ -447,6 +447,7 @@ public final class BitSet {
      *
      * @return  a string representation of this bit set.
      */
+/*if[ENABLE_HOSTED]*/
     public String toString() {
         int numBits = bytesInUse * 8;
         StringBuffer buffer = new StringBuffer(8 * numBits + 2);
@@ -464,7 +465,8 @@ public final class BitSet {
         buffer.append('}');
         return buffer.toString();
     }
-
+/*end[ENABLE_HOSTED]*/
+    
 /*if[DEBUG_CODE_ENABLED]*/
     public static void main(String[] args) {
         BitSet bs = new BitSet();

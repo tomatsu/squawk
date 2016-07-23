@@ -748,6 +748,11 @@ public class Build {
      * @return the created and installed command
      */
     public Target addTarget(boolean j2me, String baseDir, String dependencies, String extraClassPath, String extraSourceDirs) {
+ 	return addTarget(j2me, baseDir, dependencies, extraClassPath, extraSourceDirs, false);
+     }
+     
+     public Target addTarget(boolean j2me, String baseDir, String dependencies, String extraClassPath, String extraSourceDirs, boolean stripHostCode) {
+ //	System.out.println("#### addTarget " + j2me + ", " + baseDir + ", " + dependencies + ", " + extraClassPath + ", " + extraSourceDirs + ", " + stripHostCode);
  //log(true, "addTarget j2me: " + j2me + " baseDir:" + baseDir + " dependencies:" + dependencies + " extraClassPath:" + extraClassPath+ " extraSourceDirs:" + extraSourceDirs);
         File primarySrcDir = new File(baseDir, "src");
         File[] srcDirs;
@@ -796,7 +801,7 @@ public class Build {
 //            }
 //        }
         
-        Target command = new Target(extraBuffer.toString(), j2me, baseDir, srcDirs, true, this, new File(baseDir).getName().toLowerCase());
+        Target command = new Target(extraBuffer.toString(), j2me, baseDir, srcDirs, true, this, new File(baseDir).getName().toLowerCase(), stripHostCode);
         if (dependencies != null) {
             command.dependsOn(dependencies);
         }
@@ -1143,7 +1148,8 @@ public class Build {
                     baseDir,
                     attributes.get("dependsOn"),
                     spacesToPath(attributes.get("extraClassPath")),
-                    attributes.get("extraSourceDirs"));
+                    attributes.get("extraSourceDirs"),
+		    Boolean.valueOf(attributes.get("stripHostCode")));
             String extraArgs = attributes.get("extraArgs");
             if (extraArgs != null) {
                 target.addExtraArg(extraArgs);
@@ -3131,15 +3137,20 @@ public class Build {
      * @param   noJava5    do not allow Java 5 syntax
      */
     public void javac(String compileClassPath, String preverifyClassPath, File baseDir, File[] srcDirs, boolean j2me, List<String> extraArgs, boolean preprocess, boolean noJava5) {
+	javac(compileClassPath, preverifyClassPath, baseDir, srcDirs, j2me, extraArgs, preprocess, noJava5, false);
+    }
+     
+    public void javac(String compileClassPath, String preverifyClassPath, File baseDir, File[] srcDirs, boolean j2me, List<String> extraArgs, boolean preprocess, boolean noJava5, boolean stripHostCode) {
+ //	System.out.println("##   javac  .... " + preprocess + ", " + stripHostCode);
         boolean doJava5 = isJava5SyntaxSupported() && !noJava5;
 
         // Preprocess the sources if required
         if (preprocess) {
-            srcDirs = new File[] { preprocess(baseDir, srcDirs, j2me, false) };
+            srcDirs = new File[] { preprocess(baseDir, srcDirs, j2me, false, stripHostCode) };
         }
 
         // Get the javac output directory
-        File classesDir = mkdir(baseDir, "classes");
+        File classesDir = mkdir(baseDir, stripHostCode ? "classes.target" : "classes");	
 
         // Prepare and run the Java compiler
         javaCompiler.reset();
@@ -3167,7 +3178,7 @@ public class Build {
         }
 
         // Run the preverifier for a J2ME compilation
-        if (j2me) {
+        if (j2me && stripHostCode) {
             preverify(preverifyClassPath, baseDir);
         }
     }
@@ -3210,7 +3221,12 @@ public class Build {
      * @return the preprocessor output directory
      */
     public File preprocess(File baseDir, File[] srcDirs, boolean j2me, boolean vm2c) {
-        // Get the preprocessor output directory
+ 	return preprocess(baseDir, srcDirs, j2me, vm2c, false);
+     }
+     
+     public File preprocess(File baseDir, File[] srcDirs, boolean j2me, boolean vm2c, boolean stripHostCode) {
+
+	 // Get the preprocessor output directory
         final File preprocessedDir;
         boolean resetJava5Syntax = false;
         if (vm2c && !isJava5SyntaxSupported()) {
@@ -3220,7 +3236,7 @@ public class Build {
             isJava5SyntaxSupported = true;
             resetJava5Syntax = true;
         } else {
-            preprocessedDir = mkdir(baseDir, "preprocessed");
+            preprocessedDir = mkdir(baseDir, stripHostCode ? "preprocessed.target" : "preprocessed");	    
         }
 
         // Preprocess the sources
@@ -3229,7 +3245,9 @@ public class Build {
         // @TODO: Should be true for desktop builds. host == target?
         preprocessor.showLineNumbers = true;
 
-        for (int i = 0; i != srcDirs.length; ++i) {
+	preprocessor.hosted = !stripHostCode;
+	
+	for (int i = 0; i != srcDirs.length; ++i) {
 
             File sourceDir = srcDirs[i];
 
@@ -3284,7 +3302,7 @@ public class Build {
 
 
         // Get the preverifier input and output directories
-        File classesDir = isJava5SyntaxSupported()?new File(baseDir, "weaved"):new File(baseDir, "classes");
+        File classesDir = isJava5SyntaxSupported()?new File(baseDir, "weaved"):new File(baseDir, "classes.target");
         File j2meclassesDir = mkdir(baseDir, "j2meclasses");
 
         // See if any of the classes actually need re-preverifying

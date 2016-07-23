@@ -85,11 +85,13 @@ public class Ref {
         // Add to the global list this weak reference
         GC.getCollector().addWeakReference(this);
     }
-
+    
+/*if[ENABLE_HOSTED]*/
     public String toString() {
         return "referrent: " + referent.toUWord().toPrimitive();
     }
-
+/*end[ENABLE_HOSTED]*/
+    
 /*if[DEBUG_CODE_ENABLED]*/
 /*if[FINALIZATION]*/
     static boolean objectFinalized;

@@ -514,9 +514,11 @@ public class SquawkHashtable<K, V> {
      *
      * @return  a string representation of this hashtable.
      */
+/*if[ENABLE_HOSTED]*/
     public String toString() {
         return SquawkHashtable.enumerationsToString(keys(), elements(), size());
     }
+/*end[ENABLE_HOSTED]*/
     
     /**
      * Return the current capacity of the hashtable.

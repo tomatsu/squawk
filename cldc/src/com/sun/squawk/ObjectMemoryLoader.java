@@ -68,18 +68,23 @@ public abstract class ObjectMemoryLoader {
 
     // Can't be a static block, as we must only call this on SPOTs
     private static void ensurePublicKeyInitialised() {
-        if (!VM.isHosted() && !signatureVerifierInitialised && !noPublicKeyInstalled) {
-            try {
-            	byte[] publicKeyBytes = getPublicKey();
-            	if (publicKeyBytes.length > 0) {
+/*if[ENABLE_HOSTED]*/	
+        if (!VM.isHosted())
+/*end[ENABLE_HOSTED]*/	
+	{
+	    if (!signatureVerifierInitialised && !noPublicKeyInstalled) {
+		try {
+		    byte[] publicKeyBytes = getPublicKey();
+		    if (publicKeyBytes.length > 0) {
             		SignatureVerifier.initialize(publicKeyBytes, 0, publicKeyBytes.length);
             		signatureVerifierInitialised = true;
-            	} else {
+		    } else {
             		noPublicKeyInstalled = true;
-            	}
-           } catch (SignatureVerifierException e) {
-                throw new RuntimeException("Failed to initialize SignatureVerifier. " + e.getMessage());
-            }
+		    }
+		} catch (SignatureVerifierException e) {
+		    throw new RuntimeException("Failed to initialize SignatureVerifier. " + e.getMessage());
+		}
+	    }
         }
     }
     
@@ -221,9 +226,12 @@ public abstract class ObjectMemoryLoader {
      */
     public static ObjectMemoryFile load(String uri, boolean loadIntoReadOnlyMemory) throws IOException {
         String url;
+/*if[ENABLE_HOSTED]*/	
         if (VM.isHosted()) {
             url = convertURIHosted(uri);
-        } else {
+        } else
+/*end[ENABLE_HOSTED]*/	    
+	{
             url = uri;
         }
         if (url.startsWith("file://") && filePathelements != null) {
@@ -274,9 +282,12 @@ System.out.println("filePathelements=" + filePathelements);
 /*if[FLASH_MEMORY]*/
     private static ObjectMemoryLoader load0Flash(DataInputStream dis, String uri, boolean loadIntoReadOnlyMemory, boolean headerOnly) {
         if (!uri.startsWith("spotsuite:")) {
+/*if[ENABLE_HOSTED]*/		    
             if (VM.isHosted()) {
                 return load0Hosted(dis, uri, loadIntoReadOnlyMemory, headerOnly);
-            } else {
+            } else
+/*end[ENABLE_HOSTED]*/			
+	    {
                 throw new Error("URI is not a SPOT suite: " + uri);
             }
         }
@@ -368,7 +379,9 @@ System.out.println("filePathelements=" + filePathelements);
         // Load the parent of this object memory file
         ObjectMemory parent;
         if (parentURI.length() == 0) {
+/*if[ENABLE_HOSTED]*/		    
             Assert.always(VM.isHosted());
+/*end[ENABLE_HOSTED]*/		    
             parent = null;
         } else {
             parent = loadParent(parentHash, parentURI);
@@ -481,7 +494,10 @@ System.out.println("filePathelements=" + filePathelements);
 
         // Run the collector to prevent a collection being run during relocation which
         // will screw a RAM buffer
-        if (!VM.isHosted()) {
+/*if[ENABLE_HOSTED]*/		
+        if (!VM.isHosted())
+/*end[ENABLE_HOSTED]*/		    
+	{
             VM.collectGarbage(true);
         }
 
@@ -489,10 +505,15 @@ System.out.println("filePathelements=" + filePathelements);
         Address relocatedBuffer = relocateMemory(parent, buffer, oopMap);
 
         // Need to do this one more time
-        if (!VM.isHosted() && !loadIntoReadOnlyMemory) {
-            if (buffer != relocatedBuffer.toObject()) {
-                throw new ObjectMemory.GCDuringRelocationError();
-            }
+/*if[ENABLE_HOSTED]*/			
+        if (!VM.isHosted())
+/*end[ENABLE_HOSTED]*/			    
+	{
+	    if (!loadIntoReadOnlyMemory) {
+		if (buffer != relocatedBuffer.toObject()) {
+		    throw new ObjectMemory.GCDuringRelocationError();
+		}
+	    }
         }
 
         // Set the pointer to the root object
@@ -508,8 +529,15 @@ System.out.println("filePathelements=" + filePathelements);
         }
 
 //if(!VM.isHosted()) GC.traceMemory(relocatedBuffer, relocatedBuffer.add(size), true);
-        if (Klass.TRACING_ENABLED && !VM.isHosted() && Tracer.isTracing("oms")) {
-            GC.traceMemory(relocatedBuffer, relocatedBuffer.add(size), true);
+        if (Klass.TRACING_ENABLED) {
+/*if[ENABLE_HOSTED]*/		    
+	    if (!VM.isHosted())
+/*end[ENABLE_HOSTED]*/			
+	    {
+		if (Tracer.isTracing("oms")) {
+		    GC.traceMemory(relocatedBuffer, relocatedBuffer.add(size), true);
+		}
+	    }
         }
 
         ObjectMemory om = new ObjectMemory(relocatedBuffer, size, url, rootObject, hash, parent);
@@ -696,18 +724,27 @@ class StandardObjectMemoryLoader extends ObjectMemoryLoader {
         Address canonicalStart = parent == null ? Address.zero() : parent.getCanonicalEnd();
 
         // If this is the mapper, then the memory model in com.sun.squawk.Address needs to be initialized/appended to
+/*if[ENABLE_HOSTED]*/			
         if (VM.isHosted()) {
             NativeUnsafe.initialize(buffer, oopMap, parent != null);
         }
-
+/*end[ENABLE_HOSTED]*/		
         // Set up the address at which the object memory will finally reside
+/*if[ENABLE_HOSTED]*/				
         final Address bufferAddress = VM.isHosted() ? canonicalStart : Address.fromObject(buffer);
+/*else[ENABLE_HOSTED]*/
+//        final Address bufferAddress = Address.fromObject(buffer);
+/*end[ENABLE_HOSTED]*/				
         final Address relocatedBufferAddress = (loadIntoReadOnlyMemory) ? GC.allocateNvmBuffer(size) : bufferAddress;
 
         // Null the buffer object as there is no need for the relocation to test whether
         // or not the relocated buffer has moved which it won't have if it is in read-only
         // memory or this host environment is not Squawk
+/*if[ENABLE_HOSTED]*/		
         if (VM.isHosted() || loadIntoReadOnlyMemory) {
+/*else[ENABLE_HOSTED]*/	    
+//        if (loadIntoReadOnlyMemory) {
+/*end[ENABLE_HOSTED]*/	    
             buffer = null;
         }
 
@@ -737,8 +774,13 @@ class StandardObjectMemoryLoader extends ObjectMemoryLoader {
 
         // Fix up the object memory buffer if it is in RAM so that it now looks
         // like a zero length byte array to the garbage collector
-        if (!loadIntoReadOnlyMemory && !VM.isHosted()) {
-            GC.setHeaderLength(Address.fromObject(buffer), 0);
+        if (!loadIntoReadOnlyMemory) {
+/*if[ENABLE_HOSTED]*/		    
+	    if (!VM.isHosted())
+/*end[ENABLE_HOSTED]*/			
+	    {
+		GC.setHeaderLength(Address.fromObject(buffer), 0);
+	    }
         }
 
         return relocatedBufferAddress;

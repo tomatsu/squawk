@@ -519,9 +519,11 @@ public class SquawkVector {
      *
      * @return  a string representation of this vector.
      */
+/*if[ENABLE_HOSTED]*/
     public String toString() {
         return SquawkVector.enumerationToString(elements(), size());
     }
+/*end[ENABLE_HOSTED]*/
     
     /**
      * Utility to return a string representation of any enumeration.

@@ -58,12 +58,13 @@ public final class Global {
     private static Hashtable intGlobals,
                              addrGlobals,
                              oopGlobals;
-
+/*if[ENABLE_HOSTED]*/
     static {
         if (VM.isHosted()) {
             initGlobals();
         }
     }
+/*end[ENABLE_HOSTED]*/    
 
     /**
      * Fields specified here will be allocated constant offsets.

@@ -245,6 +245,7 @@ public final class Modifier {
      * @return  a string representation of the set of modifers
      * represented by <code>mod</code>
      */
+/*if[ENABLE_HOSTED]*/
     public static String toString(int mod) 
 /*if[!DEBUG_CODE_ENABLED]*/
             throws HostedPragma
@@ -299,6 +300,7 @@ public final class Modifier {
         }
         return "";
     }
+/*end[ENABLE_HOSTED]*/
     
     /*
      * Access modifier flag constants from <em>The Java Virtual

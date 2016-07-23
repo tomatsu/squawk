@@ -379,10 +379,12 @@ public class IntHashtable {
      * @return  a string representation of this hashtable.
      * @since   JDK1.0
      */
+/*if[ENABLE_HOSTED]*/
     public String toString() {
         return SquawkHashtable.enumerationsToString(keys(), elements(), size());
     }
-
+/*end[ENABLE_HOSTED]*/
+    
     /**
      * A hashtable enumerator class.  This class should remain opaque
      * to the client. It will use the Enumeration interface.

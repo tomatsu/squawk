@@ -96,8 +96,12 @@ public class ObjectMemorySerializer {
      * @throws IOException     if there is an IO error
      */
     public static void save(final DataOutputStream dos, final String uri, final ControlBlock cb, final ObjectMemory parent, final boolean bigEndian) throws IOException {
+/*if[ENABLE_HOSTED]*/		
         Assert.that(parent != null  || VM.isHosted());
-
+/*else[ENABLE_HOSTED]*/
+//        Assert.that(parent != null);
+/*end[ENABLE_HOSTED]*/
+	
         // Figure out correct DataOutputStream to use
         ObjectMemoryOutputStream sfos = new ObjectMemoryOutputStream(dos);
 
@@ -150,7 +154,12 @@ public class ObjectMemorySerializer {
 
         // Relocate the memory
         Address canonicalStart = relocateMemory(cb.memory, cb.start, cb.oopMap, parent, Klass.TRACING_ENABLED && Tracer.isTracing("oms"));
+/*if[ENABLE_HOSTED]*/
         Address srcAddress = VM.isHosted() ? cb.start : Address.fromObject(cb.memory);
+/*else[ENABLE_HOSTED]*/
+//        Address srcAddress = Address.fromObject(cb.memory);
+/*end[ENABLE_HOSTED]*/
+	
 
         if (Klass.TRACING_ENABLED && Tracer.isTracing("oms")) {
 
@@ -184,11 +193,12 @@ public class ObjectMemorySerializer {
         if (requiresEndianSwap) {
             ObjectMemory om = new ObjectMemory(srcAddress, size, "", null, 0, parent);
             ObjectMemoryEndianessSwapper.swap(om, false, true);
-
+/*if[ENABLE_HOSTED]*/	
             if (VM.isHosted()) {
                 // Need to copy swapped memory back into cb.memory
                 NativeUnsafe.copyMemory(cb.memory, cb.start.toUWord().toInt(), 0, cb.memory.length);
             }
+/*end[ENABLE_HOSTED]*/		    
         }
         // Write the object memory itself.
         sfos.write(cb.memory, "memory");
@@ -230,7 +240,11 @@ public class ObjectMemorySerializer {
             canonicalStart = parent.getCanonicalEnd();
             ObjectMemory.relocateParents("RAM",
                                          null,
+/*if[ENABLE_HOSTED]*/						 
                                          VM.isHosted() ? start : Address.fromObject(memory),
+/*else[ENABLE_HOSTED]*/
+//                                       Address.fromObject(memory),
+/*end[ENABLE_HOSTED]*/						 					 
                                          oopMap,
                                          parent,
                                          true,
@@ -243,7 +257,11 @@ public class ObjectMemorySerializer {
 //System.out.println("after parent: oopMap.cardinality = " + oopMap.cardinality());
         ObjectMemory.relocate("RAM",
                               null,
+/*if[ENABLE_HOSTED]*/				      
                               VM.isHosted() ? start : Address.fromObject(memory),
+/*else[ENABLE_HOSTED]*/
+//                              Address.fromObject(memory),
+/*end[ENABLE_HOSTED]*/				      			      
                               oopMap,
                               start,
                               canonicalStart,

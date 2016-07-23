@@ -541,7 +541,10 @@ public final class Isolate implements Runnable {
      */
     private boolean isCurrentThreadExternal() {
 /*if[ENABLE_MULTI_ISOLATE]*/
-        if(!VM.isHosted()) {
+/*if[ENABLE_HOSTED]*/	
+        if(!VM.isHosted())
+/*end[ENABLE_HOSTED]*/	    
+	{
             VMThread currentThread = VMThread.currentThread();
             if (currentThread != null && currentThread.getThreadNumber() != 0 && currentThread.getIsolate() != this) {
                 return true;
@@ -768,9 +771,12 @@ public final class Isolate implements Runnable {
      * @return  a translator for installing new classes or null if the system does not support dynamic class loading
      */
     public TranslatorInterface getTranslator() throws AllowInlinedPragma {
+/*if[ENABLE_HOSTED]*/	
         if (VM.isHosted()) {
             return translator;
         }
+/*end[ENABLE_HOSTED]*/
+	
 /*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
         return null;
 /*else[ENABLE_DYNAMIC_CLASSLOADING]*/
@@ -1435,7 +1441,11 @@ public final class Isolate implements Runnable {
         if (value == null) {
             return null;
         }
+/*if[ENABLE_HOSTED]*/	
         Assert.that(VM.isHosted() || (this == VM.getCurrentIsolate() && this.isAlive()));
+/*else[ENABLE_HOSTED]*/
+//        Assert.that((this == VM.getCurrentIsolate() && this.isAlive()));
+/*end[ENABLE_HOSTED]*/	
         if (!GC.inRam(value)) {
             return value;
         }
@@ -1444,7 +1454,10 @@ public final class Isolate implements Runnable {
         }
         String internedString = (String) internedStrings.get(value);
         if (internedString == null) {
-            if (!VM.isHosted()) {
+/*if[ENABLE_HOSTED]*/
+            if (!VM.isHosted())
+/*end[ENABLE_HOSTED]*/
+	    {
                 internedString = GC.findInRomString(value); // depends on current isolate
             }
             if (internedString == null) {
@@ -2347,6 +2360,7 @@ public final class Isolate implements Runnable {
      *
      * @return the string
      */
+/*if[ENABLE_HOSTED]*/    
     public String toString() {
         StringBuffer res = new StringBuffer("isolate ").append(id).append(" \"").append(name).append("\" ");
         if (isAlive()) {
@@ -2360,7 +2374,8 @@ public final class Isolate implements Runnable {
         }
         return res.toString();
     }
-
+/*end[ENABLE_HOSTED]*/
+    
     private String isolateInfoStr() {
         StringBuffer sb = new StringBuffer();
         sb.append("isolate for '").append(mainClassName).append("'");

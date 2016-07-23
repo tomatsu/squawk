@@ -34,6 +34,7 @@ public final class Target extends Command {
 
     protected final String extraClassPath;
     public final boolean j2me;
+    public final boolean stripHostCode;
     public final boolean preprocess;
     public final File baseDir;
     public final File[] srcDirs;
@@ -128,6 +129,10 @@ public final class Target extends Command {
      * @param   name  the name of this command
      */
     public Target(String extraClassPath, boolean j2me, String baseDir, File[] srcDirs, boolean preprocess, Build env, String name) {
+	this(extraClassPath, j2me, baseDir, srcDirs, preprocess, env, name, false);
+    }
+    
+    public Target(String extraClassPath, boolean j2me, String baseDir, File[] srcDirs, boolean preprocess, Build env, String name, boolean stripHostCode) {
         super(env, name);
         this.extraClassPath = extraClassPath;
         this.j2me = j2me;
@@ -135,6 +140,7 @@ public final class Target extends Command {
         this.srcDirs = srcDirs;
         this.preprocess = preprocess;
         this.copyJ2meDirs = new ArrayList<File>();
+	this.stripHostCode = stripHostCode;
     }
 
     public void addExtraArg(String extraArg) {
@@ -206,6 +212,9 @@ public final class Target extends Command {
             env.copy(source.getPath(), new File(baseDir, getCompiledDirectoryName()).getPath(), null, "**");
         }
         env.javac(getCompileClassPath(null), getPreverifiedClassPath(null), baseDir, srcDirs, j2me, extraArgs, preprocess);
+	if (stripHostCode) {
+	    env.javac(getCompileClassPath(null), getPreverifiedClassPath(null), baseDir, srcDirs, j2me, extraArgs, preprocess, false, stripHostCode);
+	}
     }
 
     public String getCompileClassPath(List<String> targetExceptions) {
@@ -250,9 +259,12 @@ public final class Target extends Command {
         // TODO Should really parameterize the "phoneme" entry
         Build.clearFilesMarkedAsSvnIgnore(baseDir, "phoneme");
         Build.clear(new File(baseDir, getCompiledDirectoryName()), true);
+        Build.clear(new File(baseDir, "classes.target"), true);
         Build.delete(new File(baseDir, "classes.jar"));
+        Build.delete(new File(baseDir, "classes.target.jar"));
         if (preprocess) {
             Build.clear(new File(baseDir, "preprocessed"), true);
+            Build.clear(new File(baseDir, "preprocessed.target"), true);
         }
         if (j2me) {
             Build.clear(new File(baseDir, "weaved"), true);

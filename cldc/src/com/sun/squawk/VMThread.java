@@ -797,12 +797,14 @@ public final class VMThread implements GlobalStaticFields {
      *
      * @return  a string representation of this thread.
      */
+/*if[ENABLE_HOSTED]*/    
     public String toString() {
         return getName().
             concat(" (pri=").
             concat(String.valueOf(getPriority())).
             concat(")]");
     }
+/*end[ENABLE_HOSTED]*/    
 
     /**
      * Handler for OS events...

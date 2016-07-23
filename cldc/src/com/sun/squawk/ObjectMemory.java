@@ -216,8 +216,13 @@ public final class ObjectMemory {
      * @return the address of the object memory
      */
     public Address getStart() {
-        if (!VM.isHosted() && parent == null) {
-            return VM.getRomStart();
+/*if[ENABLE_HOSTED]*/	
+        if (!VM.isHosted())
+/*end[ENABLE_HOSTED]*/	
+	{
+	    if (parent == null) {
+		return VM.getRomStart();
+	    }
         }
         return start;
     }
@@ -418,8 +423,13 @@ public final class ObjectMemory {
 
         for (int offset = oopMap.nextSetBit(0); offset != -1; offset = oopMap.nextSetBit(offset + 1)) {
             if (sourceStartBuffer != null) {
-                if (!VM.isHosted() && sourceStartBuffer != sourceStart.toObject()) {
-                    throw new GCDuringRelocationError();
+/*if[ENABLE_HOSTED]*/			
+                if (!VM.isHosted())
+/*end[ENABLE_HOSTED]*/
+		{
+		    if (sourceStartBuffer != sourceStart.toObject()) {
+			throw new GCDuringRelocationError();
+		    }
                 }
             }
 

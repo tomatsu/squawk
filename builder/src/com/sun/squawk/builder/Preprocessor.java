@@ -95,6 +95,8 @@ public class Preprocessor {
      */
     public boolean showLineNumbers = true;
 
+    public boolean hosted;
+    
     /**
      * Processes a set of files placing the resulting output in a given directory.
      *
@@ -292,6 +294,13 @@ public class Preprocessor {
      * @return the value of the property named <code>name</code>
      */
     private boolean getBooleanProperty(String name) {
+ 	if ("ENABLE_HOSTED".equals(name)) {
+ 	    if (verbose) {
+ 		System.out.println("### "  + name + " = " + hosted);
+ 	    }
+ 	    return hosted;
+ 	}
+	
         String value = properties.getProperty(name);
         if (value == null) {
             throw new PreprocessorException("no value for property '" + name + "'");
@@ -314,6 +323,12 @@ public class Preprocessor {
      * @return the value of the property named <code>name</code>
      */
     private String getProperty(String name) {
+	if ("ENABLE_HOSTED".equals(name)) {
+	    if (verbose){
+		System.out.println("### "  + name + " = " + hosted);
+	    }
+	    return String.valueOf(hosted);
+	}
         String value = properties.getProperty(name);
         if (value == null) {
             throw new PreprocessorException("value for required property '" + name + "' not specified");

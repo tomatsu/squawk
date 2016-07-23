@@ -362,9 +362,11 @@ public final class Suite {
      *
      * @return  the name of this suite with "suite " prepended
      */
+/*if[ENABLE_HOSTED]*/    
     public String toString() {
         return "suite " + name + " [type: " + typeToString(type) + ", closed: " + closed + ", parent: " + parent + "]";
     }
+/*end[ENABLE_HOSTED]*/    
 
     public void printSuiteInfo() {
         System.out.println(this);
@@ -402,9 +404,12 @@ public final class Suite {
      * @return  the ObjectMemory containing this suite if it is in read-only memory or null
      */
     ObjectMemory getReadOnlyObjectMemory() {
+/*if[ENABLE_HOSTED]*/		
         if (VM.isHosted()) {
             return getReadOnlyObjectMemoryHosted();
-        } else {
+        } else
+/*end[ENABLE_HOSTED]*/	    
+	{
             return GC.lookupReadOnlyObjectMemoryByRoot(this);
         }
     }
@@ -874,7 +879,12 @@ public final class Suite {
         if (closed) {
             throw new IllegalStateException(this + " is closed");
         }
-        if (!VM.isHosted() && !GC.inRam(this)) {
+/*if[ENABLE_HOSTED]*/
+	boolean isHosted = VM.isHosted();
+/*else[ENABLE_HOSTED]*/
+//	boolean isHosted = false;
+/*end[ENABLE_HOSTED]*/
+        if (!isHosted && !GC.inRam(this)) {
             throw new IllegalStoreException("trying to update read-only object: " + this);
         }
     }
@@ -1001,9 +1011,12 @@ public final class Suite {
         ObjectMemorySerializer.save(dos, uri, cb, parentMemory, bigEndian);
 
         ObjectMemory objectMemory;
+/*if[ENABLE_HOSTED]*/	
         if (VM.isHosted()) {
             objectMemory = saveHosted(uri, cb, parentMemory);
-        } else {
+        } else
+/*end[ENABLE_HOSTED]*/	    
+	{
         	objectMemory = null;
         }
         return objectMemory;

@@ -347,7 +347,11 @@ public class Klass<T> {
         Klass klass = Klass.lookupKlass(className);
         ClassNotFoundException cnfe = null;
         if (klass == null) {
+/*if[ENABLE_HOSTED]*/	    
             if (ENABLE_DYNAMIC_CLASSLOADING || VM.isHosted()) {
+/*else[ENABLE_HOSTED]*/
+//            if (ENABLE_DYNAMIC_CLASSLOADING) {
+/*end[ENABLE_HOSTED]*/						
                 Object result = forNameDynamic(className);
                 if (result instanceof Klass) {
                     klass = (Klass)result;
@@ -583,10 +587,12 @@ T
      *
      * @return a string representation of this class object.
      */
+/*if[ENABLE_HOSTED]*/    
     public final String toString() {
         return (isInterface() ? "interface " : "class ") + getName();
     }
-
+/*end[ENABLE_HOSTED]*/
+    
     /**
      * Determines if the specified <code>Object</code> is assignment-compatible
      * with the object represented by this <code>Klass</code>.
@@ -1742,18 +1748,26 @@ T
                  * If the execution environment is not the romizer, then the methods must
                  * be converted to their special object form now
                  */
-                if (!VM.isHosted()) {
+/*if[ENABLE_HOSTED]*/
+                if (!VM.isHosted())
+/*end[ENABLE_HOSTED]*/
+		{
                     fixupMethodTables();
                 }
             }
 
 /*if[ENABLE_SDA_DEBUGGER]*/
             // Inform the debugger of this class
-            if (!VM.isHosted() && !isInternalType()) {
-                Debugger debugger = VM.getCurrentIsolate().getDebugger();
-                if (debugger != null) {
-                    debugger.notifyEvent(new Debugger.Event(Debugger.Event.CLASS_PREPARE, this));
-                }
+/*if[ENABLE_HOSTED]*/	    
+            if (!VM.isHosted())
+/*end[ENABLE_HOSTED]*/	    
+	    {
+		if (!isInternalType()) {
+		    Debugger debugger = VM.getCurrentIsolate().getDebugger();
+		    if (debugger != null) {
+			debugger.notifyEvent(new Debugger.Event(Debugger.Event.CLASS_PREPARE, this));
+		    }
+		}
             }
 /*end[ENABLE_SDA_DEBUGGER]*/
 
@@ -1869,6 +1883,7 @@ T
         /*
          * Create and install the metadata for this class.
          */
+/*if[ENABLE_HOSTED]*/	
         Suite suite = VM.getCurrentIsolate().getLeafSuite();
         KlassMetadata metadata = new KlassMetadata.Full(this,
                                                    virtualMethods,
@@ -1879,7 +1894,7 @@ T
                                                    this.virtualMethods.length,
                                                    this.staticMethods.length);
         suite.installMetadata(metadata);
-
+/*end[ENABLE_HOSTED]*/
         /*
          * Compute and set the interface table and interface index table.
          */
@@ -1993,8 +2008,13 @@ T
          * includes classes such as the collector and Thread class that have code executed
          * before the VM has progressed far enough since startup to support class initialization.
          */
-        if (!VM.isHosted() && constantSize > 0) {
-            modifiers |= Modifier.COMPLETE_RUNTIME_STATICS;
+/*if[ENABLE_HOSTED]*/
+        if (!VM.isHosted())
+/*end[ENABLE_HOSTED]*/
+	{
+	    if (constantSize > 0) {
+		modifiers |= Modifier.COMPLETE_RUNTIME_STATICS;
+	    }
         }
 
         int tempStaticFieldsSize;
@@ -2572,8 +2592,17 @@ T
      * @return the file name or null if it is not available
      */
     public final String getSourceFileName() {
-        KlassMetadata metadata = getMetadata();
-        return metadata == null ? null : metadata.getSourceFileName();
+/*if[!ENABLE_RUNTIME_METADATA_FOR_COMPLETE_STATICS]*/
+/*if[!ENABLE_HOSTED]*/
+	return null;
+/*else[ENABLE_HOSTED]*/
+//        KlassMetadata metadata = getMetadata();
+//        return metadata == null ? null : metadata.getSourceFileName();
+/*end[ENABLE_HOSTED]*/
+/*else[ENABLE_RUNTIME_METADATA_FOR_COMPLETE_STATICS]*/
+//        KlassMetadata metadata = getMetadata();
+//        return metadata == null ? null : metadata.getSourceFileName();
+/*end[ENABLE_RUNTIME_METADATA_FOR_COMPLETE_STATICS]*/
     }
 
     /**
@@ -3020,8 +3049,13 @@ T
      * @param body   the method body for which the symbolic info is requested
      * @return the symbolic info for <code>body</code> or null if it is not available
      */
+/*if[ENABLE_RUNTIME_METADATA]*/
     Method findMethod(Object body) {
+/*if[ENABLE_HOSTED]*/	    	
         if (ENABLE_DYNAMIC_CLASSLOADING || VM.isHosted()) {
+/*else[ENABLE_HOSTED]*/
+//        if (ENABLE_DYNAMIC_CLASSLOADING) {
+/*end[ENABLE_HOSTED]*/	    	    
             Method result = findMethodDynamic(body);
             if (result != null) {
                 return result;
@@ -3056,6 +3090,7 @@ T
         }
         return null;
     }
+/*end[ENABLE_RUNTIME_METADATA]*/
 
     /**
      * Test an instance oop map bit.
@@ -3796,8 +3831,10 @@ T
         }
 
         // Should never get here in a non-hosted system as all the bootstrap classes must be in the bootstrap suite
+/*if[ENABLE_HOSTED]*/	    	
         Assert.always(VM.isHosted());
-
+/*end[ENABLE_HOSTED]*/
+	
         return bootHosted(superType, name, systemID, modifiers, bootstrapSuite);
     }
 
@@ -3871,9 +3908,12 @@ T
         DOUBLE_ARRAY       = boot(OBJECT,        "[double",                 CID.DOUBLE_ARRAY,      synthetic); // only used by translator
         
         // Ensure that all the reserved system classes are loaded if running in a hosted environment
+/*if[ENABLE_HOSTED]*/	    	
         if (VM.isHosted()) {
             initBootstrapClassesHostedEarly();
         }
+/*end[ENABLE_HOSTED]*/
+	
         /*
          * Special implementation types.
          */
@@ -3888,10 +3928,12 @@ T
         BYTECODE_ARRAY     = boot(OBJECT,        "[-bytecode-",             CID.BYTECODE_ARRAY,    synthetic);
 
         // Ensure that all the reserved system classes are loaded if running in a hosted environment
+/*if[ENABLE_HOSTED]*/	    	
         if (VM.isHosted()) {
             initBootstrapClassesHostedLate();
         }
-
+/*end[ENABLE_HOSTED]*/
+	
         Assert.that(Klass.LONG2.isPrimitive());
         Assert.that(Klass.DOUBLE2.isPrimitive());
     }

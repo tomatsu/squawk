@@ -53,11 +53,11 @@ public final class ExecutionPoint {
 //        throw new RuntimeException("ExecutionPoints cannot be keys in a hashtable");
 //    }
 
-/*if[DEBUG_CODE_ENABLED]*/
+/*if[ENABLE_HOSTED]*/
     public String toString() {
         return "frame=" + frame.toPrimitive() + ",bci=" + bci.toPrimitive() + ",mp=" + Address.fromObject(mp).toUWord().toPrimitive() + "]";
     }
-/*end[DEBUG_CODE_ENABLED]*/
+/*end[ENABLE_HOSTED]*/
     
     /**
      * Return the klass that defined the method referred to by this ExecutionPoint.
