@@ -1505,7 +1505,11 @@ public final class Isolate implements Runnable {
      * Start the primordial isolate.
      */
     void primitiveThreadStart() {
+/*if[ENABLE_MULTI_ISOLATE]*/	    
         VMThread.asVMThread(new CrossIsolateThread(this, "primitive-thread")).primitiveThreadStart();
+/*else[ENABLE_MULTI_ISOLATE]*/
+//        VMThread.asVMThread(new Thread(this, "primitive-thread")).primitiveThreadStart();
+/*end[ENABLE_MULTI_ISOLATE]*/
     }
 
     /**
@@ -1516,7 +1520,11 @@ public final class Isolate implements Runnable {
     public void start() {
         transitioningState = ALIVE;
         String isoname = new StringBuffer(mainClassName).append(" - main").toString();
+/*if[ENABLE_MULTI_ISOLATE]*/	
         Thread t = new CrossIsolateThread(this, isoname);
+/*else[ENABLE_MULTI_ISOLATE]*/
+//        Thread t = new Thread(this, isoname);
+/*end[ENABLE_MULTI_ISOLATE]*/
         t.start();
     }
 
