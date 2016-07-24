@@ -110,7 +110,9 @@ public class DeadClassEliminator {
         "com.sun.squawk.ObjectMemorySerializer$ControlBlock",// used by metadata suites (when multi-suites used)
 /*end[ENABLE_SUITE_LOADING]*/
         "com.sun.squawk.StringOfBytes",
+/*if[ENABLE_MULTI_ISOLATE]*/
 	"com.sun.squawk.io.j2me.debug.Protocol"	
+/*end[ENABLE_MULTI_ISOLATE]*/
     };
 
     static {
