@@ -2,6 +2,9 @@
 
 if [ $# = 0 ]; then
     jarfile="helloworld/classes.jar"
+    if [ ! -f $jarfile ]; then
+	(cd helloworld; sh build.sh)
+    fi
 else
     jarfile=$1
 fi
