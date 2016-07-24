@@ -127,14 +127,14 @@ public class JavaApplicationManager {
 //            javaArgs[i] = args[i];
 //        }
 /*end[EMULATOR_LAUNCHER]*/
-        
+
+/*if[ENABLE_MULTI_ISOLATE]*/	
         /*
          * Get the start time.
          */
         long startTime = System.currentTimeMillis();
         int exitCode = 999;
         
-/*if[ENABLE_MULTI_ISOLATE]*/
         try {
             /*
              * Create the application isolate and run it.
@@ -333,6 +333,8 @@ public class JavaApplicationManager {
         } else if (arg.equals("-testoms")) {
             testoms = true;
 /*end[DEBUG_CODE_ENABLED]*/
+	    
+/*if[!PRODUCTION]*/
         } else if (Klass.TRACING_ENABLED && arg.startsWith("-trace")) {
             if (arg.startsWith("-tracefilter:")) {
                 Tracer.setFilter(arg.substring("-tracefilter:".length()));
@@ -367,6 +369,7 @@ public class JavaApplicationManager {
                 ex.printStackTrace();
                 System.err.println("Ignoring -sampleStatData option");
             }
+/*end[PRODUCTION]*/
         } else if (arg.startsWith("-D")) {
             String propAndValue = arg.substring("-D".length());
             int seperator = propAndValue.indexOf('=');
