@@ -1249,7 +1249,8 @@ public final class SDA extends Debugger {
         if (logURL != null) {
             debuggeeIsolate.setProperty("squawk.debugger.log.url", logURL);
         }
-
+	
+/*if[ENABLE_MULTI_ISOLATE]*/
         if (outURL != null) {
             debuggeeIsolate.clearOut();
             if (outURL.length() > 0) {
@@ -1263,6 +1264,7 @@ public final class SDA extends Debugger {
                 debuggeeIsolate.addErr(errURL);
             }
         }
+/*end[ENABLE_MULTI_ISOLATE]*/
         return true;
     }
 

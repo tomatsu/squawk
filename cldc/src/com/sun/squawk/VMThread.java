@@ -1769,7 +1769,9 @@ VM.println("creating stack:");
                      * isolates are waiting for it to complete.
                      */
                     VM.println("=== DEAD-LOCK STATUS: ===");
+/*if[ENABLE_MULTI_ISOLATE]*/
                     Isolate.printAllIsolateStates(System.err);
+/*end[ENABLE_MULTI_ISOLATE]*/
                     Assert.shouldNotReachHere("Dead-locked system: no schedulable threads");
                 }
 //VM.println("waitForEvent timeout");

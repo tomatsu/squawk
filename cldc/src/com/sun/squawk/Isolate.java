@@ -374,7 +374,11 @@ public final class Isolate implements Runnable {
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
         this.parentSuiteSourceURI = null;
         this.state                = NEW;
+/*if[ENABLE_MULTI_ISOLATE]*/
         this.id                   = VM.allocateIsolateID();
+/*else[ENABLE_MULTI_ISOLATE]*/	
+//        this.id                   = 1;
+/*end[ENABLE_MULTI_ISOLATE]*/	
         this.name                 = mainClassName;
 
         while (suite.getParent() != null) {
@@ -382,7 +386,9 @@ public final class Isolate implements Runnable {
         }
         this.bootstrapSuite = suite;
 
+/*if[ENABLE_MULTI_ISOLATE]*/
         VM.registerIsolate(this);
+/*end[ENABLE_MULTI_ISOLATE]*/	
         Assert.always(VM.getCurrentIsolate() == null);
     }
     
@@ -451,15 +457,19 @@ public final class Isolate implements Runnable {
         if (mainClassName == null || args == null) {
             throw new NullPointerException();
         }
-        this.mainClassName        = copyIfCurrentThreadIsExternal(mainClassName);
-        this.args                 = copyIfCurrentThreadIsExternal(args);
+        this.mainClassName        = ENABLE_MULTI_ISOLATE ? copyIfCurrentThreadIsExternal(mainClassName) : mainClassName;
+        this.args                 = ENABLE_MULTI_ISOLATE ? copyIfCurrentThreadIsExternal(args) : args;
 /*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
 /*else[ENABLE_DYNAMIC_CLASSLOADING]*/
-//      this.classPath            = copyIfCurrentThreadIsExternal(classPath);
+//      this.classPath            = ENABLE_MULTI_ISOLATE ? copyIfCurrentThreadIsExternal(classPath) : classPath;
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
-        this.parentSuiteSourceURI = copyIfCurrentThreadIsExternal(parentSuiteSourceURI);
+        this.parentSuiteSourceURI = ENABLE_MULTI_ISOLATE ? copyIfCurrentThreadIsExternal(parentSuiteSourceURI) : parentSuiteSourceURI;
         this.state                = NEW;
+/*if[ENABLE_MULTI_ISOLATE]*/	
         this.id                   = VM.allocateIsolateID();
+/*else[ENABLE_MULTI_ISOLATE]*/	
+//        this.id                   = 1;
+/*end[ENABLE_MULTI_ISOLATE]*/	
         this.name                 = this.mainClassName;
 
         Isolate currentIsolate = VM.getCurrentIsolate();
@@ -494,7 +504,9 @@ public final class Isolate implements Runnable {
             throw e;
         }
 
+/*if[ENABLE_MULTI_ISOLATE]*/
         VM.registerIsolate(this);
+/*end[ENABLE_MULTI_ISOLATE]*/
     }
 
     /**
@@ -595,7 +607,7 @@ public final class Isolate implements Runnable {
      * @return the isolate name
      */
     public String getName() {
-        return copyIfCurrentThreadIsExternal(name);
+	    return ENABLE_MULTI_ISOLATE ? copyIfCurrentThreadIsExternal(name) : name;
     }
 
     /**
@@ -607,7 +619,7 @@ public final class Isolate implements Runnable {
         if (newName == null) {
             throw new IllegalArgumentException();
         }
-        name = copyIfCurrentThreadIsExternal(newName);
+        name = ENABLE_MULTI_ISOLATE ? copyIfCurrentThreadIsExternal(newName) : newName;
     }
 
     /**
@@ -619,7 +631,7 @@ public final class Isolate implements Runnable {
 /*if[!ENABLE_DYNAMIC_CLASSLOADING]*/
         return null;
 /*else[ENABLE_DYNAMIC_CLASSLOADING]*/
-//      return copyIfCurrentThreadIsExternal(classPath);
+//      return ENABLE_MULTI_ISOLATE ? copyIfCurrentThreadIsExternal(classPath) : classPath;
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
     }
 
@@ -664,7 +676,7 @@ public final class Isolate implements Runnable {
     @Vm2c(code="return com_sun_squawk_Isolate_mainClassName(this);")
 /*end[JAVA5SYNTAX]*/
     public String getMainClassName() {
-        return copyIfCurrentThreadIsExternal(mainClassName);
+	    return ENABLE_MULTI_ISOLATE ? copyIfCurrentThreadIsExternal(mainClassName) : mainClassName;
     }
 
     /**
@@ -693,7 +705,7 @@ public final class Isolate implements Runnable {
      * @return the arguments
      */
     public String[] getMainClassArguments() {
-        return copyIfCurrentThreadIsExternal(args);
+	return ENABLE_MULTI_ISOLATE ? copyIfCurrentThreadIsExternal(args) : args;
     }
 
     /**
@@ -810,8 +822,8 @@ public final class Isolate implements Runnable {
         }
 
         if (jadProperties.get(key) == null) {
-            key = copyIfCurrentThreadIsExternal(key);
-            value = copyIfCurrentThreadIsExternal(value);
+	    if (ENABLE_MULTI_ISOLATE) key = copyIfCurrentThreadIsExternal(key);
+            if (ENABLE_MULTI_ISOLATE) value = copyIfCurrentThreadIsExternal(value);
             jadProperties.put(key, value);
         }
     }
@@ -827,7 +839,7 @@ public final class Isolate implements Runnable {
             return null;
         }
 
-        return copyIfCurrentThreadIsExternal((String)jadProperties.get(key));
+        return ENABLE_MULTI_ISOLATE ? copyIfCurrentThreadIsExternal((String)jadProperties.get(key)) : (String)jadProperties.get(key);
     }
 
     /**
@@ -861,11 +873,11 @@ public final class Isolate implements Runnable {
             properties = new SquawkHashtable();
         }
 
-        key = copyIfCurrentThreadIsExternal(key);
+        if (ENABLE_MULTI_ISOLATE) key = copyIfCurrentThreadIsExternal(key);
         if(value == null){
         	properties.remove(key);
         }else{
-        	value = copyIfCurrentThreadIsExternal(value);
+        	if (ENABLE_MULTI_ISOLATE) value = copyIfCurrentThreadIsExternal(value);
         	properties.put(key, value);
         }
     }
@@ -885,7 +897,7 @@ public final class Isolate implements Runnable {
             return null;
         }
 
-        return copyIfCurrentThreadIsExternal((String)properties.get(key));
+        return ENABLE_MULTI_ISOLATE ? copyIfCurrentThreadIsExternal((String)properties.get(key)) : (String)properties.get(key);
     }
 
     /**
@@ -906,7 +918,7 @@ public final class Isolate implements Runnable {
         }
 
         public Object nextElement() {
-            return iso.copyIfCurrentThreadIsExternal((String)realEnum.nextElement());
+		return ENABLE_MULTI_ISOLATE ? iso.copyIfCurrentThreadIsExternal((String)realEnum.nextElement()) : realEnum.nextElement();
         }
 
     }
@@ -1060,6 +1072,7 @@ public final class Isolate implements Runnable {
      *
      * RemoteListenerWrapper objects should not be reused for different event types.
      */
+/*if[ENABLE_MULTI_ISOLATE]*/	
     static final class RemoteListenerWrapper extends LocalListenerWrapper {
         private final Runnable cleanupHook;
         private final Isolate local;
@@ -1114,7 +1127,8 @@ public final class Isolate implements Runnable {
         }
 
     } /* RemoteListenerWrapper */
-
+/*end[ENABLE_MULTI_ISOLATE]*/
+	
     /**
      * Add a listener to be run when this isolate terminates, hibernates, or unhibernates, depending on <code>evenSet</code>. <p>
      *
@@ -1689,7 +1703,8 @@ public final class Isolate implements Runnable {
 
         // It is important that java.lang.System is initialized before com.sun.cldc.i18n.Helper
         // so initialized it now.
-        System.currentTimeMillis();
+//        System.currentTimeMillis();
+	PrintStream out = System.out;
 
         String initializerClassName = VM.getIsolateInitializerClassName();
 
@@ -2491,7 +2506,8 @@ public final class Isolate implements Runnable {
             }
         }
     }
-
+	
+/*if[ENABLE_MULTI_ISOLATE]*/
     public final MulticastOutputStream stdout = new MulticastOutputStream();
     public final MulticastOutputStream stderr = new MulticastOutputStream();
 
@@ -2687,6 +2703,7 @@ public final class Isolate implements Runnable {
         }
         return names;
     }
+/*end[ENABLE_MULTI_ISOLATE]*/	
 
 /*if[NEW_IIC_MESSAGES]*/
     /*---------------------------------------------------------------------------*\
