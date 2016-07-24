@@ -32,6 +32,7 @@ import com.sun.squawk.Klass;
 import com.sun.squawk.VM;
 import com.sun.squawk.util.Assert;
 import com.sun.cldc.i18n.Helper;
+import com.sun.squawk.util.Arrays;
 
 /**
  * The <code>System</code> class contains several useful class fields
@@ -81,6 +82,7 @@ public final class System {
     public final static PrintStream out = getOutput(false);
 
     private static PrintStream getOutput(boolean err) {
+/*if[ENABLE_MULTI_ISOLATE]*/
         String url = System.getProperty(err ? "java.lang.System.err" : "java.lang.System.out");
         if (url == null) {
             url = err ? "debug:err" : "debug:";
@@ -95,6 +97,9 @@ public final class System {
             os = isolate.stdout;
         }
         return new PrintStream(os);
+/*else[ENABLE_MULTI_ISOLATE]*/
+//	return new PrintStream(new PrivateOutputStream(err));
+/*end[ENABLE_MULTI_ISOLATE]*/
     }
 
     /**
@@ -373,3 +378,38 @@ public final class System {
 }
 
 
+/*if[!ENABLE_MULTI_ISOLATE]*/
+class PrivateOutputStream extends OutputStream {
+    private boolean err;
+
+    PrivateOutputStream(boolean err) {
+	    this.err = err;
+    }
+
+    synchronized public void write(int b) throws IOException {
+        int old;
+        if (err) {
+            old = VM.setStream(VM.STREAM_STDERR);
+        } else {
+            old = VM.setStream(VM.STREAM_STDOUT);
+        }
+        VM.print((char)b);
+        VM.setStream(old);
+    }
+
+    public void write(byte b[], int off, int len) throws IOException {
+        Arrays.boundsCheck(b.length, off, len);
+        if (len == 0) {
+            return;
+        }
+        int old;
+        if (err) {
+            old = VM.setStream(VM.STREAM_STDERR);
+        } else {
+            old = VM.setStream(VM.STREAM_STDOUT);
+        }
+        VM.printBytes(b, off, len);
+        VM.setStream(old);
+    }
+}
+/*end[ENABLE_MULTI_ISOLATE]*/
