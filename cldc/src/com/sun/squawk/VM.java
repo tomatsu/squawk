@@ -315,7 +315,9 @@ public class VM implements GlobalStaticFields {
          */
         try {
             exceptionsEnabled = true;
+/*if[!PLATFORM_TYPE_BARE_METAL]*/		    
             shutdownHooks = new CallbackManager(true);
+/*end[PLATFORM_TYPE_BARE_METAL]*/		    
             currentIsolate.primitiveThreadStart();
             VMThread.initializeThreading2();
             ServiceOperation.execute();
@@ -2569,8 +2571,8 @@ hbp.dumpState();
 
     static boolean executingHooks;
 
-    private static void cleanupTaskExecutors() {
 /*if[!PLATFORM_TYPE_BARE_METAL]*/
+    private static void cleanupTaskExecutors() {
         for (int i = 0; i < taskCache.size(); i++) {
             TaskExecutor te = (TaskExecutor) taskCache.elementAt(i);
             te.cancelTaskExecutor();
@@ -2586,8 +2588,8 @@ hbp.dumpState();
                 }
             }
         }
-/*end[PLATFORM_TYPE_BARE_METAL]*/
     }
+/*end[PLATFORM_TYPE_BARE_METAL]*/
 
     /**
      * Halt the VM in the normal way. Any registered shutdown hooks will be run.
@@ -2606,9 +2608,11 @@ hbp.dumpState();
         if (VM.isVerbose()) {
             System.out.println("Running top-level shutdown hooks:");
         }
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
         shutdownHooks.runHooks();
         // system-wide shutdown
         cleanupTaskExecutors();
+/*end[PLATFORM_TYPE_BARE_METAL]*/
 
         if (VM.isVerbose()) {
             System.out.println("Done running top-level shutdown hooks.");
@@ -2708,6 +2712,7 @@ hbp.dumpState();
      * @see #haltVM(int)
      * @see #stopVM(int)
      */
+/*if[!PLATFORM_TYPE_BARE_METAL]*/	
     public static void addShutdownHook(Isolate iso, Runnable hook) {
         // thread-safe in Squawk only! This is a system class.
         if (executingHooks) {
@@ -2743,7 +2748,7 @@ hbp.dumpState();
         
         return shutdownHooks.remove(iso, hook);
     }
-    
+	
     /**
      * Registers a new virtual-machine shutdown hook.
      *
@@ -2855,7 +2860,8 @@ hbp.dumpState();
         
         return shutdownHooks.remove(VMThread.asVMThread(hook).getIsolate(), hook);
     }
-
+/*end[PLATFORM_TYPE_BARE_METAL]*/
+	
     /**
      * Return a system global Stack of cached TaskExecutors. Only for use by the JNA implementation.
      * @return Stack of TaskExecutors
