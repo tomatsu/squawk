@@ -99,7 +99,14 @@ public class DeadClassEliminator {
         "com.sun.squawk.KlassMetadata",
         "com.sun.squawk.KlassMetadata$1", // used by metadata suites
         "com.sun.squawk.KlassMetadata$Full",
+/*if[ENABLE_RUNTIME_METADATA]*/
         "com.sun.squawk.MethodMetadata",
+        "com.sun.squawk.MethodBody",
+	"com.sun.squawk.ClassFileMethod",
+	"com.sun.squawk.ClassFileField",
+	"com.sun.squawk.ObjectMemorySerializer$ControlBlock",
+	"com.sun.squawk.ScopedLocalVariable",
+/*end[ENABLE_RUNTIME_METADATA]*/
 /*if[ENABLE_SDA_DEBUGGER]*/
         "com.sun.squawk.FullMethodMetadata",
 /*end[ENABLE_SDA_DEBUGGER]*/
@@ -380,9 +387,16 @@ public class DeadClassEliminator {
                         foundClasses.addElement(klass.toString());
                     }
                     scanClassDeep(klass);
-                }
-            }
-        }
+                } else {
+		    Klass c = klass.getComponentType();
+		    if (c != null) {
+			if (isBasicRoot(c)) {
+			    markClass(klass);
+			}
+		    }
+		}
+	    }
+	}
         if (trace && !foundClasses.isEmpty()) {
             Tracer.traceln("[translator DCE: ==== System roots:  " + foundClasses.size() + " =====");
             printVectorSorted(foundClasses, "System root: ");
