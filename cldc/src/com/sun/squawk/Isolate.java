@@ -2933,14 +2933,6 @@ public final class Isolate implements Runnable {
         return debugger;
     }
 /*else[ENABLE_SDA_DEBUGGER]*/
-//    /**
-//     * Gets the debugger under which this isolate is executing.
-//     *
-//     * @return  the debugger under which this isolate is executing (if any)
-//     */
-//    public Debugger getDebugger() {
-//        return null;
-//    }
 /*end[ENABLE_SDA_DEBUGGER]*/
 
     /**
