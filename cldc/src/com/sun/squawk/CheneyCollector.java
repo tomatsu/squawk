@@ -496,6 +496,7 @@ public final class CheneyCollector extends GarbageCollector {
         }
 /*end[DEBUG_CODE_ENABLED]*/
 
+/*if[ENABLE_VERBOSE]*/
 /*if[!FLASH_MEMORY]*/
         if (VM.isVerbose() && Klass.getSystemID(klass) == CID.BYTECODE_ARRAY) {
             int old = VM.setStream(VM.STREAM_SYMBOLS);
@@ -515,6 +516,7 @@ public final class CheneyCollector extends GarbageCollector {
             VM.setStream(old);
         }
 /*end[FLASH_MEMORY]*/        
+/*end[ENABLE_VERBOSE]*/
 
         /*
          * Return the new object pointer.

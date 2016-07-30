@@ -253,7 +253,10 @@ public final class Translator implements TranslatorInterface {
         Assert.that(translationStrategy != BY_METHOD);
         convert(klass);
         if (klass.getState() < Klass.STATE_CONVERTED) {
-            if (!VM.isVerbose()) { // "squawk -verbose" will show the class names as it finishes loading them, which is progress enough
+/*if[ENABLE_VERBOSE]*/		
+            if (!VM.isVerbose()) // "squawk -verbose" will show the class names as it finishes loading them, which is progress enough
+/*end[ENABLE_VERBOSE]*/		
+	    {
                 traceProgress();
             }
         	lastClassNameStack.push(klass.getName());
@@ -322,10 +325,11 @@ public final class Translator implements TranslatorInterface {
         if (verbose()) {
             time = System.currentTimeMillis() - time;
             Tracer.traceln(time + "ms.]");
-
+/*if[ENABLE_VERBOSE]*/
             if (VM.isVeryVerbose()) {
                 InstructionEmitter.printUncalledNativeMethods();
             }
+/*end[ENABLE_VERBOSE]*/	    
         }
         Assert.always(lastClassNameStack.empty());
     }

@@ -207,7 +207,11 @@ public final class Arg {
         }
                 
         Arg verbose = get(VERBOSE);
+/*if[ENABLE_VERBOSE]*/	
         verbose.setBoolValue(verbose.getBool() | VM.isVerbose() | VM.isVeryVerbose() | Tracer.isTracing("converting"));
+/*else[ENABLE_VERBOSE]*/	
+//        verbose.setBoolValue(verbose.getBool() | Tracer.isTracing("converting"));
+/*end[ENABLE_VERBOSE]*/	
         
         if (get(HELP).getBool() || verbose.getBool()) {
             System.out.println("Translator properties and current values:");

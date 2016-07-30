@@ -118,11 +118,13 @@ public class Test {
     }
 
     static void passed(String name) {
+/*if[ENABLE_VERBOSE]*/
         if (VM.isVerbose()) {
             VM.print("Test ");
             VM.print(name);
             VM.print(" passed\n");
         }
+/*end[ENABLE_VERBOSE]*/
     }
 
     static void failed(String name) {
@@ -527,10 +529,12 @@ public class Test {
                 VM.collectGarbage(false);
                 stackSize = ((int)GC.freeMemory() / com.sun.squawk.vm.HDR.BYTES_PER_WORD) + delta;
                 x46Prim(stackSize);
+/*if[ENABLE_VERBOSE]*/		
                 if (VM.isVerbose()) {
                     VM.print("stackSize = ");
                     VM.println(stackSize);
                 }
+/*end[ENABLE_VERBOSE]*/		
                 delta++;
             } catch (OutOfMemoryError oome) {
                 break;

@@ -315,6 +315,7 @@ public class GC implements GlobalStaticFields {
         arr[current.length] = om;
         readOnlyObjectMemories = arr;
 
+/*if[ENABLE_VERBOSE]*/
 /*if[!FLASH_MEMORY]*/
         if (VM.isVeryVerbose()) {
             PrintStream out = null;
@@ -336,7 +337,7 @@ public class GC implements GlobalStaticFields {
             }
         }
 /*end[FLASH_MEMORY]*/
-
+/*end[ENABLE_VERBOSE]*/
     }
 
     /**
@@ -359,9 +360,12 @@ public class GC implements GlobalStaticFields {
         System.arraycopy(current, index + 1, arr, index, current.length - index - 1);
         readOnlyObjectMemories = arr;
 
+/*if[ENABLE_VERBOSE]*/
         if (VM.isVeryVerbose()) {
 	        System.out.println("[removed read only object memory: " + om.getURI() +"]");
         }
+/*end[ENABLE_VERBOSE]*/
+	
     }
     
     /**
@@ -1418,9 +1422,7 @@ public class GC implements GlobalStaticFields {
      * @exception OutOfMemoryError if allocation fails
      */
     static Object newMethod(Object definingClass, MethodBody body) {
-/*if[ENABLE_HOSTED]*/
-        boolean isHosted = VM.isHosted();
-/*end[ENABLE_HOSTED]*/
+//        boolean isHosted = VM.isHosted();
 
         /*
          * Get a ByteBufferEncoder and write the method header into it.
@@ -1522,12 +1524,9 @@ public class GC implements GlobalStaticFields {
         /*
          * Write the symbol table entries.
          */
+/*if[ENABLE_VERBOSE]*/	
 /*if[!FLASH_MEMORY]*/
-/*if[ENABLE_HOSTED]*/
-        if (isHosted || VM.isVerbose()) {
-/*else[ENABLE_HOSTED]*/
-//        if (VM.isVerbose()) {
-/*end[ENABLE_HOSTED]*/
+        if (VM.isHosted() || VM.isVerbose()) {
             Method method = body.getDefiningMethod();
             String name = method.toString();
             String file = body.getDefiningClass().getSourceFilePath();
@@ -1553,7 +1552,7 @@ public class GC implements GlobalStaticFields {
             VM.setStream(old);
         }
 /*end[FLASH_MEMORY]*/
-        
+/*end[ENABLE_VERBOSE]*/        
         /*
          * Return the method object.
          */
@@ -2049,9 +2048,11 @@ public class GC implements GlobalStaticFields {
         }
 
         int percent = 0;
+/*if[ENABLE_VERBOSE]*/
         if (GC.GC_TRACING_SUPPORTED && VM.isVeryVerbose()) {
             VM.print("Scanning String objects from read-only memory");
         }
+/*end[ENABLE_VERBOSE]*/
         
         while (parent != null) {
             Address end = parent.getStart().add(parent.getSize());
@@ -2063,6 +2064,7 @@ public class GC implements GlobalStaticFields {
                     }
                 }
               
+/*if[ENABLE_VERBOSE]*/
                 if (GC.GC_TRACING_SUPPORTED && VM.isVeryVerbose()) {
                     Address start = parent.getStart();
                     Offset size = end.diff(start);
@@ -2072,14 +2074,17 @@ public class GC implements GlobalStaticFields {
                         percent = percentNow;
                     }
                 }
+/*end[ENABLE_VERBOSE]*/
                 
                 block = object.add(GC.getBodySize(GC.getKlass(object), object));
             }
             parent = parent.getParent();
         }
+/*if[ENABLE_VERBOSE]*/	
         if (GC.GC_TRACING_SUPPORTED && VM.isVeryVerbose()) {
             VM.println(" done");
         }
+/*end[ENABLE_VERBOSE]*/	
         return null;
     }
     

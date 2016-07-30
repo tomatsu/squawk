@@ -139,7 +139,11 @@ public final class ClassFileLoader implements Context {
             is = classPath.openInputStream(classFilePath);
             load(classFilePath, is);
         } catch (IOException ioe) {
+/*if[ENABLE_VERBOSE]*/		
             if (VM.isHosted() || VM.isVeryVerbose()) {
+/*else[ENABLE_VERBOSE]*/		
+//            if (VM.isHosted()) {
+/*end[ENABLE_VERBOSE]*/		
                 System.err.println("IO error while loading: " + klass);
                 ioe.printStackTrace();
             }

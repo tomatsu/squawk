@@ -629,9 +629,11 @@ public final class Suite {
         }
         int index = getResourceDataIndex(resourceFile.name); 
         if (index < 0) {
-//          if (VM.isVerbose()) {
-            System.out.println("[Including resource: " + resourceFile.name + "]");
-//          }
+/*if[ENABLE_VERBOSE]*/
+           if (VM.isVerbose()) {
+	       System.out.println("[Including resource: " + resourceFile.name + "]");
+            }
+/*end[ENABLE_VERBOSE]*/	   
             System.arraycopy(resourceFiles, 0, resourceFiles = new ResourceFile[resourceFiles.length + 1], 0, resourceFiles.length - 1);
             resourceFiles[resourceFiles.length - 1] = resourceFile;
         } else { // replace duplicates
@@ -705,9 +707,11 @@ public final class Suite {
                 setProperty(key, value);
             }
         } catch (IOException e) {
+/*if[ENABLE_VERBOSE]*/	    
             if (VM.isVerbose()) {
                 System.out.println("Error while loading properties: " + e.getMessage());
             }
+/*end[ENABLE_VERBOSE]*/	    
         }
     }
     
@@ -728,16 +732,20 @@ public final class Suite {
         // as is the case if JAD properties are added, so take this into account
         int index = Arrays.binarySearch(manifestProperties, property.name, ManifestProperty.comparer);
         if (index < 0) {
+/*if[ENABLE_VERBOSE]*/	    	    
             if (VM.isVerbose()) {
                 System.out.println("[Adding property key: |" + property.name + "| value: |" + property.value + "|]");
             }
+/*end[ENABLE_VERBOSE]*/	    	    
             System.arraycopy(manifestProperties, 0, manifestProperties = new ManifestProperty[manifestProperties.length + 1], 0, manifestProperties.length - 1);
             manifestProperties[manifestProperties.length - 1] = property;
             Arrays.sort(manifestProperties, ManifestProperty.comparer);
         } else {
+/*if[ENABLE_VERBOSE]*/	    	    
             if (VM.isVerbose()) {
                 System.out.println("[Overwriting property key: |" + property.name + "| value: |" + property.value + "|]");
             }
+/*end[ENABLE_VERBOSE]*/	    	    
             manifestProperties[index] = property;
         }
 	}
@@ -1198,10 +1206,11 @@ public final class Suite {
         SquawkHashtable deadClasses = null; // set of stripped classes
 
         if (stripClassesLater != null) {
+/*if[ENABLE_VERBOSE]*/	    	    
             if (VM.isVerbose()) {
                 System.out.println("Removing " + stripClassesLater.length + " classes from " + copy);
             }
-
+/*end[ENABLE_VERBOSE]*/	    
             // make set of classes to be removed
             deadClasses = new SquawkHashtable(stripClassesLater.length);
             for (int i = 0; i < stripClassesLater.length; i++) {
@@ -1266,9 +1275,11 @@ public final class Suite {
                 for (int i = 0; i < copy.classes.length; i++) {
                     Klass klass = classes[i];
                     if (klass != null && deadClasses.contains(klass)) {
-                        if (Klass.DEBUG_CODE_ENABLED && VM.isVerbose()) {
+/*if[ENABLE_VERBOSE]*/	    			
+                        if (/*Klass.DEBUG_CODE_ENABLED && */VM.isVerbose()) {
                             System.out.println("Removing from suite: " + klass);
                         }
+/*end[ENABLE_VERBOSE]*/	    			
                         copy.classes[i] = null;
                     } else {
                         copy.classes[i] = klass;

@@ -197,7 +197,11 @@ public class DeadMethodEliminator {
     }
 
     public void computeMethodsUsed() {
-        boolean trace = (Translator.TRACING_ENABLED && Tracer.isTracing("DME")) || VM.isVeryVerbose();
+/*if[ENABLE_VERBOSE]*/
+        boolean trace = (Translator.TRACING_ENABLED && Tracer.isTracing("DME")) || VM.isVeryVerbose();a
+/*else[ENABLE_VERBOSE]*/
+//        boolean trace = (Translator.TRACING_ENABLED && Tracer.isTracing("DME"));
+/*end[ENABLE_VERBOSE]*/
         usedMethods = new Hashtable();
         Enumeration e;
         SquawkVector foundMethods = new SquawkVector(); // used for tracing
@@ -293,7 +297,11 @@ public class DeadMethodEliminator {
 
         
         // report unused methods:
+/*if[ENABLE_VERBOSE]*/	
         if (trace || VM.isVeryVerbose()) {
+/*else[ENABLE_VERBOSE]*/	
+//        if (trace) {
+/*end[ENABLE_VERBOSE]*/	
             e = methodDB.getAllMethods();
             foundMethods.removeAllElements();
             while (e.hasMoreElements()) {

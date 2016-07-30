@@ -241,9 +241,11 @@ public class RecordStoreManager implements IRecordStoreManager {
         }
         String eraseRmsReason = checkMIDletVersion(installedMidletName, installedMidletVendor, installedMidletVersion);
         if (eraseRmsReason != null) {
+/*if[ENABLE_VERBOSE]*/
             if (VM.isVerbose()) {
                 System.out.println(eraseRmsReason);
             }
+/*end[ENABLE_VERBOSE]*/	    
             if (currentApplicationDescriptor != null) {
                 invalidateEntryAt(currentApplicationDescriptor.getAddress());
             }

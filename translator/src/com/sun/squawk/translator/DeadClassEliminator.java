@@ -246,9 +246,11 @@ public class DeadClassEliminator {
                     // what can we do here
                     if (Modifier.isPackagePrivate(modifiers)) {
                         // treat as internal:
+/*if[ENABLE_VERBOSE]*/
                         if (VM.isVerbose()) {
                             System.out.println("### FYI - Found package-private class: " + klass);
                         }
+/*end[ENABLE_VERBOSE]*/			
                         return false;
                     }
                     return true;
@@ -368,7 +370,11 @@ public class DeadClassEliminator {
     }
 
     public void computeClassesUsed() {
+/*if[ENABLE_VERBOSE]*/	    
         boolean trace = (Translator.TRACING_ENABLED && Tracer.isTracing("DCE")) || VM.isVeryVerbose();
+/*else[ENABLE_VERBOSE]*/	    
+//        boolean trace = (Translator.TRACING_ENABLED && Tracer.isTracing("DCE"));
+/*end[ENABLE_VERBOSE]*/	    
         //Enumeration e;
 
         SquawkVector foundClasses = new SquawkVector(); // used for tracing
@@ -448,7 +454,11 @@ public class DeadClassEliminator {
                 }
             }
         }
+/*if[ENABLE_VERBOSE]*/
         if (trace || VM.isVeryVerbose()) {
+/*else[ENABLE_VERBOSE]*/
+//        if (trace) {
+/*end[ENABLE_VERBOSE]*/
             if (!foundClasses.isEmpty()) {
                 Tracer.traceln("[translator DCE: ==== Unused classes:  " + foundClasses.size() + " (used classes: " + referencedClasses.size() + ") =====");
                 printVectorSorted(foundClasses, "    ");

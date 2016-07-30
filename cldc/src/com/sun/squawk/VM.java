@@ -124,11 +124,13 @@ public class VM implements GlobalStaticFields {
      */
     private static int bootstrapHash;
 
+/*if[ENABLE_VERBOSE]*/	
     /**
      * The verbosity level.
      */
     private static int verboseLevel;
-
+/*end[ENABLE_VERBOSE]*/
+	
     /**
      * Flag to say that synchronization is enabled.
      */
@@ -2252,28 +2254,34 @@ hbp.dumpState();
      *
      * @return true if the VM is running in verbose mode
      */
+/*if[ENABLE_VERBOSE]*/	
     public static boolean isVerbose() {
         return verboseLevel > 0;
     }
+/*end[ENABLE_VERBOSE]*/	
 
     /**
      * Gets the flag indicating if the VM is running in very verbose mode.
      *
      * @return true if the VM is running in very verbose mode
      */
+/*if[ENABLE_VERBOSE]*/	    
     public static boolean isVeryVerbose() {
         return verboseLevel > 1;
     }
-
+/*end[ENABLE_VERBOSE]*/
+    
     /**
      * Sets the flag indicating if the VM is running in verbose mode.
      *
      * @param level  indicates if the VM should run in verbose mode
      */
+/*if[ENABLE_VERBOSE]*/    
     static void setVerboseLevel(int level) {
         verboseLevel = level;
     }
-
+/*end[ENABLE_VERBOSE]*/
+	
     /**
      * Delete a channel I/O context.
      *
@@ -2605,18 +2613,22 @@ hbp.dumpState();
         }
         
         executingHooks = true;
+/*if[ENABLE_VERBOSE]*/
         if (VM.isVerbose()) {
             System.out.println("Running top-level shutdown hooks:");
         }
-/*if[!PLATFORM_TYPE_BARE_METAL]*/
+/*end[ENABLE_VERBOSE]*/
+/*if[!PLATFORM_TYPE_BARE_METAL]*/		
         shutdownHooks.runHooks();
         // system-wide shutdown
         cleanupTaskExecutors();
 /*end[PLATFORM_TYPE_BARE_METAL]*/
 
+/*if[ENABLE_VERBOSE]*/	
         if (VM.isVerbose()) {
             System.out.println("Done running top-level shutdown hooks.");
         }
+/*end[ENABLE_VERBOSE]*/
         haltVM(code);
     }
     

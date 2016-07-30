@@ -98,7 +98,11 @@ public abstract class ObjectMemoryLoader {
             signatureVerificationErrorMessage = "Signature verification of the application (" + uri + ") failed.\n"
                     + "Use \"ant deploy\" to reinstall the application via USB.";
         }
+/*if[ENABLE_VERBOSE]*/	
         return signatureVerificationErrorMessage + ((VM.isVerbose()) ? ("\n\t" + e.getMessage()) : "");
+/*else[ENABLE_VERBOSE]*/
+//        return signatureVerificationErrorMessage;
+/*end[ENABLE_VERBOSE]*/
     }
     
     private static void verifySignatureOnLoad(String uri) {
@@ -108,9 +112,11 @@ public abstract class ObjectMemoryLoader {
             InputStream suiteIn = Connector.openInputStream(uri);
             try {
                 if (!SignatureVerifier.isVerifiedSuite(suiteIn) && !noPublicKeyInstalled) {
+/*if[ENABLE_VERBOSE]*/
                     if (VM.isVerbose()) {
                         System.out.println("Verifying signature of suite (" + uri + ")");
                     }
+/*end[ENABLE_VERBOSE]*/		    
                     SignatureVerifier.verifySuite(suiteIn);
                 } else {
                     //System.out.println("NOT verifying suite with uri " + uri);
@@ -266,12 +272,14 @@ System.out.println("filePathelements=" + filePathelements);
 /*end[FLASH_MEMORY]*/
         
         ObjectMemoryFile omf = loader.load(headerOnly);
-
+	
+/*if[ENABLE_VERBOSE]*/
         if (VM.isVerbose()) {
             VM.print("[loaded object memory from '");
             VM.print(uri);
             VM.println("']");
         }
+/*end[ENABLE_VERBOSE]*/	
 
         if (loadIntoReadOnlyMemory) {
             GC.registerReadOnlyObjectMemory(omf.objectMemory);
@@ -609,7 +617,8 @@ System.out.println("filePathelements=" + filePathelements);
                 int index = uri.lastIndexOf('/');
                 String newURI = uri.substring(0, index + 1) + "unsigned-" + uri.substring(index + 1);
                 result = newURI;
-                if (true || VM.isVerbose()) {
+//               if (true || VM.isVerbose())
+		{
                     System.out.println("[loading from " + newURI + " instead of " + uri);
                 }
             }

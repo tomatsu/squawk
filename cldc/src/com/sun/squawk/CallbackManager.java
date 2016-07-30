@@ -223,9 +223,11 @@ public final class CallbackManager {
         synchronized (this) {
             if (runOnce & ran) {
                 // can happen as a race...
+/*if[ENABLE_VERBOSE]*/
                 if (VM.isVeryVerbose()) {
                     System.err.println("Already ran one-time callbacks");
                 }
+/*end[ENABLE_VERBOSE]*/
                 return;
             }
             ran = true;
@@ -398,9 +400,11 @@ final class CallbackGroup {
             Runnable hook = hks[i];
             try {
 //              System.out.println("Running a hook in runAllHooksInContext" + hook);
+/*if[ENABLE_VERBOSE]*/
                 if (VM.isVerbose()) {
                     System.out.println("Running hook: " + hook);
                 }
+/*end[ENABLE_VERBOSE]*/
                 hook.run();
             } catch (RuntimeException e) {
                 System.err.print("Exception thrown executing callback. Exception printed and ignored:");

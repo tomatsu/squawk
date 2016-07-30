@@ -189,9 +189,9 @@ public class JavaApplicationManager {
 
         } catch (Error e) {
             System.err.println(e);
-            if (VM.isVerbose()) {
-                e.printStackTrace();
-            }
+/*if[ENABLE_VERBOSE]*/
+		if (VM.isVerbose()) e.printStackTrace();
+/*end[ENABLE_VERBOSE]*/
         }
         /*
          * Show execution statistics if requested
@@ -236,9 +236,9 @@ public class JavaApplicationManager {
 //            //appThread.join(); // note that this isnt waiting for all app threads to finish, just this thread.
 //        } catch (Error e) {
 //            System.err.println(e);
-//            if (VM.isVerbose()) {
-//                e.printStackTrace();
-//            }
+///*
+//	          if (VM.isVerbose()) e.printStackTrace();
+//*/
 //        }
 /*end[ENABLE_MULTI_ISOLATE]*/        
     }
@@ -319,6 +319,7 @@ public class JavaApplicationManager {
         } else if (arg.equals("-version")) {
             showVersion(System.err);
             VM.stopVM(0);
+/*if[ENABLE_VERBOSE]*/	    
         } else if (arg.equals("-verbose")) {
             if (!VM.isVerbose()) {
                 VM.setVerboseLevel(1);
@@ -327,6 +328,7 @@ public class JavaApplicationManager {
             if (!VM.isVeryVerbose()) {
                 VM.setVerboseLevel(2);
             }
+/*end[ENABLE_VERBOSE]*/
 /*if[DEBUG_CODE_ENABLED]*/
         } else if (arg.startsWith("-testMIDlet:")) {
             testMIDletClass = arg.substring(12);
@@ -425,12 +427,15 @@ public class JavaApplicationManager {
                 "    -MIDlet-x             which MIDlet-x property to use from " + Suite.PROPERTIES_MANIFEST_RESOURCE_NAME + "\n" +
                 "    -sampleStatData:url   poll VM.Stats every 500ms and send samples to url\n" +
                 "    -version              print product version and exit\n" +
+/*if[ENABLE_VERBOSE]*/		
                 "    -verbose              report when a class is loaded\n" +
-                "    -veryverbose          report when a class is initialized and various other output\n"
+                "    -veryverbose          report when a class is initialized and various other output\n" +
+/*end[ENABLE_VERBOSE]*/		
 /*if[DEBUG_CODE_ENABLED]*/
-              + "    -testMIDlet:<class>   specify MIDlet class name directly\n" +
-                "    -testoms              continually serialize, deserialize and restart the application if it hibernates itself\n"
+                "    -testMIDlet:<class>   specify MIDlet class name directly\n" +
+                "    -testoms              continually serialize, deserialize and restart the application if it hibernates itself\n" +
 /*end[DEBUG_CODE_ENABLED]*/
+		""
             );
 
         if (Klass.TRACING_ENABLED) {

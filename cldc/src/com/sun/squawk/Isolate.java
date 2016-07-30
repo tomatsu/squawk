@@ -1709,6 +1709,7 @@ public final class Isolate implements Runnable {
         String initializerClassName = VM.getIsolateInitializerClassName();
 
         // Verbose trace.
+/*if[ENABLE_VERBOSE]*/
         if (DEBUG_CODE_ENABLED && VM.isVeryVerbose()) {
             System.out.print("[Starting " + isolateInfoStr() + " with args");
             if (args != null) {
@@ -1723,6 +1724,7 @@ public final class Isolate implements Runnable {
 
             System.out.println("]");
         }
+/*end[ENABLE_VERBOSE]*/
 
 /*if[ENABLE_MULTI_ISOLATE]*/
         addVMShutdownHook();
@@ -1882,19 +1884,23 @@ public final class Isolate implements Runnable {
 
 /*if[ENABLE_MULTI_ISOLATE]*/
     private void runHooks(CallbackManager cbm, String label) {
+/*if[ENABLE_VERBOSE]*/	
         if (DEBUG_CODE_ENABLED && VM.isVerbose()) {
             System.out.print("Running isolate");
             System.out.print(label);
             System.out.print(" hooks for ");
             System.out.println(this);
         }
+/*end[ENABLE_VERBOSE]*/	
         cbm.runHooks();
+/*if[ENABLE_VERBOSE]*/	
         if (DEBUG_CODE_ENABLED && VM.isVerbose()) {
             System.out.print("Done with isolate");
             System.out.print(label);
             System.out.print(" hooks for ");
             System.out.println(this);
         }
+/*end[ENABLE_VERBOSE]*/	
     }
 
     /**
@@ -1906,9 +1912,11 @@ public final class Isolate implements Runnable {
             shutdownHooks.removeAll();
             shutdownHooks = null;
         } else {
+/*if[ENABLE_VERBOSE]*/	    
             if (DEBUG_CODE_ENABLED && VM.isVerbose()) {
                 System.out.println("No isolate SHUTDOWN_EVENT hooks for " + this);
             }
+/*end[ENABLE_VERBOSE]*/	    
         }
     }
 /*end[ENABLE_MULTI_ISOLATE]*/
@@ -2072,9 +2080,11 @@ public final class Isolate implements Runnable {
         }
 /*end[ENABLE_SDA_DEBUGGER]*/
 
+/*if[ENABLE_VERBOSE]*/
         if (DEBUG_CODE_ENABLED && VM.isVeryVerbose()) {
             System.out.println("[Hibernating " + isolateInfoStr() + "]");
         }
+/*end[ENABLE_VERBOSE]*/
 
         hibernate(HIBERNATED, true);
     }
@@ -2780,30 +2790,38 @@ public final class Isolate implements Runnable {
         try {
             // tell all remote mailboxes that these references are going away.
             if (mailboxAddresses != null) {
+/*if[ENABLE_VERBOSE]*/		
                 if (VM.isVeryVerbose()) {
                     System.err.println("Closing addresses...");
                 }
+/*end[ENABLE_VERBOSE]*/		
                 Enumeration addressE = mailboxAddresses.elements();
                 while (addressE.hasMoreElements()) {
                     MailboxAddress address = (MailboxAddress)addressE.nextElement();
+/*if[ENABLE_VERBOSE]*/		    
                     if (VM.isVeryVerbose()) {
                         System.err.println("Closing address " + address);
                     }
+/*end[ENABLE_VERBOSE]*/		    
                     address.close(); // tolerant of double closes()
                 }
             }
 
             // close all local Mailboxes
             if (mailboxes != null) {
+/*if[ENABLE_VERBOSE]*/		
                 if (VM.isVeryVerbose()) {
                     System.err.println("Closing mailboxes...");
                 }
+/*end[ENABLE_VERBOSE]*/		
                 Enumeration mailboxE = mailboxes.elements();
                 while (mailboxE.hasMoreElements()) {
                     Mailbox mailbox = (Mailbox)mailboxE.nextElement();
+/*if[ENABLE_VERBOSE]*/		    
                     if (VM.isVeryVerbose()) {
                         System.err.println("Closing mailbox " + mailbox);
                     }
+/*end[ENABLE_VERBOSE]*/		    
                     mailbox.close(); // tolerant of double closes()
                 }
             }

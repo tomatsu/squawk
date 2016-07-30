@@ -171,7 +171,11 @@ public class Throwable {
             }
             stream.println();
 
+/*if[ENABLE_VERBOSE]*/
             boolean internalFrame = !VM.isVeryVerbose();
+/*else[ENABLE_VERBOSE]*/
+//            boolean internalFrame = true;
+/*end[ENABLE_VERBOSE]*/		    
             if (this != VM.getOutOfMemoryError() && trace != null) {
                 for (int i = 0; i != trace.length; ++i) {
                     internalFrame = internalFrame && internalFrame(trace[i]);

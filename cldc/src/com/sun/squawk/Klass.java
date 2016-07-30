@@ -317,9 +317,11 @@ public class Klass<T> {
                     translator.close(Suite.DEBUG);
                 }
             } else {
+/*if[ENABLE_VERBOSE]*/		
                 if (VM.isVerbose()) {
                     VM.println("[translator not found - dynamic class loading disabled]");
                 }
+/*end[ENABLE_VERBOSE]*/		
             }
         }
         
@@ -338,12 +340,13 @@ public class Klass<T> {
      */
     public static synchronized Klass forName(String className) throws ClassNotFoundException {
        // Verbose trace.
+/*if[ENABLE_VERBOSE]*/
         if (VM.isVeryVerbose()) {
             VM.print("[Klass.forName(");
             VM.print(className);
             VM.println(")]");
         }
-
+/*end[ENABLE_VERBOSE]*/
         Klass klass = Klass.lookupKlass(className);
         ClassNotFoundException cnfe = null;
         if (klass == null) {
@@ -1774,9 +1777,11 @@ T
             /*
              * Verbose trace.
              */
+/*if[ENABLE_VERBOSE]*/
             if (VM.isVerbose() && !isSynthetic()) {
                 System.out.println("[Loaded " + name + "]");
-            }
+           }
+/*end[ENABLE_VERBOSE]*/	    
         }
     }
 
@@ -3580,12 +3585,14 @@ T
         int index = getClinitIndex();
         if (index >= 0) {
             // Verbose trace.
+/*if[ENABLE_VERBOSE]*/	    
             if (VM.isVeryVerbose()) {
                   VM.print("[initializing ");
                   VM.print(isInterface() ? "interface " :  "class ");
                   VM.print(name);
                   VM.println("]");
             }
+/*end[ENABLE_VERBOSE]*/	    
             Assert.that(GC.getKlass(staticMethods[index]).id == CID.BYTECODE_ARRAY);
             VM.callStaticNoParm(this, index);
         }

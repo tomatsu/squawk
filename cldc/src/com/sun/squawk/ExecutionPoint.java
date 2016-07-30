@@ -268,11 +268,13 @@ public final class ExecutionPoint {
 //            }
 /*end[ENABLE_RUNTIME_METADATA]*/
         } catch (Throwable e) {
+/*if[ENABLE_VERBOSE]*/
 /*if[DEBUG_CODE_ENABLED]*/
             if (VM.isVerbose()) {
                 VM.printVMStackTrace(e, "***", "Exception thrown in ExecutionPoint.print():");
             }
 /*end[DEBUG_CODE_ENABLED]*/
+/*end[ENABLE_VERBOSE]*/
             VM.print("*** Error decoding this ExecutionPoint:\n    ");
             printToVM();
             // print it the simple way
