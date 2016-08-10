@@ -260,6 +260,8 @@ public final class Target extends Command {
         Build.clearFilesMarkedAsSvnIgnore(baseDir, "phoneme");
         Build.clear(new File(baseDir, getCompiledDirectoryName()), true);
         Build.clear(new File(baseDir, "classes.target"), true);
+        Build.clear(new File(baseDir, "classes.target.orig"), true);
+        Build.clear(new File(baseDir, "j2meclasses.orig"), true);
         Build.delete(new File(baseDir, "classes.jar"));
         Build.delete(new File(baseDir, "classes.target.jar"));
         if (preprocess) {

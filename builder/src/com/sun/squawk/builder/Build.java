@@ -1704,7 +1704,7 @@ public class Build {
         
         // Add the "uei" command
         addCommand(new UEICommand(this));
-               
+        addCommand(new ShrinkCommand(this));
     }
 
     /**
