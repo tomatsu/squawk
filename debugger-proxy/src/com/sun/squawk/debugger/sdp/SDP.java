@@ -647,7 +647,7 @@ public class SDP {
             DatagramPacket packet = null;
             try {
                 packet = new DatagramPacket(buffer, 0, buffer.length, new InetSocketAddress(killPort));
-            } catch (SocketException e) {
+            } catch (/*SocketException*/Exception e) {
                 continue;
             }
             try {
