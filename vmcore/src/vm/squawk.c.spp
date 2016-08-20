@@ -2261,8 +2261,10 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
     /*
      * Lose the first argument (the path to the executable program).
      */
+#if !PLATFORM_TYPE_BARE_METAL
     argv++;
     argc--;
+#endif
 
     Squawk_main(argc, argv);
     
