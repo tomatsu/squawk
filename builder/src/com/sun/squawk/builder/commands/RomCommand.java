@@ -44,7 +44,7 @@ public class RomCommand extends Command {
     public static final File UTIL_SRC_DIR = new File("vmcore/src/vm/util");
     public static final File VM_SRC_RTS_DIR = new File("vmcore/src/rts");
     public static final File VM_SRC_FILE = new File(VM_SRC_DIR, "squawk.c");
-    public static final File VM2C_SRC_FILE = new File(VM_SRC_DIR, "vm2c.c.spp");
+    public static final File VM2C_SRC_FILE = new File(VM_SRC_DIR, "vm2c.c.inc.spp");
 
     public static final String PREPROCESSED_FOR_VM2C_DIR_NAME = "preprocessed-vm2c";
 
@@ -543,13 +543,14 @@ public class RomCommand extends Command {
 	    
             env.log(env.brief, "[linking '" + bootstrapSuiteName + "' ...]");
             ccompiler.link((File[])objectFiles.toArray(new File[objectFiles.size()]), bootstrapSuiteName, env.dll);
-
+			/*
             if (!env.verbose) {
             	for (File file : generatedFiles) {
                     Build.delete(file);
                     Build.clear(VM_BLD_DIR, true);
                 }
             }
+			*/
         }
 
         // Rebuild the jar of files used by the JVM embedded in Squawk if the bootstrap suite was (re)built
