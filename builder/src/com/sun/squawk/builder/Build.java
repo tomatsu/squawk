@@ -2536,6 +2536,8 @@ public class Build {
             ccompiler = new GccCompiler(this, platform);
         } else if (name.equals("gcc-arm")) {
             ccompiler = new GccARMCompiler(this, platform);
+        } else if (name.equals("yotta")) {
+            ccompiler = new YottaGenerator(this, platform);
         } else if (name.equals("gcc-macox")) {
             ccompiler = new GccMacOSXCompiler(this, platform);
         } else if (name.equals("cc")) {
