@@ -2266,7 +2266,7 @@ public class Arrays {
         }
 
         for (int i = 0; i < length; i++) {
-            if (Double.doubleToLongBits(a[i]) != Double.doubleToLongBits(a2[i])) {
+            if (a[i] != a2[i]) {
                 return false;
             }
         }
@@ -2306,7 +2306,7 @@ public class Arrays {
         }
 
         for (int i = 0; i < length; i++) {
-            if (Float.floatToIntBits(a[i]) != Float.floatToIntBits(a2[i])) {
+            if (a[i] != a2[i]) {
                 return false;
             }
         }
