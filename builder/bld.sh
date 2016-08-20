@@ -41,6 +41,11 @@ JAR=$JAVA_HOME/bin/jar
 #echo JAR=$JAR
 
 
+if [ ! -f $JAVA_HOME/lib/tools.jar ]; then
+	echo "JAVA_HOME must be JDK top directory"
+	exit 1
+fi
+
 #----------------------------------------------------------#
 #              Go ahead and build build.jar                #
 #----------------------------------------------------------#
