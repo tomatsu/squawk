@@ -48,7 +48,7 @@ const char *format(const char* fmt);
 #include "io_native.h"
 #endif
 
-#include "os.c"
+#include "os.c.inc"
 
 #ifndef DIAGNOSTICS_ENABLED
 /* for ARM, defined in arm-library, otherwise do it here. */
@@ -90,11 +90,11 @@ void diagnosticWithValue(char * msg, int val) {
 #endif
 
 #if PLATFORM_TYPE_DELEGATING
-#define IODOTC "io_delegating.c"
+#define IODOTC "io_delegating.c.inc"
 #elif PLATFORM_TYPE_NATIVE
-#define IODOTC "io_native.c"
+#define IODOTC "io_native.c.inc"
 #elif PLATFORM_TYPE_SOCKET
-#define IODOTC "io_socket.c"
+#define IODOTC "io_socket.c.inc"
 #elif PLATFORM_TYPE_BARE_METAL
 /* Different bare metal platforms handle this differently - eg set IODOTC to a specific file.
  * Also include io_metal.c*/
@@ -113,7 +113,7 @@ extern unsigned int* /*VAL*/_bootstrap/*BOOTSTRAP_SUITE_ADDR_SYM*/;
 /*
  * Include the type definitions and operations on machine word sized quantities
  */
-#include "address.c"
+#include "address.c.inc"
 
 /*
  * Forward refs.
@@ -556,24 +556,24 @@ void freeBuffers() {
 /*
  * Include the memory interface.
  */
-#include "memory.c"
+#include "memory.c.inc"
 
 /*
  * Include the bitmap used by the Lisp2 collectors.
  */
 #ifdef LISP2_BITMAP
-#include "lisp2.c"
+#include "lisp2.c.inc"
 #endif /* LISP2_BITMAP */
 
 /*
  * Include the switch and bytecode routines.
  */
-#include "bytecodes.c"
+#include "bytecodes.c.inc"
 
 /*
  * Include java code translated into C code.
  */
-#include "vm2c.c"
+#include "vm2c.c.inc"
 
 
 #if KERNEL_SQUAWK
@@ -588,30 +588,30 @@ void freeBuffers() {
 /*
  * Include the I/O system
  */
-#include "cio.c"
+#include "cio.c.inc"
 
 #if KERNEL_SQUAWK
 /*
  * Include the device-related routines
  */
-#include "os_devices.c"
-#include "devices.c"
+#include "os_devices.c.inc"
+#include "devices.c.inc"
 #endif
 
 /*
  * Include the instruction trace routine.
  */
-#include "trace.c"
+#include "trace.c.inc"
 
 #ifdef DB_DEBUG
 /*
  * Include support for low-level interactive debug
  */
-#include "debug.c"
+#include "debug.c.inc"
 #endif
 
 #if SDA_DEBUGGER
-#include "debugger.c"
+#include "debugger.c.inc"
 #endif
 
 
@@ -721,7 +721,7 @@ int readFile(const char *file, Address buffer, UWord size) {
 /*
  * Include the functions for laoding and saving the bootstrap suite
  */
-#include "suite.c"
+#include "suite.c.inc"
 
 /**
  * Gets the 2 integers representing a percent value.
@@ -2005,7 +2005,7 @@ void Squawk_continue(Globals *gp) {
 #endif /* OSPROF */
 #endif /* PROFILING */
         next:
-#include "switch.c"
+#include "switch.c.inc"
 #ifndef USELABELS
         continue;
 #endif
@@ -2261,7 +2261,7 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
     /*
      * Lose the first argument (the path to the executable program).
      */
-#if !PLATFORM_TYPE_BARE_METAL
+#if !PLATFORM_TYPE_BARE_METAL || defined (__linux__)
     argv++;
     argc--;
 #endif
@@ -2276,7 +2276,7 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
  * the issues.
  */
 #if defined(__APPLE__) || defined(VXWORKS)
-#include "os_main.c"
+#include "os_main.c.inc"
 #endif
 
 #ifndef VXWORKS
