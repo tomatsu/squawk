@@ -1,0 +1,20 @@
+{
+  "name": "squawk",
+  "version": "0.0.1",
+  "license": "GPL",
+  "description": "Squawk VM for mbed",
+  "keywords": ["mbed-classic", "java", "squawk", "cldc"],
+  "author": "Toyokazu Tomatsu <toyokazu.tomatsu@gmail.com>",
+  "homepage": "https://github.com/tomatsu/squawk4mbed",
+  "dependencies":{
+    "mbed-classic": "~0.0.4"
+  },
+  "extraIncludes":[
+	  "source/vm",
+	  "source/vm/fp",
+	  "source/rts/gcc-arm",
+	  "/usr/lib/jvm/jdk1.8.0_26/include",
+	  "/usr/lib/jvm/jdk1.8.0_26/include/linux"
+  ],
+  "bin": "./source"
+}
