@@ -1888,7 +1888,6 @@ T
         /*
          * Create and install the metadata for this class.
          */
-/*if[ENABLE_HOSTED]*/	
         Suite suite = VM.getCurrentIsolate().getLeafSuite();
         KlassMetadata metadata = new KlassMetadata.Full(this,
                                                    virtualMethods,
@@ -1899,7 +1898,6 @@ T
                                                    this.virtualMethods.length,
                                                    this.staticMethods.length);
         suite.installMetadata(metadata);
-/*end[ENABLE_HOSTED]*/
         /*
          * Compute and set the interface table and interface index table.
          */
