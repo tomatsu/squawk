@@ -33,43 +33,54 @@
 #define jlong  int64_t
 
 /* The package that conmtains the native code to use for a "NATIVE" platform type*/
+#if !PLATFORM_TYPE_BARE_METAL
+#include "os_posix.c"
+
 #if defined(sun)
 #define sysPlatformName() "solaris"
 #else
 #define sysPlatformName() "linux"
 #endif
 
-#if !PLATFORM_TYPE_BARE_METAL
-#include "os_posix.c"
-#else
+jlong sysTimeMicros() {
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+    /* We adjust to 1000 ticks per second */
+    return (jlong)tv.tv_sec * 1000000 + tv.tv_usec;
+}
+
+#else /*PLATFORM_TYPE_BARE_METAL*/
+
 #ifdef __arm__
+#define sysPlatformName() "arm"
+
 #include "rtc_api.h"
 #include "gpio_api.h"
 #include "ticker_api.h"
 #include "us_ticker_api.h"
-#endif
+#endif /* __arm__ */
+
 #define sysGetPageSize() 128
 #define sysToggleMemoryProtection(x,y,z)
 //#define ioExecute() 
 #define sysValloc(s) memalign(sysGetPageSize(),s)
 #define sysVallocFree(p) free(p)
 
-#if !PLATFORM_TYPE_BARE_METAL
-jlong sysTimeMicros() {
-    struct timeval tv;
-//    printf("######## sysTimeMicros()\n");
-    gettimeofday(&tv, NULL);
-    /* We adjust to 1000 ticks per second */
-    return (jlong)tv.tv_sec * 1000000 + tv.tv_usec;
-}
-#else
 jlong sysTimeMicros() {
     extern jlong sysTimeMillis(void);
     return sysTimeMillis() * 1000;
 }
-#endif
 
 #if defined(STM32L0) || defined(STM32L1) || defined(STM32L4) || defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4) || defined(STM32F7)
+#define USE_SUBSECOND_RTC
+#elif defined(NRF51)
+#define USE_TICK
+#else
+#define USE_RTC
+#endif
+
+#ifdef USE_SUBSECOND_RTC
 static void rtc_read_frac_s(time_t * t, int * millis)
 {
     RTC_HandleTypeDef RtcHandle;
@@ -96,30 +107,9 @@ static void rtc_read_frac_s(time_t * t, int * millis)
     *millis = (timeStruct.SecondFraction-timeStruct.SubSeconds*1000) / (timeStruct.SecondFraction+1);
     return;
 }
-#endif
+#endif /* USE_SUBSECOND_RTC */
 
-
-jlong sysTimeMillis(void) {
-#ifdef __arm__
-#if defined(STM32L4) || defined(STM32F4)
-    time_t t;
-    int millis;
-    rtc_read_frac_s(&t, &millis);
-    return (jlong)t * 1000 + millis;
-#else    
-    static int initialized = 0;
-    if (!initialized) {
-	rtc_init();
-	initialized = 1;
-    }
-    return (jlong)rtc_read() * 1000;
-#endif
-#else
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (jlong)tv.tv_sec * 1000;
-#endif
-}
+#ifdef USE_TICK
 
 static ticker_event_t _event;
 static timestamp_t _delay;
@@ -146,8 +136,38 @@ void initTickCount() {
 jlong sysTickCount(){
     return _counter;
 }
+#endif /* USE_TICK */
 
+jlong sysTimeMillis(void) {
+#ifdef __arm__
+#ifdef USE_SUBSECOND_RTC
+    time_t t;
+    int millis;
+    rtc_read_frac_s(&t, &millis);
+    return (jlong)t * 1000 + millis;
+#elif defined(USE_TICK)
+    static int initialized = 0;
+    if (!initialized) {
+		initTickCount();
+	    initialized = 1;
+	}
+	return sysTickCount();
+#else    
+    static int initialized = 0;
+    if (!initialized) {
+	rtc_init();
+	initialized = 1;
+    }
+    return (jlong)rtc_read() * 1000;
 #endif
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (jlong)tv.tv_sec * 1000;
+#endif /* __arm__ */
+}
+
+#endif /*PLATFORM_TYPE_BARE_METAL*/
 
 /** 
  * Return another path to find the bootstrap suite with the given name.
