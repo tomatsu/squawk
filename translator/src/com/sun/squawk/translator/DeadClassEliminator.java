@@ -110,8 +110,8 @@ public class DeadClassEliminator {
 /*if[ENABLE_SDA_DEBUGGER]*/
         "com.sun.squawk.FullMethodMetadata",
 /*end[ENABLE_SDA_DEBUGGER]*/
-        "com.sun.squawk.vm.FieldOffsets",
-        "com.sun.squawk.vm.MethodOffsets",
+//        "com.sun.squawk.vm.FieldOffsets",
+//        "com.sun.squawk.vm.MethodOffsets",
         "com.sun.squawk.util.ArrayHashtable",// used by metadata suites
 /*if[ENABLE_SUITE_LOADING]*/
         "com.sun.squawk.ObjectMemorySerializer$ControlBlock",// used by metadata suites (when multi-suites used)
