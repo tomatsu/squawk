@@ -354,11 +354,7 @@ public abstract class GarbageCollector implements GlobalStaticFields {
     /**
      * Specifies if timings should be in terms of microseconds or milliseconds.
      */
-/*if[FLASH_MEMORY]*/
-    private static final boolean useMicrosecondTimer = false; //  no microsecond resolution on SPOT
-/*else[FLASH_MEMORY]*/
-//    private boolean useMicrosecondTimer;
-/*end[FLASH_MEMORY]*/
+	private static final boolean useMicrosecondTimer = /*VAL*/false/*GC_USEC_TIMER*/; //  no microsecond resolution on SPOT
 
     /**
      * Gets the time now in terms of microseconds or milliseconds since some epoch.
@@ -394,13 +390,6 @@ public abstract class GarbageCollector implements GlobalStaticFields {
                 return true;
             }
         }
-/*if[FLASH_MEMORY]*/
-/*else[FLASH_MEMORY]*/
-//      if (arg.equals("-usecgctimer")) {
-//            useMicrosecondTimer = true;
-//            return true;
-//      }
-/*end[FLASH_MEMORY]*/
         return false;
     }
 
@@ -414,9 +403,6 @@ public abstract class GarbageCollector implements GlobalStaticFields {
             out.println("    -nativegc             use native version of collector (default)");
             out.println("    -interpgc             use interpreted version of collector");
         }
-/*if[!FLASH_MEMORY]*/
-        out.println("    -usecgctimer          use microsecond (not millisecond) timer for GC");
-/*end[FLASH_MEMORY]*/
     }
 
     void verbose() {
