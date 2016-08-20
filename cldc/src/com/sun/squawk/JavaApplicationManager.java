@@ -91,7 +91,7 @@ public class JavaApplicationManager {
         // If no name is specified for MIDlet, assume MIDlet-1
         midletPropertyNum = 1;
         
-        String mainClassName = null;
+        String mainClassName = /*VAL*/null/*MAIN_CLASS_NAME*/;
         String[] javaArgs = null;
 
 /*if[!EMULATOR_LAUNCHER]*/
@@ -99,10 +99,12 @@ public class JavaApplicationManager {
         /*
          * Process any switches.
          */
+/*if[!PLATFORM_TYPE_BARE_METAL]*/		
         if (args.length != 0) {
             args = processVMOptions(args);
         }
-
+/*end[PLATFORM_TYPE_BARE_METAL]*/
+		
 /*if[DEBUG_CODE_ENABLED]*/
         if (testMIDletClass != null) {
             mainClassName = Isolate.MIDLET_WRAPPER_CLASS;
@@ -110,15 +112,15 @@ public class JavaApplicationManager {
         } else
 /*end[DEBUG_CODE_ENABLED]*/
             if (args.length > 0) {
-            /*
-             * Split out the class name from the other arguments.
-             */
-            mainClassName = args[0].replace('/', '.');
-            javaArgs = new String[args.length - 1];
-            for (int i = 0 ; i < javaArgs.length ; i++) {
-                javaArgs[i] = args[i+1];
-            }
-        } // else use midletPropertyNum
+				/*
+				 * Split out the class name from the other arguments.
+				 */
+				mainClassName = args[0].replace('/', '.');
+				javaArgs = new String[args.length - 1];
+				for (int i = 0 ; i < javaArgs.length ; i++) {
+					javaArgs[i] = args[i+1];
+				}
+			} // else use midletPropertyNum
         
 /*else[EMULATOR_LAUNCHER]*/
 //        mainClassName = "com.sun.squawk.uei.j2me.Launcher";
@@ -196,6 +198,7 @@ public class JavaApplicationManager {
         /*
          * Show execution statistics if requested
          */
+/*if[!PLATFORM_TYPE_BARE_METAL]*/		
         if (displayExecutionStatistics) {
             long endTime = System.currentTimeMillis();
             System.out.println();
@@ -206,7 +209,7 @@ public class JavaApplicationManager {
             System.out.println("=============================");
             System.out.println();
         }
-
+/*end[PLATFORM_TYPE_BARE_METAL]*/
         /*
          * Stop the VM.
          */
@@ -249,6 +252,7 @@ public class JavaApplicationManager {
      * @param args the arguments as supplied by the VM.startup code
      * @return the arguments needed by the main() routine of the isolate
      */
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
     private static String[] processVMOptions(String[] args) {
         int offset = 0;
         Assert.that(VM.getCommandLineProperties().isEmpty());
@@ -395,7 +399,8 @@ public class JavaApplicationManager {
             VM.stopVM(0);
         }
     }
-
+/*end[PLATFORM_TYPE_BARE_METAL]*/
+		
      /**
      * Print a usage message and exit.
      *
