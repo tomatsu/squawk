@@ -331,7 +331,7 @@ public class Preprocessor {
 	}
         String value = properties.getProperty(name);
         if (value == null) {
-            throw new PreprocessorException("value for required property '" + name + "' not specified");
+			System.out.println("Value for property '" + name + "' not specified");
         }
         return value;
     }
