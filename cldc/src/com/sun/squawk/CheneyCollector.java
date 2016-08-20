@@ -203,7 +203,7 @@ public final class CheneyCollector extends GarbageCollector {
         /*
          * Output trace information.
          */
-        if (GC.isTracing(GC.TRACE_BASIC)) {
+        if (GC.GC_TRACING_SUPPORTED && GC.isTracing(GC.TRACE_BASIC)) {
             traceVariables();
         }
     }
@@ -1486,7 +1486,7 @@ public final class CheneyCollector extends GarbageCollector {
         traceHeapSegment("toSpace{used}", toSpaceStartPointer, allocationPointer);
         traceHeapSegment("toSpace{free}", allocationPointer, toSpaceEndPointer);
 
-        if (GC.isTracing(GC.TRACE_HEAP_CONTENTS)) {
+        if (GC.GC_TRACING_SUPPORTED && GC.isTracing(GC.TRACE_HEAP_CONTENTS)) {
             for (Address block = toSpaceStartPointer; block.lo(allocationPointer); ) {
                 Address object = GC.blockToOop(block);
                 Klass klass = GC.getKlass(object);

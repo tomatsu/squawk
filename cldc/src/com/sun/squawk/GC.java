@@ -833,35 +833,37 @@ public class GC implements GlobalStaticFields {
         /*
          * Trace.
          */
-        if (oop != null) {
-            if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_ALLOCATION)) {
-                VM.print("[Allocated object: block = ");
-                VM.printUWord(GC.oopToBlock(VM.asKlass(klass), Address.fromObject(oop)).toUWord());
-                VM.print(" oop = ");
-                VM.printAddress(oop);
-                VM.print(" size = ");
-                VM.print(size);
-                VM.print(" klass = ");
-                VM.printAddress(klass);
-                VM.print(" ");
-                VM.print(GC.getKlass(oop).getInternalName());
-                VM.println("]");
-            }
-        } else {
-            if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_ALLOCATION)) {
-                VM.print("[Failed allocation of ");
-                VM.print(size);
-                VM.print(" bytes, klass = ");
-                VM.print(VM.asKlass(klass).getInternalName());
+        if (GC.GC_TRACING_SUPPORTED) {
+			if (oop != null) {
+				if (isTracing(TRACE_ALLOCATION)) {
+					VM.print("[Allocated object: block = ");
+					VM.printUWord(GC.oopToBlock(VM.asKlass(klass), Address.fromObject(oop)).toUWord());
+					VM.print(" oop = ");
+					VM.printAddress(oop);
+					VM.print(" size = ");
+					VM.print(size);
+					VM.print(" klass = ");
+					VM.printAddress(klass);
+					VM.print(" ");
+					VM.print(GC.getKlass(oop).getInternalName());
+					VM.println("]");
+				}
+			} else {
+				if (isTracing(TRACE_ALLOCATION)) {
+					VM.print("[Failed allocation of ");
+					VM.print(size);
+					VM.print(" bytes, klass = ");
+					VM.print(VM.asKlass(klass).getInternalName());
 //                VM.print(", bcount = ");
 //                VM.print(VM.branchCount());
-                VM.print(" (bytes free: ");
-                VM.printOffset(allocEnd.diff(allocTop));
-                VM.print(" in alloc space, ");
-                VM.printOffset(heapEnd.diff(allocTop));
-                VM.println(" in total)]");
-            }
-        }
+					VM.print(" (bytes free: ");
+					VM.printOffset(allocEnd.diff(allocTop));
+					VM.print(" in alloc space, ");
+					VM.printOffset(heapEnd.diff(allocTop));
+					VM.println(" in total)]");
+				}
+			}
+		}
 
         return oop;
     }
@@ -957,7 +959,7 @@ public class GC implements GlobalStaticFields {
         // Enable allocation again.
         setAllocationEnabled(true);
 
-        if (isTracing(TRACE_BASIC)) {
+        if (GC.GC_TRACING_SUPPORTED && isTracing(TRACE_BASIC)) {
             long afterFree = freeMemory();
             if (fullCollection) {
                 VM.print("[Full GC ");
