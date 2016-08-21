@@ -28,7 +28,7 @@ cp module.json .yotta.json $TOP
 cp squawk.suite.c cflags.cmake $SOURCE
 
 tar cf - -C vmcore/src \
-	./rts/gcc-arm ./vm/fp ./vm/*.h ./vm/squawk.c ./vm/util ./vm/*.c.inc \
+	`(cd vmcore/src; echo rts/gcc-arm vm/fp vm/*.h vm/squawk.c vm/util vm/*.c.inc)` \
 	| (cd $SOURCE; tar xf -)
 
 # build 
