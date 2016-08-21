@@ -2264,6 +2264,15 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
 #if !PLATFORM_TYPE_BARE_METAL || defined (__linux__)
     argv++;
     argc--;
+#else
+
+#define stringify(s) _str(s)
+#define _str(s) #s
+
+	static char* static_argv[] = {stringify(MAIN_CLASS_NAME), 0};
+	
+	argc = 1;
+	argv = static_argv;
 #endif
 
     Squawk_main(argc, argv);

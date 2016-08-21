@@ -442,6 +442,7 @@ public class RomCommand extends Command {
         String options;
         if (compilationEnabled) {
         	options = ccompiler.options(false).trim();
+			generateCMakeFile(options);
         } else {
         	options = "Built via -nocomp, assuming custom cross-compilation";
         }
@@ -558,7 +559,20 @@ public class RomCommand extends Command {
             env.runCommand("squawk.jar", Build.NO_ARGS);
         }
     }
-    
+
+	static void generateCMakeFile(String options){
+		try {
+			PrintWriter w = new PrintWriter(new FileOutputStream("cflags.cmake"));
+			w.println("set_target_properties( squawk");
+			w.print("     PROPERTIES COMPILE_FLAGS \"");
+			w.print(options);
+			w.println("\")");
+			w.close();
+		} catch (IOException e){
+			e.printStackTrace();
+		}
+	}
+	
     public String[] runRomizer(String... args) {
         bootstrapSuiteName = "squawk";
         // Only run the romizer if there are arguments passed to this command

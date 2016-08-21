@@ -21,7 +21,25 @@ public class YottaGenerator extends CCompiler {
      * {@inheritDoc}
      */
     public String options(boolean disableOpts) {
-		return "";
+        StringBuffer buf = new StringBuffer();
+        if (options.tracing)            { buf.append("-DTRACE ");           }
+        if (options.profiling)          { buf.append("-DPROFILING ");       }
+        if (options.macroize)           { buf.append("-DMACROIZE ");        }
+        if (options.assume)             { buf.append("-DASSUME ");          }
+        if (options.typemap)            { buf.append("-DTYPEMAP ");         }
+        if (options.kernel)             { buf.append("-DKERNEL_SQUAWK=true ");     }
+        
+        if (options.nativeVerification) { buf.append("-DNATIVE_VERIFICATION=true ");          }
+ 
+        buf.append("-D_GNU_SOURCE ");
+
+        buf.append("-DSQUAWK_64=" + options.is64).
+            append(' ').
+            append(get64BitOption()).append(' ');
+        buf.append("-DPLATFORM_BIG_ENDIAN=false ");
+		buf.append("-DPLATFORM_UNALIGNED_LOADS=false ");
+
+        return buf.append(options.cflags).append(' ').toString();
     }
 
     /**
@@ -64,11 +82,13 @@ public class YottaGenerator extends CCompiler {
      * {@inheritDoc}
      */
     public File compile(File[] includeDirs, File source, File dir, boolean disableOpts) {
+		/*
 		System.out.print("compile: source="+source + ", dir="+dir + ", includes=");
 		for (int i = 0; i < includeDirs.length; i++) {
 			System.out.print(includeDirs[i] + ", ");
 		}
 		System.out.println();
+		*/
         return null;
     }
 
@@ -76,11 +96,13 @@ public class YottaGenerator extends CCompiler {
      * {@inheritDoc}
      */
     public File link(File[] objects, String out, boolean dll) {
+		/*
 		System.out.print("link:");
 		for (int i = 0; i < objects.length; i++) {
 			System.out.print(objects[i] + ", ");
 		}
 		System.out.println("out="+out);
+		*/
 		return null;
     }
 
