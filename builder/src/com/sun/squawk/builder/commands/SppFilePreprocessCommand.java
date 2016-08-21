@@ -64,7 +64,7 @@ public class SppFilePreprocessCommand extends Command {
      * @return File
      * @throws IllegalArgumentException if <code>sppFile</code> does not end with ".spp"
      */
-    private static File getFileDerivedFromSppFile(File sppFile) {
+    public static File getFileDerivedFromSppFile(File sppFile) {
         String path = sppFile.getPath();
         if (!path.endsWith(".spp")) {
             throw new IllegalArgumentException("file does not end with \".spp\": " + path);

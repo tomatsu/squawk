@@ -9,6 +9,11 @@ import org.objectweb.asm.*;
 
 public class Shrink {
 
+	/*
+	 * Usage:
+	 *  <input_dir> <output_dir> <main_class> classpaths..
+	 *  <input_jar> <output_dir> <main_class> classpaths..
+	 */
 	public static void main(String[] args) throws IOException {
 		String[] classpaths = new String[args.length - 3];
 		System.arraycopy(args, 3, classpaths, 0, args.length - 3);
@@ -16,7 +21,10 @@ public class Shrink {
 		Shrink f = new Shrink(analyzer);
 		File in = new File(args[0]);
 		File out = new File(args[1]);
-		if (in.isDirectory() && out.isDirectory()) {
+		if (!out.isDirectory()) {
+			throw new RuntimeException();
+		}
+		if (in.isDirectory()) {
 			f.processDir(in, out);
 		} else {
 			f.processJar(in, out);
@@ -77,26 +85,27 @@ public class Shrink {
 	
 	void processJar(File input, File output) throws IOException {
 		ZipInputStream zin = new ZipInputStream(new FileInputStream(input));
-		ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(output));
-		processJar(zin, zout);
+		processJar(zin, output);
 		zin.close();
-		zout.close();
 	}
 		
-	void processJar(ZipInputStream zin, ZipOutputStream zout) throws IOException {
+	void processJar(ZipInputStream zin, File output) throws IOException {
 		while (true) {
 			ZipEntry entry = zin.getNextEntry();
 			if (entry != null){
 				String name = entry.getName();
+				File dest = new File(output, name);
 				if (name.endsWith(".class")){
 					String id = name.substring(0, name.length()-6);
 					if (isUsedClass(id)) {
-						zout.putNextEntry(entry);
-						process(id, zin, zout);
+						FileOutputStream out = new FileOutputStream(dest);
+						process(id, zin, out);
+						out.close();
 					}
 				} else {
-					zout.putNextEntry(entry);
-					copy(zin, zout);
+					FileOutputStream out = new FileOutputStream(dest);
+					copy(zin, out);
+					out.close();
 				}
 			} else {
 				break;

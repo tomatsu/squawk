@@ -1,14 +1,21 @@
 #!/bin/sh
 
 # common settings
-LANG=C
-PROP=build-mbed.properties
-MAIN_CLASS_NAME=com.sun.squawk.Dine
-JARFILE=app/classes.jar
+MAIN_CLASS_NAME=Hello
+JARFILE=helloworld/classes.jar
+
 TARGET=bbc-microbit-classic-gcc-nosd
+CFLAGS="-DNRF51 -DDEFAULT_RAM_SIZE=13*1024 -DMAIN_CLASS_NAME=${MAIN_CLASS_NAME}"
+PROP=build-mbed.properties
 TOP=build
 SOURCE=$TOP/source
-CFLAGS="-DNRF51 -DDEFAULT_RAM_SIZE=13*1024 -DMAIN_CLASS_NAME=${MAIN_CLASS_NAME}"
+
+case "$1" in
+"clean" )
+	./d.sh -override $PROP -q clean || exit 1
+	rm -rf ${TOP}
+	exit ;;
+esac
 
 skip_stage_1=true
 
@@ -16,18 +23,13 @@ if [ ! -d ${TOP} ]; then
 	skip_stage_1=false
 fi
 
-case "$1" in
-"-full" )		
-	skip_stage_1=false ;;
-esac
-
 # stage 1
 if [ x${skip_stage_1} != "xtrue" ]; then
 	echo "stage 1...."
 
 	(cd builder; sh bld.sh) || exit 1
-	./d.sh -override $PROP clean || exit 1
-	./d.sh -override $PROP || exit 1
+	./d.sh -override $PROP -q clean || exit 1
+	./d.sh -override $PROP -q || exit 1
 
 # set up yotta
 	rm -rf ${TOP}
@@ -45,8 +47,8 @@ echo "stage 2...."
 
 cflags="`for i in $CFLAGS; do echo -cflags:$i; done`"
 
-./d.sh -override $PROP -fork shrink ${MAIN_CLASS_NAME} app/classes || exit 1
-./d.sh -override $PROP \
+./d.sh -override $PROP -q -fork shrink ${MAIN_CLASS_NAME} ${JARFILE} || exit 1
+./d.sh -override $PROP -q \
        -comp:yotta \
        $cflags \
        rom -strip:a cldc ${JARFILE} || exit 1
@@ -62,4 +64,4 @@ tar cf - -C vmcore/src \
 # build
 cd ${TOP}
 
-yotta build 2>&1 > log
+yotta build

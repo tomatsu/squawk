@@ -173,7 +173,7 @@ public class DependencyAnalyzer {
 			addClassNode(fn.definingClass, newNodes);
 		}
 
-		System.out.println("newNodes="+newNodes);
+//		System.out.println("newNodes="+newNodes);
 		while (true) {
 			Set<MethodNode> next = analyze(methods, newNodes);
 			if (next.isEmpty()) {
@@ -353,7 +353,7 @@ public class DependencyAnalyzer {
 			boolean isThread = false;
 			for (ClassNode s : n.superTypes) {
 				if (s.name == null) {
-					System.out.println("n="+n);
+//					System.out.println("n="+n);
 					continue;
 				}
 				if (s.name.equals("java/lang/Thread")) {

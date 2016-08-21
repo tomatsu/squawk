@@ -91,7 +91,7 @@ public class JavaApplicationManager {
         // If no name is specified for MIDlet, assume MIDlet-1
         midletPropertyNum = 1;
         
-        String mainClassName = /*VAL*/null/*MAIN_CLASS_NAME*/;
+        String mainClassName = null;
         String[] javaArgs = null;
 
 /*if[!EMULATOR_LAUNCHER]*/

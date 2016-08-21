@@ -1394,6 +1394,14 @@ public class Build {
                         cmd.clean();
                     }
                 }
+				clear(RomCommand.VM_BLD_DIR, true);
+				FileSet sppFiles = new FileSet(RomCommand.VM_SRC_DIR, new FileSet.SuffixSelector(".spp"));
+				for (File sppFile : sppFiles.list()) {
+					File outputFile = SppFilePreprocessCommand.getFileDerivedFromSppFile(sppFile);
+					File preprocessedFile = new File(sppFile.getPath() + ".preprocessed");
+					Build.delete(outputFile);
+					Build.delete(preprocessedFile);
+				}
             }
         });
 
@@ -2264,7 +2272,7 @@ public class Build {
 
                 // Make it very clear to the user which properties in the standard properties
                 // file are potentially being overridden
-                System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Using build override file: " + overideProperties.getPath() + " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+//                System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Using build override file: " + overideProperties.getPath() + " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 properties = loadProperties(overideProperties, properties);
             }
         } else {
@@ -2338,7 +2346,7 @@ public class Build {
             }
         }
         Build builder = new Build(buildDotOverrideFileName);
-        System.out.println("Platform: " + builder.platform);
+//        System.out.println("Platform: " + builder.platform);
         try {
             builder.mainProgrammatic(args);
             System.out.println("Total time: " + ((System.currentTimeMillis() - start) / 1000) + "s");
@@ -2498,7 +2506,7 @@ public class Build {
 
                     public Object put(Object key, Object value) {
                         String oldValue = defaults.getProperty((String)key);
-                        if (oldValue != null && !oldValue.equals(value)) {
+                        if (verbose && oldValue != null && !oldValue.equals(value)) {
                             System.out.println(">>>>>>> Overwrote " + key + " property: " + oldValue + " --> " + value);
                         }
                         return super.put(key, value);
@@ -2626,7 +2634,7 @@ public class Build {
             cOptions.platformType = platformOption;
             cOptions.cflags += " -D" + derivedPropName + "=1";
             updateProperty(derivedPropName, "true", true);
-            System.out.println("PLATFORM_TYPE=" + platformOption);
+//            System.out.println("PLATFORM_TYPE=" + platformOption);
         } else {
             updateProperty(derivedPropName, "false", true);
         }
@@ -2639,10 +2647,10 @@ public class Build {
         String derivedPropName = "GC_" + collectorName;
         if (getProperty("GC").equals(collectorName)) {
             updateProperty(derivedPropName, "true", true);
-            System.out.println(derivedPropName + "=true");
+//            System.out.println(derivedPropName + "=true");
         } else {
             updateProperty(derivedPropName, "false", true);
-            System.out.println(derivedPropName + "=false");
+//            System.out.println(derivedPropName + "=false");
         }
     }
 
