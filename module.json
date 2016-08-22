@@ -13,8 +13,8 @@
 	  "source/vm",
 	  "source/vm/fp",
 	  "source/rts/gcc-arm",
-	  "/usr/lib/jvm/jdk1.8.0_26/include",
-	  "/usr/lib/jvm/jdk1.8.0_26/include/linux"
+	  "$JAVA_HOME/include",
+	  "$JAVA_HOME/include/linux"
   ],
   "bin": "./source"
 }

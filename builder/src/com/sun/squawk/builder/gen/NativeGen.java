@@ -158,6 +158,8 @@ public class NativeGen {
         lookup(Class.forName("com.sun.squawk.Lisp2Bitmap"));
         lookup(Class.forName("com.sun.squawk.Lisp2Bitmap$Iterator"));
 
+        lookup(Class.forName("com.sun.squawk.hal.DigitalOut"));
+		
         output(Class.forName("com.sun.squawk.VM"), "lcmp", true, new Class[] { Long.TYPE, Long.TYPE }, Integer.TYPE);
 
         if (optionNo == 0) {

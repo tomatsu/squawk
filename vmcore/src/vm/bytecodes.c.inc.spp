@@ -4806,6 +4806,32 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                 })
 /*end[KERNEL_SQUAWK]*/
 
+/* MBED/HAL */
+                CASE_(com_sun_squawk_hal_DigitalOut_init0, {
+                    int pin = popInt();
+					pushInt(open_gpio(pin, 1));
+					break;
+				})
+				
+                CASE_(com_sun_squawk_hal_DigitalOut_write0, {
+                    int value = popInt();
+                    int desc = popInt();
+					write_gpio(desc, value);
+					break;
+				})
+				
+                CASE_(com_sun_squawk_hal_DigitalOut_read0, {
+                    int desc = popInt();
+					pushInt(read_gpio(desc));
+					break;
+				})
+				
+                CASE_(com_sun_squawk_hal_DigitalOut_isConnected0, {
+                    int desc = popInt();
+					pushInt(is_connected_gpio(desc));
+					break;
+				})
+				
                 default: {
                     /*fprintf(stderr, "*** Undefined native method: *** %d\n", iparm);*/
                     pushInt(iparm);
