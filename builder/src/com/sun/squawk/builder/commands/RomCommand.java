@@ -442,7 +442,7 @@ public class RomCommand extends Command {
         String options;
         if (compilationEnabled) {
         	options = ccompiler.options(false).trim();
-			generateCMakeFile(options);
+			saveCflags(options);
         } else {
         	options = "Built via -nocomp, assuming custom cross-compilation";
         }
@@ -560,13 +560,10 @@ public class RomCommand extends Command {
         }
     }
 
-	static void generateCMakeFile(String options){
+	static void saveCflags(String options){
 		try {
-			PrintWriter w = new PrintWriter(new FileOutputStream("cflags.cmake"));
-			w.println("set_target_properties( squawk");
-			w.print("     PROPERTIES COMPILE_FLAGS \"");
+			PrintWriter w = new PrintWriter(new FileOutputStream("cflags.txt"));
 			w.print(options);
-			w.println("\")");
 			w.close();
 		} catch (IOException e){
 			e.printStackTrace();

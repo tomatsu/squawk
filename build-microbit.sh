@@ -46,9 +46,11 @@ if [ x${skip_stage_1} != "xtrue" ]; then
 	awk '{gsub(/\$JAVA_HOME/,"'$JAVA_HOME'"); print $0}' module.json > $TOP/module.json
 	cp .yotta.json $TOP
 
+#	(cd ${TOP}; yotta target ${TARGET} && \
+#		 yotta up && \
+#		 patch -p 0 < ../compiler_abstraction.h.diff) # workaround 
 	(cd ${TOP}; yotta target ${TARGET} && \
-		 yotta up && \
-		 patch -p 0 < ../compiler_abstraction.h.diff) # workaround 
+		 yotta up)
 fi
 
 # stage 2
@@ -62,9 +64,15 @@ cflags="`for i in $CFLAGS; do echo -cflags:$i; done`"
        $cflags \
        rom -strip:a cldc ${JARFILE} || exit 1
 
+./d.sh -override $PROP map -cp:cldc/j2meclasses:$JARFILE squawk.suite
+
 # copy files to yotta build directory
 
-cp cflags.cmake $SOURCE
+f=`cat cflags.txt`
+cat > $SOURCE/cflags.cmake <<EOF
+set_target_properties( squawk
+     PROPERTIES COMPILE_FLAGS "-std=gnu99 -Wno-unused $f")
+EOF
 cp squawk.suite.c $SOURCE
 
 tar cf - -C vmcore/src \
