@@ -80,7 +80,7 @@ EOF
 cp squawk.suite.c $SOURCE
 
 tar cf - -C vmcore/src \
-	`(cd vmcore/src; echo rts/gcc-arm vm/fp vm/*.h vm/squawk.c vm/util vm/*.c.inc vm/hal)` \
+	`(cd vmcore/src; echo rts/gcc-arm vm/fp vm/*.h vm/squawk.c vm/util vm/*.c.inc)` \
 	| (cd $SOURCE; tar xf -)
 
 # stage 3
