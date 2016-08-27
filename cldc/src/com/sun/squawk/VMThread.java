@@ -950,6 +950,7 @@ public final class VMThread implements GlobalStaticFields {
 
     private int errno; /* save errno after native calls so java thread's will see correct errno value. */
 
+	public int event;
 
     /**
      * Fail if thread invarients are true.
@@ -2087,6 +2088,8 @@ VM.println("creating stack:");
     private static void signalEvent(int event) {
         VMThread thread = events.findEvent(event);
         if (thread != null) {
+			thread.event = ServiceOperation.event;
+			ServiceOperation.event = 0;
             addToRunnableThreadsQueue(thread);
         }
     }

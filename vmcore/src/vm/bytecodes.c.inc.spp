@@ -4807,6 +4807,13 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
 /*end[KERNEL_SQUAWK]*/
 
 /* MBED/HAL */
+                CASE_(com_sun_squawk_hal_GpioIRQ_init, {
+                    int fall = popInt();
+                    int pin = popInt();
+					pushInt(GpioIRQ_init(pin, fall));
+					break;
+				})
+				
                 CASE_(com_sun_squawk_hal_DigitalOut_init0, {
                     int pin = popInt();
 					pushInt(open_gpio(pin, 1));

@@ -54,7 +54,9 @@ import com.sun.squawk.util.SquawkHashtable;
 import com.sun.squawk.util.SquawkVector;
 import com.sun.squawk.vm.ChannelConstants;
 import com.sun.squawk.vm.HDR;
+/*if[ENABLE_DYNAMIC_CLASSLOADING]*/
 import com.sun.squawk.vm.Native;
+/*end[ENABLE_DYNAMIC_CLASSLOADING]*/
 import com.sun.squawk.vm.SC;
 import com.sun.squawk.vm.FieldOffsets;
 import com.sun.squawk.util.Arrays;
@@ -3871,7 +3873,6 @@ hbp.dumpState();
 //    }
 /*end[ENABLE_CHANNEL_GUI]*/ 
     
-/*if[FLASH_MEMORY]*/
     /**
      * Waits for an interrupt.
      *
@@ -3891,6 +3892,7 @@ hbp.dumpState();
         }
     }
 
+/*if[FLASH_MEMORY]*/
     /**
      * Wait until it's possible that we can go to deep sleep. It's possible if
      * the thread scheduler has nothing to do for at least a certain length of time

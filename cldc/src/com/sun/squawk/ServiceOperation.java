@@ -102,6 +102,7 @@ public final class ServiceOperation implements GlobalStaticFields {
      * The result code.
      */
     private static int result;
+    public static int event;
 
     /**
      * The address result in message I/O operations.

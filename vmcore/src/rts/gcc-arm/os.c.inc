@@ -26,40 +26,19 @@
 #define FALSE 0
 
 #include <stdlib.h>
-#include <sys/time.h>
-//#include <dlfcn.h>
-#include <jni.h>
+#define IODOTC "hal-io.c.inc"
 
 #define jlong  int64_t
 
 /* The package that conmtains the native code to use for a "NATIVE" platform type*/
-#if !PLATFORM_TYPE_BARE_METAL
-#include "os_posix.c"
 
-#if defined(sun)
-#define sysPlatformName() "solaris"
-#else
-#define sysPlatformName() "linux"
-#endif
-
-jlong sysTimeMicros() {
-    struct timeval tv;
-
-    gettimeofday(&tv, NULL);
-    /* We adjust to 1000 ticks per second */
-    return (jlong)tv.tv_sec * 1000000 + tv.tv_usec;
-}
-
-#else /*PLATFORM_TYPE_BARE_METAL*/
-
-#ifdef __arm__
 #define sysPlatformName() "arm"
 
 #include "rtc_api.h"
 #include "gpio_api.h"
 #include "ticker_api.h"
 #include "us_ticker_api.h"
-#endif /* __arm__ */
+//#include "sleep_api.h"
 
 #define sysGetPageSize() 128
 #define sysToggleMemoryProtection(x,y,z)
@@ -139,12 +118,18 @@ jlong sysTickCount(){
 #endif /* USE_TICK */
 
 jlong sysTimeMillis(void) {
-#ifdef __arm__
 #ifdef USE_SUBSECOND_RTC
     time_t t;
     int millis;
     rtc_read_frac_s(&t, &millis);
     return (jlong)t * 1000 + millis;
+#elif defined(USE_RTC)
+    static int initialized = 0;
+    if (!initialized) {
+		rtc_init();
+		initialized = 1;
+    }
+    return (jlong)rtc_read() * 1000;
 #elif defined(USE_TICK)
     static int initialized = 0;
     if (!initialized) {
@@ -152,54 +137,10 @@ jlong sysTimeMillis(void) {
 	    initialized = 1;
 	}
 	return sysTickCount();
-#else    
-    static int initialized = 0;
-    if (!initialized) {
-	rtc_init();
-	initialized = 1;
-    }
-    return (jlong)rtc_read() * 1000;
-#endif
 #else
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (jlong)tv.tv_sec * 1000;
-#endif /* __arm__ */
-}
-
-#endif /*PLATFORM_TYPE_BARE_METAL*/
-
-/** 
- * Return another path to find the bootstrap suite with the given name.
- * On some platforms the suite might be stored in an odd location
- * 
- * @param bootstrapSuiteName the name of the boostrap suite
- * @return full or partial path to alternate location, or null
- */
-INLINE char* sysGetAlternateBootstrapSuiteLocation(char* bootstrapSuiteName) { return NULL; }
-
-#if PLATFORM_TYPE_DELEGATING
-jint createJVM(JavaVM **jvm, void **env, void *args) {
-    jint (JNICALL *CreateJavaVM)(JavaVM **jvm, void **env, void *args) = 0;
-    const char* name = "libjvm.so";
-    void* libVM = dlopen(name, RTLD_LAZY);
-    if (libVM == 0) {
-        fprintf(stderr, "Cannot load %s\n", name);
-        fprintf(stderr, "Please add the directories containing libjvm.so and libverify.so\n");
-        fprintf(stderr, "to the LD_LIBRARY_PATH environment variable.\n");
-        return false;
-    }
-
-    CreateJavaVM = (jint (JNICALL *)(JavaVM **,void **, void *)) dlsym(libVM, "JNI_CreateJavaVM");
-
-    if (CreateJavaVM == 0) {
-        fprintf(stderr,"Cannot resolve JNI_CreateJavaVM in %s\n", name);
-        return false;
-    }
-
-    return CreateJavaVM(jvm, env, args) == 0;
-}
+#error
 #endif
+}
 
 #define osloop()        /**/
 #define osbackbranch()  /**/
