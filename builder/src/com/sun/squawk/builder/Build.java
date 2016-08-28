@@ -1352,8 +1352,6 @@ public class Build {
 //File[] siblingBuilderDotPropertiesFiles = getSiblingBuilderDotPropertiesFiles();
     	List<File> dotPropertiesFiles = new ArrayList<File>();
     	addSiblingBuilderDotPropertiesFiles(new File("."), dotPropertiesFiles);
-        addGen("NativeGen",                "cldc/src");
-		
     	processBuilderDotPropertiesFiles(dotPropertiesFiles);
 
         addGen("OPC",                "cldc/src");

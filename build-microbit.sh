@@ -35,7 +35,10 @@ if [ x${skip_stage_1} != "xtrue" ]; then
 	(cd builder; sh bld.sh) || exit 1
 	./d.sh -override $PROP -q clean || exit 1
 	./d.sh -override $PROP || exit 1
+
 	(cd builder; sh nbld.sh) || exit 1
+	./d.sh -override $PROP -q clean || exit 1
+	./d.sh -override $PROP || exit 1
 
 # set up yotta
 	rm -rf ${TOP}
