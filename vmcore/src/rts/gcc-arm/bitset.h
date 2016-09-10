@@ -1,9 +1,11 @@
 #ifndef _BITSET_H_
 #define _BITSET_H_
 
+#include <stdint.h>
+
 typedef struct _bitset {
     int nwords;
-    unsigned long long words[0];
+    uint64_t words[0];
 } bitset;
 
 #define ADDRESS_BITS_PER_WORD 6

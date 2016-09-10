@@ -52,7 +52,8 @@ jlong sysTimeMicros() {
 }
 
 #if defined(STM32L0) || defined(STM32L1) || defined(STM32L4) || defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4) || defined(STM32F7)
-#define USE_SUBSECOND_RTC
+//#define USE_SUBSECOND_RTC
+#define USE_TICK
 #elif defined(NRF51)
 #define USE_TICK
 #else
@@ -80,7 +81,7 @@ static void rtc_read_frac_s(time_t * t, int * millis)
     timeinfo.tm_hour = timeStruct.Hours;
     timeinfo.tm_min  = timeStruct.Minutes;
     timeinfo.tm_sec  = timeStruct.Seconds;
- 
+
     // Convert to timestamp
     *t = mktime(&timeinfo);
     *millis = (timeStruct.SecondFraction-timeStruct.SubSeconds*1000) / (timeStruct.SecondFraction+1);
@@ -100,10 +101,15 @@ static void insert(timestamp_t t) {
 }
 
 static void handler(uint32_t id) {
-    insert(_event.timestamp + _delay);
-    _counter++;
+    if (id == 0) {
+      insert(_event.timestamp + _delay);
+      _counter++;
+	} else {
+	  uint32_t* ptr = (uint32_t*)id;
+	  ((void (*)(uint32_t))ptr[0])(&ptr[0]);
+	}
 }
-    
+
 void initTickCount() {
     _ticker_data = get_us_ticker_data();
     ticker_set_handler(_ticker_data, &handler);
@@ -121,6 +127,11 @@ jlong sysTimeMillis(void) {
 #ifdef USE_SUBSECOND_RTC
     time_t t;
     int millis;
+    static int initialized = 0;
+    if (!initialized) {
+		rtc_init();
+		initialized = 1;
+    }
     rtc_read_frac_s(&t, &millis);
     return (jlong)t * 1000 + millis;
 #elif defined(USE_RTC)

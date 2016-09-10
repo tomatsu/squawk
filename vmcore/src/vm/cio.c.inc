@@ -62,7 +62,9 @@ INLINE void returnAddressResult(Address value) {
 //#include "metal_sleep.h"
 //#include "io_metal.h"
 //#else
+#ifdef IODOTC
 #include IODOTC
+#endif
 //#endif
 
 #if PLATFORM_TYPE_BARE_METAL

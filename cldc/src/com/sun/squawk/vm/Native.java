@@ -258,6 +258,8 @@ public final class Native {
     public final static int com_sun_squawk_hal_DigitalOut$read0           = 167;
     public final static int com_sun_squawk_hal_DigitalOut$write0          = 168;
     public final static int com_sun_squawk_hal_GpioIRQ$init               = 169;
-    public final static int com_sun_squawk_VM$lcmp                        = 170;
-    public final static int ENTRY_COUNT                                   = 171;
+    public final static int com_sun_squawk_hal_TimerIRQ$cancel            = 170;
+    public final static int com_sun_squawk_hal_TimerIRQ$init              = 171;
+    public final static int com_sun_squawk_VM$lcmp                        = 172;
+    public final static int ENTRY_COUNT                                   = 173;
 }

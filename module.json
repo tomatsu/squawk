@@ -10,9 +10,9 @@
     "mbed-classic": "~0.0.4"
   },
   "extraIncludes":[
-	  "source/vm",
-	  "source/vm/fp",
-	  "source/rts/gcc-arm",
+	  "source/vmcore/src/vm",
+	  "source/vmcore/src/vm/fp",
+	  "source/vmcore/src/rts/gcc-arm",
 	  "$JAVA_HOME/include",
 	  "$JAVA_HOME/include/linux"
   ],

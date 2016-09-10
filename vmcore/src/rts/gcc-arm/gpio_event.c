@@ -4,7 +4,7 @@
 #define GPIO_BUFFER_LIMIT 4
 
 #define MASK(pin, fall) ((fall ? 1LL : 2LL) << (pin * 2))
-#define EVENT(pin, fall) (((uint64_t)pin << 2) | (fall ? 1 : 2))
+#define EVENT(pin, fall) ((pin << 2) | (fall ? 1 : 2))
 #define EVENT_PIN(event) (event >> 2)
 #define EVENT_FALL(event) ((event & 1) != 0)
 

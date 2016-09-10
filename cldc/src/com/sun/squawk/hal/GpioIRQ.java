@@ -16,8 +16,7 @@ public class GpioIRQ {
 	 *    }
 	 * });
 	 */
-	public static void startIRQ(final GpioIRQHandler handler) {
-		System.out.println("startIRQ " + handler);
+	public static void start(final GpioIRQHandler handler) {
 		Thread th = new Thread(){
 				public void run() {
 					int r;

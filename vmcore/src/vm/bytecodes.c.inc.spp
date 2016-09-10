@@ -4814,6 +4814,19 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
 					break;
 				})
 				
+                CASE_(com_sun_squawk_hal_TimerIRQ_init, {
+                    int repeat = popInt();
+                    int delay = popInt();
+					pushInt(TimerIRQ_init(delay, repeat));
+					break;
+				})
+				
+                CASE_(com_sun_squawk_hal_TimerIRQ_cancel, {
+                    int desc = popInt();
+					TimerIRQ_cancel(desc);
+					break;
+				})
+				
                 CASE_(com_sun_squawk_hal_DigitalOut_init0, {
                     int pin = popInt();
 					pushInt(open_gpio(pin, 1));

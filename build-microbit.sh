@@ -5,9 +5,10 @@
 #JARFILE=helloworld/classes.jar
 MAIN_CLASS_NAME=Blinky
 JARFILE=microbit_blinky/classes.jar
+export EXTRA_BUILDER_VMFLAGS=-Xbootclasspath/a:tools/asm-5.1.jar
 
 TARGET=bbc-microbit-classic-gcc-nosd
-CFLAGS="-DNRF51 -DDEFAULT_RAM_SIZE=12*1024 -DMAIN_CLASS_NAME=${MAIN_CLASS_NAME} -DMAX_GPIO_DESC=2"
+CFLAGS="-DNRF51 -DDEFAULT_RAM_SIZE=12*1024 -DMAIN_CLASS_NAME=${MAIN_CLASS_NAME}"
 PROP=build-mbed.properties
 TOP=build
 SOURCE=$TOP/source
@@ -63,15 +64,30 @@ fi
 # stage 2
 echo "stage 2...."
 
+TMP=/tmp/d
+
+rm -rf $TMP
+mkdir -p $TMP/classes
+(cwd=`pwd`; cd $TMP/classes; jar xf $cwd/cldc/classes.target.jar; jar xf $cwd/${JARFILE}; jar cfM $TMP/merged.jar .)
+
+rm -rf $TMP/classes2
+mkdir -p $TMP/classes2
+java -Xbootclasspath/a:tools/asm-5.1.jar -cp build.jar com.sun.squawk.builder.asm.Shrink $TMP/merged.jar $TMP/classes2 ${MAIN_CLASS_NAME} $TMP/merged.jar
+
+rm -rf $TMP/j2meclasses
+mkdir $TMP/j2meclasses
+tools/linux-x86/preverify -d $TMP/j2meclasses $TMP/classes2
+(cd $TMP/j2meclasses; jar cfM $TMP/j2meclasses.jar .)
+
 cflags="`for i in $CFLAGS; do echo -cflags:$i; done`"
 
-./d.sh -override $PROP -q -fork shrink ${MAIN_CLASS_NAME} ${JARFILE} || exit 1
-./d.sh -override $PROP -q \
+java -jar build.jar \
+       -override $PROP -q \
        -comp:yotta \
        $cflags \
-       rom -strip:a cldc ${JARFILE} || exit 1
+       rom -d:$TOP/source -strip:a $TMP/j2meclasses.jar $TMP/j2meclasses.jar || exit 1
 
-./d.sh -override $PROP map -cp:cldc/j2meclasses:$JARFILE squawk.suite
+#./d.sh -override $PROP map -cp:cldc/j2meclasses:$JARFILE squawk.suite
 
 # copy files to yotta build directory
 
@@ -82,8 +98,7 @@ set_target_properties( squawk
 EOF
 cp squawk.suite.c $SOURCE
 
-tar cf - -C vmcore/src \
-	`(cd vmcore/src; echo rts/gcc-arm vm/fp vm/*.h vm/squawk.c vm/util vm/*.c.inc)` \
+tar cf - vmcore/src/rts/gcc-arm vmcore/src/vm/fp vmcore/src/vm/*.h vmcore/src/vm/squawk.c vmcore/src/vm/util vmcore/src/vm/*.c.inc \
 	| (cd $SOURCE; tar xf -)
 
 # stage 3

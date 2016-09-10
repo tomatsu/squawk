@@ -9,15 +9,24 @@ public class Blinky {
 	static void setupButtons() {
 		GpioIRQ.init(BUTTON_A, true);
 		GpioIRQ.init(BUTTON_B, true);
-		GpioIRQ.startIRQ(new GpioIRQHandler(){
+		GpioIRQ.start(new GpioIRQHandler(){
 				public void signal(int pin, boolean fall) {
 					System.out.println("pin="+pin + ", " + (fall ? "fall" : "rise"));
 				}
 			});
 	}
-	
+
+	static void setupTimer() {
+		TimerIRQ timer = new TimerIRQ(700, true, new TimerIRQHandler() {
+				public void signal() {
+						System.out.println("timer ");
+				}
+			});
+	}
+
 	public static void main(String[] args) throws Exception {
 		setupButtons();
+		setupTimer();
 		
 		col.write(0);
 		while (true) {

@@ -95,9 +95,17 @@ int getEventPrim(int removeEventFlag) {
 }
 
 extern int get_gpio_event(int);
+extern int get_timer_event(int);
 
 static event_check_routine_t get_event_check_routine(int type) {
-	   return &get_gpio_event;
+	   switch (type) {
+	   case 0:
+	   	   return &get_gpio_event;
+	   case 1:
+	   	   return &get_timer_event;
+	   default:
+		   printf("unknown event type %d\n", type);
+	   }
 }
 
 /**

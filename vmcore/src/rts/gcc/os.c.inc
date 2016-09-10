@@ -30,6 +30,8 @@
 #include <dlfcn.h>
 #include <jni.h>
 
+#define IODOTC "io_simple.c.inc"
+
 #define jlong  int64_t
 
 /* The package that conmtains the native code to use for a "NATIVE" platform type*/
