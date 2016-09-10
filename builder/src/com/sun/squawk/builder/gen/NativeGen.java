@@ -160,6 +160,7 @@ public class NativeGen {
 
         lookup(Class.forName("com.sun.squawk.hal.DigitalOut"));
         lookup(Class.forName("com.sun.squawk.hal.GpioIRQ"));
+        lookup(Class.forName("com.sun.squawk.hal.TimerIRQ"));
 		
         output(Class.forName("com.sun.squawk.VM"), "lcmp", true, new Class[] { Long.TYPE, Long.TYPE }, Integer.TYPE);
 

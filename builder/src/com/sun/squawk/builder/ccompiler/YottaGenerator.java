@@ -121,5 +121,9 @@ public class YottaGenerator extends CCompiler {
     public boolean useSSE2Math() {
         return false;
     }
+		
+    public String getRtsIncludeName() {
+			return "gcc-arm";
+	}
 
 }

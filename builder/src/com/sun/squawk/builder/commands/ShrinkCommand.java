@@ -13,15 +13,22 @@ public class ShrinkCommand extends Command {
 		File baseDir = new File(".");
 		File cldc = new File(baseDir, "cldc");
 
-		new File(cldc, "classes.target").renameTo(new File(cldc, "classes.target.orig"));
-		new File(cldc, "j2meclasses").renameTo(new File(cldc, "j2meclasses.orig"));
-		
-		env.mkdir(cldc, "classes.target");
-		env.mkdir(cldc, "j2meclasses");
-
-		env.java("tools/asm-5.1.jar:build.jar", false, "", "com.sun.squawk.builder.asm.Shrink",
+		new File("/tmp/d").mkdir();
+		{
+			File files[] = new File("/tmp/d").listFiles();
+			for (int i = 0; i < files.length; i++){
+				files[i].delete();
+			}
+		}
+		{
+			File files[] = new File(cldc, "j2meclasses").listFiles();
+			for (int i = 0; i < files.length; i++){
+				files[i].delete();
+			}
+		}
+		env.java("tools/asm-5.1.jar:build.jar", true, "", "com.sun.squawk.builder.asm.Shrink",
 				 new String[]{
-					 "cldc/classes.target.orig", "cldc/classes.target", args[0], "cldc/classes.target.orig", args[1]});
-		env.preverify("j2meclasses", cldc);
+					 "cldc/classes.target.jar", "/tmp/d", args[0], "cldc/classes.target.jar", args[1]});
+		env.preverify("j2meclasses", new File("/tmp/d"), new File(cldc, "j2meclasses"));
 	}
 }

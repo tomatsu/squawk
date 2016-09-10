@@ -122,7 +122,7 @@ public class FlashConverter {
                 VM.setVerbose(true);
                 VM.setVeryVerbose(true);
             } else if (arg.equals("-c")) {
-		generateRelocatableCArray = true;
+				generateRelocatableCArray = true;
             } else if (arg.equals("-h")) {
                 usage(null);
                 return false;
@@ -179,21 +179,21 @@ public class FlashConverter {
      * Execute the mapper and produce the dump.
      */
     private void run() throws IOException {
-	if (generateRelocatableCArray) {
-	    generateRelocatableCArray();
-	} else {
-	    relocateMemory();
-	}
+		if (generateRelocatableCArray) {
+			generateRelocatableCArray();
+		} else {
+			relocateMemory();
+		}
     }
     
     private void generateRelocatableCArray() throws IOException {
         int[] memoryAddrs = getMemoryAddrs();
-	Suite suite = new Suite();
-	suite.loadFromFile(suiteFilePath, new File(bootstrapSuitePath).getPath());
-
-	FileOutputStream oc = new FileOutputStream(suiteFilePath + ".c");
-	suite.generateRelocatableCArray(memoryAddrs, relocatableCArraySymbol, oc);
-	oc.close();
+		Suite suite = new Suite();
+		suite.loadFromFile(suiteFilePath, new File(bootstrapSuitePath).getPath());
+		
+		FileOutputStream oc = new FileOutputStream(suiteFilePath + ".c");
+		suite.generateRelocatableCArray(memoryAddrs, relocatableCArraySymbol, oc);
+		oc.close();
     }
     
     private void relocateMemory() throws IOException {

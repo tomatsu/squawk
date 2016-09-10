@@ -13,6 +13,7 @@ public class Shrink {
 	 * Usage:
 	 *  <input_dir> <output_dir> <main_class> classpaths..
 	 *  <input_jar> <output_dir> <main_class> classpaths..
+	 *  <input_jar> <output_jar> <main_class> classpaths..
 	 */
 	public static void main(String[] args) throws IOException {
 		String[] classpaths = new String[args.length - 3];
@@ -21,9 +22,6 @@ public class Shrink {
 		Shrink f = new Shrink(analyzer);
 		File in = new File(args[0]);
 		File out = new File(args[1]);
-		if (!out.isDirectory()) {
-			throw new RuntimeException();
-		}
 		if (in.isDirectory()) {
 			f.processDir(in, out);
 		} else {
@@ -67,7 +65,7 @@ public class Shrink {
 					} else {
 //						System.out.println("# deleted " + id);
 					}
-				} else {
+				} else if (!name.endsWith("/")) {
 					File dir = dest.getParentFile();
 					if (!dir.exists()) {
 						dir.mkdirs();
@@ -85,7 +83,13 @@ public class Shrink {
 	
 	void processJar(File input, File output) throws IOException {
 		ZipInputStream zin = new ZipInputStream(new FileInputStream(input));
-		processJar(zin, output);
+		if (output.isDirectory()) {
+			processJar(zin, output);
+		} else {
+			ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(output));
+			processJar(zin, zout);
+			zout.close();
+		}
 		zin.close();
 	}
 		
@@ -98,14 +102,49 @@ public class Shrink {
 				if (name.endsWith(".class")){
 					String id = name.substring(0, name.length()-6);
 					if (isUsedClass(id)) {
+						File dir = dest.getParentFile();
+						if (!dir.exists()) {
+							dir.mkdirs();
+						}
 						FileOutputStream out = new FileOutputStream(dest);
 						process(id, zin, out);
 						out.close();
 					}
-				} else {
+				} else if (!name.endsWith("/")) {
+					File dir = dest.getParentFile();
+					if (!dir.exists()) {
+						dir.mkdirs();
+					}
 					FileOutputStream out = new FileOutputStream(dest);
 					copy(zin, out);
 					out.close();
+				}
+			} else {
+				break;
+			}
+		}
+	}
+
+	void processJar(ZipInputStream zin, ZipOutputStream zout) throws IOException {
+		byte[] buf = new byte[512];
+		int n;
+		while (true) {
+			ZipEntry entry = zin.getNextEntry();
+			if (entry != null){
+				String name = entry.getName();
+				if (name.endsWith(".class")){
+					String id = name.substring(0, name.length()-6);
+					if (isUsedClass(id)) {
+						zout.putNextEntry(entry);
+						while ((n = zin.read(buf)) != -1) {
+							zout.write(buf, 0, n);
+						}
+					}
+				} else if (!name.endsWith("/")) {
+					zout.putNextEntry(entry);
+					while ((n = zin.read(buf)) != -1) {
+						zout.write(buf, 0, n);
+					}
 				}
 			} else {
 				break;
@@ -135,7 +174,7 @@ public class Shrink {
 		
 	void process(final String className, InputStream in, OutputStream out) throws IOException {
 		ClassReader cr = new ClassReader(in);
-		ClassWriter cw = new ClassWriter(/*cr, ClassWriter.COMPUTE_MAXS*/0);
+		ClassWriter cw = new ClassWriter(0);
 		ClassVisitor cv = new ClassVisitor(Opcodes.ASM5, cw) {
 			
 		public MethodVisitor visitMethod(int access, String name, String desc,

@@ -1538,7 +1538,7 @@ public class Build {
             setDescription("object memory file endianess converter");
 
         // Add the "flashconv" command
-        addJavaCommand("flashconv", "hosted-support/classes:mapper/classes:cldc/classes:translator/classes", false, "", "com.sun.squawk.suiteconverter.FlashConverter", "mapper").
+        addJavaCommand("flashconv", "hosted-support/classes.jar:mapper/classes.jar:cldc/classes.jar:translator/classes.jar", false, "", "com.sun.squawk.suiteconverter.FlashConverter", "mapper").
             setDescription("object memory file endianess converter");
 
         // Add the "sdproxy" command
@@ -1753,7 +1753,7 @@ public class Build {
                     run((Target) command, NO_ARGS);
                 }
             }
-            runCommand("squawk.jar", NO_ARGS);
+//            runCommand("squawk.jar", NO_ARGS);
         } else {
             Command command = getCommand(name);
             if (command == null) {
@@ -3315,11 +3315,12 @@ public class Build {
      * @param   baseDir    the directory under which the "j2meclasses" and "classes" directories
      */
     public void preverify(String classPath, File baseDir) {
-
-
-        // Get the preverifier input and output directories
         File classesDir = isJava5SyntaxSupported()?new File(baseDir, "weaved"):new File(baseDir, "classes.target");
         File j2meclassesDir = mkdir(baseDir, "j2meclasses");
+		preverify(classPath, classesDir, j2meclassesDir);
+	}
+	
+	public void preverify(String classPath, File classesDir, File j2meclassesDir) {
 
         // See if any of the classes actually need re-preverifying
         FileSet.Selector outOfDate = new FileSet.DependSelector(new FileSet.SourceDestDirMapper(classesDir, j2meclassesDir));
@@ -3460,7 +3461,7 @@ public class Build {
             }
             Method main = null;
             URL[] cp = toURLClassPath(classPath);
-            ClassLoader loader = new URLClassLoader(cp);
+            ClassLoader loader = new URLClassLoader(cp, null);
             try {
                 Class<?> mainClass = loader.loadClass(mainClassName);
                 main = mainClass.getMethod("main", new Class[] {String[].class});

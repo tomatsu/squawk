@@ -39,7 +39,8 @@ import com.sun.squawk.builder.util.*;
 public class RomCommand extends Command {
 
     public static final File VM_SRC_DIR = new File("vmcore/src/vm");
-    public static final File VM_BLD_DIR = new File("vmcore/build");
+    public static /*final*/ File VM_BLD_DIR = new File("vmcore/build");
+    public static /*final*/ File VM_BLD_HDR_DIR	= VM_SRC_DIR;
     public static final File FP_SRC_DIR = new File("vmcore/src/vm/fp");
     public static final File UTIL_SRC_DIR = new File("vmcore/src/vm/util");
     public static final File VM_SRC_RTS_DIR = new File("vmcore/src/rts");
@@ -53,6 +54,7 @@ public class RomCommand extends Command {
      */
     private String bootstrapSuiteName;
 
+    private String destPath;
     /**
      * Determines if the C compilation step should be executed or not.
      */
@@ -131,6 +133,10 @@ public class RomCommand extends Command {
                     usage(null);
                     // Stop the builder
                     throw new BuildException("", 0);
+                } else if (arg.startsWith("-d:")) {
+                    destPath = arg.substring("-d:".length());
+					VM_BLD_DIR = new File(new File(destPath), VM_BLD_DIR.getPath());
+					VM_BLD_HDR_DIR = new File(new File(destPath), VM_SRC_DIR.getPath());
                 } else if (arg.startsWith("-o:")) {
                     bootstrapSuiteName = arg.substring("-o:".length());
                 } else if (arg.startsWith("-arch:")) {
@@ -248,7 +254,9 @@ public class RomCommand extends Command {
                     suiteName = module;
                 }
             }
-
+			if (destPath != null) {
+				romizerArgs.add("-d:" + destPath);
+			}
             if (isBootstrapSuite) {
                 suiteName = bootstrapSuiteName;
                 romizerArgs.add("-o:" + suiteName);
@@ -327,6 +335,22 @@ public class RomCommand extends Command {
         return args;
     }
 
+	File getOutputFile(String name) {
+		File file;
+		if (destPath == null) {
+			file = new File(name);
+		} else {
+			file = new File(new File(destPath), name);
+		}
+		File dir = file.getParentFile();
+		if (dir != null) {
+			if (!dir.exists()) {
+				dir.mkdirs();
+			}
+		}
+		return file;
+	}
+	
     /**
      * Creates the "buildflags.h" file containing the string constant indicating what
      * C compiler flags the VM was built with.
@@ -334,7 +358,7 @@ public class RomCommand extends Command {
      * @param buildFlags   the C compiler flags
      */
     private void createBuildFlagsHeaderFile(String buildFlags) {
-        File buildFlagsFile = new File(VM_SRC_DIR, "buildflags.h");
+        File buildFlagsFile = new File(VM_BLD_HDR_DIR, "buildflags.h");
         try {
             FileOutputStream fos = new FileOutputStream(buildFlagsFile);
             PrintStream out = new PrintStream(fos);
@@ -434,9 +458,9 @@ public class RomCommand extends Command {
         if (noNeedToCompile) {
             return;
         }
-	if (env.getBooleanProperty("PLATFORM_TYPE_BARE_METAL")) {
-	    runFlashConverter();
-	}
+		if (env.getBooleanProperty("PLATFORM_TYPE_BARE_METAL")) {
+			runFlashConverter();
+		}
 	
         JDK jdk = env.getJDK();
         String options;
@@ -463,13 +487,14 @@ public class RomCommand extends Command {
             File[] includeDirs;
 
             if (ccompiler.isCrossPlatform()) {
-                includeDirs = new File[] {VM_SRC_DIR, FP_SRC_DIR,
+                includeDirs = new File[] {VM_SRC_DIR, FP_SRC_DIR, VM_BLD_HDR_DIR,
                             new File(VM_SRC_RTS_DIR, ccompiler.getRtsIncludeName())
                         };
             } else {
                 includeDirs = new File[] {new File(jdk.getHome(), "include"),
                             jdk.getJNI_MDIncludePath(),
                             VM_SRC_DIR,
+							VM_BLD_HDR_DIR,
                             FP_SRC_DIR,
                             new File(VM_SRC_RTS_DIR, ccompiler.getRtsIncludeName())
                         };
@@ -536,14 +561,23 @@ public class RomCommand extends Command {
             env.log(env.brief, "[compiling '" + VM_SRC_FILE + "' ...]");
             objectFiles.add(ccompiler.compile(includeDirs, VM_SRC_FILE, VM_BLD_DIR, false));
 
-	    if (env.getBooleanProperty("PLATFORM_TYPE_BARE_METAL")) {
-		File bootstrapSuiteSourceFile = new File(bootstrapSuiteName + ".suite.c");
-		env.log(env.brief, "[compiling '" + bootstrapSuiteSourceFile + "' ...]");
-		objectFiles.add(ccompiler.compile(includeDirs, bootstrapSuiteSourceFile, VM_BLD_DIR, false));
-	    }
+			if (env.getBooleanProperty("PLATFORM_TYPE_BARE_METAL")) {
+				File bootstrapSuiteSourceFile = getOutputFile(bootstrapSuiteName + ".suite.c");
+				env.log(env.brief, "[compiling '" + bootstrapSuiteSourceFile + "' ...]");
+				objectFiles.add(ccompiler.compile(includeDirs, bootstrapSuiteSourceFile, VM_BLD_DIR, false));
+
+				File[] f = new File(VM_SRC_RTS_DIR, ccompiler.getRtsIncludeName()).listFiles();
+				for (int i = 0; i < f.length; i++) {
+					File c = f[i];
+					if (c.getName().endsWith(".c")) {
+						env.log(env.brief, "[compiling '" + c + "' ...]");
+						objectFiles.add(ccompiler.compile(includeDirs, c, VM_BLD_DIR, false));
+					}
+				}
+			}
 	    
             env.log(env.brief, "[linking '" + bootstrapSuiteName + "' ...]");
-            ccompiler.link((File[])objectFiles.toArray(new File[objectFiles.size()]), bootstrapSuiteName, env.dll);
+            ccompiler.link((File[])objectFiles.toArray(new File[objectFiles.size()]), getOutputFile(bootstrapSuiteName).getPath(), env.dll);
 			/*
             if (!env.verbose) {
             	for (File file : generatedFiles) {
@@ -555,14 +589,14 @@ public class RomCommand extends Command {
         }
 
         // Rebuild the jar of files used by the JVM embedded in Squawk if the bootstrap suite was (re)built
-        if (args.length > 0) {
-            env.runCommand("squawk.jar", Build.NO_ARGS);
-        }
+//        if (args.length > 0) {
+//            env.runCommand("squawk.jar", Build.NO_ARGS);
+//        }
     }
 
-	static void saveCflags(String options){
+	void saveCflags(String options){
 		try {
-			PrintWriter w = new PrintWriter(new FileOutputStream("cflags.txt"));
+			PrintWriter w = new PrintWriter(new FileOutputStream(getOutputFile("cflags.txt")));
 			w.print(options);
 			w.close();
 		} catch (IOException e){
@@ -584,7 +618,7 @@ public class RomCommand extends Command {
 
     public void runFlashConverter() {
         // Only run the romizer if there are arguments passed to this command
-	env.runCommand("flashconv", new String[]{"-c", bootstrapSuiteName + ".suite", "0"});
+		env.runCommand("flashconv", new String[]{"-c", getOutputFile(bootstrapSuiteName + ".suite").getPath(), "0"});
     }
 
     /**

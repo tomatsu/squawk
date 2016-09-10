@@ -118,6 +118,8 @@ public class Romizer {
      */
     private Suite suite;
 
+    private String destPath;
+	
     /**
      * The search path for classes in the suite.
      */
@@ -517,6 +519,8 @@ public class Romizer {
                     usage("malformed -D option: " + arg);
                     throw new RuntimeException();
                 }
+			} else if (arg.startsWith("-d:")) {
+				destPath = ArgsUtilities.toPlatformPath(arg.substring("-d:".length()), true);
             } else if (arg.startsWith("-cp:")) {
                 classPath = ArgsUtilities.toPlatformPath(arg.substring("-cp:".length()), true);
             } else if (arg.startsWith("-java5cp:")) {
@@ -848,6 +852,22 @@ public class Romizer {
         }
     }
 
+	File getOutputFile(String name) {
+		File file;
+		if (destPath == null) {
+			file = new File(name);
+		} else {
+			file = new File(new File(destPath), name);
+		}
+		File dir = file.getParentFile();
+		if (dir != null) {
+			if (!dir.exists()) {
+				dir.mkdirs();
+			}
+		}
+		return file;
+	}
+	
     /*---------------------------------------------------------------------------*\
      *                             Image building                                *
     \*---------------------------------------------------------------------------*/
@@ -858,7 +878,7 @@ public class Romizer {
 	private void createImage() throws IOException {
 
         // Open the map file.
-        File file = new File(suiteName + ".sym");
+        File file = getOutputFile(suiteName + ".sym");
         PrintStream symbols = VM.Streams[VM.STREAM_SYMBOLS] = new PrintStream(new FileOutputStream(file));
         generatedFiles.addElement(file.getAbsolutePath());
 
@@ -871,6 +891,9 @@ public class Romizer {
         verifyExclusions(strippedSuite);
 
         String suiteFileName = suiteName + Suite.FILE_EXTENSION;
+		if (destPath != null) {
+			suiteFileName = destPath + "/" + suiteFileName;
+		}
         String url = "file://" + suiteFileName;
         DataOutputStream dos = Connector.openDataOutputStream(url);
 
@@ -907,12 +930,12 @@ public class Romizer {
         // even though eliminated from suite.
         if (createJars) {
             String jarFilePath = suiteName + "_classes.jar";
-            File jarFile = new File(jarFilePath);
+            File jarFile = getOutputFile(jarFilePath);
             jarClasses(jarFile, suite, false);
             generatedFiles.addElement(jarFile.getAbsolutePath());
             if (java5ClassPath != null) {
                 jarFilePath = suiteName + "_java5.jar";
-                jarFile = new File(jarFilePath);
+                jarFile = getOutputFile(jarFilePath);
                 jarClasses(jarFile, suite, true);
                 generatedFiles.addElement(jarFile.getAbsolutePath());
             }
@@ -924,10 +947,11 @@ public class Romizer {
         ObjectMemory memory = ObjectMemoryLoader.load(Connector.openDataInputStream(url), url, false).objectMemory;
 
         printSymFile(memory, symbols);
-	File u = new File("vmcore/src/vm/unused.h");
-	PrintStream st = new PrintStream(new FileOutputStream(u));
-	VM.listUnusedNativeMethods(st);
-	st.close();
+		
+		File u = getOutputFile("vmcore/src/vm/unused.h");
+		PrintStream st = new PrintStream(new FileOutputStream(u));
+		VM.listUnusedNativeMethods(st);
+		st.close();
     }
 
     private void printSymFile(ObjectMemory memory, PrintStream symbols) throws IOException {
@@ -1035,9 +1059,9 @@ public class Romizer {
      * @throws IOException if an IO error occurs
      */
     private void createCHeader() throws IOException {
-        File headerFile = new File("vmcore/src/vm/rom.h");
+        File headerFile = getOutputFile("vmcore/src/vm/rom.h");
         Properties symbols = new Properties();
-        symbols.load(new FileInputStream(suiteName + ".sym"));
+        symbols.load(new FileInputStream(getOutputFile(suiteName + ".sym")));
 
         if (CHeaderFileCreator.update(suite, headerFile, symbols)) {
             generatedFiles.addElement(headerFile.getAbsolutePath());
@@ -1056,7 +1080,7 @@ public class Romizer {
      */
     private void createSuiteAPI() throws IOException {
         Suite apiSuite = this.suite.strip(suiteType, this.suite.getName(), this.suite.getParent());
-        File api = new File(suiteName + Suite.FILE_EXTENSION + Suite.FILE_EXTENSION_API);
+        File api = getOutputFile(suiteName + Suite.FILE_EXTENSION + Suite.FILE_EXTENSION_API);
         PrintStream out = new PrintStream(new FileOutputStream(api));
         printAPI(out, apiSuite);
         generatedFiles.addElement(api.getAbsolutePath());

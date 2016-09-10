@@ -4,6 +4,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.Opcodes;
 import java.util.*;
 import java.io.*;
+import java.net.URL;
 
 public class DependencyAnalyzer {
 	Map<String,ClassNode> classMap;
@@ -33,6 +34,9 @@ public class DependencyAnalyzer {
 		"java/lang/Object",
 	};
 		
+//	static String builtinMethods[];
+//	static String builtinFields[];
+
 	static String builtinMethods[] = {
 		"com/sun/squawk/VM.startup(Lcom/sun/squawk/Suite;)V",
 		"com/sun/squawk/VM.undefinedNativeMethod(I)V",
@@ -60,8 +64,6 @@ public class DependencyAnalyzer {
 		"com/sun/squawk/StringOfBytes._init_(Lcom/sun/squawk/StringOfBytes;)Lcom/sun/squawk/StringOfBytes;",
 		"com/sun/squawk/Klass.setClassFileDefinition(Lcom/sun/squawk/Klass;[Lcom/sun/squawk/Klass;[Lcom/sun/squawk/ClassFileMethod;[Lcom/sun/squawk/ClassFileMethod;[Lcom/sun/squawk/ClassFileField;[Lcom/sun/squawk/ClassFileField;Ljava/lang/String;)V",
 		"com/sun/squawk/Klass.changeState(B)V",
-//		"java/lang/Object.abstractMethodError()V",
-//		"java/lang/Object.missingMethodError()V",
 		"com/sun/squawk/JavaApplicationManager.main([Ljava/lang/String;)V",
 	};
 
@@ -108,8 +110,45 @@ public class DependencyAnalyzer {
 		"com/sun/squawk/ServiceOperation.NONE",
 		"com/sun/squawk/ServiceOperation.CHANNELIO",
 		"com/sun/squawk/ServiceOperation.GARBAGE_COLLECT",
-	};
-		
+		};
+		/*
+	static {
+		try {
+			readBuiltinNames();
+		} catch (IOException e){
+			//ignore
+		}
+	}
+	*/
+	static void readBuiltinNames() throws IOException {
+		URL url = DependencyAnalyzer.class.getResource("builtin.txt");
+		if (url == null) {
+			return;
+		}
+		BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
+		String line = null;
+		int section = -1;
+		ArrayList<String> methods = new ArrayList<String>();
+		ArrayList<String> fields = new ArrayList<String>();
+		while ((line = br.readLine()) != null) {
+			if (line.startsWith("#methods")) {
+				section = 0; // methods
+			} else if (line.startsWith("#fields")) {
+				section = 1; // fields
+			} else if (!line.isEmpty()) {
+				if (section == 0) {
+					methods.add(line);
+				} else if (section == 1) {
+					fields.add(line);
+				}
+			}
+		}
+		builtinMethods = methods.toArray(new String[methods.size()]);
+		builtinFields = fields.toArray(new String[fields.size()]);
+		System.out.println("builtinMethods:"+ builtinMethods.length);
+		System.out.println("builtinFields:"+builtinFields.length);
+	}
+	
 	DependencyAnalyzer(DependencyVisitor visitor) {
 		classMap = visitor.classMap;
 		methodMap = visitor.methodMap;
@@ -146,6 +185,9 @@ public class DependencyAnalyzer {
 	void run(String mainClass) {
 		MethodNode main = getMethodNode(mainClass.replace('.', '/') + ".main([Ljava/lang/String;)V");
 		Set<MethodNode> newNodes = new HashSet<MethodNode>();
+		if (main == null) {
+			throw new RuntimeException("Main class (" + mainClass + ") is not found");
+		}
 		newNodes.add(main);
 //		methods.add(main);
 
@@ -483,6 +525,18 @@ public class DependencyAnalyzer {
 	public static void main(String args[]) throws Exception {
 		String[] classpaths = new String[args.length - 1];
 		System.arraycopy(args, 1, classpaths, 0, args.length - 1);
-		analyze(args[0], classpaths);
+		DependencyAnalyzer analyzer = analyze(args[0], classpaths);
+//		System.out.println("#classes:");
+//		for (String name : new TreeSet<String>(analyzer.classMap.keySet())) {
+//			System.out.println(name);
+//		}
+		System.out.println("#methods:");
+		for (String name : new TreeSet<String>(analyzer.methodMap.keySet())) {
+			System.out.println(name);
+		}
+		System.out.println("#fields:");
+		for (String name : new TreeSet<String>(analyzer.fieldMap.keySet())) {
+			System.out.println(name);
+		}
 	}
 }
