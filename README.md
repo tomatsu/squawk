@@ -22,7 +22,7 @@ Build
 Current Status
 --------------
 * Has been tested on MICROBIT, NUCLEO_L476, and Linux/x86.
-* Image size for simple app is around 100KB.  Unused code are eliminated to reduce memory footprint.
+* Image size for simple app is around 100KB (including romized classes).  Unused code are eliminated to reduce memory footprint.
 * Interpreter loop is optimized using GCC's 'Labels as Values'.
 * Currently, the API is based on cldc1.1. It has experimental/undocumented/non-standard APIs to utilize HAL layer.
 * An issue is that build takes long time.  The build system is divided into two steps:
