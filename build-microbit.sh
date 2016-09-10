@@ -85,13 +85,13 @@ java -jar build.jar \
        -override $PROP -q \
        -comp:yotta \
        $cflags \
-       rom -d:$TOP/source -strip:a $TMP/j2meclasses.jar $TMP/j2meclasses.jar || exit 1
+       rom -d:$SOURCE -strip:a $TMP/j2meclasses.jar $TMP/j2meclasses.jar || exit 1
 
 #./d.sh -override $PROP map -cp:cldc/j2meclasses:$JARFILE squawk.suite
 
 # copy files to yotta build directory
 
-f=`cat cflags.txt`
+f=`cat $SOURCE/cflags.txt`
 cat > $SOURCE/cflags.cmake <<EOF
 set_target_properties( squawk
      PROPERTIES COMPILE_FLAGS "-std=gnu99 -Wno-unused $f")
