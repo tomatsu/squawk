@@ -41,8 +41,10 @@
 #define sysPlatformName() "linux"
 #endif
 
+#define sysInitialize() /* empty */
+
 #if !PLATFORM_TYPE_BARE_METAL
-#include "os_posix.c"
+#include "os_posix.c.inc"
 #else
 #define sysGetPageSize() 128
 #define sysToggleMemoryProtection(x,y,z)

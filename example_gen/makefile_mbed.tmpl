@@ -1,0 +1,124 @@
+
+AT ?= @
+#CFLAGS_OPTS = -Os
+CFLAGS_OPTS = -O3 -flto
+
+JAVA = java
+JAVAC = javac
+JAR = jar
+FIND = find
+PYTHON = python
+CC = arm-none-eabi-gcc
+CXX = arm-none-eabi-g++
+OBJCOPY = arm-none-eabi-objcopy
+
+JAVA_HOME = $(shell dirname $(shell dirname $(shell realpath $(shell which javac))))
+SQUAWK_TOP = squawk
+BUILD_TOP ?= build
+JARFILE = classes.jar
+JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar hal_api.jar
+TARGET_JSON = targets.json
+
+BUILD_FLAGS = -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
+BUILD_FLAGS += -DTARGET_$(TARGET) -DTARGET_$(MCU) -DDEFAULT_RAM_SIZE=$(RAM_SIZE) -DMAIN_CLASS_NAME=$(MAIN_CLASS_NAME)
+DEVICE_HAS = $(shell $(PYTHON) devices.py $(TARGET_JSON) $(TARGET))
+DEVICE_OPTIONS = $(patsubst %,-DDEVICE_%=1,$(DEVICE_HAS))
+INCLUDE_DIRS += $(MBED) $(MBED)/TARGET_$(TARGET) $(MBED)/TARGET_$(TARGET)/TARGET_$(VENDOR)/TARGET_$(MCU) $(MBED)/TARGET_$(TARGET)/TARGET_$(VENDOR)/TARGET_$(MCU)/TARGET_$(DEVICE)
+INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/gcc-arm
+INCLUDE_DIRS += $(JAVA_HOME)/include $(JAVA_HOME)/include/linux
+CFLAGS += $(CFLAGS_ARCH) $(DEVICE_OPTIONS) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) -fdata-sections -ffunction-sections -MD
+LDFLAGS += $(CFLAGS_ARCH) -T$(LINKERSCRIPT) --specs=nano.specs -u _printf_float -u _scanf_float $(CFLAGS_OPTS) -Wl,-gc-sections -Wl,--no-wchar-size-warning
+LDSUFFIXES += -L$(LIBDIR) $(LIBDIR)/*.o -lmbed -lc -lm -lnosys
+TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
+CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes hal_classes hal_api.jar
+
+C_SOURCE_DIRS = src/native hal_api/src/native $(SQUAWK_TOP)/vmcore/src/rts/gcc-arm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm
+C_SOURCE_FILES  = $(shell for i in $(patsubst %,%/*.c,$(C_SOURCE_DIRS)); do if [ -f $$i ]; then basename $$i; fi; done)
+OBJECT_DIR = $(BUILD_TOP)/obj
+OBJECT_FILES = $(patsubst %.c,$(OBJECT_DIR)/%.o,$(C_SOURCE_FILES))
+OBJECT_FILES += $(OBJECT_DIR)/squawk.suite.o
+DEPENDS = $(patsubst %.o,%.d,$(OBJECT_FILES))
+HAL_CLASSES_JAVA = $(shell $(FIND) hal_api/src/classes hal_api/src/targets/$(TARGET)/classes -name '*.java' -print)
+
+JAVA_SOURCE_FILES = $(shell $(FIND) src/classes -name '*.java' -print)
+
+vpath %.c $(C_SOURCE_DIRS)
+
+all: dirs hal_api.jar $(JARFILE) romize compile link bin hex
+
+dirs:
+	$(AT)mkdir -p $(OBJECT_DIR)
+
+hal_api.jar: $(HAL_CLASSES_JAVA)
+	$(AT)rm -rf hal_classes
+	$(AT)mkdir -p hal_classes
+	$(AT)$(JAVAC) -target 1.4 -source 1.4 -classpath $(SQUAWK_TOP)/cldc/classes.target.jar -d hal_classes $(HAL_CLASSES_JAVA)
+	$(AT)$(JAR) cf hal_api.jar -C hal_classes .
+
+$(JARFILE): $(JAVA_SOURCE_FILES)
+	$(AT)rm -rf classes
+	$(AT)mkdir -p classes
+	$(AT)$(JAVAC) -bootclasspath $(SQUAWK_TOP)/cldc/classes.target.jar -classpath hal_api.jar -target 1.3 -source 1.3 -d classes $(JAVA_SOURCE_FILES)
+	$(AT)$(JAR) cf classes.jar -C classes .
+
+romize: $(BUILD_TOP)/squawk.suite.c
+
+$(BUILD_TOP)/squawk.suite.c: $(JARFILES)
+	$(AT)rm -rf $(TMP)
+	$(AT)mkdir -p $(TMP)/classes $(BUILD_TOP)
+	$(AT)for i in $(JARFILES); do (cd $(TMP)/classes; $(JAR) x) < $$i; done
+	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-5.1.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.glue.NativeGlueGen -d:$(BUILD_TOP) $(TMP)/classes
+	$(AT)tar cf - -C $(BUILD_TOP)/cldc/classes .  | (cd $(TMP)/classes; tar xf -)
+	$(AT)mkdir -p $(TMP)/classes2
+	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-5.1.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.asm.Shrink $(TMP)/classes $(TMP)/classes2 $(MAIN_CLASS_NAME) $(TMP)/classes
+	$(AT)mkdir -p $(TMP)/j2meclasses
+	$(AT)$(SQUAWK_TOP)/tools/linux-x86/preverify -classpath $(SQUAWK_TOP)/cldc/classes.target.jar -d $(TMP)/j2meclasses $(TMP)/classes2
+	$(AT)$(JAVA) -cp $(BUILD_TOP)/cldc/classes:$(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/romizer/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar \
+		com.sun.squawk.Romizer -strip:a -DGC_com.sun.squawk.Lisp2Collector=false -DPLATFORM_TYPE_DELEGATING=false \
+		-DGC_com.sun.squawk.Lisp2GenerationalCollector=false -DPLATFORM_TYPE_SOCKET=false \
+		-DMACROIZE=true -DGC_com.sun.squawk.CheneyCollector=true -DPLATFORM_TYPE_BARE_METAL=true -DPLATFORM_TYPE_NATIVE=false \
+		-d:$(BUILD_TOP) -o:squawk -arch:X86 -endian:little -cp:$(TMP)/j2meclasses -java5cp:$(TMP)/j2meclasses -nometadata -noApi $(TMP)/j2meclasses
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/mapper/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar \
+		com.sun.squawk.suiteconverter.FlashConverter -c $(BUILD_TOP)/squawk.suite 0
+
+buildflags:
+	$(AT)echo "#define BUILD_FLAGS \""$(BUILD_FLAGS)"\"" > $(TMP)//buildflags.h
+	$(AT)if [ -f $(BUILD_TOP)/vmcore/src/vm/native.c.inc ]; then \
+		echo "#define INCLUDE_NATIVE" >> $(TMP)/buildflags.h; \
+	fi
+	$(AT)if [ -f $(BUILD_TOP)/vmcore/src/vm/buildflags.h ]; then \
+	    diff $(TMP)/buildflags.h $(BUILD_TOP)/vmcore/src/vm/buildflags.h > /dev/null || cp $(TMP)/buildflags.h $(BUILD_TOP)/vmcore/src/vm/buildflags.h; \
+	else \
+		cp $(TMP)/buildflags.h $(BUILD_TOP)/vmcore/src/vm/buildflags.h; \
+	fi
+
+compile: buildflags $(OBJECT_FILES)
+
+-include $(DEPENDS)
+
+$(OBJECT_DIR)/squawk.suite.o: $(BUILD_TOP)/squawk.suite.c
+	$(AT)$(CC) -c $(CFLAGS) -o $@ $<
+
+$(OBJECT_DIR)/%.o: %.c
+	$(AT)$(CC) -c $(CFLAGS) -o $@ $<
+
+%.hex : %.elf
+	$(AT)$(OBJCOPY) -O ihex $< $@
+
+%.bin: %.elf
+	$(AT)$(OBJCOPY) -O binary $< $@
+
+$(BUILD_TOP)/squawk.elf : $(OBJECT_FILES)
+	$(AT)$(CC) $(LDFLAGS) -o $@ $(OBJECT_FILES) $(LDSUFFIXES)
+
+link: $(BUILD_TOP)/squawk.elf
+bin: $(BUILD_TOP)/squawk.bin
+hex: $(BUILD_TOP)/squawk.hex
+
+map:
+	$(AT)java -cp $(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/mapper/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar com.sun.squawk.ObjectMemoryMapper -o:$(BUILD_TOP)/squawk.suite.map -cp:$(TMP)/j2meclasses:$(JARFILE) $(BUILD_TOP)/squawk.suite
+
+clean:
+	$(AT)rm -rf $(CLEAN_TARGETS)
+
+.PHONY: all dirs romize buildflags compile link bin hex map clean

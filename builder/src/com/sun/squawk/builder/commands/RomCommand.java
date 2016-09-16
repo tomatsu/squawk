@@ -71,6 +71,8 @@ public class RomCommand extends Command {
 
     private ArrayList<String> vm2cRootClasses;
 
+	private String classPath;
+
     public RomCommand(Build env) {
         super(env, "rom");
     }
@@ -112,7 +114,7 @@ public class RomCommand extends Command {
      * @return  <code>args</code> reformatted for the romizer
      */
     private String[] convertToRomizerOptions(String[] args, String arch) {
-        String extraCP = "";
+//        String extraCP = "";
         List<String> romizerArgs = new ArrayList<String>();
         String endian = env.getPlatform().isBigEndian() ? "big" : "little";
         String parentSuite = null;
@@ -128,7 +130,8 @@ public class RomCommand extends Command {
             String arg = args[argc];
             if (arg.charAt(0) == '-') {
                 if (arg.startsWith("-cp:")) {
-                    extraCP = arg.substring("-cp:".length());
+//                    extraCP = arg.substring("-cp:".length());
+                    classPath = arg.substring("-cp:".length());
                 } else if (arg.startsWith("-h")) {
                     usage(null);
                     // Stop the builder
@@ -260,9 +263,11 @@ public class RomCommand extends Command {
             if (isBootstrapSuite) {
                 suiteName = bootstrapSuiteName;
                 romizerArgs.add("-o:" + suiteName);
+				/*
                 if (extraCP != "") {
                     classesLocations.add(new Target.FilePair(new File(extraCP)));
                 }
+				*/
                 romizerArgs.add("-arch:" + arch);
                 romizerArgs.add("-endian:" + endian);
             } else {
@@ -458,6 +463,13 @@ public class RomCommand extends Command {
         if (noNeedToCompile) {
             return;
         }
+		if (destPath != null) {
+			File dst = new File(destPath);
+			if (new File(dst, "vmcore/src/vm/native.c.inc").exists()) {
+				ccompiler.options.includeNative = true;
+			}
+		}
+		
 		if (env.getBooleanProperty("PLATFORM_TYPE_BARE_METAL")) {
 			runFlashConverter();
 		}
@@ -577,7 +589,9 @@ public class RomCommand extends Command {
 			}
 	    
             env.log(env.brief, "[linking '" + bootstrapSuiteName + "' ...]");
-            ccompiler.link((File[])objectFiles.toArray(new File[objectFiles.size()]), getOutputFile(bootstrapSuiteName).getPath(), env.dll);
+
+            ccompiler.link(/*(File[])objectFiles.toArray(new File[objectFiles.size()])*/VM_BLD_DIR.listFiles(),
+						   getOutputFile(bootstrapSuiteName).getPath(), env.dll);
 			/*
             if (!env.verbose) {
             	for (File file : generatedFiles) {
@@ -611,7 +625,12 @@ public class RomCommand extends Command {
             CCompiler ccompiler = env.getCCompiler();
             String arch = ccompiler == null ? "X86" : ccompiler.getArchitecture();
             args = convertToRomizerOptions(args, arch);
-            env.runCommand("romize", args);
+//            env.runCommand("romize", args);
+
+            JavaCommand command = (JavaCommand)env.getCommand("romize");
+			command.classPath = this.classPath + ":" + command.classPath;
+			command.run(args);
+			
         }
         return args;
     }

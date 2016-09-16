@@ -30,7 +30,7 @@ package com.sun.squawk.builder;
  */
 public class JavaCommand extends Command {
 
-    public final String classPath;
+    public String classPath;
     public final boolean bootclasspath;
     public final String extraJVMArgs;
     public final String mainClassName;

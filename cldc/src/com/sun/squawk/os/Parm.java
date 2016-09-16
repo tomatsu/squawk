@@ -1,3 +1,4 @@
+//if[!PLATFORM_TYPE_BARE_METAL]
 /*
  * Copyright 1994-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

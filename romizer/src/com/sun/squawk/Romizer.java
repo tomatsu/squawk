@@ -88,7 +88,7 @@ public class Romizer {
 
                 // Make it very clear to the user which properties in the standard properties
                 // file are potentially being overridden
-                System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Using build override file: " + overideProperties.getPath() + " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+//                System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Using build override file: " + overideProperties.getPath() + " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 inputStream = new FileInputStream(overideProperties);
                 buildProperties.load(inputStream);
             }
@@ -198,6 +198,11 @@ public class Romizer {
     private boolean noHeader;
     
     /**
+     * If true, do not create the file "*.api"
+     */
+    private boolean noApi;
+	
+    /**
      * Creates the romizer instance used to romize a suite.
      *
      * @param parent  the romizer that was used to romize the parent suite
@@ -295,7 +300,9 @@ public class Romizer {
      */
     private static Vector<String> readExcludesFile(String file) {
         Vector<String> lines = new Vector<String>();
-        System.out.println("Loaded class excludes list from " + file);
+		if (VM.isVerbose()) {
+			System.out.println("Loaded class excludes list from " + file);
+		}
         LineReader.readLines(file, lines);
 
         Vector<String> excludes = new Vector<String>(lines.size());
@@ -410,6 +417,7 @@ public class Romizer {
             if (args == null && suite == null) {
                 return null;
             }
+			VM.initialNativeMethodTable(classPath);
 
             // Load and translate the classes in the suite
             ComputationTimer.time("translating", new ComputationTimer.ComputationException() {
@@ -447,12 +455,14 @@ public class Romizer {
                 });
             }
 
-            ComputationTimer.time(suiteName + ".api creation", new ComputationTimer.ComputationException() {
-                public Object run() throws Exception {
-                    createSuiteAPI();
-                    return null;
-                }
-            });
+			if (!noApi) {
+				ComputationTimer.time(suiteName + ".api creation", new ComputationTimer.ComputationException() {
+					public Object run() throws Exception {
+						createSuiteAPI();
+						return null;
+					}
+				});
+			}
             if (timer) {
                 ComputationTimer.dump(System.out);
                 ComputationTimer.reset();
@@ -587,6 +597,8 @@ public class Romizer {
                 }
             } else if (arg.equals("-noheader")) {
                 noHeader = true;
+            } else if (arg.equals("-noApi")) {
+                noApi = true;
             } else if (arg.equals("-verbose") | arg.equals("-v")) {
                 System.setProperty("translator.verbose", "true");
                 VM.setVerbose(true);
@@ -785,7 +797,9 @@ public class Romizer {
             throw new RuntimeException("No classes found for "+suite);
         }
 
-        System.out.println("[translating "+suite+" ...]");
+		if (VM.isVerbose()) {
+			System.out.println("[translating "+suite+" ...]");
+		}
 
         VM.setCurrentIsolate(null);
         Isolate isolate = new Isolate(null, null, suite);
@@ -1066,7 +1080,9 @@ public class Romizer {
         if (CHeaderFileCreator.update(suite, headerFile, symbols)) {
             generatedFiles.addElement(headerFile.getAbsolutePath());
         } else {
-            System.out.println(headerFile.getAbsolutePath() + " is already up to date");
+			if (VM.isVerbose()) {
+				System.out.println(headerFile.getAbsolutePath() + " is already up to date");
+			}
         }
     }
 

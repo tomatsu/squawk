@@ -28,10 +28,8 @@
 
 if [ $# -gt 0 ]; then
     JAVA_HOME=$1
-elif [ -z "$JAVA_HOME" ]; then
-  JAVA_HOME=`which java`
-  JAVA_HOME=`dirname $JAVA_HOME`
-  JAVA_HOME=`dirname $JAVA_HOME`
+else
+	JAVA_HOME=${JAVA_HOME:-$(dirname $(realpath $(which javac)))/..}
 fi
 
 #echo "JAVA_HOME=$JAVA_HOME"
@@ -52,13 +50,14 @@ fi
 rm -rf classes
 mkdir classes
 $JAVAC -target 1.5 -source 1.5 -d classes -g src/com/sun/squawk/builder/launcher/*.java
-$JAVAC -target 1.5 -source 1.5 -d classes -cp ../tools/asm-5.1.jar -g src/com/sun/squawk/builder/asm/*.java
+#$JAVAC -target 1.5 -source 1.5 -d classes -cp ../tools/asm-5.1.jar -g src/com/sun/squawk/builder/asm/*.java src/com/sun/squawk/builder/glue/*.java
+$JAVAC -d classes -cp ../tools/asm-5.1.jar src/com/sun/squawk/builder/asm/*.java src/com/sun/squawk/builder/glue/*.java
 $JAR cfm ../build.jar build-manifest.mf -C classes .
 rm -fr classes
 mkdir classes
 cd classes
 $JAR xf ../../tools/retroweaver-all-squawk.jar
 cd ..
-$JAVAC -cp classes:../vm2c/lib/openjdk-javac-6-b12.jar:$JAVA_HOME/lib/tools.jar -target 1.5 -source 1.5 -d classes -g `find src -name asm -prune -o -name '*.java' -print`
+$JAVAC -cp classes:../vm2c/lib/openjdk-javac-6-b12.jar:$JAVA_HOME/lib/tools.jar -target 1.5 -source 1.5 -d classes -g `find src -name asm -prune -o -name glue -prune -o -name '*.java' -print`
 $JAR cfm ../build-commands.jar build-commands-manifest.mf -C classes .
 rm -fr classes

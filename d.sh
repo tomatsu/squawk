@@ -34,12 +34,7 @@ if [ ! -f d ]; then
         chmod +x `find . -name '*.sh'`
     fi
 fi
-
-if [ -z "$JAVA_HOME" ]; then
-  JAVA_HOME=`which java`
-  JAVA_HOME=`dirname $JAVA_HOME`
-  JAVA_HOME=`dirname $JAVA_HOME`
-fi
+JAVA_HOME=${JAVA_HOME:-$(dirname $(realpath $(which javac)))/..}
 
 #echo "JAVA_HOME=$JAVA_HOME"
 #-client -XX:+PrintCompilation

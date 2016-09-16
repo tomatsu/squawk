@@ -71,11 +71,14 @@ public class Enum<E extends Enum<E>> {
 	}
 
 	public final int compareTo(final E e) {
+        Enum<?> other = (Enum<?>)e;
+        Enum<E> self = this;
 		final Class<?> c1 = getDeclaringClass();
 		final Class<?> c2 = e.getDeclaringClass();
 
 		if (c1 == c2) { // NOPMD by xlv
-			return ordinal_ - e.ordinal_;
+        return self.ordinal_ - other.ordinal_;
+//			return ordinal_ - e.ordinal_;
 		}
 
 		throw new ClassCastException();

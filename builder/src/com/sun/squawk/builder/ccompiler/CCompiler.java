@@ -105,6 +105,8 @@ public abstract class CCompiler {
          */
         public boolean macroize;
 
+		public boolean includeNative;
+		
         /**
          * Extra flags to be passed to the compiler.
          */

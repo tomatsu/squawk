@@ -1,9 +1,10 @@
+#include <stdlib.h>
 #include "spi_api.h"
 #include "common.h"
 
 #if DEVICE_SPI
 
-int AbstractSPI_init(int mosi, int miso, int sclk, int ssel) {
+int Java_com_sun_squawk_hal_AbstractSPI_init(int mosi, int miso, int sclk, int ssel) {
 	spi_t* spi = (spi_t*)malloc(sizeof(spi_t));
 	if (!spi) {
 		return -1;
@@ -17,7 +18,7 @@ int AbstractSPI_init(int mosi, int miso, int sclk, int ssel) {
 	return idx;
 }
 
-int AbstractSPI_format(int desc, int bits, int mode, int slave) {
+int Java_com_sun_squawk_hal_AbstractSPI_format(int desc, int bits, int mode, int slave) {
 	spi_t* spi = get_object_from_desc(desc);
 	if (spi) {
 		spi_format(spi, bits, mode, slave);
@@ -26,7 +27,7 @@ int AbstractSPI_format(int desc, int bits, int mode, int slave) {
 	return -1;
 }
 
-int AbstractSPI_freq(int desc, int hz) {
+int Java_com_sun_squawk_hal_AbstractSPI_freq(int desc, int hz) {
 	spi_t* spi = get_object_from_desc(desc);
 	if (spi) {
 		spi_frequency(spi, hz);
@@ -35,7 +36,7 @@ int AbstractSPI_freq(int desc, int hz) {
 	return -1;
 }
 
-int AbstractSPI_write(int desc, int value, int slave) {
+int Java_com_sun_squawk_hal_AbstractSPI_write(int desc, int value, int slave) {
 	spi_t* spi = get_object_from_desc(desc);
 	if (spi) {
 		if (slave) {
@@ -48,7 +49,7 @@ int AbstractSPI_write(int desc, int value, int slave) {
 	return -1;
 }
 
-int SPISlave_read(int desc) {
+int Java_com_sun_squawk_hal_SPISlave_read0(int desc) {
 	spi_t* spi = get_object_from_desc(desc);
 	if (spi) {
 		return spi_slave_read(spi);
@@ -56,7 +57,7 @@ int SPISlave_read(int desc) {
 	return -1;
 }
 
-int SPISlave_receive(int desc) {
+int Java_com_sun_squawk_hal_SPISlave_receive0(int desc) {
 	spi_t* spi = get_object_from_desc(desc);
 	if (spi) {
 		return spi_slave_receive(spi);

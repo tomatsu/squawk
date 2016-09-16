@@ -46,19 +46,28 @@
 #define sysValloc(s) memalign(sysGetPageSize(),s)
 #define sysVallocFree(p) free(p)
 
+#if defined(STM32L0) || defined(STM32L1) || defined(STM32L4) || defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4) || defined(STM32F7)
+//#define USE_SUBSECOND_RTC
+#define USE_TICK
+#elif defined(NRF51) || defined(TARGET_LPC176X)
+#define USE_TICK
+static void initTickCount();
+#else
+#define USE_RTC
+#endif
+
+void sysInitialize() {
+#if defined(USE_SUBSECOND_RTC) || defined(USE_RTC)
+		rtc_init();
+#elif defined(USE_TICK)
+		initTickCount();
+#endif
+}
+
 jlong sysTimeMicros() {
     extern jlong sysTimeMillis(void);
     return sysTimeMillis() * 1000;
 }
-
-#if defined(STM32L0) || defined(STM32L1) || defined(STM32L4) || defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4) || defined(STM32F7)
-//#define USE_SUBSECOND_RTC
-#define USE_TICK
-#elif defined(NRF51)
-#define USE_TICK
-#else
-#define USE_RTC
-#endif
 
 #ifdef USE_SUBSECOND_RTC
 static void rtc_read_frac_s(time_t * t, int * millis)
@@ -106,11 +115,11 @@ static void handler(uint32_t id) {
       _counter++;
 	} else {
 	  uint32_t* ptr = (uint32_t*)id;
-	  ((void (*)(uint32_t))ptr[0])(&ptr[0]);
+	  ((void (*)(uint32_t))ptr[0])((uint32_t)&ptr[0]);
 	}
 }
 
-void initTickCount() {
+static void initTickCount() {
     _ticker_data = get_us_ticker_data();
     ticker_set_handler(_ticker_data, &handler);
     _delay = 1000;
@@ -127,26 +136,11 @@ jlong sysTimeMillis(void) {
 #ifdef USE_SUBSECOND_RTC
     time_t t;
     int millis;
-    static int initialized = 0;
-    if (!initialized) {
-		rtc_init();
-		initialized = 1;
-    }
     rtc_read_frac_s(&t, &millis);
     return (jlong)t * 1000 + millis;
 #elif defined(USE_RTC)
-    static int initialized = 0;
-    if (!initialized) {
-		rtc_init();
-		initialized = 1;
-    }
     return (jlong)rtc_read() * 1000;
 #elif defined(USE_TICK)
-    static int initialized = 0;
-    if (!initialized) {
-		initTickCount();
-	    initialized = 1;
-	}
 	return sysTickCount();
 #else
 #error

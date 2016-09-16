@@ -158,14 +158,12 @@ public class NativeGen {
         lookup(Class.forName("com.sun.squawk.Lisp2Bitmap"));
         lookup(Class.forName("com.sun.squawk.Lisp2Bitmap$Iterator"));
 
-        lookup(Class.forName("com.sun.squawk.hal.DigitalOut"));
-        lookup(Class.forName("com.sun.squawk.hal.GpioIRQ"));
-        lookup(Class.forName("com.sun.squawk.hal.TimerIRQ"));
-		
         output(Class.forName("com.sun.squawk.VM"), "lcmp", true, new Class[] { Long.TYPE, Long.TYPE }, Integer.TYPE);
-
+		
+        lookup(Class.forName("java.lang.System"));
+		
         if (optionNo == 0) {
-            defineNativeMethodIdentifier("ENTRY_COUNT", "" + nextNativeMethodIdentifier);
+            defineNativeMethodIdentifier("ENTRY_COUNT", "" + nextNativeMethodIdentifier, false);
         } else if (optionNo == 1) {
             System.out.println("    }");
             System.out.println("    abstract protected void nativepop(Type t);");
@@ -299,9 +297,13 @@ public class NativeGen {
      * @param id String
      */
     void defineNativeMethodIdentifier(String name, String id) {
-        System.out.println(space("    public final static int "+name, 73)+" = "+id+";");
+		defineNativeMethodIdentifier(name, id, true);
     }
-
+	
+    void defineNativeMethodIdentifier(String name, String id, boolean isFinal) {
+        System.out.println(space("    public " + (isFinal ? "final " : "") + "static int "+name, 73)+" = "+id+";");
+    }
+	
     /**
      * Output a method.
      *

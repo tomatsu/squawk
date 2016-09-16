@@ -1,9 +1,10 @@
+#include <stdlib.h>
 #include "port_api.h"
 #include "common.h"
 
 #if DEVICE_PORTIN || DEVICE_PORTOUT
 
-int Port_init(int port_name, int mask, int dir) {
+int Java_com_sun_squawk_hal_Port_init(int port_name, int mask, int dir) {
 	port_t* port = (port_t*)malloc(sizeof(port_t));
 	if (!port) {
 		return -1;
@@ -17,7 +18,7 @@ int Port_init(int port_name, int mask, int dir) {
 	return idx;
 }
 
-int Port_mode(int desc, int mode) {
+int Java_com_sun_squawk_hal_Port_mode0(int desc, int mode) {
 	port_t* port = get_object_from_desc(desc);
 	if (port) {
 		port_mode(port, (PinMode)mode);
@@ -26,7 +27,7 @@ int Port_mode(int desc, int mode) {
 	return -1;
 }
 
-int Port_dir(int desc, int dir) {
+int Java_com_sun_squawk_hal_Port_direction0(int desc, int dir) {
 	port_t* port = get_object_from_desc(desc);
 	if (port) {
 		port_dir(port, (PinDirection)dir);
@@ -35,7 +36,7 @@ int Port_dir(int desc, int dir) {
 	return -1;
 }
 
-int Port_write(int desc, int value) {
+int Java_com_sun_squawk_hal_Port_write0(int desc, int value) {
 	port_t* port = get_object_from_desc(desc);
 	if (port) {
 		port_write(port, value);
@@ -44,7 +45,7 @@ int Port_write(int desc, int value) {
 	return -1;
 }
 
-int Port_read(int desc) {
+int Java_com_sun_squawk_hal_Port_read0(int desc) {
 	port_t* port = get_object_from_desc(desc);
 	if (port) {
 		return port_read(port);

@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "gpio_irq_api.h"
 #include "common.h"
 
@@ -9,7 +10,7 @@ static void _irq_handler(uint32_t id, gpio_irq_event event) {
 	post_gpio_event(id, event);
 }
 
-int GpioIRQ_init(int pin, int fall) {
+int Java_com_sun_squawk_hal_GpioIRQ_init(int pin, int fall) {
 	int ret = 0;
 	int desc;
 	gpio_t gpio;

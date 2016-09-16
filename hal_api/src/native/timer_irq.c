@@ -1,6 +1,7 @@
 #include "bitset.h"
 #include "ticker_api.h"
 #include "us_ticker_api.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -21,6 +22,9 @@ typedef struct {
 #define REPEAT(id) ((timer_request_t*)id)->repeat
 
 #define MAX_DESC 32
+
+extern void set_timer_event(int);
+
 static struct {
     int nwords;
     uint64_t words[bitset_datasize(MAX_DESC)];
@@ -30,15 +34,6 @@ static int unused_idx = 0;
 static bitset* bs = (bitset*)&_bs;
 
 static timer_request_t* requests[MAX_DESC];
-static uint32_t irq_status;
-
-int get_timer_event(int clear) {
-	int ret = irq_status;
-	if (clear) {
-		irq_status = 0;
-	}
-	return ret;
-}
 
 static int allocate_slot(void *ptr) {
     int idx = unused_idx;
@@ -68,7 +63,7 @@ static void handler(uint32_t arg) {
 		if (REPEAT(request)) {
 			ticker_insert_event(TICKER_DATA(request), EVENT(request), EVENT(request)->timestamp + DELAY(request), (int)request);
 		}
-		irq_status |= (1 << desc);
+		set_timer_event(1 << desc);
     } else {
 	    free((timer_request_t*)request);
 		free_slot(desc);
@@ -105,13 +100,13 @@ schedule(int _delay, int _repeat) {
 }
 
 void
-TimerIRQ_cancel(int desc) {
+Java_com_sun_squawk_hal_TimerIRQ_cancel(int desc) {
 	timer_request_t* req = requests[desc];
 	req->cancelled = 1;
 	ticker_remove_event(req->ticker_data, &req->event);
 	free_slot(desc);
 }
 
-int TimerIRQ_init(int delay, int repeat) {
+int Java_com_sun_squawk_hal_TimerIRQ_init(int delay, int repeat) {
 	return schedule(delay, repeat);
 }

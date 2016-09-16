@@ -3492,6 +3492,12 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
 
 #define CASE_(n, block) Mask_##n(case Native_##n: block)
 
+#ifdef INCLUDE_NATIVE
+#include "native.c.inc"
+#else
+#define CUSTOM_NATIVE_CODE
+#endif
+
         /**
          * invokenativemain.
          */
@@ -4468,7 +4474,17 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                 })
 
                 CASE_(com_sun_squawk_VM_lcmp, {
-                    call(com_sun_squawk_VM__lcmp);
+					jlong r = popLong();
+					jlong l = popLong();
+					int result = -1;
+					
+					if (l > r) {
+					    result = 1;
+					} else if (l == r) {
+					    result = 0;
+				    }
+
+					pushInt(result);
                     break;
                 })
 
@@ -4806,52 +4822,12 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                 })
 /*end[KERNEL_SQUAWK]*/
 
-/* MBED/HAL */
-                CASE_(com_sun_squawk_hal_GpioIRQ_init, {
-                    int fall = popInt();
-                    int pin = popInt();
-					pushInt(GpioIRQ_init(pin, fall));
+                CASE_(java_lang_System_currentTimeMillis, {
+					pushLong(sysTimeMillis());
 					break;
 				})
-				
-                CASE_(com_sun_squawk_hal_TimerIRQ_init, {
-                    int repeat = popInt();
-                    int delay = popInt();
-					pushInt(TimerIRQ_init(delay, repeat));
-					break;
-				})
-				
-                CASE_(com_sun_squawk_hal_TimerIRQ_cancel, {
-                    int desc = popInt();
-					TimerIRQ_cancel(desc);
-					break;
-				})
-				
-                CASE_(com_sun_squawk_hal_DigitalOut_init0, {
-                    int pin = popInt();
-					pushInt(open_gpio(pin, 1));
-					break;
-				})
-				
-                CASE_(com_sun_squawk_hal_DigitalOut_write0, {
-                    int value = popInt();
-                    int desc = popInt();
-					write_gpio(desc, value);
-					break;
-				})
-				
-                CASE_(com_sun_squawk_hal_DigitalOut_read0, {
-                    int desc = popInt();
-					pushInt(read_gpio(desc));
-					break;
-				})
-				
-                CASE_(com_sun_squawk_hal_DigitalOut_isConnected0, {
-                    int desc = popInt();
-					pushInt(is_connected_gpio(desc));
-					break;
-				})
-				
+CUSTOM_NATIVE_CODE
+
                 default: {
                     /*fprintf(stderr, "*** Undefined native method: *** %d\n", iparm);*/
                     pushInt(iparm);

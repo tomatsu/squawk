@@ -60,6 +60,7 @@ public class GccARMCompiler extends CCompiler {
         if (options.tracing)            { buf.append("-DTRACE ");           }
         if (options.profiling)          { buf.append("-DPROFILING ");       }
         if (options.macroize)           { buf.append("-DMACROIZE ");        }
+        if (options.includeNative)      { buf.append("-DINCLUDE_NATIVE ");  }
         if (options.assume)             { buf.append("-DASSUME ");          }
         if (options.typemap)            { buf.append("-DTYPEMAP ");         }
         if (options.kernel)             { buf.append("-DKERNEL_SQUAWK=true ");     }

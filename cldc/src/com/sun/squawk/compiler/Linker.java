@@ -26,7 +26,7 @@ package com.sun.squawk.compiler;
 
 import java.util.Enumeration;
 import com.sun.squawk.util.Assert;
-import com.sun.squawk.os.*;
+//import com.sun.squawk.os.*;
 
 /**
  * Link the results of a <code>Compiler</code> compilation.

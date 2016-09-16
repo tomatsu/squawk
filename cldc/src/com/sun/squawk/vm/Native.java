@@ -253,13 +253,16 @@ public final class Native {
     public final static int com_sun_squawk_Lisp2Bitmap$setBitsFor         = 162;
     public final static int com_sun_squawk_Lisp2Bitmap$testAndSetBitFor   = 163;
     public final static int com_sun_squawk_Lisp2Bitmap$testBitFor         = 164;
-    public final static int com_sun_squawk_hal_DigitalOut$init0           = 165;
-    public final static int com_sun_squawk_hal_DigitalOut$isConnected0    = 166;
-    public final static int com_sun_squawk_hal_DigitalOut$read0           = 167;
-    public final static int com_sun_squawk_hal_DigitalOut$write0          = 168;
-    public final static int com_sun_squawk_hal_GpioIRQ$init               = 169;
-    public final static int com_sun_squawk_hal_TimerIRQ$cancel            = 170;
-    public final static int com_sun_squawk_hal_TimerIRQ$init              = 171;
-    public final static int com_sun_squawk_VM$lcmp                        = 172;
-    public final static int ENTRY_COUNT                                   = 173;
+    public final static int com_sun_squawk_VM$lcmp                        = 165;
+    public final static int java_lang_System$arraycopy                    = 166;
+    public final static int java_lang_System$currentTimeMillis            = 167;
+    public final static int java_lang_System$identityHashCode             = 168;
+    public final static int java_lang_System$initProperties               = 169;
+    public final static int java_lang_System$mapLibraryName               = 170;
+    public final static int java_lang_System$nanoTime                     = 171;
+    public final static int java_lang_System$registerNatives              = 172;
+    public final static int java_lang_System$setErr0                      = 173;
+    public final static int java_lang_System$setIn0                       = 174;
+    public final static int java_lang_System$setOut0                      = 175;
+    public static int ENTRY_COUNT                                         = 176;
 }

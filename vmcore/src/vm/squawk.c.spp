@@ -37,6 +37,8 @@
 #include "platform.h"
 #include "buildflags.h"
 
+#define stringify(s) _str(s)
+#define _str(s) #s
 
 /**
  * Forward definition of printf/fprintf helper function.
@@ -2209,7 +2211,10 @@ void Squawk_main(int argc, char *argv[]) {
         Squawk_setSignalHandlers();
         Squawk_kernelMain(kernelArgsCount, kernelArgs);
     }
+#else
+	sysInitialize();
 #endif /* KERNEL_SQUAWK */
+	   
     diagnostic("in Squawk_main");
     Squawk_run(argc, argv);
     fatalVMError("return from interpreter loop in non-kernel mode");
@@ -2265,9 +2270,6 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
     argv++;
     argc--;
 #else
-
-#define stringify(s) _str(s)
-#define _str(s) #s
 
 	static char* static_argv[] = {stringify(MAIN_CLASS_NAME), 0};
 	

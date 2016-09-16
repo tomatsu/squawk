@@ -26,9 +26,12 @@ package com.sun.squawk;
 
 import java.io.*;
 import java.util.*;
+import java.security.*;
 
 import com.sun.squawk.util.Assert;
 import com.sun.squawk.vm.Native;
+import javax.microedition.io.*;
+import com.sun.squawk.io.connections.ClasspathConnection;
 
 /**
  * The VM used when running the romizer.
@@ -535,7 +538,9 @@ public class VM {
             Properties properties = new Properties();
             properties.load(fis);
             fis.close();
-            System.out.println("Loaded suite stripping settings from " + path);
+			if (isVerbose) {
+				System.out.println("Loaded suite stripping settings from " + path);
+			}
             for (Map.Entry<Object, Object> entry : properties.entrySet()) {
                 String k = (String) entry.getKey();
                 String v = (String) entry.getValue();
@@ -986,7 +991,7 @@ public class VM {
     static {
         Streams[STREAM_STDOUT] = System.out;
         Streams[STREAM_STDERR] = System.err;
-
+		/*
         try {
             Class<?> clazz = com.sun.squawk.vm.Native.class;
             java.lang.reflect.Field[] fields = clazz.getDeclaredFields();
@@ -1004,8 +1009,40 @@ public class VM {
             ex.printStackTrace(System.err);
             System.exit(-1);
         }
+		*/
     }
 
+	static void initialNativeMethodTable(String classPath) {
+		try {
+			ClasspathConnection cp = (ClasspathConnection)Connector.open("classpath://" + classPath);
+			final byte[] b = cp.getBytes("com/sun/squawk/vm/Native.class");
+			ClassLoader cl = new ClassLoader(null) {
+					protected Class findClass(String name) throws ClassNotFoundException {
+						if (name.equals("com.sun.squawk.vm.Native")) {
+							return defineClass(name, b, 0, b.length, null);
+						} else {
+							return super.findClass(name);
+						}
+					}
+				};
+			Class clazz = cl.loadClass("com.sun.squawk.vm.Native");
+			java.lang.reflect.Field[] fields = clazz.getDeclaredFields();
+			for (int i = 0 ; i < fields.length ; i++) {
+				java.lang.reflect.Field field = fields[i];
+				if (field.getType() == Integer.TYPE) {
+					String name = field.getName().replace('_', '.').replace('$', '.');
+					int number = field.getInt(null);
+					methodTable.put(name, new Integer(number));
+					unused.put(name, name);
+				}
+			}
+		} catch (Exception ex) {
+            System.err.println(ex.getMessage());
+            ex.printStackTrace(System.err);
+            System.exit(-1);
+        }
+	}
+	
     /**
      * Determines if a given native method can be linked to by classes dynamically
      * loaded into the Squawk VM.

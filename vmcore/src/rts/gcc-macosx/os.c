@@ -33,7 +33,7 @@
 /* The package that conmtains the native code to use for a "NATIVE" platform type*/
 #define sysPlatformName() "macosx"
 
-#include "os_posix.c"
+#include "os_posix.c.inc"
 
 /* This "standard" C function is not provided on Mac OS X */
 char* strsignal(int signum) {

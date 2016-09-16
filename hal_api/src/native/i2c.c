@@ -1,9 +1,10 @@
+#include <stdlib.h>
 #include "i2c_api.h"
 #include "common.h"
 
 #if DEVICE_I2C
 
-int AbstractI2C_init(int sda, int scl) {
+int Java_com_sun_squawk_hal_AbstractI2C_init(int sda, int scl) {
 	i2c_t* i2c = (i2c_t*)malloc(sizeof(i2c_t));
 	if (!i2c) {
 		return -1;
@@ -17,7 +18,7 @@ int AbstractI2C_init(int sda, int scl) {
 	return idx;
 }
 
-int AbstractI2C_freq(int desc, int hz) {
+int Java_com_sun_squawk_hal_AbstractI2C_freq(int desc, int hz) {
 	i2c_t* i2c = get_object_from_desc(desc);
 	if (i2c) {
 		i2c_frequency(i2c, hz);
@@ -27,7 +28,7 @@ int AbstractI2C_freq(int desc, int hz) {
 	}
 }
 
-int AbstractI2C_read(int desc, int address, uint8_t* data, int offset, int len, int repeat) {
+int Java_com_sun_squawk_hal_AbstractI2C_read(int desc, int address, uint8_t* data, int offset, int len, int repeat) {
 	i2c_t* i2c = get_object_from_desc(desc);
 	if (i2c) {
 		int stop = (repeat) ? 0 : 1;
@@ -38,7 +39,7 @@ int AbstractI2C_read(int desc, int address, uint8_t* data, int offset, int len, 
 	}
 }
 
-int I2C_read(int desc, int ack) {
+int Java_com_sun_squawk_hal_I2C_read(int desc, int ack) {
 	i2c_t* i2c = get_object_from_desc(desc);
 	if (i2c) {
 		if (ack) {
@@ -51,7 +52,7 @@ int I2C_read(int desc, int ack) {
 	}
 }
 
-int AbstractI2C_write0(int desc, int address, uint8_t* data, int offset, int len, int repeat) {
+int Java_com_sun_squawk_hal_AbstractI2C_write0(int desc, int address, uint8_t* data, int offset, int len, int repeat) {
 	i2c_t* i2c = get_object_from_desc(desc);
 	if (i2c) {
 		int stop = (repeat) ? 0 : 1;
@@ -62,7 +63,7 @@ int AbstractI2C_write0(int desc, int address, uint8_t* data, int offset, int len
 	}
 }
 
-int AbstractI2C_write1(int desc, int data) {
+int Java_com_sun_squawk_hal_AbstractI2C_write1(int desc, int data) {
 	i2c_t* i2c = get_object_from_desc(desc);
 	if (i2c) {
 		return i2c_byte_write(i2c, data);
@@ -71,7 +72,7 @@ int AbstractI2C_write1(int desc, int data) {
 	}
 }
 
-void I2C_start(int desc) {
+void Java_com_sun_squawk_hal_I2C_start(int desc) {
 	i2c_t* i2c = get_object_from_desc(desc);
 	if (i2c) {
 		i2c_start(i2c);
@@ -80,7 +81,7 @@ void I2C_start(int desc) {
 	}
 }
 
-int AbstractI2C_stop(int desc) {
+int Java_com_sun_squawk_hal_AbstractI2C_stop(int desc) {
 	i2c_t* i2c = get_object_from_desc(desc);
 	if (i2c) {
 		i2c_stop(i2c);
@@ -90,7 +91,7 @@ int AbstractI2C_stop(int desc) {
 	}
 }
 
-void I2CSlave_init(int desc) {
+void Java_com_sun_squawk_hal_I2CSlave_init(int desc) {
 	i2c_t* i2c = get_object_from_desc(desc);
 	if (i2c) {
 		i2c_slave_mode(i2c, 1);
@@ -99,7 +100,7 @@ void I2CSlave_init(int desc) {
 	}
 }
 
-void I2CSlave_address(int desc, int address) {
+void Java_com_sun_squawk_hal_I2CSlave_address(int desc, int address) {
 	i2c_t* i2c = get_object_from_desc(desc);
 	if (i2c) {
 		i2c_slave_address(i2c, 0, address, 0);
@@ -108,7 +109,7 @@ void I2CSlave_address(int desc, int address) {
 	}
 }
 
-int I2CSlave_receive0(int desc) {
+int Java_com_sun_squawk_hal_I2CSlave_receive0(int desc) {
 	i2c_t* i2c = get_object_from_desc(desc);
 	if (i2c) {
 		return i2c_slave_receive(i2c);

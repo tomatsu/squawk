@@ -122,9 +122,12 @@ public final class System {
      * @return  the difference, measured in milliseconds, between the current
      *          time and midnight, January 1, 1970 UTC.
      */
+	/*
     public static long currentTimeMillis() {
         return VM.getTimeMillis();
     }
+	*/
+	public static native long currentTimeMillis();
 
     /**
      * Copies an array from the specified source array, beginning at the

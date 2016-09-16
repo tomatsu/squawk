@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-int open_gpio(int pin, int is_output) {
+static int open_gpio(int pin, int is_output) {
 	gpio_t* gpio = (gpio_t*)malloc(sizeof(gpio_t));
 	if (!gpio) {
 		return -1;
@@ -24,7 +24,7 @@ int open_gpio(int pin, int is_output) {
 	return d;
 }
 
-int read_gpio(int desc) {
+static int read_gpio(int desc) {
 	gpio_t* gpio = get_object_from_desc(desc);
 	if (gpio) {
 		return gpio_read(gpio);
@@ -33,7 +33,7 @@ int read_gpio(int desc) {
     }
 }
 
-int write_gpio(int desc, int value) {
+static int write_gpio(int desc, int value) {
 	gpio_t* gpio = get_object_from_desc(desc);
 	if (gpio) {
 		gpio_write(gpio, value);
@@ -43,7 +43,7 @@ int write_gpio(int desc, int value) {
 	}
 }
 
-void close_gpio(int idx) {
+static void close_gpio(int idx) {
 	gpio_t* gpio = get_object_from_desc(idx);
 	if (gpio) {
 		free(gpio);
@@ -51,17 +51,34 @@ void close_gpio(int idx) {
     deallocate_desc(idx);
 }
 
-void set_mode_gpio(int desc, int mode) {
+static void set_mode_gpio(int desc, int mode) {
 	gpio_t* gpio = get_object_from_desc(desc);
 	if (gpio) {
 		gpio_mode(gpio, mode);
 	}
 }
 
-int is_connected_gpio(int idx) {
+static int is_connected_gpio(int idx) {
 	gpio_t* gpio = get_object_from_desc(idx);
 	if (gpio) {
 		return gpio_is_connected(gpio);
 	}
 	return 0;
+}
+
+
+int Java_com_sun_squawk_hal_DigitalOut_init0(int pin) {
+	return open_gpio(pin, 1);
+}
+
+int Java_com_sun_squawk_hal_DigitalOut_read0(int desc) {
+	return read_gpio(desc);
+}
+
+void Java_com_sun_squawk_hal_DigitalOut_write0(int desc, int value) {
+	write_gpio(desc, value);
+}
+
+int Java_com_sun_squawk_hal_DigitalOut_isConnected0(int desc) {
+	return is_connected_gpio(desc);
 }
