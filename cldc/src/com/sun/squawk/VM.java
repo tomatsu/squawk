@@ -2169,7 +2169,11 @@ hbp.dumpState();
      * @return  the system-dependent path-separator character
      */
     public static char getPathSeparatorChar() {
-        return (char)execSyncIO(ChannelConstants.INTERNAL_GETPATHSEPARATORCHAR, 0);
+/*if[PLATFORM_TYPE_BARE_METAL]*/
+		return ':';
+/*else[PLATFORM_TYPE_BARE_METAL]*/
+//        return (char)execSyncIO(ChannelConstants.INTERNAL_GETPATHSEPARATORCHAR, 0);
+/*end[PLATFORM_TYPE_BARE_METAL]*/
     }
 
     /**
@@ -2182,7 +2186,11 @@ hbp.dumpState();
      * @see     java.lang.System#getProperty(java.lang.String)
      */
     public static char getFileSeparatorChar() {
-        return (char)execSyncIO(ChannelConstants.INTERNAL_GETFILESEPARATORCHAR, 0);
+/*if[PLATFORM_TYPE_BARE_METAL]*/
+		return '/';
+/*else[PLATFORM_TYPE_BARE_METAL]*/
+//        return (char)execSyncIO(ChannelConstants.INTERNAL_GETFILESEPARATORCHAR, 0);
+/*end[PLATFORM_TYPE_BARE_METAL]*/
     }
 
     /**
