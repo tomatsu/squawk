@@ -20,10 +20,6 @@ case "$1" in
 	;;
 esac
 
-if [ ! -f ${JARFILE} ]; then
-	(cd helloworld; sh build.sh)
-fi
-
 skip_stage_1=true
 
 if [ ! -f cldc/classes.target.jar ]; then
@@ -49,6 +45,10 @@ if [ "x${stage_1_only}" = "xtrue" ]; then
 		 $(find cldc/preprocessed-vm2c -name '*\.java' -print)
     java -jar build.jar -override $PROP spp `find vmcore/src -name '*spp'`
 	exit;
+fi
+
+if [ ! -f ${JARFILE} ]; then
+	(cd helloworld; sh build.sh)
 fi
 
 # stage 2
