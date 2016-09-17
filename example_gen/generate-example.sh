@@ -41,7 +41,6 @@ mkdir -p ${PROJECT_DIR}/mbed
 cp $MBED/*h ${PROJECT_DIR}/mbed
 tar cf - -C $MBED TARGET_${TARGET} | (cd ${PROJECT_DIR}/mbed; tar xf -)
 cp ${MBED}/../../hal/targets.json ${PROJECT_DIR}
-cp devices.py ${PROJECT_DIR}
 
 # copy hal_api
 (cd ..; tar cf - hal_api/src) | (cd ${PROJECT_DIR}; tar xf -)
@@ -55,9 +54,11 @@ cp ../squawk.library.properties ${PROJECT_DIR}
 
 # create Makefile
 echo "MBED = mbed" > ${PROJECT_DIR}/Makefile
-cat targets/${TARGET}/target.mk >> ${PROJECT_DIR}/Makefile
+echo "-include target.mk" >> ${PROJECT_DIR}/Makefile
 echo "MAIN_CLASS_NAME ?= ${MAIN_CLASS_NAME}" >> ${PROJECT_DIR}/Makefile
+python devices.py ${TARGET} >> ${PROJECT_DIR}/Makefile
 cat makefile_mbed.tmpl >> ${PROJECT_DIR}/Makefile
+(cd targets/${TARGET}/; tar cf - .) | (cd ${PROJECT_DIR}/; tar xf -)
 
 # copy application
 (cd ${PROJECT}; tar cf - .) | (cd ${PROJECT_DIR}; tar xf -)

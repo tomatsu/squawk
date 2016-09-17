@@ -1,8 +1,7 @@
 import sys
-import json
+sys.path.append('mbed')
+from tools.targets import Target
 
-f = open(sys.argv[1], 'r')
-jsonData = json.load(f)
-#print json.dumps(jsonData, sort_keys = True, indent = 4)
-for i in jsonData[sys.argv[2]]['device_has']:
-    print i
+print "DEVICE_OPTIONS += ",
+for i in Target.get_target(sys.argv[1]).device_has:
+    print "-DDEVICE_" + i + "=1",
