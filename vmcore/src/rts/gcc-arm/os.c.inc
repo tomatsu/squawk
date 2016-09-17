@@ -51,9 +51,12 @@
 #define USE_TICK
 #elif defined(NRF51) || defined(TARGET_LPC176X)
 #define USE_TICK
-static void initTickCount();
 #else
 #define USE_RTC
+#endif
+
+#ifdef USE_TICK
+static void initTickCount();
 #endif
 
 void sysInitialize() {
