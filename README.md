@@ -16,7 +16,7 @@ Build
 * Install gcc-arm-none-eabi
 * Install JDK
 * git clone https://github.com/tomatsu/squawk4mbed
-* ./build-linux-x86.sh
+* cd squawk4mbed; ./build-linux-x86.sh
 * cd example_gen; TARGET=LPC1768 MAIN_CLASS_NAME=Hello PROJECT=helloworld ./generate-example.sh
 * cd /tmp/lpc1768_helloworld; make
 

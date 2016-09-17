@@ -9,9 +9,6 @@ if [ "x${TARGET}" = "xlinux" ]; then
 	# copy squawk
     mkdir -p ${PROJECT_DIR}/squawk
     (files="$(cat files_linux.txt)"; cd ..; tar cf - $files) | (cd ${PROJECT_DIR}/squawk; tar xf -)
-    cp ../build-mbed.properties ${PROJECT_DIR}/build.properties
-    cp ../squawk.exclude ${PROJECT_DIR}
-    cp ../squawk.library.properties ${PROJECT_DIR}
 	
 	# copy application
     (cd ${PROJECT}; tar cf - .) | (cd ${PROJECT_DIR}; tar xf -)
@@ -40,7 +37,6 @@ fi
 mkdir -p ${PROJECT_DIR}/mbed
 cp $MBED/*h ${PROJECT_DIR}/mbed
 tar cf - -C $MBED TARGET_${TARGET} | (cd ${PROJECT_DIR}/mbed; tar xf -)
-cp ${MBED}/../../hal/targets.json ${PROJECT_DIR}
 
 # copy hal_api
 (cd ..; tar cf - hal_api/src) | (cd ${PROJECT_DIR}; tar xf -)
@@ -48,9 +44,6 @@ cp ${MBED}/../../hal/targets.json ${PROJECT_DIR}
 # copy squawk
 mkdir -p ${PROJECT_DIR}/squawk
 (files="$(cat files_mbed.txt)"; cd ..; tar cf - $files) | (cd ${PROJECT_DIR}/squawk; tar xf -)
-cp ../build-mbed.properties ${PROJECT_DIR}/build.properties
-cp ../squawk.exclude ${PROJECT_DIR}
-cp ../squawk.library.properties ${PROJECT_DIR}
 
 # create Makefile
 echo "MBED = mbed" > ${PROJECT_DIR}/Makefile

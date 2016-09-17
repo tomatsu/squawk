@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.Arrays;
 import java.util.jar.*;
 import java.util.zip.*;
+import java.net.URLConnection;
 import javax.microedition.io.*;
 
 import com.sun.squawk.util.*;
@@ -69,7 +70,7 @@ public class Romizer {
         buildProperties = new Properties();
         FileInputStream inputStream = null;
         try {
-            inputStream = new FileInputStream("build.properties");
+            inputStream = new FileInputStream(getInputFile("build.properties"));
             buildProperties.load(inputStream);
         } catch(IOException ex) {
             throw new Error("Could not find build.properties");
@@ -668,7 +669,7 @@ public class Romizer {
             throw new RuntimeException();
         }
 
-        File file = new File(suiteName + "." + (suiteType == Suite.EXTENDABLE_LIBRARY ? "extendable.library" : "library") + ".properties");
+        File file = getInputFile(suiteName + "." + (suiteType == Suite.EXTENDABLE_LIBRARY ? "extendable.library" : "library") + ".properties");
         if (file.exists()) {
             VM.resetSymbolsStripping(file);
         } else {
@@ -697,9 +698,12 @@ public class Romizer {
         }
 
         if (!classNames.isEmpty()) {
-            if (excludeFile == null && new File(suiteName + ".exclude").exists()) {
-                excludeFile = suiteName + ".exclude";
-            }
+            if (excludeFile == null) {
+				File dotExclude = getInputFile(suiteName + ".exclude");
+				if (dotExclude.exists()) {
+					excludeFile = dotExclude.getPath();
+				}
+            } 
             if (excludeFile != null) {
                 excludeClasses(classNames, excludeFile);
             }
@@ -866,6 +870,29 @@ public class Romizer {
         }
     }
 
+	static File squawkDir;
+
+	static {
+		try {
+			Class cls = Romizer.class;
+			URLConnection con = cls.getResource("/" + cls.getName().replace('.', '/') + ".class").openConnection();
+			if (con instanceof java.net.JarURLConnection) {
+				String jarFilePath = ((java.net.JarURLConnection)con).getJarFileURL().getFile();
+				squawkDir = new File(jarFilePath).getParentFile().getParentFile();
+			}
+		} catch (Exception e){
+			// skip
+		}
+	}
+
+	static File getInputFile(String name) {
+		if (squawkDir != null) {
+			return new File(squawkDir, name);
+		} else {
+			return new File(name);
+		}
+	}
+		
 	File getOutputFile(String name) {
 		File file;
 		if (destPath == null) {

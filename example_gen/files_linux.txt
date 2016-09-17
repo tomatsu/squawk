@@ -58,3 +58,6 @@ cldc/classes.target.jar
 translator/classes.jar
 build.jar
 romizer/classes.jar
+build.properties
+squawk.exclude
+squawk.library.properties
