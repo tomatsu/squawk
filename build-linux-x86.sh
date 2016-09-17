@@ -20,6 +20,10 @@ case "$1" in
 	;;
 esac
 
+if [ ! -f ${JARFILE} ]; then
+	(cd helloworld; sh build.sh)
+fi
+
 skip_stage_1=true
 
 if [ ! -f cldc/classes.target.jar ]; then
@@ -32,7 +36,7 @@ if [ x${skip_stage_1} != "xtrue" ]; then
 	
 	(cd builder; sh bld.sh) || exit 1
 	./d.sh -override $PROP clean || exit 1
-	./d.sh -override $PROP -verbose || exit 1
+	./d.sh -override $PROP || exit 1
 	if [ -d cldc/weaved ]; then
 		(cd cldc/weaved; jar cfM ../classes.target.jar .)
 	fi
@@ -74,7 +78,7 @@ tools/linux-x86/preverify -classpath cldc/classes.target.jar -d $TMP/j2meclasses
 cflags=`for i in $CFLAGS; do echo -cflags:$i; done`
 ldflags=`for i in $LDFLAGS; do echo -ldflags:$i; done`
 
-java -jar build.jar -override $PROP $cflags $ldflags -verbose \
+java -jar build.jar -override $PROP $cflags $ldflags \
      rom -d:${OUT} -cp:${OUT}/cldc/classes -strip:a $TMP/j2meclasses.jar || exit 1
 
 strip ${OUT}/squawk
