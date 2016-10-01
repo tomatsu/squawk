@@ -50,7 +50,7 @@ const char *format(const char* fmt);
 #include "io_native.h"
 #endif
 
-#include "os.c.inc"
+//#include "os.c.inc"
 
 #ifndef DIAGNOSTICS_ENABLED
 /* for ARM, defined in arm-library, otherwise do it here. */
@@ -489,7 +489,7 @@ void *newBuffer(UWord size, const char *desc, boolean fatalIfFail) {
 
     buffer = sysValloc(actualSize);
 
-//fprintf(stderr, format("newBuffer: desc=%s, size=%A, actualSize=%O buffer=%A\n"), desc, size, actualSize, buffer);
+//fprintf(stderr, "newBuffer: desc=%s, size=%d, actualSize=%d buffer=%p\n", desc, size, actualSize, buffer);
     /*
      * Ensure that the resulting buffer is word aligned (which is surely guaranteed
      * if it is page aligned!)
@@ -498,7 +498,7 @@ void *newBuffer(UWord size, const char *desc, boolean fatalIfFail) {
 
     if (buffer == null) {
         if (fatalIfFail) {
-            fprintf(stderr, format("Failed to allocate buffer of %A bytes for %s\n"), size, desc);
+            fprintf(stderr, "Failed to allocate buffer of %d bytes for %s\n", size, desc);
             stopVM(1);
         } else {
             return null;
@@ -531,7 +531,7 @@ void freeBuffer(Address buffer) {
 
     while (i != BufferCount) {
         if (Buffers[i] == buffer) {
-//fprintf(stderr, format("freeBuffer: buffer=%A\n"), buffer);
+//fprintf(stderr, "freeBuffer: buffer=%p\n", buffer);
             sysVallocFree(buffer);
         } else {
             Buffers[insert] = Buffers[i];
@@ -659,6 +659,8 @@ int parseQuantity(char *p, const char* arg) {
     return (int)res;
 }
 
+#if !defined(PLATFORM_TYPE_BARE_METAL) && !defined(FLASH_MEMORY)
+
 /**
  * Gets the size of a file.
  *
@@ -700,7 +702,7 @@ int readFile(const char *file, Address buffer, UWord size) {
             while (toRead > 0) {
                 count = read(fd, readPos, toRead);
                 if (count == -1) {
-                    fprintf(stderr,format("Call to read() failed: %s (file size=%A, read=%d)\n"), strerror(errno), buf.st_size, buf.st_size-toRead);
+                    fprintf(stderr, "Call to read() failed: %s (file size=%d, read=%d)\n", strerror(errno), buf.st_size, buf.st_size-toRead);
                     stopVM(-1);
                 }
                 toRead -= count;
@@ -708,17 +710,19 @@ int readFile(const char *file, Address buffer, UWord size) {
             }
             close(fd);
         } else {
-             fprintf(stderr,"Call to open(%s) failed: %s\n", file, strerror(errno));
+             fprintf(stderr, "Call to open(%s) failed: %s\n", file, strerror(errno));
              stopVM(-1);
         }
     } else {
         if (errno != ENOENT) {
-             fprintf(stderr,"Call to stat(%s) failed: %s\n", file, strerror(errno));
+             fprintf(stderr, "Call to stat(%s) failed: %s\n", file, strerror(errno));
              stopVM(-1);
         }
     }
     return result;
 }
+
+#endif
 
 /*
  * Include the functions for laoding and saving the bootstrap suite
@@ -740,7 +744,7 @@ static void printCacheStat(const char *label, int part, jlong whole) {
     if (whole == 0) {
         fprintf(stderr, " %s:0%%", label);
     } else {
-        fprintf(stderr, format(" %s:%u.%02u%%"), label, AS_PERCENT(part, whole));
+        fprintf(stderr, " %s:%u.%02u%%", label, AS_PERCENT(part, whole));
     }
 }
 
@@ -812,6 +816,7 @@ NORETURN void stopVM(int exitCode) {
  * @param exitCode the exit code
  */
 NORETURN void stopVM0(int exitCode, boolean cleanup) {
+    printf("stopVM0 %d %d\n", exitCode, cleanup);
     static boolean inStop = false;
 
 /*
@@ -865,8 +870,10 @@ fprintf(stderr, "VM is in a blocking system call!!! WILL CRASH????");
     IO_shutdown();
 #endif
 
+    printf("osfinish\n");
     osfinish();
 	inStop = false;
+    printf("exit %d\n", exitCode);
     exit(exitCode);
 }
 
@@ -1746,6 +1753,7 @@ void testWordAt() {
 
 /*if[FLOATS]*/
 void fpTest() {
+#if HAS_STDIO
     float f0 = 0.0;
     float f1 = 1.0;
     double d0 = 0.0;
@@ -1829,6 +1837,7 @@ void fpTest() {
     assertEquals8("double2ll(D_NEG_INFINITY)", double2ll_slow(lb2d(D_NEG_INFINITY)), (jlong)(lb2d(D_NEG_INFINITY)));
 
     assertEquals8("(jlong)1E+100D == max long",     (jlong)1E+100D, 0x7fffffffffffffffLL);
+#endif
 #endif
 }
 /*else[FLOATS]*/
@@ -2053,11 +2062,13 @@ int printValueInRange(Address value, char* valueName, Address low, Address high,
 
 void printStrSafely(Address value, char* valueName, Address low, Address high, char* rangeName) {
     int result = (value >= low && value < high);
-    fprintf(stderr, "    %s: ", valueName);
+    cioPrintCString("    ");
+	cioPrintCString(valueName);
+    cioPrintCString(": ");
     if (value == 0) {
-        fprintf(stderr, "NULL.\n");
+        cioPrintCString("NULL.\n");
     } else if (result) {
-        printJavaString(value, stderr);
+        cioPrintJavaString(value);
         fprintf(stderr, "\n");
     } else {
         fprintf(stderr, "%p is NOT in %s range %p .. %p\n", value, rangeName, low, high);
@@ -2282,24 +2293,7 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
     return 0;
 }
 
-/**
- * Some platforms have non-standard startup requirements. If so, define os_main() to handle
- * the issues.
- */
-#if defined(__APPLE__) || defined(VXWORKS)
 #include "os_main.c.inc"
-#endif
-
-#ifndef VXWORKS
-int main(int argc, char *argv[]) {
-    diagnostic("In main - squawk.c");
-#ifdef __APPLE__
-    os_main(argc, argv);
-#else
-    return Squawk_main_wrapper(argc, argv);
-#endif /* !__APPLE__ */
-}
-#endif /* VXWORKS */
 
 /**
  * lookup a klass from the bootstrap suite
