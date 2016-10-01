@@ -47,7 +47,6 @@ static void ioExecute(void) {
 		break;
 	}
 
-#if 0
 	case ChannelConstants_IRQ_WAIT: {
 		int addr = i1;
 		int s = storeIrqRequest(addr);
@@ -56,9 +55,8 @@ static void ioExecute(void) {
 		} else {
 		   res = s;
 		}
-	}
 		break;
-#endif		
+	}
 	default: {
 	    printf("###### skip op: %d\n", op);
 		break;
@@ -67,8 +65,6 @@ static void ioExecute(void) {
     com_sun_squawk_ServiceOperation_result = res;
 }
 
-#if 0
 void set_event(int evt) {
 	 com_sun_squawk_ServiceOperation_event = evt;
 }
-#endif
