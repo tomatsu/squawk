@@ -31,8 +31,9 @@
 #warning "must include platform .h before global.h"
 #endif
 
-#include <jni.h>
+//#include <jni.h>
 #include <math.h>
+#include <stdint.h>
 
 #include "os_math.h" /* add platform specific method definitions */
 
