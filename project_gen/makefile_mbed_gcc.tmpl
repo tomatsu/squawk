@@ -17,7 +17,7 @@ OBJCOPY = arm-none-eabi-objcopy
 SQUAWK_TOP = squawk
 BUILD_TOP ?= build
 JARFILE = classes.jar
-JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar hal_api.jar
+JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar mbed_hal.jar
 
 BUILD_FLAGS = -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
 BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE) -DMAIN_CLASS_NAME=$(MAIN_CLASS_NAME)
@@ -28,35 +28,35 @@ CFLAGS += $(CFLAGS_ARCH) $(DEVICE_OPTIONS) $(BUILD_FLAGS) $(patsubst %,-I%,$(INC
 LDFLAGS += $(CFLAGS_ARCH) -T$(LINKERSCRIPT) --specs=nano.specs $(CFLAGS_OPTS) -Wl,-gc-sections -Wl,--no-wchar-size-warning
 LDSUFFIXES += -L$(LIBDIR) $(LIBDIR)/*.o -lmbed -lc -lm -lnosys
 TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
-CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes hal_classes hal_api.jar
+CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes hal_classes mbed_hal.jar
 
-C_SOURCE_DIRS = src/native hal_api/src/native $(SQUAWK_TOP)/vmcore/src/rts/gcc-arm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm
+C_SOURCE_DIRS = src/native targets/mbed_hal/src/native $(SQUAWK_TOP)/vmcore/src/rts/gcc-arm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm
 C_SOURCE_FILES  = $(shell for i in $(patsubst %,%/*.c,$(C_SOURCE_DIRS)); do if [ -f $$i ]; then basename $$i; fi; done)
 OBJECT_DIR = $(BUILD_TOP)/obj
 OBJECT_FILES = $(patsubst %.c,$(OBJECT_DIR)/%.o,$(C_SOURCE_FILES))
 OBJECT_FILES += $(OBJECT_DIR)/squawk.suite.o
 DEPENDS = $(patsubst %.o,%.d,$(OBJECT_FILES))
-HAL_CLASSES_JAVA = $(shell $(FIND) hal_api/src/classes hal_api/src/targets/$(TARGET)/classes -name '*.java' -print)
+HAL_CLASSES_JAVA = $(shell $(FIND) targets/mbed_hal/src/classes targets/mbed_hal/src/targets/$(TARGET)/classes -name '*.java' -print)
 
 JAVA_SOURCE_FILES = $(shell $(FIND) src/classes -name '*.java' -print)
 
 vpath %.c $(C_SOURCE_DIRS)
 
-all: dirs hal_api.jar $(JARFILE) romize compile link bin hex
+all: dirs mbed_hal.jar $(JARFILE) romize compile link bin hex
 
 dirs:
 	$(AT)mkdir -p $(OBJECT_DIR)
 
-hal_api.jar: $(HAL_CLASSES_JAVA)
+mbed_hal.jar: $(HAL_CLASSES_JAVA)
 	$(AT)rm -rf hal_classes
 	$(AT)mkdir -p hal_classes
 	$(AT)$(JAVAC) -target 1.4 -source 1.4 -classpath $(SQUAWK_TOP)/cldc/classes.target.jar -d hal_classes $(HAL_CLASSES_JAVA)
-	$(AT)$(JAR) cf hal_api.jar -C hal_classes .
+	$(AT)$(JAR) cf mbed_hal.jar -C hal_classes .
 
 $(JARFILE): $(JAVA_SOURCE_FILES)
 	$(AT)rm -rf classes
 	$(AT)mkdir -p classes
-	$(AT)$(JAVAC) -bootclasspath $(SQUAWK_TOP)/cldc/classes.target.jar -classpath hal_api.jar -d classes $(JAVA_SOURCE_FILES)
+	$(AT)$(JAVAC) -bootclasspath $(SQUAWK_TOP)/cldc/classes.target.jar -classpath mbed_hal.jar -d classes $(JAVA_SOURCE_FILES)
 	$(AT)$(JAR) cf classes.jar -C classes .
 
 romize: $(BUILD_TOP)/squawk.suite.c

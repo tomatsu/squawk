@@ -61,7 +61,7 @@ mbed_hdr :
 	$(AT)tar cf - -C $(MBED) TARGET_$(TARGET) | (cd $(PROJECT_DIR)/mbed; tar xf -)
 
 hal:
-	$(AT)(cd ..; tar cf - hal_api/src) | (cd $(PROJECT_DIR); tar xf -)
+	$(AT)(cd ..; tar cf - targets/mbed_hal/src) | (cd $(PROJECT_DIR); tar xf -)
 
 makefile:
 	$(AT)echo "MBED = mbed" > $(PROJECT_DIR)/Makefile
