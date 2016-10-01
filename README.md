@@ -26,6 +26,7 @@ Build for ESP8266
 * Install JDK
 * git clone https://github.com/tomatsu/squawk
 * cd squawk; ./build.sh
+* Set environment variable ESP_SDK (for example: export ESP_SDK=$HOME/esp-open-sdk/sdk)
 * cd project_gen;  make TARGET=ESP8266 MAIN_CLASS_NAME=Hello PROJECT=helloworld
 * cd /tmp/esp8266_helloworld; make
 
