@@ -15,8 +15,6 @@ void Java_Hello_passString(void* arg) {
 	printf("\n");
 }
 
-#define getArrayLength(a) ((*((int*)a - 2))>>2)
-
 void Java_Hello_receive(void* arg) {
 	printf("integer = %d\n", Hello_Struct_integer(arg));
 	printf("singleByte = %d\n", Hello_Struct_singleByte(arg));
