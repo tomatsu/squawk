@@ -3183,7 +3183,8 @@ public class Build {
 
         javaCompiler.arg("-g").args(javacOptions);
         javaCompiler.compile(compileClassPath, classesDir, srcDirs, j2me);
-        
+
+		/*
         if (doJava5 && j2me) {
             classesDir = retroweave(baseDir, classesDir);
         }
@@ -3197,6 +3198,7 @@ public class Build {
         if (j2me && stripHostCode) {
             preverify(preverifyClassPath, baseDir);
         }
+		*/
     }
     
     /**
