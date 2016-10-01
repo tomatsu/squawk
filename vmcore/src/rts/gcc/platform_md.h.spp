@@ -1,0 +1,139 @@
+/*
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This code is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2
+ * only, as published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included in the LICENSE file that accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
+ * information or have any questions.
+ */
+
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <malloc.h>
+
+#define IODOTC "io_simple.c.inc"
+
+#define HAS_STDIO 1
+
+#ifdef __APPLE__
+#    include <CoreFoundation/CoreFoundation.h>
+#    include <pthread.h>
+/*if[KERNEL_SQUAWK]*/
+#    include <dlfcn.h>
+/*end[KERNEL_SQUAWK]*/
+#    include <sys/resource.h>
+#    include <sys/time.h>
+#endif /* __APPLE__ */
+
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#if !PLATFORM_TYPE_BARE_METAL
+#include <fcntl.h>
+#include <errno.h>
+#endif
+
+#include <string.h>
+#include <signal.h>
+#include <math.h>
+
+typedef int64_t jlong;
+
+#    define JLONG_CONSTANT(c) c ## LL
+#    define pathSeparatorChar ':'
+#    define fileSeparatorChar '/'
+#    define FORCE_USED __attribute__((used))
+
+#    ifndef O_BINARY
+#        define O_BINARY 0 /* for compatibility with open() and close() on Windows */
+#    endif /* O_BINARY */
+#    if !defined(FLASH_MEMORY) && !PLATFORM_TYPE_BARE_METAL
+#	    include <sys/mman.h>
+#    endif /* FLASH_MEMORY */
+#    ifdef __GNUC__
+#        include <unistd.h>
+#        undef  ujlong
+#        ifdef sun
+#            define ujlong uint64_t
+#        elif __arm__
+#            define ujlong unsigned long long
+#        else /* sun */
+#            define ujlong uint64_t
+#        endif /* sun */
+#    else /* assume CC */
+#    endif /* __GNUC__ */
+/*if[KERNEL_SQUAWK]*/
+#    ifndef FLASH_MEMORY
+#        include <pthread.h>
+#    endif /* FLASH_MEMORY */
+/*end[KERNEL_SQUAWK]*/
+
+#ifdef __GNUC__
+#define NOINLINE __attribute__ ((noinline))
+#define NORETURN __attribute__ ((noreturn))
+#else
+#define NOINLINE
+#define NORETURN
+#endif
+
+/*if[KERNEL_SQUAWK]*/
+#ifndef MAXSIG
+#    define MAXSIG 32
+#endif
+/*end[KERNEL_SQUAWK]*/
+
+#if PLATFORM_TYPE_DELEGATING
+#include <setjmp.h>
+#endif
+
+#ifndef max
+#define	max(a, b) 		((a) < (b) ? (b) : (a))
+#define	min(a, b) 		((a) > (b) ? (b) : (a))
+#define	abs(x)			((x) >= 0 ? (x) : -(x))
+#endif
+
+#if defined(sun)
+#define sysPlatformName() "solaris"
+#else
+#define sysPlatformName() "linux"
+#endif
+
+#define sysInitialize() /* empty */
+
+#if PLATFORM_TYPE_BARE_METAL
+#define sysGetPageSize() 128
+#define sysToggleMemoryProtection(x,y,z)
+#define sysValloc(s) memalign(sysGetPageSize(),s)
+#define sysVallocFree(p) free(p)
+#endif
+
+
+#define osloop()        /**/
+#define osbackbranch()  /**/
+#define osfinish()      /**/
+
+#define TRUE 1
+#define FALSE 0
+
+extern jlong sysTimeMicros(void);
+extern jlong sysTimeMillis(void);
+
