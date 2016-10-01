@@ -51,9 +51,16 @@ public final class CHeaderFileCreator {
      * @return  true if the file was overwritten or created, false if not
      * @throws IOException
      */
-    public static boolean update(Suite bootstrapSuite, File file, Properties properties) throws IOException {
+    public static boolean update(Suite bootstrapSuite, File classHdr, File file, Properties properties) throws IOException {
         CHeaderFileCreator creator = new CHeaderFileCreator(properties);
 
+        PrintWriter out0 = new PrintWriter(new FileOutputStream(classHdr));
+		try {
+			creator.writeClassHeader(bootstrapSuite, out0);
+		} finally {
+			out0.close();
+		}
+						 
         CharArrayWriter caw = new CharArrayWriter(file.exists() ? (int)file.length() : 0);
         PrintWriter out = new PrintWriter(caw);
         creator.writeHeader(bootstrapSuite, out);
@@ -370,9 +377,9 @@ public final class CHeaderFileCreator {
             return; // ignore this class
         }
 
-        if (!isRomizedClass(internalName)) {
-            return;// ignore this class
-        }
+//        if (!isRomizedClass(internalName)) {
+//            return;// ignore this class
+//        }
 
         out.println("#define " + fix(klass.getName()) + " " + cid);
 
@@ -506,12 +513,7 @@ public final class CHeaderFileCreator {
         }
     }
 
-    /**
-     * Create the "rom.h" for the slow VM.
-     */
-	@SuppressWarnings("unchecked")
-	private void writeHeader(Suite suite, PrintWriter out) throws IOException {
-
+	private void writeCopyright(PrintWriter out) throws IOException {
         out.println("/*");
         out.println(" * Copyright 2004-2008 Sun Microsystems, Inc. All Rights Reserved.");
         out.println(" * Copyright 2010 Oracle. All Rights Reserved.");
@@ -536,6 +538,24 @@ public final class CHeaderFileCreator {
         out.println(" * Shores, CA 94065 or visit www.oracle.com if you need additional");
         out.println(" * information or have any questions.");
         out.println("*/");
+	}
+	
+	private void writeClassHeader(Suite suite, PrintWriter out) throws IOException {
+		writeCopyright(out);
+
+		out.println("#ifndef __SQUAWK__");
+		out.println("#define getArrayLength(a) ((*((int*)a - 2))>>2)");
+		out.println("#define getByte(base, offset)  ((char *)base)[offset]");
+		out.println("#define setByte(base, offset, value)  ((char *)base)[offset] = value");
+		out.println("#define getShort(base, offset)  *((short *)&((short *)base)[offset]");
+		out.println("#define setShort(base, offset, value)  ((short *)base)[offset] = value");
+		out.println("#define getInt(base, offset)  ((int *)base)[offset]");
+		out.println("#define setInt(base, offset, value)  ((int *)base)[offset] = value");
+		out.println("#define getLongAtWord(base, offset) ((int64_t *)base)[offset]");
+		out.println("#define setLongAtWord(base, offset, value) ((int64_t *)base)[offset] = value");
+		out.println("#define getObject(base, offset)  ((unsigned int *)base)[offset]");
+		out.println("#define setObject(base, offset, value)  ((unsigned int *)base)[offset] = value");
+		out.println("#endif");
 
         // Write the CID definitions.
         int classCount = suite.getClassCount();
@@ -545,6 +565,16 @@ public final class CHeaderFileCreator {
                 writeKlassDecls(klass, cid, suite, out);
             }
         }
+	}
+	
+    /**
+     * Create the "rom.h" for the slow VM.
+     */
+	@SuppressWarnings("unchecked")
+	private void writeHeader(Suite suite, PrintWriter out) throws IOException {
+		writeCopyright(out);
+		out.println("#define __SQUAWK__");
+		out.println("#include \"classes.h\"");
 
         // Verify that the hard coded field and method offsets are correct
         verifyFieldOffsets();

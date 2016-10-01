@@ -1100,11 +1100,12 @@ public class Romizer {
      * @throws IOException if an IO error occurs
      */
     private void createCHeader() throws IOException {
+        File classHdr = getOutputFile("vmcore/src/vm/classes.h");
         File headerFile = getOutputFile("vmcore/src/vm/rom.h");
         Properties symbols = new Properties();
         symbols.load(new FileInputStream(getOutputFile(suiteName + ".sym")));
 
-        if (CHeaderFileCreator.update(suite, headerFile, symbols)) {
+        if (CHeaderFileCreator.update(suite, classHdr, headerFile, symbols)) {
             generatedFiles.addElement(headerFile.getAbsolutePath());
         } else {
 			if (VM.isVerbose()) {
