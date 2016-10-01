@@ -63,8 +63,10 @@ typedef struct globalsStruct {
     Address     _Oops[GLOBAL_OOP_COUNT];     /* Storage for the reference typed Java globals. */
     Address     _Buffers[MAX_BUFFERS];       /* Buffers that are allocated by native code. */
     int         _BufferCount;                /* Number of buffers that are currently allocated by native code. */
+#if HAS_STDIO		
     FILE       *_streams[MAX_STREAMS];       /* The file streams to which the VM printing directives sent. */
     int         _currentStream;              /* The currently selected stream */
+#endif
     int         _internalLowResult;          /* Value for INTERNAL_LOW_RESULT */
 
 #if KERNEL_SQUAWK
@@ -229,9 +231,11 @@ boolean     notrap;
 #define pendingMonitorHits                  defineGlobal(pendingMonitorHits)
 #endif /* INTERPRETER_STATS */
 
+#if HAS_STDIO
 #define streams                             defineGlobal(streams)
 #define currentStream                       defineGlobal(currentStream)
-
+#endif
+		
 #if PLATFORM_TYPE_DELEGATING
 #define channelIO_clazz                     defineGlobal(channelIO_clazz)
 #define channelIO_execute                   defineGlobal(channelIO_execute)
@@ -284,9 +288,11 @@ int initializeGlobals(Globals *globals) {
     runningOnServiceThread = true;
     pendingMonitors = &Oops[ROM_GLOBAL_OOP_COUNT];
 
+#if HAS_STDIO
     streams[com_sun_squawk_VM_STREAM_STDOUT] = stdout;
     streams[com_sun_squawk_VM_STREAM_STDERR] = stderr;
     currentStream = com_sun_squawk_VM_STREAM_STDERR;
+#endif
 
 #if TRACE
     setTraceStart(TRACESTART);
@@ -303,9 +309,11 @@ int initializeGlobals(Globals *globals) {
     return 0;
 }
 
+#if DEBUG_CODE_ENABLED
 /**
  * Prints the name and current value of all the globals.
  */
+#if HAS_STDIO
 void printGlobals() {
     FILE *vmOut = streams[currentStream];
 #if TRACE
@@ -332,6 +340,8 @@ void printGlobals() {
     fprintf(vmOut, "printGlobals() requires tracing\n");
 #endif /* TRACE */
 }
+#endif /* HAS_STDIO */
+#endif /* DEBUG_CODE_ENABLED */
 
 /**
  * Sets the stream for the VM.print... methods to one of the com_sun_squawk_VM_STREAM_... constants.
@@ -342,6 +352,7 @@ void printGlobals() {
  * @vm2c proxy( setStream )
  */
 int setStream(int stream) {
+#if HAS_STDIO	
     int result = currentStream;
     currentStream = stream;
     if (streams[currentStream] == null) {
@@ -359,12 +370,16 @@ int setStream(int stream) {
         }
     }
     return result;
+#else
+	return 0;
+#endif
 }
 
 /**
  * Closes all the open files used for VM printing.
  */
 void finalizeStreams() {
+#if HAS_STDIO		
     int i;
     for (i = 0 ; i < MAX_STREAMS ; i++) {
         FILE *file = streams[i];
@@ -377,6 +392,7 @@ void finalizeStreams() {
 #endif /* FLASH_MEMORY */
         }
     }
+#endif /* HAS_STDIO */
 }
 
 /* These macros are useful for recording the current context
@@ -399,3 +415,13 @@ typedef int (*funcPtr9)(int, int, int, int, int, int, int, int, int);
 typedef int (*funcPtr10)(int, int, int, int, int, int, int, int, int, int);
 
 
+extern void cioPrintJavaString(Address o);
+extern void cioPrintAddress(Address x);
+extern void cioPrintCString(char* s);
+extern void cioPrintChar(int ch);
+extern void cioPrintWord(int x);
+extern void cioPrintUWord(int val);
+extern void cioPrintDouble(double d);
+extern void cioPrintFloat(float f);
+extern void cioPrintLong(jlong x);
+extern void cioPrintBytes(char* bytes, int len);

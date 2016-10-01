@@ -81,8 +81,85 @@ INLINE void returnAddressResult(Address value) {
 #include "msg.c"
 #endif
 
+
+
+#if HAS_STDIO
+
+void cioPrintAddress(Address o) {
+    FILE   *vmOut   = streams[currentStream];
+	fprintf(vmOut, "%p", o);
+ 	fflush(vmOut);
+}
+
+void cioPrintCString(char* s) {
+    FILE   *vmOut   = streams[currentStream];
+	fprintf(vmOut, "%s", s);
+ 	fflush(vmOut);
+}
+
+void cioPrintChar(int ch) {
+    FILE   *vmOut   = streams[currentStream];
+	fprintf(vmOut, "%c", ch);
+ 	fflush(vmOut);
+}
+
+void cioPrintWord(int x) {
+    FILE   *vmOut   = streams[currentStream];
+	fprintf(vmOut, "%d", x);
+	fflush(vmOut);
+}
+
+void cioPrintUWord(int val) {
+    FILE   *vmOut   = streams[currentStream];
+	fprintf(vmOut, "0x%x", (UWord)val);
+	fflush(vmOut);
+}
+
+void cioPrintDouble(double d) {
+    FILE   *vmOut   = streams[currentStream];
+	fprintf(vmOut, "%f", d);
+	fflush(vmOut);
+}
+
+void cioPrintFloat(float f) {
+    FILE   *vmOut   = streams[currentStream];
+	fprintf(vmOut, "%f", f);
+	fflush(vmOut);
+}
+
+void cioPrintLong(jlong x) {
+    FILE   *vmOut   = streams[currentStream];
+	fprintf(vmOut, "0x%llx", x);
+	fflush(vmOut);
+}
+
+void cioPrintBytes(char* bytes, int len) {
+    FILE   *vmOut   = streams[currentStream];
+	int i;
+	for (i = 0; i < len; i++) {
+        fprintf(vmOut, "%c", getByte(bytes, i));
+    }
+    fflush(vmOut);
+}
+
+#endif /* HAS_STDIO */
+
+void cioPrintJavaString(Address str) {
+    int i;
+	if (str == null) {
+        cioPrintCString("null");
+    } else {
+        int length = getArrayLength(str);
+        unsigned char *chars = (unsigned char *)str;
+        cioPrintBytes(chars, length);
+    }
+}
+
 /**
  * Execute a channel operation.
+ *
+ *
+ *
  */
 void cioExecute(void) {
 /*  int     context = com_sun_squawk_ServiceOperation_context; */
@@ -97,76 +174,61 @@ void cioExecute(void) {
   */
     Address o1      = com_sun_squawk_ServiceOperation_o1;
 /*  Address o2      = com_sun_squawk_ServiceOperation_o2; */
-    FILE   *vmOut   = streams[currentStream];
 
     switch (op) {
 
         case ChannelConstants_INTERNAL_SETSTREAM: {
             com_sun_squawk_ServiceOperation_result = setStream(i1);
-            assume(streams[currentStream] != null);
             break;
         }
 
         case ChannelConstants_INTERNAL_PRINTSTRING: {
-            printJavaString(o1, vmOut);
+            cioPrintJavaString(o1);
             break;
         }
 
         case ChannelConstants_INTERNAL_PRINTCHAR: {
-            fprintf(vmOut, "%c", i1);
-            fflush(vmOut);
+		    cioPrintChar(i1);
             break;
         }
 
         case ChannelConstants_INTERNAL_PRINTINT: {
-            fprintf(vmOut, "%d", i1);
-            fflush(vmOut);
+		    cioPrintWord(i1);
             break;
         }
 
 /* use this as a proxy for /*if[FLOATS], which can't be used because this file isn't an .spp file */
 #ifdef F_POS_INFINITY
         case ChannelConstants_INTERNAL_PRINTDOUBLE: {
-            fprintf(vmOut, format("%D"), lb2d(makeLong(i1, i2)));
-            fflush(vmOut);
+			cioPrintDouble(lb2d(makeLong(i1, i2)));
             break;
         }
 
         case ChannelConstants_INTERNAL_PRINTFLOAT: {
-            fprintf(vmOut, "%f", ib2f(i1));
-            fflush(vmOut);
+			cioPrintFloat(ib2f(i1));
             break;
         }
 #endif
 
         case ChannelConstants_INTERNAL_PRINTUWORD: {
-            jlong val = makeLong(i1, i2);
-            fprintf(vmOut, format("%A"), (UWord)val);
-            fflush(vmOut);
+		    cioPrintUWord(i1);
             break;
         }
 
         case ChannelConstants_INTERNAL_PRINTOFFSET: {
-            jlong val = makeLong(i1, i2);
-            fprintf(vmOut, format("%O"), val);
-            fflush(vmOut);
+		    cioPrintWord(i1);
             break;
         }
 
         case ChannelConstants_INTERNAL_PRINTLONG: {
             jlong val = makeLong(i1, i2);
-            fprintf(vmOut, format("%L"), val);
-            fflush(vmOut);
+			cioPrintLong(val);
             break;
         }
 
         case ChannelConstants_INTERNAL_PRINTADDRESS: {
             Address val = o1;
-            fprintf(vmOut, format("%A"), val);
-            if (hieq(val, com_sun_squawk_VM_romStart) && lo(val, com_sun_squawk_VM_romEnd)) {
-                fprintf(vmOut, format(" (image @ %O)"), Address_sub(val, com_sun_squawk_VM_romStart));
-            }
-            fflush(vmOut);
+			cioPrintWord((int)val);
             break;
         }
 
@@ -179,17 +241,14 @@ void cioExecute(void) {
             /*fprintf(stderr, "IPB: %d:%d\n", offset, len);*/
             assumeAlways(offset >= 0 && len >= 0);
             assumeAlways(offset + len <= blen);
-            for (i = 0; i < len; i++) {
-                fprintf(vmOut, "%c", getByte(bytes, offset + i));
-            }
-            fflush(vmOut);
+			cioPrintBytes((char*)bytes + offset, len);
             break;
         }
 
-        case ChannelConstants_INTERNAL_PRINTCONFIGURATION: {
-            fprintf(stderr, "native VM build flags: %s\n", BUILD_FLAGS);
-            break;
-        }
+//        case ChannelConstants_INTERNAL_PRINTCONFIGURATION: {
+//            fprintf(stderr, "native VM build flags: %s\n", BUILD_FLAGS);
+//            break;
+//        }
 
 #if DEBUG_CODE_ENABLED
         case ChannelConstants_INTERNAL_PRINTGLOBALS: {
@@ -200,11 +259,11 @@ void cioExecute(void) {
 
         case ChannelConstants_INTERNAL_PRINTGLOBALOOPNAME: {
 #if TRACE
-            fprintf(vmOut, "%s", getGlobalOopName(i1));
+	        cioPrintCString(getGlobalOopName(i1));
 #else
-            fprintf(vmOut, "Global oop:%d", i1);
+			cioPrintCString("Global oop:");
+			cioPrintWord(i1);
 #endif /* TRACE */
-            fflush(vmOut);
             break;
         }
 #endif /* DEBUG_CODE_ENABLED */

@@ -1001,6 +1001,8 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
  */
 //#define UNICODE true
 
+// moved to cio.c.inc
+#if 0
         /**
          * Prints the contents of a Java String object to a given stream.
          * No trailing '\0' is printed/appended.
@@ -1040,6 +1042,7 @@ static Address         Isolate_getClassStateForInterpreter_L(Address, Address);
             fflush(out);
             return written;
         }
+#endif
 
         /**
          * Appends the contents of a Java String object
