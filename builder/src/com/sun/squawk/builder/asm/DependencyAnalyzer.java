@@ -31,7 +31,6 @@ public class DependencyAnalyzer {
 		"com/sun/squawk/vm/FieldOffsets",
 		"com/sun/squawk/vm/MethodOffsets",
 		"com/sun/squawk/vm/ChannelConstants",
-		"java/lang/Object",
 	};
 		
 //	static String builtinMethods[];
@@ -65,6 +64,17 @@ public class DependencyAnalyzer {
 		"com/sun/squawk/Klass.setClassFileDefinition(Lcom/sun/squawk/Klass;[Lcom/sun/squawk/Klass;[Lcom/sun/squawk/ClassFileMethod;[Lcom/sun/squawk/ClassFileMethod;[Lcom/sun/squawk/ClassFileField;[Lcom/sun/squawk/ClassFileField;Ljava/lang/String;)V",
 		"com/sun/squawk/Klass.changeState(B)V",
 		"com/sun/squawk/JavaApplicationManager.main([Ljava/lang/String;)V",
+		"java/lang/Object.notify()V",
+		"java/lang/Object.notifyAll()V",
+		"java/lang/Object.wait(J)V",
+		"java/lang/Object.wait(JI)V",
+		"java/lang/Object.wait()V",
+		"java/lang/Object.getClass()Ljava/lang/Class;",
+//		"java/lang/Object.hashCode()I",
+//		"java/lang/Object.equals(Ljava/lang/Object;)Z",
+//		"java/lang/Object.toString()Ljava/lang/String;",
+		"java/lang/Object.abstractMethodError()V",
+		"java/lang/Object.missingMethodError()V",
 	};
 
 	static String builtinFields[] = {
@@ -104,7 +114,11 @@ public class DependencyAnalyzer {
 		"com/sun/squawk/CheneyCollector$Timings.finalize",
 		"com/sun/squawk/GarbageCollector.references",
 		"com/sun/squawk/GarbageCollector.numBytesLastScanned",
+		"com/sun/squawk/Ref.next",
 		"com/sun/squawk/Ref.referent",
+		"com/sun/squawk/Ref.sink",
+		"com/sun/squawk/Ref.self",
+		"com/sun/squawk/Sink.head",
 		"com/sun/squawk/ServiceOperation.EXTEND",
 		"com/sun/squawk/ServiceOperation.THROW",
 		"com/sun/squawk/ServiceOperation.NONE",
@@ -323,7 +337,7 @@ public class DependencyAnalyzer {
 		}
 		for (MethodNode m2 : methods) {
 			ClassNode d = m2.definingClass;
-			if (d.isAssignableFrom(n) || n.isAssignableFrom(d)) {
+			if (/*d.isAssignableFrom(n) ||*/ n.isAssignableFrom(d)) {
 				MethodNode mn = definedMethodNames.get(m2.name + m2.desc);
 				if (mn != null) {
 					if (!methods.contains(mn)) {
@@ -388,6 +402,7 @@ public class DependencyAnalyzer {
 				for (MethodNode m: n.methods) {
 					if (m.name.equals("<init>")) {
 						nextNodes.add(m);
+						break;
 					}
 				}
 			}
