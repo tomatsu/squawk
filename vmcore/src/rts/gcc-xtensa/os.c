@@ -1,28 +1,27 @@
+//#define USE_US_TIMER
 #include <mem.h>
 #include <osapi.h>
 #include <uart.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <ets_sys.h>
 #include <user_interface.h>
+#define ICACHE_RAM_ATTR __attribute__((section(".iram0.text")))
 
 //#define IODOTC
 extern int os_printf_plus(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 #define printf os_printf_plus
+#define malloc os_malloc
+#define free os_free
 
 #define CIO_STDIO_H cio_esp.c.inc
 
 #define jlong  int64_t
-
 static jlong _counter;
 
-static void cb(void) {
-	_counter++;
-}
+static os_timer_t timer;
 
 static void initTickCount() {
-	hw_timer_init(0, 1);
-	hw_timer_set_func(cb);
-	hw_timer_arm(1000);
 }
 
 static void initSerial() {
@@ -30,17 +29,14 @@ static void initSerial() {
 }
 
 void sysInitialize() {
-    initTickCount();
-	initSerial();
 }
 
 jlong sysTickCount(){
-    return _counter;
+	return (jlong)(system_get_time() / 1000);
 }
 
 jlong sysTimeMicros() {
-    extern jlong sysTimeMillis(void);
-    return sysTimeMillis() * 1000;
+	return (jlong)system_get_time();
 }
 
 jlong sysTimeMillis(void) {
@@ -48,27 +44,23 @@ jlong sysTimeMillis(void) {
 }
 
 void *sysValloc(int size) {
-	return (void*)os_malloc(size);
+	return (void*)malloc(size);
 }
 
 void sysVallocFree(void* p){
-	os_free(p);
+	free(p);
 }
 
-int getEvent() {
-	system_soft_wdt_feed();
-	return 0;
-}
 
 void osMilliSleep(long long millis) {
-    long long target = sysTickCount() + millis;
-    long long maxValue = 0x7FFFFFFFFFFFFFFFLL;
-    if (target <= 0) target = maxValue; // overflow detected
-    while (1) {
-//        if (checkForEvents()) break;
+//	printf("osMilliSleep\r\n");
+	int64_t target = sysTickCount() + millis;
+    if (target <= 0) target = 0x7FFFFFFFFFFFFFFFLL; // overflow detected
+
+    for (;;) {
+        if (checkForEvents()) break;
         if (sysTickCount() > target) break;
 		os_delay_us(1000);
-		system_soft_wdt_feed();
 	}
 }
 
@@ -142,6 +134,9 @@ int checkForEvents() {
  * return 0.
  */
 int getEventPrim(int removeEventFlag) {
+//	printf("ets_loop_iter\n");
+	ets_loop_iter();
+	
         int res = 0;
         if (irqRequests == NULL) {
         	return 0;
@@ -211,9 +206,58 @@ int get_wifi_event(int clear) {
 	if (clear) {
 		wifi_event = 0;
 	}
+//	if (ret) printf("get_wifi_event %d\n", ret);
 	return ret;
 }
 
 void set_wifi_event(int event) {
+//		printf("set_wifi_event %d\n", event);
 	wifi_event = event;
+}
+
+
+/* entry point */
+extern int Squawk_main_wrapper(int argc, char *argv[]);
+
+static void init_done(void) {
+	Squawk_main_wrapper(0, 0);
+}
+
+uint32 ICACHE_FLASH_ATTR
+user_rf_cal_sector_set(void)
+{
+    enum flash_size_map size_map = system_get_flash_size_map();
+    uint32 rf_cal_sec = 0;
+
+    switch (size_map) {
+        case FLASH_SIZE_4M_MAP_256_256:
+            rf_cal_sec = 128 - 5;
+            break;
+
+        case FLASH_SIZE_8M_MAP_512_512:
+            rf_cal_sec = 256 - 5;
+            break;
+
+        case FLASH_SIZE_16M_MAP_512_512:
+        case FLASH_SIZE_16M_MAP_1024_1024:
+            rf_cal_sec = 512 - 5;
+            break;
+
+        case FLASH_SIZE_32M_MAP_512_512:
+        case FLASH_SIZE_32M_MAP_1024_1024:
+            rf_cal_sec = 1024 - 5;
+            break;
+
+        default:
+            rf_cal_sec = 0;
+            break;
+    }
+
+    return rf_cal_sec;
+}
+
+void user_init(void) {
+    initTickCount();
+	initSerial();
+    system_init_done_cb(init_done);
 }

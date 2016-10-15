@@ -5,11 +5,13 @@ typedef void* Address;
 typedef long long jlong;
 
 void cioPrintCString(char* s) {
-	uart0_tx_buffer(s, (uint16)strlen(s));
+	while (*s) {
+		   uart_tx_one_char_no_wait(UART0, *s++);
+	}
 }
 
 void cioPrintChar(int ch) {
-    uart_tx_one_char(UART0, ch);	
+    uart_tx_one_char_no_wait(UART0, ch);	
 }
 
 void cioPrintWord(int x) {
@@ -39,5 +41,8 @@ void cioPrintLong(jlong x) {
 }
 
 void cioPrintBytes(char* bytes, int len) {
-	uart0_tx_buffer(bytes, len);
+		int i;
+		for (i = 0; i < len; i++) {
+		   uart_tx_one_char_no_wait(UART0, *bytes++);
+		}
 }
