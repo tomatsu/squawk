@@ -2,6 +2,7 @@
 AT ?= @
 CFLAGS_OPTS = -Os -mlongcalls -mforce-l32
 CFLAGS_DEP = -MD
+CFLAGS += -std=gnu99
 
 JAVA = java
 JAVAC = javac
@@ -20,13 +21,14 @@ BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE) -DMAIN_CLASS_NAME=$(MAIN_CLASS_NAM
 INCLUDE_DIRS += $(ESP_SDK)/include .
 INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/gcc-xtensa
 INCLUDE_DIRS += $(ESP_SDK)/include $(ESP_SDK)/driver_lib/include/driver
+INCLUDE_DIRS += $(SQUAWK_TOP)/targets/esp8266/src/native
 CFLAGS += $(CFLAGS_ARCH) $(DEVICE_OPTIONS) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) $(CFLAGS_DEP)
-LDFLAGS += $(CFLAGS_ARCH) -T$(LINKERSCRIPT) -Wl,-gc-sections
-LDSUFFIXES += -L$(ESP_SDK)/lib -nostdlib -Wl,--start-group -lmain -lnet80211 -lwpa -llwip -lpp -lphy -ldriver -lgcc -lc -lm -Wl,--end-group 
+LDFLAGS += $(LDLAGS_ARCH) -T$(LINKERSCRIPT) -Wl,--gc-sections -Wl,--Map=$(@:.elf=.map) -Wl,--cref
+LDSUFFIXES += -L$(ESP_SDK)/lib -nostdlib -Wl,--start-group -lcrypto -lmain -lnet80211 -lwpa -lwpa2 -lwps -llwip -lpp -lphy -ldriver -lgcc -lcirom -lm -Wl,--end-group 
 TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
 CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes
 
-C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/rts/gcc-xtensa
+C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/rts/gcc-xtensa $(SQUAWK_TOP)/targets/esp8266/src/native
 C_SOURCE_FILES  = $(shell for i in $(patsubst %,%/*.c,$(C_SOURCE_DIRS)); do if [ -f $$i ]; then basename $$i; fi; done)
 OBJECT_DIR = $(BUILD_TOP)/obj
 OBJECT_DIR_0 = $(BUILD_TOP)/obj_0
@@ -34,7 +36,7 @@ OBJECT_FILES = $(patsubst %.c,$(OBJECT_DIR)/%.o,$(C_SOURCE_FILES))
 OBJECT_FILES += $(OBJECT_DIR)/squawk.suite.o
 DEPENDS = $(patsubst %.o,%.d,$(OBJECT_FILES))
 
-JAVA_SOURCE_FILES = $(shell $(FIND) src/classes -name '*.java' -print)
+JAVA_SOURCE_FILES = $(shell $(FIND) src/classes $(SQUAWK_TOP)/targets/esp8266/src/classes -name '*.java' -print)
 
 vpath %.c $(C_SOURCE_DIRS)
 

@@ -30,11 +30,11 @@ makefile:
 	$(AT)echo "MAIN_CLASS_NAME = $(MAIN_CLASS_NAME)" >> $(PROJECT_DIR)/Makefile
 	$(AT)cat makefile_esp.tmpl >> $(PROJECT_DIR)/Makefile
 	$(AT)(cd targets/$(TARGET)/; tar cf - .) | (cd $(PROJECT_DIR)/; tar xf -)
-	$(AT)cp $(ESP_SDK)/ld/eagle.rom.addr.v6.ld $(PROJECT_DIR)
 
 all: copy_squawk makefile copy_app
 
 else
+
 # assume MBED
 FILELIST = files_mbed.txt
 MBED = mbed/.build/mbed

@@ -51,11 +51,14 @@ vmcore/src/vm/suite.c.inc
 vmcore/src/vm/io_native.c.inc
 vmcore/src/vm/devices.c.inc
 vmcore/src/rts/gcc-xtensa/os.c
-vmcore/src/rts/gcc-xtensa/os_main.c.inc
 vmcore/src/rts/gcc-xtensa/os_math.h
 vmcore/src/rts/gcc-xtensa/cio_esp.c
 vmcore/src/rts/gcc-xtensa/platform_md.h
 vmcore/src/rts/gcc-xtensa/io_esp.c.inc
+vmcore/src/rts/gcc-xtensa/mem.c
+vmcore/src/rts/gcc-xtensa/ets_alt_task.c
+vmcore/src/rts/gcc-xtensa/ets_alt_task.h
+vmcore/src/rts/gcc-xtensa/etshal.h
 mapper/classes.jar
 cldc/classes.jar
 cldc/classes.target.jar
@@ -65,3 +68,4 @@ romizer/classes.jar
 build.properties
 squawk.exclude
 squawk.library.properties
+targets/esp8266
