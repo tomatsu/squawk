@@ -2667,9 +2667,9 @@ public class Arrays {
      * @since 1.6
      */
     public static <T,U> T[] copyOf(U[] original, int newLength, Class<? extends T[]> newType) {
-        T[] copy = ((Object)newType == (Object)Object[].class)
+        T[] copy = (Klass.asKlass(newType) == Klass.OBJECT_ARRAY)
             ? (T[]) new Object[newLength]
-            : (T[]) VM.newarray(newLength, Klass.asKlass(newType).getComponentType());
+            : (T[]) VM._newarray(newLength, Klass.asKlass(newType).getComponentType());
         System.arraycopy(original, 0, copy, 0,
                          Math.min(original.length, newLength));
         return copy;

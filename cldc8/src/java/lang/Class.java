@@ -384,9 +384,9 @@ public final class Class<T> {
      * class if this class is an array
      * @since JDK1.1
      */
-//    public Class<?> getComponentType() {
-//        return Klass.asClass(klass.getComponentType());
-//    }
+    public Class<?> getComponentType() {
+        return Klass.asClass(klass.getComponentType());
+    }
 /*end[JAVA5SYNTAX]*/
 
 

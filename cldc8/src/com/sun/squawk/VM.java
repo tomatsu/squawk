@@ -565,7 +565,7 @@ public class VM implements GlobalStaticFields {
     public static Object newarray(int size, Klass klass) throws InterpreterInvokedPragma {
         return GC.newArray(klass, size);
     }
-
+	
     /**
      * Allocate and add a new dimension to an array.
      *
@@ -4819,6 +4819,11 @@ hbp.dumpState();
 		return value;
 	}
 
+    public static Object _newarray(int size, Klass klass)  {
+        return GC.newArray(klass, size);
+	}
+
+	
 //    public static void setBlocked(boolean b) {
 //        isBlocked = b;
 //    }
