@@ -43,7 +43,7 @@ public class NativeGlueGen implements Opcodes {
 	}
 	
 	static String constantName(String className, String methodName) {
-		return className.replace('/', '_') + "_" + methodName;
+		return className.replace('/', '_') + "_" + mangle(methodName);
 	}
 
 	static String funcName(String className, String methodName) {
@@ -355,6 +355,19 @@ public class NativeGlueGen implements Opcodes {
 	static void defineInt(ClassWriter cw, String fieldName, int value) {
 		cw.visitField(ACC_PUBLIC|ACC_STATIC, fieldName, "I", null, value);
 	}
+
+	static String mangle(String name) {
+		StringBuilder sbuf = new StringBuilder();
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if (c == '_') {
+				sbuf.append("_1");
+			} else {
+				sbuf.append(c);
+			}
+		}
+		return sbuf.toString();
+	}
 	
 	static void generateJavaConstants() throws IOException {
 		ClassWriter cw = new ClassWriter(0);
@@ -372,7 +385,7 @@ public class NativeGlueGen implements Opcodes {
 			Set<MethodInfo> methods = nativeMethodMap.get(className);
 			if (methods != null) {
 				for (MethodInfo mi : methods) {
-					defineIntConstant(cw, className.replace('/', '_') + "$" + mi.name, id++);
+					defineIntConstant(cw, className.replace('/', '_') + "$" + mangle(mi.name), id++);
 				}
 			}
 		}
@@ -382,7 +395,7 @@ public class NativeGlueGen implements Opcodes {
 			Set<MethodInfo> methods = nativeMethodMap.get(className);
 			if (!builtinClassSet.contains(className)) {
 				for (MethodInfo mi : methods) {
-					defineIntConstant(cw, className.replace('/', '_') + "$" + mi.name, id++);
+					defineIntConstant(cw, className.replace('/', '_') + "$" + mangle(mi.name), id++);
 				}
 			}
 		}
@@ -393,7 +406,7 @@ public class NativeGlueGen implements Opcodes {
 			String className = builtinClasses[i];
 			Set<MethodInfo> methods = nativeMethodMap.get(className);
 			for (MethodInfo mi : methods) {
-				list.add(className.replace('/', '.') + "." + mi.name);
+				list.add(className.replace('/', '.') + "." + mangle(mi.name));
 			}
 		}
 		defineLinkableNativeMethodTable(cw, list);

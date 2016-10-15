@@ -5841,7 +5841,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
             checkReferenceSlots();
             if (unlikely(needsInitializing(getCP()))) {
                 pushAddress(getCP());
-                call(com_sun_squawk_VM_class_clinit);
+                call(com_sun_squawk_VM_class_1clinit);
             }
         }
 
@@ -5892,7 +5892,7 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
                 }
                 pushAddress(klass);
             }
-            call(com_sun_squawk_VM__new);
+            call(com_sun_squawk_VM__1new);
         }
 
         /**

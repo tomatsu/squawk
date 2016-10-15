@@ -1030,7 +1030,21 @@ public class VM {
 			for (int i = 0 ; i < fields.length ; i++) {
 				java.lang.reflect.Field field = fields[i];
 				if (field.getType() == Integer.TYPE) {
-					String name = field.getName().replace('_', '.').replace('$', '.');
+					String fieldName = field.getName();
+					int idx = fieldName.indexOf('$');
+					if (idx < 0) {
+						int number = field.getInt(null);
+						methodTable.put(fieldName, new Integer(number));
+						unused.put(fieldName, fieldName);
+						continue;
+					}
+					String className = fieldName.substring(0, idx);
+					String methodName = fieldName.substring(idx + 1);
+					
+//					String name = field.getName().replace('_', '.').replace('$', '.');
+//					String name = demangle(field.getName());
+					String name = demangle(className) + "." + demangle(methodName);
+
 					int number = field.getInt(null);
 					methodTable.put(name, new Integer(number));
 					unused.put(name, name);
@@ -1041,6 +1055,38 @@ public class VM {
             ex.printStackTrace(System.err);
             System.exit(-1);
         }
+	}
+
+	private static String demangle(String name) {
+		StringBuilder sbuf = new StringBuilder();
+		int state = 0;
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if (c == '_') {
+				if (state == 0) {
+					state = 1;
+				} else {
+					sbuf.append('.');
+				}
+			} else if (c == '$') {
+				sbuf.append('.');
+				state = 0;
+			} else if (c == '1') {
+				if (state == 1) {
+					sbuf.append('_');
+				} else {
+					sbuf.append('1');
+				}
+				state = 0;
+			} else {
+				if (state == 1) {
+					sbuf.append('.');
+				}
+				sbuf.append(c);
+				state = 0;
+			}
+		}
+		return sbuf.toString();
 	}
 	
     /**
@@ -1104,13 +1150,29 @@ public class VM {
         }
     }
 
+	
+	static String mangle(String name) {
+		StringBuilder sbuf = new StringBuilder();
+		for (int i = 0; i < name.length(); i++) {
+			char c = name.charAt(i);
+			if (c == '_') {
+				sbuf.append("_1");
+			} else if (c == '.') {
+				sbuf.append('_');
+			} else {
+				sbuf.append(c);
+			}
+		}
+		return sbuf.toString();
+	}
+	
     public static void listUnusedNativeMethods(PrintStream out) {
     	for (Map.Entry<String, Integer> entry : methodTable.entrySet()) {
 		String key = entry.getKey();
 		if (unused.get(key) != null) {
-			out.println("#define Mask_"+key.replace('.', '_') + "(b)");
+			out.println("#define Mask_"+ mangle(key) + "(b)");
 		} else {
-			out.println("#define Mask_"+key.replace('.', '_') + "(b) b");
+			out.println("#define Mask_"+ mangle(key) + "(b) b");
 		}
         }
     }

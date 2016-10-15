@@ -356,7 +356,7 @@ public final class CHeaderFileCreator {
         }
 
         String toCName() {
-            return fix(klass.getName() + '_' + meth.getName());
+            return fix(klass.getName()) + '_' + fix(meth.getName());
         }
     }
 
@@ -381,13 +381,13 @@ public final class CHeaderFileCreator {
 //            return;// ignore this class
 //        }
 
-        out.println("#define " + fix(klass.getName()) + " " + cid);
+        out.println("#define " + fixType(klass.getName()) + " " + cid);
 
         // Write the instance field getters.
         int fieldCount = klass.getFieldCount(false);
         for (int fid = 0; fid != fieldCount; fid++) {
             Field field = klass.getField(fid, false);
-            String wholeName = fix(klass.getName() + '_' + field.getName());
+            String wholeName = klass.getName().replace('.', '_').replace('$', '_') + '_' + field.getName();
             out.print("#define " + wholeName + "(oop) ");
             switch (field.getType().getSystemID()) {
                 case CID.BOOLEAN:
@@ -424,7 +424,7 @@ public final class CHeaderFileCreator {
         // Write the instance field setters.
         for (int fid = 0; fid != fieldCount; fid++) {
             Field field = klass.getField(fid, false);
-            String wholeName = fix(klass.getName() + '_' + field.getName());
+            String wholeName = klass.getName().replace('.', '_').replace('$', '_') + '_' + field.getName();
             out.print("#define set_" + wholeName + "(oop, value) ");
             switch (field.getType().getSystemID()) {
                 case CID.BOOLEAN:
@@ -494,7 +494,13 @@ public final class CHeaderFileCreator {
                         throw new RuntimeException("need another case statement for constants of type " + field.getType().getName());
                 }
 
-                String name = fix(klass.getName() + '_' + field.getName());
+//                String name = fix(klass.getName()) + '_' + field.getName().replace('$', '_');
+                String name;
+//				if (klass.getName().equals("com.sun.squawk.vm.Native")) {
+//					name = fix(klass.getName()) + '_' + fix(field.getName());
+//				} else {
+					name = fix(klass.getName()) + '_' + field.getName().replace('$', '_');
+//				}
                 if (name.startsWith("com_sun_squawk_vm_")) {
                     name = name.substring("com_sun_squawk_vm_".length());
                 }
@@ -553,8 +559,8 @@ public final class CHeaderFileCreator {
 		out.println("#define setInt(base, offset, value)  ((int *)base)[offset] = value");
 		out.println("#define getLongAtWord(base, offset) ((int64_t *)base)[offset]");
 		out.println("#define setLongAtWord(base, offset, value) ((int64_t *)base)[offset] = value");
-		out.println("#define getObject(base, offset)  ((unsigned int *)base)[offset]");
-		out.println("#define setObject(base, offset, value)  ((unsigned int *)base)[offset] = value");
+		out.println("#define getObject(base, offset)  (void*)((uint32_t *)base)[offset]");
+		out.println("#define setObject(base, offset, value)  ((uint32_t *)base)[offset] = (uint32_t)value");
 		out.println("#endif");
 
         // Write the CID definitions.
@@ -686,19 +692,35 @@ public final class CHeaderFileCreator {
     }
 
     /**
-     * Fixup a sumbol.
+     * Fixup a symbol.
      *
      * @param str the symbol name
      * @return the symbol with '.' and '$' turned into '_' and primitive types made upper case
      */
     private static String fix(String str) {
-        str = str.replace('.', '_');
-        str = str.replace('$', '_');
+		StringBuilder sbuf = new StringBuilder();
+		for (int i = 0; i < str.length(); i++) {
+			char c = str.charAt(i);
+			if (c == '.') {
+				sbuf.append('_');
+			} else if (c == '$') {
+				sbuf.append('_');
+			} else if (c == '_') {
+				sbuf.append("_1");
+			} else {
+				sbuf.append(c);
+			}
+		}
+		return sbuf.toString();
+    }
+
+    private static String fixType(String str) {
+		str = fix(str);
         if (str.indexOf('_') == -1) {
             str = str.toUpperCase(); // int, float, etc.
         }
-        return str;
-    }
+		return str;
+	}
 
     /**
      * Get a string property
