@@ -1193,7 +1193,7 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     offset = writeCStringArray(argc, argv, Address_diff(com_sun_squawk_VM_argv, memory));
 
     // Ensure that the buffer did not overflow
-    assumeAlways(loeq(Address_add(memory, offset), memoryEnd));
+//    assumeAlways(loeq(Address_add(memory, offset), memoryEnd));
 
     // Ensure all the buffers start at word aligned addresses.
     assume(isWordAligned((UWord)com_sun_squawk_VM_romStart));
@@ -2292,8 +2292,6 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
     
     return 0;
 }
-
-#include "os_main.c.inc"
 
 /**
  * lookup a klass from the bootstrap suite

@@ -290,3 +290,11 @@ void osMilliSleep(long long millis) {
 		__WFE();
 	}
 }
+
+/* entry point */
+
+extern int Squawk_main_wrapper(int argc, char *argv[]);
+
+int main(int argc, char *argv[]) {
+    return Squawk_main_wrapper(argc, argv);
+}

@@ -80,3 +80,11 @@ jint createJVM(JavaVM **jvm, void **env, void *args) {
     return CreateJavaVM(jvm, env, args) == 0;
 }
 #endif
+
+/* entry point */
+
+extern int Squawk_main_wrapper(int argc, char *argv[]);
+
+int main(int argc, char *argv[]) {
+    return Squawk_main_wrapper(argc, argv);
+}
