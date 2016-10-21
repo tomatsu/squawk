@@ -385,6 +385,9 @@ class MacroDefinition {
 
         if (isVoid) {
             currentLine.append(localsDecl.toString().replace('$', ' '));
+			for (String v : locals.values()) {
+				currentLine.append("(void)" + v + "; ");
+			}
         }
     }
 
