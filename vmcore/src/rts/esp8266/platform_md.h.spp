@@ -1,0 +1,106 @@
+/*
+ * Copyright 2004-2010 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright 2011 Oracle Corporation. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This code is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2
+ * only, as published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included in the LICENSE file that accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Oracle Corporation, 500 Oracle Parkway, Redwood
+ * Shores, CA 94065 or visit www.oracle.com if you need additional
+ * information or have any questions.
+ */
+
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+#define HAS_STDIO 0
+
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <string.h>
+
+#define IODOTC "io_esp.c.inc"
+
+typedef int64_t jlong;
+
+#define JLONG_CONSTANT(c) c ## LL
+#define pathSeparatorChar ':'
+#define fileSeparatorChar '/'
+#define FORCE_USED __attribute__((used))
+
+#undef  ujlong
+#define ujlong uint64_t
+
+#define NOINLINE __attribute__ ((noinline))
+#define NORETURN
+
+/*if[KERNEL_SQUAWK]*/
+#ifndef MAXSIG
+#    define MAXSIG 32
+#endif
+/*end[KERNEL_SQUAWK]*/
+
+#ifndef max
+#define	max(a, b) 		((a) < (b) ? (b) : (a))
+#define	min(a, b) 		((a) > (b) ? (b) : (a))
+#define	abs(x)			((x) >= 0 ? (x) : -(x))
+#endif
+
+#define sysPlatformName() "esp8266"
+
+#define fprintf(s, ...) os_printf_plus( __VA_ARGS__ )
+#define printf os_printf_plus
+#define fflush(s)
+#define exit(s) 
+#define fmod JFP_lib_fmod
+#define fmodf(a,b) (float)fmod(a,b)
+
+#define sysGetPageSize() 128
+#define sysToggleMemoryProtection(x,y,z)
+//#define ioExecute() 
+
+#define osloop()        system_soft_wdt_feed()
+#define osbackbranch()  /**/
+#define osfinish()      system_deep_sleep(0)
+
+#define TRUE 1
+#define FALSE 0
+
+/*
+ * porting layer
+ */
+ 
+extern void sysInitialize();
+extern void* sysValloc(int s);
+extern void sysVallocFree(void* p);
+extern int64_t sysTimeMillis(void);
+extern void osMilliSleep(int64_t millis);
+extern int storeIrqRequest (int type);
+extern int getEvent();
+
+#if !HAS_STDIO
+extern void cioPrintCString(char* s);
+extern void cioPrintChar(int ch);
+extern void cioPrintWord(int x);
+extern void cioPrintUWord(int val);
+extern void cioPrintDouble(double d);
+extern void cioPrintFloat(float f);
+extern void cioPrintLong(jlong x);
+extern void cioPrintBytes(char* bytes, int len);
+#endif
