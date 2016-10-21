@@ -145,7 +145,6 @@ void cioPrintBytes(char* bytes, int len) {
 #endif /* HAS_STDIO */
 
 void cioPrintJavaString(Address str) {
-    int i;
 	if (str == null) {
         cioPrintCString("null");
     } else {
