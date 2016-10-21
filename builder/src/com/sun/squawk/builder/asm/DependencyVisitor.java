@@ -279,6 +279,12 @@ public class DependencyVisitor extends ClassVisitor {
 //        @Override
         public void visitLdcInsn(final Object cst) {
 //            addConstant(cst);
+			if (cst instanceof Type) {
+				Type t = (Type)cst;
+				if (t.getSort() == Type.OBJECT) {
+					currentMethod.addClassRef(getClassNode(t.getClassName().replace('.', '/')));
+				}
+			}
         }
 
 //        @Override

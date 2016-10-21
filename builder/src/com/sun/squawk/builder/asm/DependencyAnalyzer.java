@@ -75,6 +75,7 @@ public class DependencyAnalyzer {
 //		"java/lang/Object.toString()Ljava/lang/String;",
 		"java/lang/Object.abstractMethodError()V",
 		"java/lang/Object.missingMethodError()V",
+		"java/lang/Class.getComponentType()Ljava/lang/Class;",
 	};
 
 	static String builtinFields[] = {
