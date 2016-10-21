@@ -50,11 +50,8 @@ vmcore/src/vm/io_native.c.inc
 vmcore/src/vm/devices.c.inc
 vmcore/src/rts/gcc-arm/hal-io.c.inc
 vmcore/src/rts/gcc-arm/os_math.h
-vmcore/src/rts/gcc-arm/timer_event.c
-vmcore/src/rts/gcc-arm/gpio_event.c
-vmcore/src/rts/gcc-arm/os.c
-vmcore/src/rts/gcc-arm/os_main.c.inc
 vmcore/src/rts/gcc-arm/platform_md.h
+targets/mbed
 mapper/classes.jar
 cldc/classes.jar
 cldc/classes.target.jar

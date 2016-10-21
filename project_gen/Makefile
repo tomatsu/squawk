@@ -57,11 +57,7 @@ mbed_sdk :
 
 mbed_hdr :
 	$(AT)mkdir -p $(PROJECT_DIR)/mbed
-	$(AT)cp $(MBED)/*h $(PROJECT_DIR)/mbed
-	$(AT)tar cf - -C $(MBED) TARGET_$(TARGET) | (cd $(PROJECT_DIR)/mbed; tar xf -)
-
-hal:
-	$(AT)(cd ..; tar cf - targets/mbed_hal/src) | (cd $(PROJECT_DIR); tar xf -)
+	$(AT)tar cf - -C $(MBED) hal platform TARGET_$(TARGET) | (cd $(PROJECT_DIR)/mbed; tar xf -)
 
 makefile:
 	$(AT)echo "MBED = mbed" > $(PROJECT_DIR)/Makefile
@@ -71,7 +67,7 @@ makefile:
 	$(AT)cat $(TEMPLATE) >> $(PROJECT_DIR)/Makefile
 	$(AT)(cd targets/$(TARGET)/; tar cf - .) | (cd $(PROJECT_DIR)/; tar xf -)
 
-all: mbed_sdk mbed_hdr hal copy_squawk makefile copy_app
+all: mbed_sdk mbed_hdr copy_squawk makefile copy_app
 
 endif
 endif

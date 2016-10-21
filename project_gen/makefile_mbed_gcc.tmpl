@@ -22,21 +22,22 @@ JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar mbed_hal.jar
 BUILD_FLAGS = -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
 BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE) -DMAIN_CLASS_NAME=$(MAIN_CLASS_NAME)
 BUILD_FLAGS += -DTARGET_$(TARGET) -DTARGET_$(MCU)
-INCLUDE_DIRS += $(MBED) $(MBED)/TARGET_$(TARGET) $(MBED)/TARGET_$(TARGET)/TARGET_$(VENDOR)/TARGET_$(MCU) $(MBED)/TARGET_$(TARGET)/TARGET_$(VENDOR)/TARGET_$(MCU)/TARGET_$(DEVICE)
+INCLUDE_DIRS += $(MBED) $(MBED)/hal $(MBED)/platform $(MBED)/TARGET_$(TARGET) $(MBED)/TARGET_$(TARGET)/TARGET_$(VENDOR)/TARGET_$(MCU) $(MBED)/TARGET_$(TARGET)/TARGET_$(VENDOR)/TARGET_$(MCU)/TARGET_$(DEVICE) $(MBED)/TARGET_$(TARGET)/TARGET_$(VENDOR)/TARGET_$(MCU)/device
 INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/gcc-arm
+INCLUDE_DIRS += $(SQUAWK_TOP)/targets/mbed/src/native
 CFLAGS += $(CFLAGS_ARCH) $(DEVICE_OPTIONS) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) $(CFLAGS_DEP)
 LDFLAGS += $(CFLAGS_ARCH) -T$(LINKERSCRIPT) --specs=nano.specs $(CFLAGS_OPTS) -Wl,-gc-sections -Wl,--no-wchar-size-warning
 LDSUFFIXES += -L$(LIBDIR) $(LIBDIR)/*.o -lmbed -lc -lm -lnosys
 TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
 CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes hal_classes mbed_hal.jar
 
-C_SOURCE_DIRS = src/native targets/mbed_hal/src/native $(SQUAWK_TOP)/vmcore/src/rts/gcc-arm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm
+C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/rts/gcc-arm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/targets/mbed/src/native
 C_SOURCE_FILES  = $(shell for i in $(patsubst %,%/*.c,$(C_SOURCE_DIRS)); do if [ -f $$i ]; then basename $$i; fi; done)
 OBJECT_DIR = $(BUILD_TOP)/obj
 OBJECT_FILES = $(patsubst %.c,$(OBJECT_DIR)/%.o,$(C_SOURCE_FILES))
 OBJECT_FILES += $(OBJECT_DIR)/squawk.suite.o
 DEPENDS = $(patsubst %.o,%.d,$(OBJECT_FILES))
-HAL_CLASSES_JAVA = $(shell $(FIND) targets/mbed_hal/src/classes targets/mbed_hal/src/targets/$(TARGET)/classes -name '*.java' -print)
+HAL_CLASSES_JAVA = $(shell $(FIND) $(SQUAWK_TOP)/targets/mbed/src/classes $(SQUAWK_TOP)/targets/mbed/src/targets/$(TARGET)/classes -name '*.java' -print)
 
 JAVA_SOURCE_FILES = $(shell $(FIND) src/classes -name '*.java' -print)
 
