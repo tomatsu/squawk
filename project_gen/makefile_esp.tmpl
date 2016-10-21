@@ -19,8 +19,8 @@ JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar
 BUILD_FLAGS = -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
 BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE) -DMAIN_CLASS_NAME=$(MAIN_CLASS_NAME)
 INCLUDE_DIRS += $(ESP_SDK)/include .
-INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/gcc-xtensa
-INCLUDE_DIRS += $(ESP_SDK)/include $(ESP_SDK)/driver_lib/include/driver
+INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/esp8266
+INCLUDE_DIRS += $(ESP_SDK)/include $(ESP_SDK)/driver_lib/include/driver $(ESP_SDK)/../esp-open-lwip/include
 INCLUDE_DIRS += $(SQUAWK_TOP)/targets/esp8266/src/native
 CFLAGS += $(CFLAGS_ARCH) $(DEVICE_OPTIONS) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) $(CFLAGS_DEP)
 LDFLAGS += $(LDLAGS_ARCH) -T$(LINKERSCRIPT) -Wl,--gc-sections -Wl,--Map=$(@:.elf=.map) -Wl,--cref
@@ -28,7 +28,7 @@ LDSUFFIXES += -L$(ESP_SDK)/lib -nostdlib -Wl,--start-group -lcrypto -lmain -lnet
 TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
 CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes
 
-C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/rts/gcc-xtensa $(SQUAWK_TOP)/targets/esp8266/src/native
+C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/rts/esp8266 $(SQUAWK_TOP)/targets/esp8266/src/native
 C_SOURCE_FILES  = $(shell for i in $(patsubst %,%/*.c,$(C_SOURCE_DIRS)); do if [ -f $$i ]; then basename $$i; fi; done)
 OBJECT_DIR = $(BUILD_TOP)/obj
 OBJECT_DIR_0 = $(BUILD_TOP)/obj_0
