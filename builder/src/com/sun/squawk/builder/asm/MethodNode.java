@@ -1,6 +1,7 @@
 package com.sun.squawk.builder.asm;
 
 import java.util.*;
+import org.objectweb.asm.Opcodes;
 
 class MethodNode {
 	ClassNode definingClass;
@@ -28,6 +29,10 @@ class MethodNode {
 
 	void addClassRef(ClassNode cls) {
 		classRef.add(cls);
+	}
+
+	boolean isAbstract() {
+		return (access & Opcodes.ACC_ABSTRACT) != 0;
 	}
 	
 	public String toString() {

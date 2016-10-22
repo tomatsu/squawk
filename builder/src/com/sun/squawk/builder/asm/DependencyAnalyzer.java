@@ -255,6 +255,36 @@ public class DependencyAnalyzer {
 		}
 		*/
 	}
+
+	void checkImpl(MethodNode m, ClassNode c, Set<MethodNode> nextNodes) {
+		String key = c.name + "." + m.name + m.desc;
+		MethodNode mn = methodMap.get(key);
+		if (mn != null) {
+			if (!mn.isAbstract()) {
+				if (!methods.contains(mn)){
+					nextNodes.add(mn);
+					return;
+				}
+			}
+		}
+		for (ClassNode s : c.superTypes) {
+			if (!s.isInterface()) {
+				checkImpl(m, s, nextNodes);
+			}
+		}
+	}
+	
+	void checkInterfaceMethod(MethodNode m, ClassNode c, Set<MethodNode> nextNodes) {
+		for (ClassNode sub : c.subTypes) {
+			if (sub.isInterface()) {
+				checkInterfaceMethod(m, sub, nextNodes);
+			} else if (sub.isAbstract()) {
+				checkInterfaceMethod(m, sub, nextNodes);
+			} else {
+				checkImpl(m, sub, nextNodes);
+			}
+		}
+	}
 	
 	Set<MethodNode> analyze(Set<MethodNode> known, Set<MethodNode> newNodes) {
 //		System.out.println("newNodes = "+ newNodes);
@@ -275,6 +305,9 @@ public class DependencyAnalyzer {
 				if (!known.contains(n2)) {
 					nextNodes.add(n2);
 					addDesc(n2.desc, nextNodes);
+					if (n2.definingClass.isInterface()) {
+						checkInterfaceMethod(n2, n2.definingClass, nextNodes);
+					}
 				}
 			}
 			for (FieldNode f : n.fieldRef) {
@@ -362,7 +395,9 @@ public class DependencyAnalyzer {
 			}
 		}
 		for (ClassNode c : cn.superTypes) {
-			if (overrides(m, c)) return true;
+			if (overrides(m, c)) {
+				return true;
+			}
 		}
 		return false;
 	}
@@ -438,7 +473,7 @@ public class DependencyAnalyzer {
 			for (ClassNode s : n.superTypes) {
 				for (MethodNode m : s.methods) {
 					if (methods.contains(m)){
-						if ((m.access & Opcodes.ACC_ABSTRACT) != 0) {
+						if (m.isAbstract()) {
 							abstractMethods.add(m.name + m.desc);
 						}
 					}
@@ -448,7 +483,7 @@ public class DependencyAnalyzer {
 			
 			for (ClassNode s : n.superTypes) {
 				for (MethodNode m : s.methods) {
-					if ((m.access & Opcodes.ACC_ABSTRACT) == 0) {
+					if (!m.isAbstract()) {
 						if (abstractMethods.contains(m.name + m.desc)) {
 							if (!methods.contains(m)){
 								nextNodes.add(m);

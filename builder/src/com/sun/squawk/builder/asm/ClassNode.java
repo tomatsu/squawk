@@ -1,12 +1,14 @@
 package com.sun.squawk.builder.asm;
 
 import java.util.*;
+import org.objectweb.asm.Opcodes;
 	
 class ClassNode {
 	Set<MethodNode> methods = new HashSet<MethodNode>();
 	Set<FieldNode> fields = new HashSet<FieldNode>();
 	Set<ClassNode> classRef = new HashSet<ClassNode>();
 	Set<ClassNode> superTypes = new HashSet<ClassNode>();
+	Set<ClassNode> subTypes = new HashSet<ClassNode>();
 	String name;
 	int access;
 
@@ -34,6 +36,14 @@ class ClassNode {
 		return name;
 	}
 
+	boolean isInterface() {
+		return (access & Opcodes.ACC_INTERFACE) != 0;
+	}
+	
+	boolean isAbstract() {
+		return (access & Opcodes.ACC_ABSTRACT) != 0;
+	}
+	
 	boolean isAssignableFrom(ClassNode n) {
 		for (ClassNode c : superTypes) {
 			if (c == n) {

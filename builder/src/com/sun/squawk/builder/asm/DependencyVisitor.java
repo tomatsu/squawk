@@ -72,10 +72,14 @@ public class DependencyVisitor extends ClassVisitor {
 		currentClass = getClassNode(name);
 		Set<ClassNode> superTypes = new HashSet<ClassNode>();
 		if (superName != null) {
-			superTypes.add(getClassNode(superName));
+			ClassNode sp = getClassNode(superName);
+			superTypes.add(sp);
+			sp.subTypes.add(currentClass);
 		}
 		for (int i = 0; i < interfaces.length; i++) {
-			superTypes.add(getClassNode(interfaces[i]));
+			ClassNode itf = getClassNode(interfaces[i]);
+			superTypes.add(itf);
+			itf.subTypes.add(currentClass);
 		}
 		currentClass.setSuperTypes(superTypes);
 		currentClass.access = access;
