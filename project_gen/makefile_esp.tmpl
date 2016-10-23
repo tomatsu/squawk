@@ -36,7 +36,8 @@ OBJECT_FILES = $(patsubst %.c,$(OBJECT_DIR)/%.o,$(C_SOURCE_FILES))
 OBJECT_FILES += $(OBJECT_DIR)/squawk.suite.o
 DEPENDS = $(patsubst %.o,%.d,$(OBJECT_FILES))
 
-JAVA_SOURCE_FILES = $(shell $(FIND) src/classes $(SQUAWK_TOP)/targets/esp8266/src/classes -name '*.java' -print)
+JAVA_SOURCE_DIRS = src/classes $(SQUAWK_TOP)/gcf/src $(SQUAWK_TOP)/targets/esp8266/src/classes
+JAVA_SOURCE_FILES = $(shell $(FIND) $(JAVA_SOURCE_DIRS) -name '*.java' -print)
 
 vpath %.c $(C_SOURCE_DIRS)
 

@@ -105,28 +105,28 @@ DEFINE(jboolean, station_1get_1config_1default, (void* arg), \
 )
 
 DEFINE(jboolean,  station_1set_1config, (void* arg), \
-	struct station_config c; \
+	struct station_config c = {0};						\
 	int8_t* ssid = esp8266_Wifi_StationConfig_ssid(arg);\
 	int8_t* password = esp8266_Wifi_StationConfig_password(arg); \
 	int8_t* bssid = esp8266_Wifi_StationConfig_bssid(arg); \
 	int8_t bssid_set = esp8266_Wifi_StationConfig_bssid_set(arg); \
 	\
-	memcpy(&c.ssid, ssid, sizeof(c.ssid)); \
-	memcpy(&c.password, password, sizeof(c.password)); \
+	memcpy(&c.ssid, ssid, getArrayLength(ssid)); \
+	memcpy(&c.password, password, getArrayLength(password)); \
 	if (bssid_set && bssid) memcpy(&c.bssid, bssid, sizeof(c.bssid));	\
 	c.bssid_set = bssid_set; \
 	return wifi_station_set_config(&c); \
 )
 
 DEFINE(jboolean,  station_1set_1config_1current, (void* arg),  \
-	struct station_config c; \
+	struct station_config c = {0};						   \
 	int8_t* ssid = esp8266_Wifi_StationConfig_ssid(arg);\
 	int8_t* password = esp8266_Wifi_StationConfig_password(arg); \
 	int8_t* bssid = esp8266_Wifi_StationConfig_bssid(arg); \
 	int8_t bssid_set = esp8266_Wifi_StationConfig_bssid_set(arg); \
 	\
-	memcpy(&c.ssid, ssid, sizeof(c.ssid)); \
-	memcpy(&c.password, password, sizeof(c.password)); \
+	memcpy(&c.ssid, ssid, getArrayLength(ssid));	\
+	memcpy(&c.password, password, getArrayLength(password)); \
 	if (bssid_set && bssid) memcpy(&c.bssid, bssid, sizeof(c.bssid));	\
 	c.bssid_set = bssid_set; \
 	return wifi_station_set_config_current(&c); \
@@ -170,10 +170,13 @@ typedef struct {
 	struct bss_info bss_info[0];
 } scan_done_event_t;
 
-typedef union {
-    uint32 event;
-	System_Event_t system_event;
-	scan_done_event_t scan_done_event;
+typedef struct {
+	wifi_event_t* next;
+	union {
+		uint32 event;
+		System_Event_t system_event;
+		scan_done_event_t scan_done_event;
+	} u;
 } wifi_event_t;
 
 #define SCAN_DONE_EVENT 0xff

@@ -63,3 +63,4 @@ build.properties
 squawk.exclude
 squawk.library.properties
 targets/esp8266
+gcf

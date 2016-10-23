@@ -1,0 +1,14 @@
+package esp8266;
+
+public interface Events {
+	int WIFI_STAMODE_CONNECTED_EVENT = 0;
+	int WIFI_STAMODE_GOT_IP_EVENT = 3;
+	int WIFI_SCAN_DONE_EVENT = 8;
+	int RESOLVED_EVENT = 9;
+	int CONNECTED_EVENT = 10;
+	int READ_READY_EVENT = 11;
+	int WRITE_READY_EVENT = 12;
+	int ACCEPTED_EVENT = 13;
+	int CONNECT_FAILED_EVENT = 14;
+}
+

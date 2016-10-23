@@ -1,7 +1,14 @@
 import esp8266.*;
 import static esp8266.Wifi.*;
+import javax.microedition.io.*;
+import java.io.*;
 
 public class Hello {
+	static Class[] classes = {com.sun.squawk.io.j2me.socket.Protocol.class,
+							  com.sun.squawk.io.j2me.serversocket.Protocol.class,
+							  com.sun.squawk.io.j2me.http.Protocol.class,
+	};
+	
 	public static void main(String[] args) throws Exception {
 		
 		System.out.println("get_opmode() " + Wifi.get_opmode());
@@ -38,16 +45,52 @@ public class Hello {
 		}
 		System.out.println("get_sleep_type() " + Wifi.get_sleep_type());
 		System.out.println("get_broadcast_if() " + Wifi.get_broadcast_if());
-		
+
+		/*
 		System.out.println("scan() ");
 		for (Wifi.BSS_Info bss : Wifi.Station.scan()) {
 			System.out.println(bss);
 		}
 
-		Wifi.Station.set_config("aterm-a68f0a-gw", "8a582aae2bbba", null);
+		Wifi.Station.set_config("ssid", "password", null);
 		Wifi.Station.connect();
-		Wifi.Station.getIP();
-		
+		*/
+		System.out.println(Wifi.Station.getIP());
+
+		/*
+		{
+			SocketConnection c = (SocketConnection)Connector.open("socket://192.168.1.7:9000");
+			System.out.println("local address = " + c.getLocalAddress());
+			System.out.println("local port = " + c.getLocalPort());
+			System.out.println("address = " + c.getAddress());
+			System.out.println("port = " + c.getPort());
+			InputStream in = c.openInputStream();
+			OutputStream out = c.openOutputStream();
+			out.write(12);
+			System.out.println(in.read());
+		}
+		*/
+		/*
+		{
+			HttpConnection c = (HttpConnection)Connector.open("http://192.168.1.7/");
+			InputStream in = c.openInputStream();
+			int nn;
+			byte[] b = new byte[512];
+			while ((nn = in.read(b)) != -1) {
+				System.out.write(b, 0, nn);
+			}
+		}
+		*/
+		{
+			ServerSocketConnection c = (ServerSocketConnection)Connector.open("socket://:9000");
+			SocketConnection sc = (SocketConnection)c.acceptAndOpen();
+			InputStream in = sc.openInputStream();
+			int nn;
+			byte[] b = new byte[512];
+			while ((nn = in.read(b)) != -1) {
+				System.out.write(b, 0, nn);
+			}
+		}
 		while (true) {
 			System.out.println("Hello ");
 			Thread.sleep(1000);

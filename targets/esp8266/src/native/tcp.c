@@ -3,17 +3,30 @@
 #include <lwip/err.h>
 #include <lwip/ip_addr.h>
 #include <lwip/dns.h>
+#include <lwip/netif.h>
 #include <stdint.h>
 #include <osapi.h>
 #include <mem.h>
 #include "tcp.h"
 #include "events.h"
 
+extern int os_printf_plus(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+#define printf os_printf_plus
 #define malloc os_malloc
 
 static uint16_t _localPort = 1;
 
 static err_t recv_cb(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err) {
+	int state = tpcb->state;
+
+	if (state == CLOSE_WAIT) {
+		tcp_recv(tpcb, NULL);
+		tcp_sent(tpcb, NULL);
+		tcp_err(tpcb, NULL);
+		squawk_post_event(READ_READY_EVENT, -1);
+		return ERR_OK;
+	}
+	
 	tcp_connection_t* conn = (tcp_connection_t*)arg;
     if (p == 0) { // connection closed
         if (conn->_pcb) {
@@ -27,6 +40,10 @@ static err_t recv_cb(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
         }
         return ERR_ABRT;
     }
+
+	printf("tpcb=%p\n", tpcb);
+	printf("conn->_pcb=%p\n", conn->_pcb);
+	
     if (conn->_rx_buf) {
         pbuf_cat(conn->_rx_buf, p);
     } else {
@@ -57,6 +74,7 @@ static err_t sent_cb(void *arg, struct tcp_pcb *tpcb, uint16_t len) {
 //}
 
 static err_t connected_cb(void *arg, struct tcp_pcb *pcb, err_t err) {
+	printf("connected_cb\n");
 	tcp_connection_t* conn = (tcp_connection_t*)arg;	
 	conn->_pcb = (struct tcp_pcb*)pcb;
     tcp_setprio(pcb, TCP_PRIO_MIN);
@@ -68,12 +86,22 @@ static err_t connected_cb(void *arg, struct tcp_pcb *pcb, err_t err) {
 }
 
 static void err_cb(void *arg, err_t err) {
-	squawk_post_event(CONNECT_FAILED_EVENT, 0);
+	printf("err_cb %d\n", err);
+	tcp_connection_t* conn = (tcp_connection_t*)arg;
+	squawk_post_event(CONNECTED_EVENT, 0);
 }
 
 tcp_connection_t* squawk_tcp_connect(ip_addr_t* addr, int port) {
-    struct tcp_pcb* pcb = tcp_new();
+	struct netif* interface = ip_route(addr);
+    if (!interface) {
+        printf("no route to host\r\n");
+        return NULL;
+    }
 
+    struct tcp_pcb* pcb = tcp_new();
+	if (pcb == NULL) {
+		return NULL;
+	}
     pcb->local_port = _localPort++;
 	tcp_connection_t* conn = (tcp_connection_t*)malloc(sizeof(tcp_connection_t));
 	if (conn == NULL) {
@@ -85,7 +113,10 @@ tcp_connection_t* squawk_tcp_connect(ip_addr_t* addr, int port) {
 	
     tcp_arg(pcb, conn);
     tcp_err(pcb, err_cb);
-    tcp_connect(pcb, addr, port, connected_cb);
+    int err = tcp_connect(pcb, addr, (uint16_t)port, connected_cb);
+	if (err != ERR_OK) {
+		printf("connect error %d\n", err);
+	}
 	return conn;
 }
 
@@ -141,18 +172,18 @@ static void consume(tcp_connection_t* conn, size_t size) {
 
 int squawk_tcp_read1(tcp_connection_t* conn) {
     if (!conn->_pcb) {
-        return -1;
+        return -1; // EOF
     }
     if (!conn->_rx_buf) {
 		conn->_read_block = true;
-        return 0;
+        return -2; // blocking
     }
     size_t max_size = conn->_rx_buf->tot_len - conn->_rx_buf_offset;
 	if (max_size == 0) {
 		conn->_read_block = true;
-		return 0;
+		return -2; // blocking
 	}
-    char c = ((char*)conn->_rx_buf->payload)[conn->_rx_buf_offset];
+    uint8_t c = ((uint8_t*)conn->_rx_buf->payload)[conn->_rx_buf_offset];
     consume(conn, 1);
     return c;
 }
@@ -208,18 +239,32 @@ int squawk_tcp_write(tcp_connection_t* conn, uint8_t* data, size_t size) {
 }
 
 static void dns_found_cb(const char *name, ip_addr_t *ipaddr, void *arg) {
-	squawk_post_event(RESOLVED_EVENT, 0);
+	printf("dns_found_cb %s %x\n", name, ipaddr->addr);
+	squawk_post_event(RESOLVED_EVENT, ipaddr->addr);
 }
 
 int squawk_resolve(char* hostname, ip_addr_t* ipaddr) {
 	ip_addr_t addr;
 	uint32_t result;
+
+	printf("squawk_resolve %s\n", hostname);
+	if (ipaddr_aton(hostname, &addr)) {
+		ipaddr->addr = addr.addr;
+		printf("squawk_resolve returns 1\n");
+		return 1;
+	}
+	
     err_t err = dns_gethostbyname(hostname, &addr, dns_found_cb, &result);
     if (err == ERR_OK) {
 		ipaddr->addr = addr.addr;
+		printf("squawk_resolve returns 1\n");
 		return 1;
 	}
-	return 0;
+	if (err == ERR_INPROGRESS) {
+		printf("squawk_resolve returns 0\n");
+		return 0;
+	}
+	return -1;
 }
 
 uint32_t squawk_tcp_getlocaladdr(tcp_connection_t* conn) {
@@ -260,7 +305,12 @@ struct tcp_pcb* squawk_tcp_create_server(int _addr, int _port) {
 
 static int8_t accept_cb(void *arg, struct tcp_pcb* newpcb, int8_t err) {
 	tcp_connection_t* conn = (tcp_connection_t*)arg;
+	conn->_pcb = newpcb;
     tcp_accepted(conn->_pcb);
+    tcp_setprio(conn->_pcb, TCP_PRIO_MIN);
+    tcp_recv(conn->_pcb, recv_cb);
+    tcp_sent(conn->_pcb, sent_cb);
+    tcp_err(conn->_pcb, err_cb);
 	squawk_post_event(ACCEPTED_EVENT, 0);
     return ERR_OK;
 }
@@ -275,7 +325,11 @@ tcp_connection_t* squawk_tcp_accept(struct tcp_pcb* pcb) {
 	if (!conn) {
 		return NULL;
 	}
-    conn->_pcb = listen_pcb;
+	conn->_rx_buf = 0;
+	conn->_rx_buf_offset = 0;
+	conn->_write_block = false;
+	conn->_read_block = false;
+	
     tcp_accept(listen_pcb, accept_cb);
     tcp_arg(listen_pcb, conn);
     tcp_err(pcb, err_cb);
