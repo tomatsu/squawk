@@ -1,6 +1,6 @@
 # template for ESP8266
 AT ?= @
-CFLAGS_OPTS = -Os -mlongcalls -mforce-l32
+CFLAGS_OPTS = -Os -mlongcalls -mforce-l32 -mtext-section-literals
 CFLAGS_DEP = -MD
 CFLAGS += -std=gnu99
 
@@ -24,7 +24,7 @@ INCLUDE_DIRS += $(ESP_SDK)/include $(ESP_SDK)/driver_lib/include/driver $(ESP_SD
 INCLUDE_DIRS += $(SQUAWK_TOP)/targets/esp8266/src/native
 CFLAGS += $(CFLAGS_ARCH) $(DEVICE_OPTIONS) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) $(CFLAGS_DEP)
 LDFLAGS += $(LDLAGS_ARCH) -T$(LINKERSCRIPT) -Wl,--gc-sections -Wl,--Map=$(@:.elf=.map) -Wl,--cref
-LDSUFFIXES += -L$(ESP_SDK)/lib -nostdlib -Wl,--start-group -lcrypto -lmain -lnet80211 -lwpa -lwpa2 -lwps -llwip -lpp -lphy -ldriver -lgcc -lcirom -lm -Wl,--end-group 
+LDSUFFIXES += -L$(ESP_SDK)/lib -L$(ESP_SDK)/ld -nostdlib -Wl,--start-group -lcrypto -lmain -lnet80211 -lwpa -lwpa2 -lwps -llwip -lpp -lphy -ldriver -lgcc -lcirom -lm -Wl,--end-group 
 TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
 CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes
 
