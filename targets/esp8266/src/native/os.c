@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <ets_sys.h>
 #include <user_interface.h>
-#define ICACHE_RAM_ATTR __attribute__((section(".iram0.text")))
 
 //#define IODOTC
 extern int os_printf_plus(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
