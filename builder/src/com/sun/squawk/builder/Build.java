@@ -1402,6 +1402,15 @@ public class Build {
 					Build.delete(outputFile);
 					Build.delete(preprocessedFile);
 				}
+				for (File dir : RomCommand.VM_SRC_RTS_DIR.listFiles()) {
+					FileSet generatedFiles2 = new FileSet(dir, new FileSet.SuffixSelector(".spp"));
+					for (File sppFile : generatedFiles2.list()) {
+						File outputFile = SppFilePreprocessCommand.getFileDerivedFromSppFile(sppFile);
+						File preprocessedFile = new File(sppFile.getPath() + ".preprocessed");
+						Build.delete(outputFile);
+						Build.delete(preprocessedFile);
+					}
+				}
             }
         });
 
