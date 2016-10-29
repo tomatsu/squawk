@@ -1,6 +1,7 @@
 package esp8266;
 
 import com.sun.squawk.*;
+import com.sun.squawk.io.NetUtil;
 import java.util.*;
 import java.io.IOException;
 

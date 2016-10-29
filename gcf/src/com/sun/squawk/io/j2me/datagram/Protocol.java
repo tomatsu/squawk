@@ -3,7 +3,6 @@ package com.sun.squawk.io.j2me.datagram;
 import java.io.*;
 import javax.microedition.io.*;
 import com.sun.squawk.io.*;
-import esp8266.NetUtil;
 
 /**
  * This implements the "datagram://" protocol for J2SE in a not very
@@ -14,6 +13,7 @@ import esp8266.NetUtil;
 public class Protocol extends ConnectionBase implements DatagramConnection, UDPDatagramConnection {
 
     DatagramSocket endpoint;
+	String address;
     protected boolean open;
 
     public String getLocalAddress() throws IOException {
@@ -60,6 +60,7 @@ public class Protocol extends ConnectionBase implements DatagramConnection, UDPD
 		} else if (server) {
 			endpoint = new DatagramSocket(Integer.parseInt(port));
 		}
+		address = protocol + ":" + name;
         open = true;
 		return this;
     }
@@ -99,7 +100,7 @@ public class Protocol extends ConnectionBase implements DatagramConnection, UDPD
      */
     public void receive(Datagram dgram) throws IOException {
         DatagramObject dh = (DatagramObject)dgram;
-        endpoint.receive(dh.data, dh.offset, dh.len);
+        dh.len = endpoint.receive(dh.data, dh.offset, dh.data.length - dh.offset);
         dh.pointer = 0;
     }
 
@@ -121,10 +122,7 @@ public class Protocol extends ConnectionBase implements DatagramConnection, UDPD
      * @return                 A new datagram
      */
     public Datagram newDatagram(int size)  throws IllegalArgumentException, IOException {
-		if (size < 0) {
-			throw new IllegalArgumentException();
-        }
-        return new DatagramObject(new byte[size], size);
+        return newDatagram(new byte[size], size);
     }
 
     /**
@@ -135,10 +133,7 @@ public class Protocol extends ConnectionBase implements DatagramConnection, UDPD
      */
     public Datagram newDatagram(int size, String addr) throws IOException,
 															  IllegalArgumentException {
-		if (size < 0) {
-			throw new IllegalArgumentException();
-        }
-        return new DatagramObject(new byte[size], size, addr);
+        return newDatagram(new byte[size], size, addr);
     }
 
     /**
@@ -147,10 +142,7 @@ public class Protocol extends ConnectionBase implements DatagramConnection, UDPD
      * @return                 A new datagram
      */
     public Datagram newDatagram(byte[] buf, int size)  throws IOException, IllegalArgumentException {
-		if (size < 0 || buf == null) {
-			throw new IllegalArgumentException();
-        }
-		return new DatagramObject(buf, size);
+		return newDatagram(buf, size, address);
     }
 
     /**

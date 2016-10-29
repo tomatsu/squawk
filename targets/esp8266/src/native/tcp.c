@@ -28,7 +28,6 @@ static err_t recv_cb(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 		tcp_err(tpcb, NULL);
 		if (conn->_blocker) {
 			squawk_post_event(conn->_blocker, READ_READY_EVENT, -1);
-			conn->_blocker = 0;
 		}
 		return ERR_OK;
 	}
@@ -54,7 +53,6 @@ static err_t recv_cb(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
     }
 	if (conn->_blocker) {
 		squawk_post_event(conn->_blocker, READ_READY_EVENT, 0);
-		conn->_blocker = 0;
 	}
     return ERR_OK;
 }
@@ -65,7 +63,6 @@ static err_t sent_cb(void *arg, struct tcp_pcb *tpcb, uint16_t len) {
 		size_t can_send = tcp_sndbuf(conn->_pcb);
 		if (can_send > 0) {
 			squawk_post_event(conn->_blocker, WRITE_READY_EVENT, 0);
-			conn->_blocker = 0;
 		}
 	}
     return ERR_OK;
@@ -76,7 +73,6 @@ static err_t sent_cb(void *arg, struct tcp_pcb *tpcb, uint16_t len) {
 //}
 
 static err_t connected_cb(void *arg, struct tcp_pcb *pcb, err_t err) {
-	printf("pcb=%p err=%d\n", pcb, err);
 	tcp_connection_t* conn = (tcp_connection_t*)arg;	
 	conn->_pcb = (struct tcp_pcb*)pcb;
     tcp_setprio(pcb, TCP_PRIO_MIN);
@@ -85,7 +81,6 @@ static err_t connected_cb(void *arg, struct tcp_pcb *pcb, err_t err) {
 //    tcp_poll(pcb, poll_cb, 1);
 
 	squawk_post_event(conn->_blocker, CONNECTED_EVENT, (pcb && err == ERR_OK) ? 0 : -1);
-	conn->_blocker = 0;
 }
 
 static void err_cb(void *arg, err_t err) {
@@ -96,7 +91,6 @@ static void err_cb(void *arg, err_t err) {
 }
 
 tcp_connection_t* squawk_tcp_connect(ip_addr_t* addr, int port) {
-	printf("squawk_tcp_connect\n");
 	struct netif* interface = ip_route(addr);
     if (!interface) {
         printf("no route to host\r\n");
@@ -120,7 +114,6 @@ tcp_connection_t* squawk_tcp_connect(ip_addr_t* addr, int port) {
     tcp_arg(pcb, conn);
     tcp_err(pcb, err_cb);
     int err = tcp_connect(pcb, addr, (uint16_t)port, connected_cb);
-	printf("tcp_connect %d\n", err);
 	if (err != ERR_OK) {
 		printf("connect error %d\n", err);
 	}
@@ -321,7 +314,6 @@ static int8_t accept_cb(void *arg, struct tcp_pcb* newpcb, int8_t err) {
     tcp_sent(conn->_pcb, sent_cb);
     tcp_err(conn->_pcb, err_cb);
 	squawk_post_event(conn->_blocker, ACCEPTED_EVENT, 0);
-	conn->_blocker = 0;
     return ERR_OK;
 }
 

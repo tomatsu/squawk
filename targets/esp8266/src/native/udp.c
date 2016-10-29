@@ -4,6 +4,8 @@
 #include "udp.h"
 #include "events.h"
 
+//extern int os_printf_plus(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+//#define printf os_printf_plus
 #define malloc os_malloc
 #define CALLER (squawk_threadID() + 1)
 
@@ -52,23 +54,46 @@ void squawk_udb_localaddr(udp_context_t* udp, ip_addr_t* addr) {
 	*addr = udp->_pcb->local_ip;
 }
 
+static void consume(udp_context_t* udp, size_t size) {
+    ptrdiff_t left = udp->_rx_buf->len - udp->_rx_buf_offset - size;
+    if (left > 0) {
+        udp->_rx_buf_offset += size;
+    } else if (!udp->_rx_buf->next) {
+        pbuf_free(udp->_rx_buf);
+        udp->_rx_buf = 0;
+        udp->_rx_buf_offset = 0;
+    } else {
+        struct pbuf* head = udp->_rx_buf;
+        udp->_rx_buf = udp->_rx_buf->next;
+        udp->_rx_buf_offset = 0;
+        pbuf_free(head);
+    }
+}
+
 size_t squawk_udp_read(udp_context_t* udp, char* dst, size_t size) {
 	if (!udp->_rx_buf) {
 		udp->_blocker = CALLER;
 		return 0;
 	}
-
-	size_t max_size = udp->_rx_buf->len - udp->_rx_buf_offset;
+	
+	size_t max_size = udp->_rx_buf->tot_len - udp->_rx_buf_offset;
 	if (max_size == 0) {
 		udp->_blocker = CALLER;
 		return 0;
 	}
 	size = (size < max_size) ? size : max_size;
 
-	memcpy(dst, udp->_rx_buf->payload + udp->_rx_buf_offset, size);
-	udp->_rx_buf_offset += size;
-
-	return size;
+    size_t size_read = 0;
+    while (size > 0) {
+        size_t buf_size = udp->_rx_buf->len - udp->_rx_buf_offset;
+        size_t copy_size = (size < buf_size) ? size : buf_size;
+        os_memcpy(dst, udp->_rx_buf->payload + udp->_rx_buf_offset, copy_size);
+        dst += copy_size;
+        consume(udp, copy_size);
+        size -= copy_size;
+        size_read += copy_size;
+    }
+    return size_read;
 }
 
 bool squawk_udp_send(udp_context_t* udp, ip_addr_t* addr, uint16_t port, char* src, size_t size) {

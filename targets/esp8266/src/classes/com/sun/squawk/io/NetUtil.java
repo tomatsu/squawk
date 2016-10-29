@@ -1,7 +1,8 @@
-package esp8266;
+package com.sun.squawk.io;
 
 import com.sun.squawk.*;
 import java.io.IOException;
+import esp8266.Events;
    
 public class NetUtil {
 	private static native int resolve(String host);
@@ -21,7 +22,7 @@ public class NetUtil {
 		return (addr & 0xff) + "." + ((addr >> 8) & 0xff) + "." + ((addr >> 16) & 0xff) + "." + ((addr >> 24) & 0xff);
 	}
 
-	static String formatByteArray(byte[] array) {
+	public static String formatByteArray(byte[] array) {
 		StringBuilder sb = new StringBuilder();
 		sb.append('[');
 		int len = array.length;

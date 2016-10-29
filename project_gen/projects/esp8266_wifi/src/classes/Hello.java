@@ -1,12 +1,15 @@
 import esp8266.*;
 import static esp8266.Wifi.*;
 import javax.microedition.io.*;
+import com.sun.squawk.io.*;
+import java.io.BufferedReader;
 import java.io.*;
 
 public class Hello {
 	static Class[] classes = {com.sun.squawk.io.j2me.socket.Protocol.class,
 							  com.sun.squawk.io.j2me.serversocket.Protocol.class,
 							  com.sun.squawk.io.j2me.http.Protocol.class,
+							  com.sun.squawk.io.j2me.datagram.Protocol.class,
 	};
 	
 	public static void main(String[] args) throws Exception {
@@ -56,21 +59,8 @@ public class Hello {
 		Wifi.Station.connect();
 		*/
 		System.out.println(Wifi.Station.getIP());
-
-		/*
-		{
-			SocketConnection c = (SocketConnection)Connector.open("socket://192.168.1.7:9000");
-			System.out.println("local address = " + c.getLocalAddress());
-			System.out.println("local port = " + c.getLocalPort());
-			System.out.println("address = " + c.getAddress());
-			System.out.println("port = " + c.getPort());
-			InputStream in = c.openInputStream();
-			OutputStream out = c.openOutputStream();
-			out.write(12);
-			System.out.println(in.read());
-		}
-		*/
-		/*
+		
+		/* http client
 		{
 			HttpConnection c = (HttpConnection)Connector.open("http://192.168.1.7/");
 			InputStream in = c.openInputStream();
@@ -81,6 +71,22 @@ public class Hello {
 			}
 		}
 		*/
+		/* tcp client
+		try {
+			SocketConnection c = (SocketConnection)Connector.open("socket://192.168.1.7:9001");
+			System.out.println("local address = " + c.getLocalAddress());
+			System.out.println("local port = " + c.getLocalPort());
+			System.out.println("address = " + c.getAddress());
+			System.out.println("port = " + c.getPort());
+			InputStream in = c.openInputStream();
+			OutputStream out = c.openOutputStream();
+			out.write(12);
+			System.out.println(in.read());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		*/
+		/* tcp server
 		{
 			ServerSocketConnection c = (ServerSocketConnection)Connector.open("socket://:9000");
 			SocketConnection sc = (SocketConnection)c.acceptAndOpen();
@@ -91,6 +97,47 @@ public class Hello {
 				System.out.write(b, 0, nn);
 			}
 		}
+		*/
+		/* udp client 
+		{
+			DatagramConnection c = (DatagramConnection)Connector.open("datagram://192.168.1.7:9001");
+			Datagram d = c.newDatagram(10);
+			d.setData("hello".getBytes(), 0, 5);
+			c.send(d);
+		}
+		*/
+		/* udp server
+		{
+			DatagramConnection c = (DatagramConnection)Connector.open("datagram://:9000");
+			Datagram d = c.newDatagram(10);
+			c.receive(d);
+		}
+		*/
+		/* udp inputstream
+		try {
+			DatagramConnection c = (DatagramConnection)Connector.open("datagram://:9000");
+			InputStream in = new UDPInputStream(c);
+			byte[] line = new byte[32];
+			while ((n = in.read(line)) != -1) {
+				System.out.write(line, 0, n);
+				if (n==3 && line[0] == 'b' && line[1] == 'y' && line[2] == 'e') {
+					break;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		*/
+		/* udp outputstream */
+		try {
+			DatagramConnection c = (DatagramConnection)Connector.open("datagram://192.168.1.7:9000");
+			OutputStream out = new UDPOutputStream(c);
+			out.write("Hello".getBytes());
+			out.flush();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		/**/
 		while (true) {
 			System.out.println("Hello ");
 			Thread.sleep(1000);

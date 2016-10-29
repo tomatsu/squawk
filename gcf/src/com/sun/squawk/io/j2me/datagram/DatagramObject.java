@@ -2,7 +2,7 @@ package com.sun.squawk.io.j2me.datagram;
 
 import javax.microedition.io.*;
 import java.io.*;
-import esp8266.NetUtil;
+import com.sun.squawk.io.NetUtil;
 
 public class DatagramObject implements Datagram {
 
@@ -24,7 +24,9 @@ public class DatagramObject implements Datagram {
 		this.data = data;
 		this.offset = 0;
 		this.len = len;
-		setAddress(addr);
+		if (addr != null) {
+			setAddress(addr);
+		}
 	}
 	
     public String getAddress() {
@@ -50,11 +52,11 @@ public class DatagramObject implements Datagram {
 		int idx = name.indexOf(':', 11);
 		if (idx < 0) {
 			throw new IllegalArgumentException();
-		} else if (idx == offset) { // no host
+		} else if (idx == 11) { // no host
 			this.host = null;
 			this.remoteaddr = 0;
 		} else {
-			this.host = name.substring(12, idx);
+			this.host = name.substring(11, idx);
 			this.remoteaddr = NetUtil.gethostbyname(host);
 		}
 		String port = name.substring(idx + 1);
@@ -398,17 +400,8 @@ public class DatagramObject implements Datagram {
 
     public void write(int ch) throws IOException {
         byte[] b = this.data;
-	    if (len == 0) {
-			b = new byte[1];
-			setData(b, 0, 1);
-			setLength(1);
-	    }
 		if ((offset + pointer) == b.length) {
-			byte new_b[] = new byte[b.length+1];
-			System.arraycopy(b, 0, new_b, 0, b.length);
-			b = new_b;
-			setData(b, 0, b.length);
-			setLength(b.length);
+			throw new IOException();
 		}
         b[offset + pointer++] = (byte)ch;
     }
@@ -427,6 +420,7 @@ public class DatagramObject implements Datagram {
      * @exception  IOException  if an I/O error occurs.
      */
     public void write(byte b[]) throws IOException {
+		write(b, 0, b.length);
 	}
 
     /**
@@ -450,6 +444,11 @@ public class DatagramObject implements Datagram {
      * @exception  IOException  if an I/O error occurs.
      */
     public void write(byte b[], int off, int len) throws IOException {
+        byte[] data = this.data;
+		if ((data.length - (offset + pointer)) < len) {
+			throw new IOException();
+		}
+		System.arraycopy(b, off, data, offset + pointer, len);
 	}
 
     /**
@@ -751,13 +750,9 @@ public class DatagramObject implements Datagram {
     public void writeUTF(String str) throws IOException {
         int strlen = str.length();
         int utflen = 0;
-        char[] charr = new char[strlen];
-        int c, count = 0;
-
-        str.getChars(0, strlen, charr, 0);
 
         for (int i = 0; i < strlen; i++) {
-            c = charr[i];
+            int c = str.charAt(i);
             if ((c >= 0x0001) && (c <= 0x007F)) {
                 utflen++;
             } else if (c > 0x07FF) {
@@ -770,22 +765,26 @@ public class DatagramObject implements Datagram {
         if (utflen > 65535)
             throw new UTFDataFormatException();
 
-        byte[] bytearr = new byte[utflen+2];
-        bytearr[count++] = (byte) ((utflen >>> 8) & 0xFF);
-        bytearr[count++] = (byte) ((utflen >>> 0) & 0xFF);
+        byte[] b = this.data;
+		if ((b.length - (offset + pointer)) < (2 + utflen)) {
+			throw new IOException();
+		}
+		int idx = offset + pointer;
+		b[idx++] = (byte)((utflen >>> 8) & 0xFF);
+		b[idx++] = (byte)((utflen >>> 0) & 0xFF);
+		
         for (int i = 0; i < strlen; i++) {
-            c = charr[i];
+            int c = str.charAt(i);
             if ((c >= 0x0001) && (c <= 0x007F)) {
-                bytearr[count++] = (byte) c;
+                b[idx++] = (byte) c;
             } else if (c > 0x07FF) {
-                bytearr[count++] = (byte) (0xE0 | ((c >> 12) & 0x0F));
-                bytearr[count++] = (byte) (0x80 | ((c >>  6) & 0x3F));
-                bytearr[count++] = (byte) (0x80 | ((c >>  0) & 0x3F));
+                b[idx++] = (byte) (0xE0 | ((c >> 12) & 0x0F));
+                b[idx++] = (byte) (0x80 | ((c >>  6) & 0x3F));
+                b[idx++] = (byte) (0x80 | ((c >>  0) & 0x3F));
             } else {
-                bytearr[count++] = (byte) (0xC0 | ((c >>  6) & 0x1F));
-                bytearr[count++] = (byte) (0x80 | ((c >>  0) & 0x3F));
+                b[idx++] = (byte) (0xC0 | ((c >>  6) & 0x1F));
+                b[idx++] = (byte) (0x80 | ((c >>  0) & 0x3F));
             }
         }
-        write(bytearr);
 	}
 }

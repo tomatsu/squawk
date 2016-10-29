@@ -2,7 +2,7 @@ package com.sun.squawk.io;
 
 import com.sun.squawk.*;
 import java.io.IOException;
-import static esp8266.NetUtil.*;
+import static com.sun.squawk.io.NetUtil.*;
 import esp8266.Events;
 
 public class Socket  {

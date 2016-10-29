@@ -10,7 +10,7 @@ extern int os_printf_plus(const char *format, ...)  __attribute__ ((format (prin
 /*
  * NetUtil
  */
-DEFINE(int, esp8266_NetUtil_resolve, (char* host), \
+DEFINE(int, com_sun_squawk_io_NetUtil_resolve, (char* host), \
 	ip_addr_t addr; \
 	int n = squawk_resolve(host, &addr); \
 	if (n == 1) { \
@@ -92,7 +92,9 @@ DEFINE(int, com_sun_squawk_io_DatagramSocket_send0, (int handle, uint8_t* buf, i
 
 DEFINE(int, com_sun_squawk_io_DatagramSocket_send1, (int handle, int addr, int port, uint8_t* buf, int off, int len), \
 	udp_context_t* udp = (udp_context_t*)handle; \
-	return squawk_udp_send(udp, addr, port, buf + off, len); \
+	ip_addr_t a; \
+    a.addr = addr; \
+	return squawk_udp_send(udp, &a, port, buf + off, len); \
 )
 
 DEFINE(int, com_sun_squawk_io_DatagramSocket_receive0, (int handle, uint8_t* buf, int off, int len), \
