@@ -68,3 +68,11 @@ static void ioExecute(void) {
 void set_event(int evt) {
 	 com_sun_squawk_ServiceOperation_event = evt;
 }
+
+int squawk_threadID() {
+	return com_sun_squawk_VMThread_threadNumber(com_sun_squawk_VMThread_currentThread);
+}
+
+int squawk_cioRequestor() {
+	return com_sun_squawk_ServiceOperation_requestor;
+}

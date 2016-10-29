@@ -1,4 +1,4 @@
-#include <stdbool.h>
+//#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 #include <user_interface.h>
@@ -170,13 +170,10 @@ typedef struct {
 	struct bss_info bss_info[0];
 } scan_done_event_t;
 
-typedef struct {
-	wifi_event_t* next;
-	union {
-		uint32 event;
-		System_Event_t system_event;
-		scan_done_event_t scan_done_event;
-	} u;
+typedef union {
+	uint32 event;
+	System_Event_t system_event;
+	scan_done_event_t scan_done_event;
 } wifi_event_t;
 
 #define SCAN_DONE_EVENT 0xff
@@ -222,7 +219,7 @@ scan_done(void *arg, STATUS status)
 			os_memcpy(&info[i++], bss_link, sizeof(struct bss_info));
 			bss_link = bss_link->next.stqe_next;
 		}
-		squawk_post_event(WIFI_SCAN_DONE_EVENT, event);
+		squawk_post_event(0, WIFI_SCAN_DONE_EVENT, event);
 	} else {
 		os_printf("scan fail !!!\r\n");
 	}
@@ -558,7 +555,7 @@ static void event_handler_cb(System_Event_t *event) {
 	}
 	memcpy(e, event, sizeof(System_Event_t));
 
-	squawk_post_event(event->event, e);	 // event id is in range 0..7
+	squawk_post_event(0, event->event, e);	 // event id is in range 0..7
 }
 
 DEFINE(int, wifi_1get_1event_1id, (void* evt), \

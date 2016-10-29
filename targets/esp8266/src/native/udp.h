@@ -1,16 +1,16 @@
 #include <lwip/udp.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include <stdbool.h>
 
 typedef struct {
 	struct udp_pcb* _pcb;
 	struct pbuf* _rx_buf;
 	size_t _rx_buf_offset;
-	bool _read_block;
+	uint32_t _blocker;
 } udp_context_t;
 
-extern udp_context_t* squawk_udp_create();
+extern udp_context_t* squawk_udp_create(int port);
 extern bool squawk_udp_connect(udp_context_t* udp, ip_addr_t addr, uint16_t port);
 extern void squawk_udp_disconnect(udp_context_t* udp);
 extern bool squawk_udp_bind(udp_context_t* udp, ip_addr_t addr, uint16_t port);

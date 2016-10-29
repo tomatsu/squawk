@@ -114,6 +114,8 @@ public final class ServiceOperation implements GlobalStaticFields {
      */
      static Throwable pendingException;
 
+    private static int requestor;
+	
     /**
      * This is the service thread operation loop.
      */

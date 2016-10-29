@@ -105,6 +105,7 @@ public final class Global {
         Add("com.sun.squawk.ServiceOperation.o2");
         Int("com.sun.squawk.ServiceOperation.result");
         Add("com.sun.squawk.ServiceOperation.addressResult");
+        Int("com.sun.squawk.ServiceOperation.requestor");
 
         Int("branchCountHigh");
         Int("branchCountLow");

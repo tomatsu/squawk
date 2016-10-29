@@ -16,18 +16,23 @@ extern int os_printf_plus(const char *format, ...)  __attribute__ ((format (prin
 
 static uint16_t _localPort = 1;
 
-static err_t recv_cb(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err) {
-	int state = tpcb->state;
+#define CALLER (squawk_threadID() + 1)
 
+static err_t recv_cb(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err) {
+	tcp_connection_t* conn = (tcp_connection_t*)arg;
+	int state = tpcb->state;
+	
 	if (state == CLOSE_WAIT) {
 		tcp_recv(tpcb, NULL);
 		tcp_sent(tpcb, NULL);
 		tcp_err(tpcb, NULL);
-		squawk_post_event(READ_READY_EVENT, -1);
+		if (conn->_blocker) {
+			squawk_post_event(conn->_blocker, READ_READY_EVENT, -1);
+			conn->_blocker = 0;
+		}
 		return ERR_OK;
 	}
 	
-	tcp_connection_t* conn = (tcp_connection_t*)arg;
     if (p == 0) { // connection closed
         if (conn->_pcb) {
             tcp_arg(conn->_pcb, NULL);
@@ -41,29 +46,26 @@ static err_t recv_cb(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
         return ERR_ABRT;
     }
 
-	printf("tpcb=%p\n", tpcb);
-	printf("conn->_pcb=%p\n", conn->_pcb);
-	
     if (conn->_rx_buf) {
         pbuf_cat(conn->_rx_buf, p);
     } else {
         conn->_rx_buf = p;
         conn->_rx_buf_offset = 0;
     }
-	if (conn->_read_block) {
-		conn->_read_block = false;
-		squawk_post_event(READ_READY_EVENT, 0);
+	if (conn->_blocker) {
+		squawk_post_event(conn->_blocker, READ_READY_EVENT, 0);
+		conn->_blocker = 0;
 	}
     return ERR_OK;
 }
 
 static err_t sent_cb(void *arg, struct tcp_pcb *tpcb, uint16_t len) {
 	tcp_connection_t* conn = (tcp_connection_t*)arg;
-	if (conn->_write_block) {
+	if (conn->_blocker) {
 		size_t can_send = tcp_sndbuf(conn->_pcb);
 		if (can_send > 0) {
-			conn->_write_block = false;
-			squawk_post_event(WRITE_READY_EVENT, 0);
+			squawk_post_event(conn->_blocker, WRITE_READY_EVENT, 0);
+			conn->_blocker = 0;
 		}
 	}
     return ERR_OK;
@@ -74,7 +76,7 @@ static err_t sent_cb(void *arg, struct tcp_pcb *tpcb, uint16_t len) {
 //}
 
 static err_t connected_cb(void *arg, struct tcp_pcb *pcb, err_t err) {
-	printf("connected_cb\n");
+	printf("pcb=%p err=%d\n", pcb, err);
 	tcp_connection_t* conn = (tcp_connection_t*)arg;	
 	conn->_pcb = (struct tcp_pcb*)pcb;
     tcp_setprio(pcb, TCP_PRIO_MIN);
@@ -82,16 +84,19 @@ static err_t connected_cb(void *arg, struct tcp_pcb *pcb, err_t err) {
     tcp_sent(pcb, sent_cb);
 //    tcp_poll(pcb, poll_cb, 1);
 
-	squawk_post_event(CONNECTED_EVENT, 0);
+	squawk_post_event(conn->_blocker, CONNECTED_EVENT, (pcb && err == ERR_OK) ? 0 : -1);
+	conn->_blocker = 0;
 }
 
 static void err_cb(void *arg, err_t err) {
-	printf("err_cb %d\n", err);
 	tcp_connection_t* conn = (tcp_connection_t*)arg;
-	squawk_post_event(CONNECTED_EVENT, 0);
+	if (conn->_blocker) {
+		squawk_post_event(conn->_blocker, conn->_operation, -1);
+	}
 }
 
 tcp_connection_t* squawk_tcp_connect(ip_addr_t* addr, int port) {
+	printf("squawk_tcp_connect\n");
 	struct netif* interface = ip_route(addr);
     if (!interface) {
         printf("no route to host\r\n");
@@ -109,11 +114,13 @@ tcp_connection_t* squawk_tcp_connect(ip_addr_t* addr, int port) {
 	}
 	conn->_rx_buf = 0;
 	conn->_rx_buf_offset = 0;
-	conn->_write_block = false;
+	conn->_operation = CONNECTED_EVENT;
+	conn->_blocker = CALLER;
 	
     tcp_arg(pcb, conn);
     tcp_err(pcb, err_cb);
     int err = tcp_connect(pcb, addr, (uint16_t)port, connected_cb);
+	printf("tcp_connect %d\n", err);
 	if (err != ERR_OK) {
 		printf("connect error %d\n", err);
 	}
@@ -175,12 +182,14 @@ int squawk_tcp_read1(tcp_connection_t* conn) {
         return -1; // EOF
     }
     if (!conn->_rx_buf) {
-		conn->_read_block = true;
+		conn->_operation = READ_READY_EVENT;
+		conn->_blocker = CALLER;
         return -2; // blocking
     }
     size_t max_size = conn->_rx_buf->tot_len - conn->_rx_buf_offset;
 	if (max_size == 0) {
-		conn->_read_block = true;
+		conn->_operation = READ_READY_EVENT;
+		conn->_blocker = CALLER;
 		return -2; // blocking
 	}
     uint8_t c = ((uint8_t*)conn->_rx_buf->payload)[conn->_rx_buf_offset];
@@ -193,13 +202,15 @@ int squawk_tcp_read(tcp_connection_t* conn, char* dst, size_t size) {
         return -1;
     }
     if (!conn->_rx_buf) {
-		conn->_read_block = true;
+		conn->_operation = READ_READY_EVENT;
+		conn->_blocker = CALLER;
         return 0;
     }
 
     size_t max_size = conn->_rx_buf->tot_len - conn->_rx_buf_offset;
 	if (max_size == 0) {
-		conn->_read_block = true;
+		conn->_operation = READ_READY_EVENT;
+		conn->_blocker = CALLER;
 		return 0;
 	}
     size = (size < max_size) ? size : max_size;
@@ -233,35 +244,33 @@ int squawk_tcp_write(tcp_connection_t* conn, uint8_t* data, size_t size) {
             tcp_output(conn->_pcb);
         }
     } else {
-		conn->_write_block = true;
+		conn->_operation = WRITE_READY_EVENT;
+		conn->_blocker = CALLER;
 	}
     return will_send;
 }
 
 static void dns_found_cb(const char *name, ip_addr_t *ipaddr, void *arg) {
-	printf("dns_found_cb %s %x\n", name, ipaddr->addr);
-	squawk_post_event(RESOLVED_EVENT, ipaddr->addr);
+	uint32_t caller = (uint32_t)arg;
+	squawk_post_event(caller, RESOLVED_EVENT, ipaddr->addr);
 }
 
 int squawk_resolve(char* hostname, ip_addr_t* ipaddr) {
 	ip_addr_t addr;
-	uint32_t result;
+	uint32_t arg;
 
-	printf("squawk_resolve %s\n", hostname);
 	if (ipaddr_aton(hostname, &addr)) {
 		ipaddr->addr = addr.addr;
-		printf("squawk_resolve returns 1\n");
 		return 1;
 	}
-	
-    err_t err = dns_gethostbyname(hostname, &addr, dns_found_cb, &result);
+
+	arg = CALLER;
+    err_t err = dns_gethostbyname(hostname, &addr, dns_found_cb, arg);
     if (err == ERR_OK) {
 		ipaddr->addr = addr.addr;
-		printf("squawk_resolve returns 1\n");
 		return 1;
 	}
 	if (err == ERR_INPROGRESS) {
-		printf("squawk_resolve returns 0\n");
 		return 0;
 	}
 	return -1;
@@ -311,7 +320,8 @@ static int8_t accept_cb(void *arg, struct tcp_pcb* newpcb, int8_t err) {
     tcp_recv(conn->_pcb, recv_cb);
     tcp_sent(conn->_pcb, sent_cb);
     tcp_err(conn->_pcb, err_cb);
-	squawk_post_event(ACCEPTED_EVENT, 0);
+	squawk_post_event(conn->_blocker, ACCEPTED_EVENT, 0);
+	conn->_blocker = 0;
     return ERR_OK;
 }
 
@@ -327,8 +337,8 @@ tcp_connection_t* squawk_tcp_accept(struct tcp_pcb* pcb) {
 	}
 	conn->_rx_buf = 0;
 	conn->_rx_buf_offset = 0;
-	conn->_write_block = false;
-	conn->_read_block = false;
+	conn->_operation = ACCEPTED_EVENT;
+	conn->_blocker = CALLER;
 	
     tcp_accept(listen_pcb, accept_cb);
     tcp_arg(listen_pcb, conn);

@@ -13,5 +13,4 @@
 
 #define MAX_EVENT_TYPE 15
 
-extern int squawk_get_event(int type, bool clear);
-extern void squawk_post_event(int type, uint32_t value);
+extern void squawk_post_event(int eventNumber, int type, uint32_t value);

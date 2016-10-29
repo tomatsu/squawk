@@ -1,15 +1,15 @@
 #include <lwip/tcp.h>
 #include <lwip/err.h>
 #include <lwip/ip_addr.h>
-#include <stdbool.h>
 #include <sys/types.h>
+#include <stdbool.h>
 
 typedef struct {
 	struct tcp_pcb* _pcb;
 	struct pbuf* _rx_buf;
 	size_t _rx_buf_offset;
-	bool _write_block;
-	bool _read_block;
+	int _operation;
+	int _blocker;
 } tcp_connection_t;
 
 extern tcp_connection_t* squawk_tcp_connect(ip_addr_t* addr, int port);

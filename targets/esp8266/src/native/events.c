@@ -1,27 +1,31 @@
 #include <stdint.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <mem.h>
 #include "events.h"
+#include "classes.h"
 #include "ets_alt_task.h"
 
+extern int os_printf_plus(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+#define printf os_printf_plus
 #define malloc os_malloc
 #define free os_free
+#define EVENT_NUMBER (squawk_cioRequestor()+1)
 
 /*
  * event delivery mechanism
  */
 struct irqRequest {
-        int eventNumber;
-        int type;
-        struct irqRequest *next;
+	int eventNumber;
+	int type;
+	bool signaled;
+	int event;
+	struct irqRequest *next;
 };
 typedef struct irqRequest IrqRequest;
 typedef int (*event_check_routine_t)(int);
 
 static IrqRequest *irqRequests;
 
-static int irqRequestCount[MAX_EVENT_TYPE] = {0};
 /*
  * Java has requested wait for an interrupt. Store the request,
  * and each time Java asks for events, signal the event if the interrupt has happened
@@ -38,24 +42,25 @@ int storeIrqRequest (int type) {
 
         newRequest->next = NULL;
         newRequest->type = type;
+        newRequest->signaled = false;
+        newRequest->event = 0;
 
         if (irqRequests == NULL) {
         	irqRequests = newRequest;
-        	newRequest->eventNumber = 1;
+        	newRequest->eventNumber = EVENT_NUMBER;
         } else {
         	IrqRequest* current = irqRequests;
         	while (current->next != NULL) {
         		current = current->next;
         	}
         	current->next = newRequest;
-        	newRequest->eventNumber = current->eventNumber + 1;
+        	newRequest->eventNumber = EVENT_NUMBER;
         }
-		irqRequestCount[type]++;
         return newRequest->eventNumber;
 }
 
 int getEventPrim(int);
-static int check_event(int type, int clear_flag, int* result);
+static int check_event(IrqRequest* requests, int clear_flag, int* result);
 
 /*
  * If there are outstanding irqRequests and one of them is for an irq that has
@@ -80,7 +85,6 @@ int checkForEvents() {
  * return 0.
  */
 int getEventPrim(int removeEventFlag) {
-//	printf("ets_loop_iter\n");
 	ets_loop_iter();
 	
         int res = 0;
@@ -91,7 +95,7 @@ int getEventPrim(int removeEventFlag) {
         IrqRequest* previous = NULL;
         while (current != NULL) {
 			int evt;
-        	if (check_event(current->type, removeEventFlag, &evt)) {
+        	if (check_event(current, removeEventFlag, &evt)) {
 			    set_event(evt);
         		res = current->eventNumber;
         		//unchain
@@ -116,39 +120,30 @@ int getEventPrim(int removeEventFlag) {
  * Check if an irq bit is set in the status, return 1 if yes
  * Also, clear bit if it is set and clear_flag = 1
  */
-static int check_event(int type, int clear_flag, int *evt) {
-        int result;
-		int r = squawk_get_event(type, clear_flag);
-		if (r) {
-		    *evt = r;
-            result = 1;
-        } else {
-        	result = 0;
-        }
-        return result;
-}
-
-static uint32_t event_status = 0;
-static uint32_t wifi_event;
-#define IS_WIFI_EVENT(type) (type >= WIFI_STAMODE_CONNECTED_EVENT && type <= WIFI_SCAN_DONE_EVENT)
-
-int squawk_get_event(int type, bool clear) {
-	int bit = (1 << type);
-	int e = (event_status & bit) != 0;
-	if (clear && e) {
-		if (--irqRequestCount[type] == 0) {
-			event_status &= ~bit;
+static int check_event(IrqRequest* current, int clear_flag, int *evt) {
+	if (current->signaled) {
+		*evt = current->event;
+		if (clear_flag) {
+			current->signaled = false;
 		}
+		return 1;
+	} else {
+		return 0;
 	}
-	if (IS_WIFI_EVENT(type)) {
-		return e ? wifi_event : 0;
-	}
-	return e;
 }
 
-void squawk_post_event(int type, uint32_t value) {
-	event_status |= (1 << type);
-	if (IS_WIFI_EVENT(type)) {
-		wifi_event = value;
+void squawk_post_event(int threadNumber, int type, uint32_t value) {
+	if (irqRequests == NULL) {
+		return;
+	}
+	IrqRequest* current = irqRequests;
+	while (current != NULL) {
+		int evt;
+		if ((threadNumber == 0 || current->eventNumber == threadNumber) && current->type == type) {
+			current->event = value;
+			current->signaled = true;
+			break;
+		}
+		current = current->next;
 	}
 }
