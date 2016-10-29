@@ -1,6 +1,6 @@
 package com.sun.squawk.io;
 
-import com.sun.squawk.VM;
+import com.sun.squawk.*;
 import java.io.IOException;
 import esp8266.Events;
 

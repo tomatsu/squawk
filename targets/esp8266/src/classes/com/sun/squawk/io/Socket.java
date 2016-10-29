@@ -39,6 +39,9 @@ public class Socket  {
 			throw new IOException();
 		}
 		VM.waitForInterrupt(Events.CONNECTED_EVENT);
+		if (VMThread.currentThread().event != 0) {
+			throw new IOException();
+		}
 		this.handle = n;
 	}
 
@@ -67,7 +70,7 @@ public class Socket  {
 				VM.waitForInterrupt(Events.READ_READY_EVENT);
 				int e = th.event;
 				switch (e) {
-				case -1:
+				case -1: // EOF
 					return -1;
 				case 0:
 					break;
@@ -123,10 +126,20 @@ public class Socket  {
 	
 	public int write(byte[] buf, int off, int len) throws IOException {
 		int n;
+		VMThread th = VMThread.currentThread();
 		while (true) {
 			n = write0(handle, buf, off, len);
 			if (n == 0) {
 				VM.waitForInterrupt(Events.WRITE_READY_EVENT);
+				int e = th.event;
+				switch (e) {
+				case -1:
+					return -1;
+				case 0:
+					break;
+				default:
+					throw new IOException();
+				}
 			} else {
 				break;
 			}
