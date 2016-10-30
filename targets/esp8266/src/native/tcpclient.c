@@ -1,9 +1,12 @@
 #include "tcp.h"
 #include "udp.h"
 #include "unused.h"
+#include "classes.h"
 
 extern int os_printf_plus(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 #define printf os_printf_plus
+#define malloc os_malloc
+#define free os_free
 
 #define DEFINE(type, name, args, body) Mask_ ## name ( type Java_ ## name args { body } )
 
@@ -11,12 +14,26 @@ extern int os_printf_plus(const char *format, ...)  __attribute__ ((format (prin
  * NetUtil
  */
 DEFINE(int, com_sun_squawk_io_NetUtil_resolve, (char* host), \
-	ip_addr_t addr; \
-	int n = squawk_resolve(host, &addr); \
-	if (n == 1) { \
-		return addr.addr; \
+    int len = getArrayLength(host); \
+  	char buf[32]; \
+	char* p; \
+	if (len < sizeof(buf)) { \
+	  p = buf; \
+	} else { \
+	  p = malloc(len + 1); \
+	  if (!p) { \
+		 return 0; \
+	  } \
 	} \
-	return 0; \
+	memcpy(p, host, len); \
+	p[len] = 0; \
+	ip_addr_t addr; \
+	int n = squawk_resolve(buf, &addr); \
+	int result = (n == 1) ? addr.addr : 0; \
+	if (p != buf) { \
+	    free(p); \
+	} \
+	return result; \
 )
 
 /*

@@ -1,7 +1,7 @@
 package com.sun.squawk.io;
 
 import com.sun.squawk.*;
-import java.io.IOException;
+import java.io.*;
 import esp8266.Events;
 
 public class DatagramSocket {
@@ -108,5 +108,62 @@ public class DatagramSocket {
 			}
 		}
 		return n;
+	}
+
+	public InputStream getInputStream() {
+		return new PrivateInputStream();
+	}
+	
+	public OutputStream getOutputStream(int remoteaddr, int remoteport) {
+		return new PrivateOutputStream(remoteaddr, remoteport);
+	}
+	
+	static byte[] inbuf = new byte[1];
+	static byte[] outbuf = new byte[1];
+	
+	class PrivateInputStream extends InputStream {
+		public int read() throws IOException {
+			// assume single thread
+			int n = receive(inbuf, 0, 1);
+			if (n == 1) {
+				return inbuf[0];
+			} else {
+				return n;
+			}
+		}
+
+		public int read(byte b[], int off, int len) throws IOException {
+			return receive(b, off, len);
+		}
+		
+		public int available() throws IOException {
+			return 0;
+		}
+		
+		public void close() throws IOException {
+		}
+	}
+
+	class PrivateOutputStream extends OutputStream {
+		int remoteaddr;
+		int remoteport;
+
+		PrivateOutputStream(int remoteaddr, int remoteport) {
+			this.remoteaddr = remoteaddr;
+			this.remoteport = remoteport;
+		}
+		
+		public void write(int i) throws IOException {
+			// assume single thread
+			outbuf[0] = (byte)i;
+			send(outbuf, 0, 1);
+		}
+		
+		public void write(byte[] b, int off, int len) throws IOException {
+			send(remoteaddr, remoteport, b, off, len);
+		}
+
+		public void close() throws IOException {
+		}
 	}
 }

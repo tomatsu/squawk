@@ -135,9 +135,10 @@ DEFINE(jboolean,  station_1set_1config_1current, (void* arg),  \
 DEFINE(int, station_1set_1cert_1key, (int8_t* current_cert, int client_cert_len, \
 									  int8_t* private_key, int private_key_len,	\
 									  char* private_key_passwd),		\
+	int len = getArrayLength(private_key_passwd); \
 	return wifi_station_set_cert_key(current_cert, client_cert_len, \
 									 private_key, private_key_len, \
-									 private_key_passwd, strlen(private_key_passwd)); \
+									 private_key_passwd, len); \
 )
 
 DEFINE(void, station_1clear_1cert_1key, (), \
@@ -145,7 +146,8 @@ DEFINE(void, station_1clear_1cert_1key, (), \
 )
 
 DEFINE(int, station_1set_1username, (char* name), \
-	return wifi_station_set_username(name, strlen(name)); \
+	int len = getArrayLength(name); \
+	return wifi_station_set_username(name, len); \
 )
 
 DEFINE(void, station_1clear_1username, (), \
@@ -304,6 +306,12 @@ DEFINE(int, station_1get_1rssi, (), \
 	)
 
 DEFINE(jboolean, station_1set_1hostname, (char* name), \
+	char buf[33]; \
+	char* p; \
+	int len = getArrayLength(name); \
+	if (len > 32) len = 32; \
+	memcpy(buf, name, len); \
+	buf[len] = 0; \
 	return wifi_station_set_hostname(name); \
 )
 

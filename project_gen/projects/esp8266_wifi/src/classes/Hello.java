@@ -113,7 +113,7 @@ public class Hello {
 			c.receive(d);
 		}
 		*/
-		/* udp inputstream
+		/* udp inputstream (1)
 		try {
 			DatagramConnection c = (DatagramConnection)Connector.open("datagram://:9000");
 			InputStream in = new UDPInputStream(c);
@@ -132,12 +132,48 @@ public class Hello {
 		try {
 			DatagramConnection c = (DatagramConnection)Connector.open("datagram://192.168.1.7:9000");
 			OutputStream out = new UDPOutputStream(c);
-			out.write("Hello".getBytes());
+
+			byte[] data = "hello".getBytes();
+			for (int i = 0; i < 1000; i++) {
+					out.write(data, 0, data.length);
+			}
 			out.flush();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		/**/
+		/* udp inputstream (2) 
+		try {
+			DatagramSocket s = new DatagramSocket(9000);
+			InputStream in = s.getInputStream();
+			byte[] line = new byte[32];
+			int count = 0;
+			while ((n = in.read(line)) != -1) {
+//				System.out.write(line, 0, n);
+				count+=n;
+				System.out.println("count="+count);
+				if (n==3 && line[0] == 'b' && line[1] == 'y' && line[2] == 'e') {
+					break;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		*/
+		/* udp outputstream (2) 
+		try {
+			DatagramSocket s = new DatagramSocket();
+			int adr = NetUtil.gethostbyname("192.168.1.7");
+			System.out.println("adr="+adr);
+			OutputStream out = s.getOutputStream(adr, 9000);
+			byte[] data = "hello".getBytes();
+			for (int i = 0; i < 1000; i++) {
+					out.write(data, 0, data.length);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		**/
 		while (true) {
 			System.out.println("Hello ");
 			Thread.sleep(1000);
