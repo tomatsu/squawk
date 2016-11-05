@@ -16,8 +16,8 @@ Build for mbed
 * Install gcc-arm-none-eabi
 * Install JDK
 * git clone https://github.com/tomatsu/squawk
-* cd squawk; ./build.sh
-* cd project_gen;  make TARGET=LPC1768 MAIN_CLASS_NAME=Hello PROJECT=helloworld
+* cd squawk; make
+* cd project_gen/targets/mbed;  make TARGET=LPC1768 PROJECT=helloworld
 * cd /tmp/lpc1768_helloworld; make
 
 Build for ESP8266
@@ -25,9 +25,10 @@ Build for ESP8266
 * Install toolchain and SDK
 * Install JDK
 * git clone https://github.com/tomatsu/squawk
-* cd squawk; ./build.sh
-* Set environment variable ESP_SDK (for example: export ESP_SDK=$HOME/esp-open-sdk/sdk)
-* cd project_gen;  make TARGET=ESP8266 MAIN_CLASS_NAME=Hello PROJECT=helloworld
+* cd squawk; make
+* Set environment variable PATH and ESP_SDK
+  For example, export ESP_SDK=$HOME/esp-open-sdk/sdk; export PATH=$HOME/esp-open-sdk/xtensa-lx106-elf/bin:$PATH
+* cd project_gen/targets/esp8266;  make PROJECT=helloworld
 * cd /tmp/esp8266_helloworld; make
 
 Plans

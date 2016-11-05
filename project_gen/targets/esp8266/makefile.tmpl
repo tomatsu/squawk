@@ -1,64 +1,63 @@
-# template for MBED
+-include target.mk
 
 AT ?= @
-CFLAGS_OPTS = -Os -flto -fdata-sections -ffunction-sections
-#CFLAGS_OPTS = -O2 -flto -fdata-sections -ffunction-sections
+CFLAGS_OPTS = -Os -mlongcalls -mforce-l32 -mtext-section-literals -ffunction-sections -fdata-sections
 CFLAGS_DEP = -MD
+CFLAGS += -std=gnu99 -Dprintf=os_printf_plus
 
 JAVA = java
 JAVAC = javac
 JAR = jar
 FIND = find
-PYTHON = python
-CC = arm-none-eabi-gcc
-CXX = arm-none-eabi-g++
-OBJCOPY = arm-none-eabi-objcopy
+CC = xtensa-lx106-elf-cc
+AR = xtensa-lx106-elf-ar
+OBJCOPY = xtensa-lx106-elf-objcopy
 
 SQUAWK_TOP = squawk
 BUILD_TOP ?= build
+LINKERSCRIPT = esp8266.ld
 JARFILE = classes.jar
-JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar mbed_hal.jar
-
+JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar
 BUILD_FLAGS = -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
-BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE) -DMAIN_CLASS_NAME=$(MAIN_CLASS_NAME)
-BUILD_FLAGS += -DTARGET_$(TARGET) -DTARGET_$(MCU)
-INCLUDE_DIRS += $(MBED) $(MBED)/hal $(MBED)/platform $(MBED)/TARGET_$(TARGET) $(MBED)/TARGET_$(TARGET)/TARGET_$(VENDOR)/TARGET_$(MCU) $(MBED)/TARGET_$(TARGET)/TARGET_$(VENDOR)/TARGET_$(MCU)/TARGET_$(DEVICE) $(MBED)/TARGET_$(TARGET)/TARGET_$(VENDOR)/TARGET_$(MCU)/device
-INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/gcc-arm
-INCLUDE_DIRS += $(SQUAWK_TOP)/targets/mbed/src/native
+BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE)
+INCLUDE_DIRS += $(ESP_SDK)/include .
+INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/esp8266
+INCLUDE_DIRS += $(ESP_SDK)/include $(ESP_SDK)/driver_lib/include/driver $(ESP_SDK)/../esp-open-lwip/include
+INCLUDE_DIRS += $(SQUAWK_TOP)/targets/esp8266/src/native
+INCLUDE_DIRS += $(SQUAWK_TOP)/spiffs/latest/src
+INCLUDE_DIRS += $(SQUAWK_TOP)/mbedtls/latest/include
 CFLAGS += $(CFLAGS_ARCH) $(DEVICE_OPTIONS) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) $(CFLAGS_DEP)
-LDFLAGS += $(CFLAGS_ARCH) -T$(LINKERSCRIPT) --specs=nano.specs $(CFLAGS_OPTS) -Wl,-gc-sections -Wl,--no-wchar-size-warning
-LDSUFFIXES += -L$(LIBDIR) $(LIBDIR)/*.o -lmbed -lc -lm -lnosys
+LDFLAGS += $(LDLAGS_ARCH) -T$(LINKERSCRIPT) -uuser_init -Wl,--gc-sections -Wl,--Map=$(@:.elf=.map) -Wl,--cref
+LDSUFFIXES += -L$(BUILD_TOP) -lsquawk
+LIBAR = $(BUILD_TOP)/libsquawk.a
+LDSUFFIXES += -L$(ESP_SDK)/lib -L$(ESP_SDK)/ld -nostdlib -Wl,--start-group -lcrypto -lmain -lnet80211 -lwpa -lwpa2 -lwps -llwip -lpp -lphy -ldriver -lgcc -lcirom -lm -Wl,--end-group 
 TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
-CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes hal_classes mbed_hal.jar
+CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes
 
-C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/rts/gcc-arm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/targets/mbed/src/native
+C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/rts/esp8266 $(SQUAWK_TOP)/targets/esp8266/src/native
+C_SOURCE_DIRS += $(SQUAWK_TOP)/spiffs/latest/src
 C_SOURCE_FILES  = $(shell for i in $(patsubst %,%/*.c,$(C_SOURCE_DIRS)); do if [ -f $$i ]; then basename $$i; fi; done)
 OBJECT_DIR = $(BUILD_TOP)/obj
 OBJECT_FILES = $(patsubst %.c,$(OBJECT_DIR)/%.o,$(C_SOURCE_FILES))
 OBJECT_FILES += $(OBJECT_DIR)/squawk.suite.o
 DEPENDS = $(patsubst %.o,%.d,$(OBJECT_FILES))
-HAL_CLASSES_JAVA = $(shell $(FIND) $(SQUAWK_TOP)/targets/mbed/src/classes $(SQUAWK_TOP)/targets/mbed/src/targets/$(TARGET)/classes -name '*.java' -print)
 
-JAVA_SOURCE_FILES = $(shell $(FIND) src/classes -name '*.java' -print)
+JAVA_SOURCE_DIRS = src/classes $(SQUAWK_TOP)/gcf/src $(SQUAWK_TOP)/targets/esp8266/src/classes 
+JAVA_SOURCE_FILES = $(shell $(FIND) $(JAVA_SOURCE_DIRS) -name '*.java' -print)
 
 vpath %.c $(C_SOURCE_DIRS)
 
-all: dirs mbed_hal.jar $(JARFILE) romize compile link bin hex
+all: dirs $(JARFILE) romize compile link bin hex
 
 dirs:
 	$(AT)mkdir -p $(OBJECT_DIR)
 
-mbed_hal.jar: $(HAL_CLASSES_JAVA)
-	$(AT)rm -rf hal_classes
-	$(AT)mkdir -p hal_classes
-	$(AT)$(JAVAC) -target 1.4 -source 1.4 -classpath $(SQUAWK_TOP)/cldc/classes.target.jar -d hal_classes $(HAL_CLASSES_JAVA)
-	$(AT)$(JAR) cf mbed_hal.jar -C hal_classes .
-
 $(JARFILE): $(JAVA_SOURCE_FILES)
 	$(AT)rm -rf classes
 	$(AT)mkdir -p classes
-	$(AT)$(JAVAC) -bootclasspath $(SQUAWK_TOP)/cldc/classes.target.jar -classpath mbed_hal.jar -d classes $(JAVA_SOURCE_FILES)
-	$(AT)$(JAR) cf classes.jar -C classes .
+	$(AT)$(JAVAC) -bootclasspath $(SQUAWK_TOP)/cldc/classes.target.jar -d classes $(JAVA_SOURCE_FILES)
+	$(AT)$(JAR) cf $(JARFILE) -C classes .
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-5.1.jar com.sun.squawk.builder.asm.MainFinder $(JARFILE) > $(BUILD_TOP)/MAIN_CLASS_NAME
 
 romize: $(BUILD_TOP)/squawk.suite.c
 
@@ -69,7 +68,7 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-5.1.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.glue.NativeGlueGen -d:$(BUILD_TOP) $(TMP)/classes
 	$(AT)tar cf - -C $(BUILD_TOP)/cldc/classes .  | (cd $(TMP)/classes; tar xf -)
 	$(AT)mkdir -p $(TMP)/classes2
-	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-5.1.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.asm.Shrink $(TMP)/classes $(TMP)/classes2 $(MAIN_CLASS_NAME) $(TMP)/classes
+	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-5.1.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.asm.Shrink $(TMP)/classes $(TMP)/classes2 $(shell cat $(BUILD_TOP)/MAIN_CLASS_NAME) $(TMP)/classes
 	$(AT)mkdir -p $(TMP)/weaved
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/tools/retroweaver-all-squawk.jar:$(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/romizer/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar com.sun.squawk.SquawkRetroWeaver $(TMP)/classes2 $(TMP)/weaved
 	$(AT)mkdir -p $(TMP)/j2meclasses
@@ -83,38 +82,38 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 		com.sun.squawk.suiteconverter.FlashConverter -c $(BUILD_TOP)/squawk.suite 0
 
 buildflags:
-	$(AT)echo "#define BUILD_FLAGS \""$(BUILD_FLAGS)"\"" > $(TMP)//buildflags.h
+	$(AT)echo "#define BUILD_FLAGS \""$(BUILD_FLAGS)"\"" > $(TMP)/buildflags.h
 	$(AT)if [ -f $(BUILD_TOP)/vmcore/src/vm/native.c.inc ]; then \
 		echo "#define INCLUDE_NATIVE" >> $(TMP)/buildflags.h; \
 	fi
+	$(AT)echo "#define MAIN_CLASS_NAME "$(shell cat $(BUILD_TOP)/MAIN_CLASS_NAME) >> $(TMP)/buildflags.h
 	$(AT)if [ -f $(BUILD_TOP)/vmcore/src/vm/buildflags.h ]; then \
 	    diff $(TMP)/buildflags.h $(BUILD_TOP)/vmcore/src/vm/buildflags.h > /dev/null || cp $(TMP)/buildflags.h $(BUILD_TOP)/vmcore/src/vm/buildflags.h; \
 	else \
 		cp $(TMP)/buildflags.h $(BUILD_TOP)/vmcore/src/vm/buildflags.h; \
 	fi
 
-compile: buildflags $(OBJECT_FILES)
+compile: buildflags $(OBJECT_FILES) archive
+
+archive:
+	$(AT)$(AR) r $(LIBAR) $(OBJECT_FILES)
 
 -include $(DEPENDS)
 
 $(OBJECT_DIR)/squawk.suite.o: $(BUILD_TOP)/squawk.suite.c
-	$(AT)$(CC) -c $(CFLAGS) -o $@ $<
+	$(AT)$(CC) -c $(CFLAGS) -o $(OBJECT_DIR)/squawk.suite.o $<
 
 $(OBJECT_DIR)/%.o: %.c
 	$(AT)$(CC) -c $(CFLAGS) -o $@ $<
 
-%.hex : %.elf
-	$(AT)$(OBJCOPY) -O ihex $< $@
-
 %.bin: %.elf
-	$(AT)$(OBJCOPY) -O binary $< $@
+	esptool.py elf2image $^
 
-$(BUILD_TOP)/squawk.elf : $(OBJECT_FILES)
-	$(AT)$(CC) $(LDFLAGS) -o $@ $(OBJECT_FILES) $(LDSUFFIXES)
+$(BUILD_TOP)/squawk.elf : $(LIBAR)
+	$(AT)$(CC) $(LDFLAGS) -o $@ $(LDSUFFIXES)
 
 link: $(BUILD_TOP)/squawk.elf
 bin: $(BUILD_TOP)/squawk.bin
-hex: $(BUILD_TOP)/squawk.hex
 
 map:
 	$(AT)java -cp $(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/mapper/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar com.sun.squawk.ObjectMemoryMapper -o:$(BUILD_TOP)/squawk.suite.map -cp:$(TMP)/j2meclasses $(BUILD_TOP)/squawk.suite

@@ -1,7 +1,7 @@
 BUILD_TOP ?= /tmp
-TARGET ?= linux
+TARGET ?= LPC1768
+SQUAWK_TOP = ../../..
 
-MAIN_CLASS_NAME ?= Hello
 PROJECT ?= helloworld
 PROJECT_DIR = $(BUILD_TOP)/$(shell echo $(TARGET) | tr '[:upper:]' '[:lower:]')_$(PROJECT)
 
@@ -9,34 +9,7 @@ AT = @
 
 default: all
 
-ifeq ($(TARGET),linux)
-
-FILELIST = files_linux.txt
-
-makefile:
-	$(AT)echo "MAIN_CLASS_NAME = $(MAIN_CLASS_NAME)" > $(PROJECT_DIR)/Makefile
-	$(AT)cat makefile_linux-i386.tmpl >> $(PROJECT_DIR)/Makefile
-
-all: copy_squawk makefile copy_app
-
-else
-
-ifeq ($(TARGET),ESP8266)
-
-FILELIST = files_esp8266.txt
-
-makefile:
-	$(AT)echo "-include target.mk" > $(PROJECT_DIR)/Makefile
-	$(AT)echo "MAIN_CLASS_NAME = $(MAIN_CLASS_NAME)" >> $(PROJECT_DIR)/Makefile
-	$(AT)cat makefile_esp.tmpl >> $(PROJECT_DIR)/Makefile
-	$(AT)(cd targets/$(TARGET)/; tar cf - .) | (cd $(PROJECT_DIR)/; tar xf -)
-
-all: copy_squawk makefile copy_app
-
-else
-
-# assume MBED
-FILELIST = files_mbed.txt
+FILELIST = files.txt
 MBED = mbed/.build/mbed
 TOOL ?= GCC_ARM
 SDK_URL ?= https://github.com/mbedmicro/mbed.git
@@ -62,23 +35,15 @@ mbed_hdr :
 makefile:
 	$(AT)echo "MBED = mbed" > $(PROJECT_DIR)/Makefile
 	$(AT)echo "-include target.mk" >> $(PROJECT_DIR)/Makefile
-	$(AT)echo "MAIN_CLASS_NAME ?= $(MAIN_CLASS_NAME)" >> $(PROJECT_DIR)/Makefile
 	$(AT)python mbed_devices.py ${TARGET} >> $(PROJECT_DIR)/Makefile
 	$(AT)cat $(TEMPLATE) >> $(PROJECT_DIR)/Makefile
-	$(AT)(cd targets/$(TARGET)/; tar cf - .) | (cd $(PROJECT_DIR)/; tar xf -)
+	$(AT)(cd $(TARGET); tar cf - .) | (cd $(PROJECT_DIR)/; tar xf -)
 
 all: mbed_sdk mbed_hdr copy_squawk makefile copy_app
 
-endif
-endif
-
-#
-# common 
-#
-
 copy_squawk:
 	$(AT)mkdir -p $(PROJECT_DIR)/squawk
-	$(AT)(files="$(shell cat $(FILELIST))"; cd ..; tar cf - $$files) | (cd $(PROJECT_DIR)/squawk; tar xf -)
+	$(AT)(files="$(shell cat $(FILELIST))"; cd $(SQUAWK_TOP); tar cf - $$files) | (cd $(PROJECT_DIR)/squawk; tar xf -)
 
 copy_app:
-	$(AT)(cd projects/$(PROJECT); tar cf - .) | (cd $(PROJECT_DIR); tar xf -)
+	$(AT)(cd ../../projects/$(PROJECT); tar cf - .) | (cd $(PROJECT_DIR); tar xf -)

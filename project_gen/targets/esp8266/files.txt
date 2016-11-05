@@ -62,7 +62,7 @@ romizer/classes.jar
 build.properties
 squawk.exclude
 squawk.library.properties
-targets/esp8266
+targets/esp8266/src
 gcf
 spiffs
 mbedtls

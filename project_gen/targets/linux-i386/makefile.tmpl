@@ -1,15 +1,17 @@
-# template for ESP8266
+RAM_SIZE ?= 13*1024
+
 AT ?= @
-CFLAGS_OPTS = -Os -mlongcalls -mforce-l32 -mtext-section-literals
-CFLAGS_DEP = -MD
-CFLAGS += -std=gnu99 -Dprintf=os_printf_plus
+CFLAGS_ARCH = -m32
+CFLAGS_OPTS = -Os
+#CFLAGS_OPTS = -Os -flto
 
 JAVA = java
 JAVAC = javac
 JAR = jar
 FIND = find
-CC = xtensa-lx106-elf-cc
-OBJCOPY = xtensa-lx106-elf-objcopy
+CC = gcc
+CXX = g++
+STRIP = strip
 
 SQUAWK_TOP = squawk
 BUILD_TOP ?= build
@@ -17,44 +19,38 @@ JARFILE = classes.jar
 JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar
 
 BUILD_FLAGS = -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
-BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE) -DMAIN_CLASS_NAME=$(MAIN_CLASS_NAME)
-INCLUDE_DIRS += $(ESP_SDK)/include .
-INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/esp8266
-INCLUDE_DIRS += $(ESP_SDK)/include $(ESP_SDK)/driver_lib/include/driver $(ESP_SDK)/../esp-open-lwip/include
-INCLUDE_DIRS += $(SQUAWK_TOP)/targets/esp8266/src/native
-INCLUDE_DIRS += $(SQUAWK_TOP)/spiffs/latest/src
-INCLUDE_DIRS += $(SQUAWK_TOP)/mbedtls/latest/include
-CFLAGS += $(CFLAGS_ARCH) $(DEVICE_OPTIONS) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) $(CFLAGS_DEP)
-LDFLAGS += $(LDLAGS_ARCH) -T$(LINKERSCRIPT) -Wl,--gc-sections -Wl,--Map=$(@:.elf=.map) -Wl,--cref
-LDSUFFIXES += -L$(ESP_SDK)/lib -L$(ESP_SDK)/ld -nostdlib -Wl,--start-group -lcrypto -lmain -lnet80211 -lwpa -lwpa2 -lwps -llwip -lpp -lphy -ldriver -lgcc -lcirom -lm -Wl,--end-group 
+BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE)
+
+INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/gcc
+CFLAGS += $(CFLAGS_ARCH) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) -fdata-sections -ffunction-sections -MD
+LDFLAGS += $(CFLAGS_ARCH) $(CFLAGS_OPTS) -Wl,-gc-sections
+LDSUFFIXES += -lm
 TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
 CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes
 
-C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/rts/esp8266 $(SQUAWK_TOP)/targets/esp8266/src/native
-C_SOURCE_DIRS += $(SQUAWK_TOP)/spiffs/src/native $(SQUAWK_TOP)/spiffs/latest/src
+C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/rts/gcc $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm
 C_SOURCE_FILES  = $(shell for i in $(patsubst %,%/*.c,$(C_SOURCE_DIRS)); do if [ -f $$i ]; then basename $$i; fi; done)
 OBJECT_DIR = $(BUILD_TOP)/obj
-OBJECT_DIR_0 = $(BUILD_TOP)/obj_0
 OBJECT_FILES = $(patsubst %.c,$(OBJECT_DIR)/%.o,$(C_SOURCE_FILES))
 OBJECT_FILES += $(OBJECT_DIR)/squawk.suite.o
 DEPENDS = $(patsubst %.o,%.d,$(OBJECT_FILES))
 
-JAVA_SOURCE_DIRS = src/classes $(SQUAWK_TOP)/gcf/src $(SQUAWK_TOP)/targets/esp8266/src/classes 
-JAVA_SOURCE_FILES = $(shell $(FIND) $(JAVA_SOURCE_DIRS) -name '*.java' -print)
+JAVA_SOURCE_FILES = $(shell $(FIND) src/classes -name '*.java' -print)
 
 vpath %.c $(C_SOURCE_DIRS)
 
-all: dirs $(JARFILE) romize compile link bin hex
+all: dirs $(JARFILE) romize compile link strip
 
 dirs:
-	$(AT)mkdir -p $(OBJECT_DIR) $(OBJECT_DIR_0)
+	$(AT)mkdir -p $(OBJECT_DIR)
 
 $(JARFILE): $(JAVA_SOURCE_FILES)
 	$(AT)rm -rf classes
 	$(AT)mkdir -p classes
 	$(AT)$(JAVAC) -bootclasspath $(SQUAWK_TOP)/cldc/classes.target.jar -d classes $(JAVA_SOURCE_FILES)
 	$(AT)$(JAR) cf classes.jar -C classes .
-
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-5.1.jar com.sun.squawk.builder.asm.MainFinder $(JARFILE) > $(BUILD_TOP)/MAIN_CLASS_NAME
+	
 romize: $(BUILD_TOP)/squawk.suite.c
 
 $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
@@ -64,7 +60,7 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-5.1.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.glue.NativeGlueGen -d:$(BUILD_TOP) $(TMP)/classes
 	$(AT)tar cf - -C $(BUILD_TOP)/cldc/classes .  | (cd $(TMP)/classes; tar xf -)
 	$(AT)mkdir -p $(TMP)/classes2
-	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-5.1.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.asm.Shrink $(TMP)/classes $(TMP)/classes2 $(MAIN_CLASS_NAME) $(TMP)/classes
+	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-5.1.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.asm.Shrink $(TMP)/classes $(TMP)/classes2 $(shell cat $(BUILD_TOP)/MAIN_CLASS_NAME) $(TMP)/classes
 	$(AT)mkdir -p $(TMP)/weaved
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/tools/retroweaver-all-squawk.jar:$(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/romizer/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar com.sun.squawk.SquawkRetroWeaver $(TMP)/classes2 $(TMP)/weaved
 	$(AT)mkdir -p $(TMP)/j2meclasses
@@ -78,10 +74,11 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 		com.sun.squawk.suiteconverter.FlashConverter -c $(BUILD_TOP)/squawk.suite 0
 
 buildflags:
-	$(AT)echo "#define BUILD_FLAGS \""$(BUILD_FLAGS)"\"" > $(TMP)//buildflags.h
+	$(AT)echo "#define BUILD_FLAGS \""$(BUILD_FLAGS)"\"" > $(TMP)/buildflags.h
 	$(AT)if [ -f $(BUILD_TOP)/vmcore/src/vm/native.c.inc ]; then \
 		echo "#define INCLUDE_NATIVE" >> $(TMP)/buildflags.h; \
 	fi
+	$(AT)echo "#define MAIN_CLASS_NAME "$(shell cat $(BUILD_TOP)/MAIN_CLASS_NAME) >> $(TMP)/buildflags.h
 	$(AT)if [ -f $(BUILD_TOP)/vmcore/src/vm/buildflags.h ]; then \
 	    diff $(TMP)/buildflags.h $(BUILD_TOP)/vmcore/src/vm/buildflags.h > /dev/null || cp $(TMP)/buildflags.h $(BUILD_TOP)/vmcore/src/vm/buildflags.h; \
 	else \
@@ -93,23 +90,18 @@ compile: buildflags $(OBJECT_FILES)
 -include $(DEPENDS)
 
 $(OBJECT_DIR)/squawk.suite.o: $(BUILD_TOP)/squawk.suite.c
-	$(AT)$(CC) -c $(CFLAGS) -o $(OBJECT_DIR_0)/squawk.suite.o $<
-	$(AT)$(OBJCOPY) --rename-section .text=.irom0.text --rename-section .literal=.irom0.literal --rename-section .rodata=.irom0.rodata $(OBJECT_DIR_0)/squawk.suite.o $@
-
-$(OBJECT_DIR)/%.o: $(OBJECT_DIR_0)/%.o
-	$(AT)$(OBJCOPY) --rename-section .text=.irom0.text --rename-section .literal=.irom0.literal --rename-section .rodata=.irom0.rodata $< $@
-
-$(OBJECT_DIR_0)/%.o: %.c
 	$(AT)$(CC) -c $(CFLAGS) -o $@ $<
 
-%.bin: %.elf
-	esptool.py elf2image $^
+$(OBJECT_DIR)/%.o: %.c
+	$(AT)$(CC) -c $(CFLAGS) -o $@ $<
 
-$(BUILD_TOP)/squawk.elf : $(OBJECT_FILES)
+$(BUILD_TOP)/squawk : $(OBJECT_FILES)
 	$(AT)$(CC) $(LDFLAGS) -o $@ $(OBJECT_FILES) $(LDSUFFIXES)
 
-link: $(BUILD_TOP)/squawk.elf
-bin: $(BUILD_TOP)/squawk.bin
+link: $(BUILD_TOP)/squawk
+
+strip:
+	$(AT)$(STRIP) $(BUILD_TOP)/squawk
 
 map:
 	$(AT)java -cp $(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/mapper/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar com.sun.squawk.ObjectMemoryMapper -o:$(BUILD_TOP)/squawk.suite.map -cp:$(TMP)/j2meclasses $(BUILD_TOP)/squawk.suite
@@ -117,4 +109,4 @@ map:
 clean:
 	$(AT)rm -rf $(CLEAN_TARGETS)
 
-.PHONY: all dirs romize buildflags compile link bin hex map clean
+.PHONY: all dirs romize buildflags compile link strip map clean
