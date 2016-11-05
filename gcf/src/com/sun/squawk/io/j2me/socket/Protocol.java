@@ -128,7 +128,7 @@ public class Protocol extends ConnectionBase implements SocketConnection {
             throw new IOException();
         }
         isopen = true;
-        InputStream in = new PrivateInputStream();
+        InputStream in = socket.getInputStream();
         opens++;
         return in;
     }
@@ -149,7 +149,7 @@ public class Protocol extends ConnectionBase implements SocketConnection {
             throw new IOException();
         }
         osopen = true;
-        OutputStream os = new PrivateOutputStream();
+        OutputStream os = socket.getOutputStream();
         opens++;
         return os;
     }
@@ -209,201 +209,5 @@ public class Protocol extends ConnectionBase implements SocketConnection {
         ensureOpen();
         return port;
     }
-
-	/**
-	 * Input stream for the connection
-	 */
-	class PrivateInputStream extends InputStream {
-
-		/**
-		 * End of file flag
-		 */
-		boolean eof = false;
-
-		/**
-		 * Constructor
-		 * @param pointer to the connection object
-		 *
-		 * @exception  IOException  if an I/O error occurs.
-		 */
-		/* public */ PrivateInputStream() throws IOException {
-		}
-
-		/**
-		 * Reads the next byte of data from the input stream.
-		 * <p>
-		 * Polling the native code is done here to allow for simple
-		 * asynchronous native code to be written. Not all implementations
-		 * work this way (they block in the native code) but the same
-		 * Java code works for both.
-		 *
-		 * @return     the next byte of data, or <code>-1</code> if the end of the
-		 *             stream is reached.
-		 * @exception  IOException  if an I/O error occurs.
-		 */
-		synchronized public int read() throws IOException {
-			int res;
-			ensureOpen();
-			if (eof) {
-				return -1;
-			}
-			res = socket.read();
-			if (res == -1) {
-				eof = true;
-			}
-			return res;
-		}
-
-		/**
-		 * Reads up to <code>len</code> bytes of data from the input stream into
-		 * an array of bytes.
-		 * <p>
-		 * Polling the native code is done here to allow for simple
-		 * asynchronous native code to be written. Not all implementations
-		 * work this way (they block in the native code) but the same
-		 * Java code works for both.
-		 *
-		 * @param      b     the buffer into which the data is read.
-		 * @param      off   the start offset in array <code>b</code>
-		 *                   at which the data is written.
-		 * @param      len   the maximum number of bytes to read.
-		 * @return     the total number of bytes read into the buffer, or
-		 *             <code>-1</code> if there is no more data because the end of
-		 *             the stream has been reached.
-		 * @exception  IOException  if an I/O error occurs.
-		 */
-		synchronized public int read(byte b[], int off, int len)
-            throws IOException {
-			ensureOpen();
-			if (eof) {
-				return -1;
-			}
-			if (len == 0) {
-				return 0;
-			}
-			// Check for array index out of bounds, and NullPointerException,
-			// so that the native code doesn't need to do it
-			int test = b[off];
-			test = b[off + len - 1];
-        
-			int n = socket.read(b, off, len);
-			if (n == -1) {
-				eof = true;
-			}
-
-			return n;
-		}
-
-		/**
-		 * Returns the number of bytes that can be read (or skipped over) from
-		 * this input stream without blocking by the next caller of a method for
-		 * this input stream.
-		 *
-		 * @return     the number of bytes that can be read from this input stream.
-		 * @exception  IOException  if an I/O error occurs.
-		 */
-		synchronized public int available() throws IOException {
-			ensureOpen();
-			return socket.available();
-		}
-
-		/**
-		 * Close the stream.
-		 *
-		 * @exception  IOException  if an I/O error occurs
-		 */
-		public synchronized void close() throws IOException {
-			ensureOpen();
-			realClose();
-			isopen = false;
-		}
-
-	}
-
-	/**
-	 * Output stream for the connection
-	 */
-	class PrivateOutputStream extends OutputStream {
-
-		/**
-		 * Constructor
-		 * @param pointer to the connection object
-		 *
-		 * @exception  IOException  if an I/O error occurs.
-		 */
-		/* public */ PrivateOutputStream() throws IOException {
-		}
-
-		/**
-		 * Writes the specified byte to this output stream.
-		 * <p>
-		 * Polling the native code is done here to allow for simple
-		 * asynchronous native code to be written. Not all implementations
-		 * work this way (they block in the native code) but the same
-		 * Java code works for both.
-		 *
-		 * @param      b   the <code>byte</code>.
-		 * @exception  IOException  if an I/O error occurs. In particular,
-		 *             an <code>IOException</code> may be thrown if the
-		 *             output stream has been closed.
-		 */
-		synchronized public void write(int b) throws IOException {
-			ensureOpen();
-			while (true) {
-				int res = socket.write(b);
-				if (res != 0) {
-					// IMPL_NOTE: should EOFException be thrown if write fails?
-					return;
-				}
-			}
-		}
-
-		/**
-		 * Writes <code>len</code> bytes from the specified byte array
-		 * starting at offset <code>off</code> to this output stream.
-		 * <p>
-		 * Polling the native code is done here to allow for simple
-		 * asynchronous native code to be written. Not all implementations
-		 * work this way (they block in the native code) but the same
-		 * Java code works for both.
-		 *
-		 * @param      b     the data.
-		 * @param      off   the start offset in the data.
-		 * @param      len   the number of bytes to write.
-		 * @exception  IOException  if an I/O error occurs. In particular,
-		 *             an <code>IOException</code> is thrown if the output
-		 *             stream is closed.
-		 */
-		synchronized public void write(byte b[], int off, int len)
-			throws IOException {
-			ensureOpen();
-			if (len == 0) {
-				return;
-			}
-
-			// Check for array index out of bounds, and NullPointerException,
-			// so that the native code doesn't need to do it
-			int test = b[off] + b[off + len - 1];
-
-			int n = 0;
-			while (true) {
-				n += socket.write(b, off + n, len - n);
-				if (n == len) {
-					break;
-				}
-			}
-		}
-
-		/**
-		 * Close the stream.
-		 *
-		 * @exception  IOException  if an I/O error occurs
-		 */
-		public synchronized void close() throws IOException {
-			ensureOpen();
-			realClose();
-			osopen = false;
-		}
-	}
 }
 

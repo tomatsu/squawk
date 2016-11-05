@@ -100,7 +100,7 @@ public class Protocol extends ConnectionBase implements DatagramConnection, UDPD
      */
     public void receive(Datagram dgram) throws IOException {
         DatagramObject dh = (DatagramObject)dgram;
-        dh.len = endpoint.receive(dh.data, dh.offset, dh.data.length - dh.offset);
+        dh.len = endpoint.read(dh.data, dh.offset, dh.data.length - dh.offset);
         dh.pointer = 0;
     }
 

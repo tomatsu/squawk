@@ -43,6 +43,6 @@ void cioPrintLong(jlong x) {
 void cioPrintBytes(char* bytes, int len) {
 		int i;
 		for (i = 0; i < len; i++) {
-		   uart_tx_one_char_no_wait(UART0, *bytes++);
+		   uart_tx_one_char(UART0, *bytes++);
 		}
 }

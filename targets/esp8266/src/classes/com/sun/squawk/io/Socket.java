@@ -5,7 +5,7 @@ import java.io.IOException;
 import static com.sun.squawk.io.NetUtil.*;
 import esp8266.Events;
 
-public class Socket  {
+public class Socket extends AbstractSocket {
 	private static native int getlocaladdr(int handle);
 	private static native int getlocalport(int handle);
 	private static native int available0(int handle);
@@ -16,7 +16,7 @@ public class Socket  {
 	private static native int write1(int handle, byte value);
 	private static native int close0(int handle);
 
-	private int handle;
+	int handle;
 	
 	public Socket() {
 	}

@@ -2,7 +2,6 @@ import esp8266.*;
 import static esp8266.Wifi.*;
 import javax.microedition.io.*;
 import com.sun.squawk.io.*;
-import java.io.BufferedReader;
 import java.io.*;
 
 public class Hello {
