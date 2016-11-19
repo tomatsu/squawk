@@ -13,13 +13,12 @@
 #define free os_free
 #define min(a,b) ((a) > (b) ? (b) : (a))
 
-#define DEFINE(type, name, args, body) Mask_ ## name ( type Java_ ## name args { body } )
 #define FLASH_INT_MASK 0x23a
 
 #define CSTR(str, n)							\
 	int str ## _len = getArrayLength(str);		\
 	if (str ## _len > n) str ## _len = n;		\
-	uint8_t c_ ## str [str ## _len + 1];					\
+	uint8_t c_ ## str [str ## _len + 1];		\
 	memcpy(c_ ## str, str, str ## _len);		\
 	c_ ## str[str ## _len] = 0;						   
 
@@ -203,177 +202,177 @@ static int32_t spiffs_hal_erase(uint32_t addr, uint32_t size) {
 	return SPIFFS_OK;
 }
 	
-DEFINE(bool, spiffs_FileSystem_mount0, (),								\
-	   if (!SPIFFS_mounted(&squawk_spiffs_fs)) {						\
-		   spiffs_config config = {0};									\
-		   config.hal_read_f = &spiffs_hal_read;						\
-		   config.hal_write_f = &spiffs_hal_write;						\
-		   config.hal_erase_f = &spiffs_hal_erase;						\
-		   squawk_spiffs_work = (uint8_t*)malloc(512);					\
-		   if (!squawk_spiffs_work) {									\
-			   return false;											\
-		   }															\
-		   squawk_spiffs_fd_space = (uint8_t*)malloc(SPIFFS_MAX_OPEN_FILES * sizeof(spiffs_fd));\
-		   if (!squawk_spiffs_fd_space) {								\
-			   free(squawk_spiffs_work);								\
-			   return false;											\
-		   }															\
-		   if (!initialize_cache()) {									\
-			   free(squawk_spiffs_work);								\
-			   free(squawk_spiffs_fd_space);							\
-			   return false;											\
-		   }															\
-		   int32_t res = SPIFFS_mount(&squawk_spiffs_fs,				\
-									  &config,							\
-									  squawk_spiffs_work,				\
-									  squawk_spiffs_fd_space,			\
-									  SPIFFS_MAX_OPEN_FILES * sizeof(spiffs_fd), \
-									  squawk_spiffs_cache,				\
-									  squawk_cache_size, check_cb_f);	\
-		   if (res != SPIFFS_OK) {										\
-			   printf("SPIFFS_mount failed, errono=%d\n", SPIFFS_errno(&squawk_spiffs_fs));		\
-			   return false;											\
-		   }															\
-		   return SPIFFS_mounted(&squawk_spiffs_fs);					\
-	   }																\
-	   return true;														\
-)
+bool Java_spiffs_FileSystem_mount0() {
+	if (!SPIFFS_mounted(&squawk_spiffs_fs)) {
+		spiffs_config config = {0};
+		config.hal_read_f = &spiffs_hal_read;
+		config.hal_write_f = &spiffs_hal_write;
+		config.hal_erase_f = &spiffs_hal_erase;
+		squawk_spiffs_work = (uint8_t*)malloc(512);
+		if (!squawk_spiffs_work) {
+			return false;
+		}
+		squawk_spiffs_fd_space = (uint8_t*)malloc(SPIFFS_MAX_OPEN_FILES * sizeof(spiffs_fd));
+		if (!squawk_spiffs_fd_space) {
+			free(squawk_spiffs_work);
+			return false;
+		}
+		if (!initialize_cache()) {
+			free(squawk_spiffs_work);
+			free(squawk_spiffs_fd_space);
+			return false;
+		}
+		int32_t res = SPIFFS_mount(&squawk_spiffs_fs,
+								   &config,
+								   squawk_spiffs_work,
+								   squawk_spiffs_fd_space,
+								   SPIFFS_MAX_OPEN_FILES * sizeof(spiffs_fd),
+								   squawk_spiffs_cache,
+								   squawk_cache_size, check_cb_f);
+		if (res != SPIFFS_OK) {
+			printf("SPIFFS_mount failed, errono=%d\n", SPIFFS_errno(&squawk_spiffs_fs));
+			return false;
+		}
+		return SPIFFS_mounted(&squawk_spiffs_fs);
+	}
+	return true;
+}
 
-DEFINE(bool, spiffs_FileSystem_unmount0, (),		\
-	   if (SPIFFS_mounted(&squawk_spiffs_fs)) {		\
-		   SPIFFS_unmount(&squawk_spiffs_fs);		\
-		   free(squawk_spiffs_work);				\
-		   free(squawk_spiffs_fd_space);			\
-	   }											\
-)	   
+bool Java_spiffs_FileSystem_unmount0() {
+	if (SPIFFS_mounted(&squawk_spiffs_fs)) {
+		SPIFFS_unmount(&squawk_spiffs_fs);
+		free(squawk_spiffs_work);
+		free(squawk_spiffs_fd_space);
+	}
+}	   
 
-DEFINE(bool, spiffs_FileSystem_format0, (),			\
-	   int32_t res = SPIFFS_format(&squawk_spiffs_fs);			\
-	   return (res == SPIFFS_OK);								\
-)	   
+bool Java_spiffs_FileSystem_format0() {
+	int32_t res = SPIFFS_format(&squawk_spiffs_fs);
+	return (res == SPIFFS_OK);
+}	   
 
-DEFINE(bool, spiffs_FileSystem_rename0, (char* from,  char* to),	\
-	   CSTR(from, 31);												\
-	   CSTR(to, 31);												\
-	   int32_t res = SPIFFS_rename(&squawk_spiffs_fs, c_from, c_to);	\
-	   return (res == SPIFFS_OK);										\
-)	   
+bool Java_spiffs_FileSystem_rename0(char* from,  char* to) {
+	CSTR(from, 31);
+	CSTR(to, 31);
+	int32_t res = SPIFFS_rename(&squawk_spiffs_fs, c_from, c_to);
+	return (res == SPIFFS_OK);
+}	   
 
-DEFINE(bool, spiffs_FileSystem_delete0, (char* path),		\
-	   CSTR(path, 31);										\
-	   int res = SPIFFS_remove(&squawk_spiffs_fs, c_path);	\
-	   return (res == SPIFFS_OK);							\
-)	   
+bool Jav_spiffs_FileSystem_delete0(char* path) {
+	CSTR(path, 31);
+	int res = SPIFFS_remove(&squawk_spiffs_fs, c_path);
+	return (res == SPIFFS_OK);
+}	   
 
-DEFINE(bool, spiffs_FileSystem_exists0, (char* path),					\
-	   CSTR(path, 31);													\
-	   spiffs_stat s;													\
-	   int rc = SPIFFS_stat(&squawk_spiffs_fs, c_path, &s);				\
-	   return rc == SPIFFS_OK;											\
-)	   
+bool Java_spiffs_FileSystem_exists0(char* path) {
+	CSTR(path, 31);
+	spiffs_stat s;
+	int rc = SPIFFS_stat(&squawk_spiffs_fs, c_path, &s);
+	return rc == SPIFFS_OK;
+}	   
 
-DEFINE(int, spiffs_FileSystem_opendir, (char* path),			  \
-	   spiffs_DIR* dir = (spiffs_DIR*)malloc(sizeof(spiffs_DIR)); \
-	   if (!dir) {												  \
-		   printf("out of memory\n");							  \
-		   return 0;											  \
-	   }														  \
-	   CSTR(path, 31);											  \
-	   int32_t res = SPIFFS_opendir(&squawk_spiffs_fs, c_path, dir);	\
-	   if (res == 0) {													\
-		   printf("SPIFFS_opendir failed, errono=%d\n", SPIFFS_errno(&squawk_spiffs_fs));		\
-		   free(dir);													\
-		   return 0;													\
-	   }																\
-	   return dir;														\
-)	   
+int Java_spiffs_FileSystem_opendir(char* path) {
+	spiffs_DIR* dir = (spiffs_DIR*)malloc(sizeof(spiffs_DIR));
+	if (!dir) {
+		printf("out of memory\n");
+		return 0;
+	}
+	CSTR(path, 31);
+	int32_t res = SPIFFS_opendir(&squawk_spiffs_fs, c_path, dir);
+	if (res == 0) {
+		printf("SPIFFS_opendir failed, errono=%d\n", SPIFFS_errno(&squawk_spiffs_fs));
+		free(dir);
+		return 0;
+	}
+	return dir;
+}	   
 
-DEFINE(int, spiffs_FileSystem_readdir, (int handle, char* name),	\
-	   struct spiffs_dirent e;										\
-	   int32_t res = SPIFFS_readdir((spiffs_DIR*)handle, &e);
-	   if (res == 0) {												\
-		   return 0;												\
-	   }															\
-	   int len = strlen(e.name);									\
-	   if (len > 31) len = 31;										\
-	   memcpy(name, e.name, len);									\
-	   return len;													\
-)	   
+int Java_spiffs_FileSystem_readdir(int handle, char* name) {
+	struct spiffs_dirent e;
+	int32_t res = SPIFFS_readdir((spiffs_DIR*)handle, &e);
+	if (res == 0) {
+		return 0;
+	}
+	int len = strlen(e.name);
+	if (len > 31) len = 31;
+	memcpy(name, e.name, len);
+	return len;
+}	   
 
-DEFINE(int, spiffs_FileSystem_closedir, (int handle),	\
-	   return SPIFFS_closedir((spiffs_DIR*)handle);	    \
-)	   
+int Java_spiffs_FileSystem_closedir(int handle) {
+	return SPIFFS_closedir((spiffs_DIR*)handle);
+}	   
 
-DEFINE(int, spiffs_FileSystem_getLastError0, (),	\
-	   return SPIFFS_errno(&squawk_spiffs_fs);		\
-)
+int Java_spiffs_FileSystem_getLastError0() {
+	return SPIFFS_errno(&squawk_spiffs_fs);
+}
 
-DEFINE(int, spiffs_FileInputStream_open, (char* path),					\
-	   CSTR(path, 31);													\
-	   return SPIFFS_open(&squawk_spiffs_fs, c_path, SPIFFS_RDONLY, 0);	\
-)
+int Java_spiffs_FileInputStream_open(char* path) {
+	CSTR(path, 31);
+	return SPIFFS_open(&squawk_spiffs_fs, c_path, SPIFFS_RDONLY, 0);
+}
 
-DEFINE(int, spiffs_FileInputStream_read1, (int handle),			\
-	   uint8_t buf[1];											\
-	   if (SPIFFS_read(&squawk_spiffs_fs, handle, buf, 1) < 0) {	\
-		   if (SPIFFS_eof(&squawk_spiffs_fs, handle)) {						\
-			   return -1;										\
-		   }													\
-		   return -2;											\
-	   }														\
-	   return (int)buf[0];										\
-)
+int Java_spiffs_FileInputStream_read1(int handle) {
+	uint8_t buf[1];
+	if (SPIFFS_read(&squawk_spiffs_fs, handle, buf, 1) < 0) {
+		if (SPIFFS_eof(&squawk_spiffs_fs, handle)) {
+			return -1;
+		}
+		return -2;
+	}
+	return (int)buf[0];
+}
 
-DEFINE(int, spiffs_FileInputStream_read0, (int handle, uint8_t* buf, int offset, int size), \
-	   int n = SPIFFS_read(&squawk_spiffs_fs, handle, buf + offset, size); \
-	   if (n < 0) {														\
-		   if (SPIFFS_eof(&squawk_spiffs_fs, handle)) {						\
-			   return -1;												\
-		   }															\
-		   return -2;													\
-	   }																\
-	   return n;														\
-)
+int Java_spiffs_FileInputStream_read0(int handle, uint8_t* buf, int offset, int size) {
+	int n = SPIFFS_read(&squawk_spiffs_fs, handle, buf + offset, size);
+	if (n < 0) {
+		if (SPIFFS_eof(&squawk_spiffs_fs, handle)) {
+			return -1;
+		}
+		return -2;
+	}
+	return n;
+}
 
-DEFINE(int, spiffs_FileInputStream_skip0, (int handle, int n),	\
-	   SPIFFS_lseek(&squawk_spiffs_fs, (spiffs_file)handle, n, SPIFFS_SEEK_CUR); \
-)
+int Java_spiffs_FileInputStream_skip0(int handle, int n) {
+	SPIFFS_lseek(&squawk_spiffs_fs, (spiffs_file)handle, n, SPIFFS_SEEK_CUR);
+}
 
-DEFINE(int, spiffs_FileInputStream_available0, (int handle),	\
-	   int total = SPIFFS_tell(&squawk_spiffs_fs, (spiffs_file)handle);			\
-	   int cur = SPIFFS_lseek(&squawk_spiffs_fs, (spiffs_file)handle, 0, SPIFFS_SEEK_CUR); \
-	   if (total > cur) {												\
-		   return total - cur;											\
-	   } else {															\
-		   return 0;													\
-	   }																\
-)
+int Java_spiffs_FileInputStream_available0(int handle) {
+	int total = SPIFFS_tell(&squawk_spiffs_fs, (spiffs_file)handle);
+	int cur = SPIFFS_lseek(&squawk_spiffs_fs, (spiffs_file)handle, 0, SPIFFS_SEEK_CUR);
+	if (total > cur) {
+		return total - cur;
+	} else {
+		return 0;
+	}
+}
 
-DEFINE(int, spiffs_FileInputStream_close0, (int handle),	\
-	   SPIFFS_close(&squawk_spiffs_fs, (spiffs_file)handle);	    \
-)
+int Java_spiffs_FileInputStream_close0(int handle) {
+	SPIFFS_close(&squawk_spiffs_fs, (spiffs_file)handle);
+}
 
-DEFINE(int, spiffs_FileOutputStream_open, (char* path),	\
-	   CSTR(path, 31);													\
-	   return SPIFFS_open(&squawk_spiffs_fs, c_path, SPIFFS_CREAT|SPIFFS_WRONLY|SPIFFS_TRUNC, 0); \
-)
+int Java_spiffs_FileOutputStream_open(char* path) {
+	CSTR(path, 31);
+	return SPIFFS_open(&squawk_spiffs_fs, c_path, SPIFFS_CREAT|SPIFFS_WRONLY|SPIFFS_TRUNC, 0);
+}
 
-DEFINE(int, spiffs_FileOutputStream_write1, (int handle, int ch), \
-	   uint8_t u8 = (uint8_t)ch;										\
-	   return SPIFFS_write(&squawk_spiffs_fs, (spiffs_file)handle, &u8, 1); \
-)
+int Java_spiffs_FileOutputStream_write1(int handle, int ch) {
+	uint8_t u8 = (uint8_t)ch;
+	return SPIFFS_write(&squawk_spiffs_fs, (spiffs_file)handle, &u8, 1);
+}
 
-DEFINE(int, spiffs_FileOutputStream_write0, (int handle, uint8_t* buf, int offset, int size), \
-	   int ret = SPIFFS_write(&squawk_spiffs_fs, (spiffs_file)handle, buf + offset, size); \
-	   return ret;														\
-)
+int Java_spiffs_FileOutputStream_write0(int handle, uint8_t* buf, int offset, int size) {
+	int ret = SPIFFS_write(&squawk_spiffs_fs, (spiffs_file)handle, buf + offset, size);
+	return ret;
+}
 
-DEFINE(int, spiffs_FileOutputStream_flush0, (int handle),	\
-	   SPIFFS_fflush(&squawk_spiffs_fs, (spiffs_file)handle);			\
-	   return 0;														\
-)
+int Java_spiffs_FileOutputStream_flush0(int handle) {
+	SPIFFS_fflush(&squawk_spiffs_fs, (spiffs_file)handle);
+	return 0;
+}
 
-DEFINE(int, spiffs_FileOutputStream_close0, (int handle),	\
-	   SPIFFS_close(&squawk_spiffs_fs, (spiffs_file)handle);		\
-	   return 0;													\
-)
+int Java_spiffs_FileOutputStream_close0(int handle) {
+	SPIFFS_close(&squawk_spiffs_fs, (spiffs_file)handle);
+	return 0;
+}
