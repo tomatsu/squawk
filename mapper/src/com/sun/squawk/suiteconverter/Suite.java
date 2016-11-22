@@ -345,7 +345,7 @@ public class Suite {
 	toHex(sbuf, getHash(), 8);
 	sbuf.append(",0x");
 	toHex(sbuf, memorySize, 8);
-	sbuf.append(",");
+	sbuf.append(", {");
 	out.println(sbuf);
 		
 	for (int i = 0; i < oopMap.length; i++) {
@@ -371,7 +371,7 @@ public class Suite {
 	    sbuf.append("\n");
 	    out.print(sbuf.toString());
 	}
-	out.println("};");
+	out.println("}};");
 	out.println("const unsigned int* " + var + " = (unsigned int*)&_" + var + ";");
     }
 
