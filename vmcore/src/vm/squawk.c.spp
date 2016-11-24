@@ -463,6 +463,7 @@ NOINLINE int float2l_slow(float f) {
 }
 /*end[FLOATS]*/
 
+#if !PLATFORM_TYPE_BARE_METAL
 /**
  * Allocate a word aligned byte buffer from the C memory and zero its contents.
  * The call will exit the system if it could not allocate the buffer.
@@ -554,7 +555,7 @@ void freeBuffers() {
         freeBuffer(Buffers[0]);
     }
 }
-
+#endif
 /*
  * Include the memory interface.
  */
@@ -828,10 +829,12 @@ fprintf(stderr, "VM is in a blocking system call!!! WILL CRASH????");
     if (!inStop) {
         inStop = true;
         finalizeStreams();
-
+		
+#if !PLATFORM_TYPE_BARE_METAL
         if (cleanup) {
             freeBuffers();
         }
+#endif
 /*if[!EMULATOR_LAUNCHER]*/
         fprintf(stderr, "\n\n");
 #ifndef FLASH_MEMORY
@@ -1052,6 +1055,10 @@ int writeCStringArray(int length, char **array, int offset) {
  */
 static char* getAlternateBootstrapSuiteLocation(char* bootstrapSuiteName);
 
+#if PLATFORM_TYPE_BARE_METAL
+static uint32_t javaHeap[DEFAULT_RAM_SIZE/sizeof(uint32_t)] __attribute__((aligned(sysGetPageSize()))); /* We assume sysGetPageSize() is a constant */
+#endif
+
 /**
  * Sets up the memory buffer.
  * 
@@ -1104,7 +1111,7 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     diagnosticWithValue("setupMemory: ram size", ramSize);
     diagnosticWithValue("setupMemory: nvmSize size", nvmSize);
 
-#if defined(FLASH_MEMORY) || PLATFORM_TYPE_BARE_METAL
+#if defined(FLASH_MEMORY) || defined(PLATFORM_TYPE_BARE_METAL)
     memorySize = roundUp(ramSize - (pageSize-1), pageSize);
     ramSize = memorySize - roundUp(serviceChunkSize, pageSize) - roundUp(argvTotalSize, pageSize) - roundUp(nvmSize, pageSize);
     diagnosticWithValue("ram size", ramSize);
@@ -1127,17 +1134,22 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     memorySize = roundUp(memorySize + argvTotalSize, pageSize);
 #endif /* FLASH_MEMORY */
 
+#if PLATFORM_TYPE_BARE_METAL
+    bootstrapSize = loadBootstrapSuiteFromFlash(/*VAL*/_bootstrap/*BOOTSTRAP_SUITE_ADDR_SYM*/, &com_sun_squawk_VM_romStart, &suite, &com_sun_squawk_VM_bootstrapHash);
+    com_sun_squawk_VM_bootstrapStart = com_sun_squawk_VM_romStart; 
+    com_sun_squawk_VM_romEnd = Address_add(com_sun_squawk_VM_romStart, bootstrapSize);
+
+    memory = javaHeap;
+    memoryEnd = Address_add(memory, memorySize);
+
+#else
      // Double the memory buffer to allocate the type map if necessary
     realMemorySize = TYPEMAP ? memorySize * 2 : memorySize;
 
     // Allocate the memory buffer
     memory = newBuffer(realMemorySize, "memory", true);
     memoryEnd = Address_add(memory, memorySize);
-#if PLATFORM_TYPE_BARE_METAL
-    bootstrapSize = loadBootstrapSuiteFromFlash(/*VAL*/_bootstrap/*BOOTSTRAP_SUITE_ADDR_SYM*/, &com_sun_squawk_VM_romStart, &suite, &com_sun_squawk_VM_bootstrapHash);
-    com_sun_squawk_VM_bootstrapStart = com_sun_squawk_VM_romStart; 
-    com_sun_squawk_VM_romEnd = Address_add(com_sun_squawk_VM_romStart, bootstrapSize);
-#else
+
 #ifdef FLASH_MEMORY
     bootstrapSize = loadBootstrapSuiteFromFlash(bootstrapSuiteFile, &com_sun_squawk_VM_romStart, &suite, &com_sun_squawk_VM_bootstrapHash);
     com_sun_squawk_VM_bootstrapStart = com_sun_squawk_VM_romStart;
