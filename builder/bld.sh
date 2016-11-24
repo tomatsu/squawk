@@ -52,6 +52,7 @@ mkdir classes
 $JAVAC -target 1.5 -source 1.5 -d classes -g src/com/sun/squawk/builder/launcher/*.java
 #$JAVAC -target 1.5 -source 1.5 -d classes -cp ../tools/asm-5.1.jar -g src/com/sun/squawk/builder/asm/*.java src/com/sun/squawk/builder/glue/*.java
 $JAVAC -d classes -cp ../tools/asm-5.1.jar src/com/sun/squawk/builder/asm/*.java src/com/sun/squawk/builder/glue/*.java
+$JAVAC -target 1.5 -source 1.5 -d classes -g src/com/sun/squawk/builder/util/*.java
 $JAR cfm ../build.jar build-manifest.mf -C classes .
 rm -fr classes
 mkdir classes
