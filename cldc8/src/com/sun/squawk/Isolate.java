@@ -1969,13 +1969,14 @@ public final class Isolate implements Runnable {
             debugger.notifyEvent(new Debugger.Event(Debugger.Event.VM_DEATH, this));
         }
 /*end[ENABLE_SDA_DEBUGGER]*/
-
+/*if[ENABLE_MULTI_ISOLATE]*/
         try {
             hibernate(EXITED, doExitHooks);
         } catch (IOException e) {
             e.printStackTrace();
             Assert.shouldNotReachHere();
         }
+/*end[ENABLE_MULTI_ISOLATE]*/
     }
 
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
