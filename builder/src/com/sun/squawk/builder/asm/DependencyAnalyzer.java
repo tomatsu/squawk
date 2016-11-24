@@ -99,6 +99,28 @@ public class DependencyAnalyzer {
 		"com/sun/squawk/GC.GC_TRACING_SUPPORTED",
 		"com/sun/squawk/GC.TRACE_ALLOCATION",
 		"com/sun/squawk/GC.traceThreshold",
+		"com/sun/squawk/Lisp2Bitmap.start",
+		"com/sun/squawk/Lisp2Bitmap.base",
+		"com/sun/squawk/Lisp2Bitmap.size",
+		"com/sun/squawk/Lisp2Bitmap.Iterator_inUse",
+		"com/sun/squawk/Lisp2Bitmap.Iterator_end",
+		"com/sun/squawk/Lisp2Bitmap.Iterator_next",
+		"com/sun/squawk/Lisp2Collector.collectionStart",
+		"com/sun/squawk/Lisp2Collector.collectionEnd",
+		"com/sun/squawk/Lisp2Collector$MarkingStack.base",
+		"com/sun/squawk/Lisp2Collector$MarkingStack.size",
+		"com/sun/squawk/Lisp2Collector$MarkingStack.index",
+		"com/sun/squawk/Lisp2Collector$MarkingStack.overflowed",
+		"com/sun/squawk/Lisp2Collector.markingRecursionLevel",
+		"com/sun/squawk/Lisp2Collector.firstMovingBlock",
+		"com/sun/squawk/Lisp2Collector.firstDeadBlock",
+		"com/sun/squawk/Lisp2Collector.lastDeadBlock",
+		"com/sun/squawk/Lisp2Collector$Timings.computeAddresses",
+		"com/sun/squawk/Lisp2Collector$Timings.setup",
+		"com/sun/squawk/Lisp2Collector$Timings.mark",
+		"com/sun/squawk/Lisp2Collector$Timings.updatePointers",
+		"com/sun/squawk/Lisp2Collector$Timings.finalize",
+		"com/sun/squawk/Lisp2Collector$Timings.compactObjects",
 		"com/sun/squawk/CheneyCollector.copyingObjectGraph",
 		"com/sun/squawk/CheneyCollector.forwardingRepairMap",
 		"com/sun/squawk/CheneyCollector.forwardingRepairMapTop",
@@ -125,6 +147,9 @@ public class DependencyAnalyzer {
 		"com/sun/squawk/ServiceOperation.NONE",
 		"com/sun/squawk/ServiceOperation.CHANNELIO",
 		"com/sun/squawk/ServiceOperation.GARBAGE_COLLECT",
+		"com/sun/squawk/VMThread.threadNumber",
+/*if DEBUG_CODE_ENABLED is true, you will need the following line: */
+/*		"com/sun/squawk/CheneyCollector.VMThreadKlass",*/
 		};
 		/*
 	static {
