@@ -56,8 +56,10 @@ public class TestJava5 {
         testAutoUnboxingBoolean(true, true);
         testAutoUnboxingByte((byte) 10, (byte) 10);
         testAutoUnboxingCharacter('a', 'a');
+/*if[FLOATS]*/		
         testAutoUnboxingDouble(10.0, 10.0);
         testAutoUnboxingFloat((float) 10.0, (float) 10.0);
+/*end[FLOATS]*/		
         testAutoUnboxingInteger(10, 10);
         testAutoUnboxingLong(10L, 10L);
         testAutoUnboxingShort((short) 10, (short) 10);
@@ -77,12 +79,14 @@ public class TestJava5 {
         System.out.println(i == j);
     }
 
+/*if[FLOATS]*/
     public static void testAutoUnboxingFloat(Float i, float j) {
         System.out.print("Float = float: ");
         System.out.println(i = j);
         System.out.print("Float == float: ");
         System.out.println(i == j);
     }
+/*end[FLOATS]*/
 
     public static void testAutoUnboxingCharacter(Character i, char j) {
         System.out.print("Character = char: ");
@@ -90,13 +94,15 @@ public class TestJava5 {
         System.out.print("Character == char: ");
         System.out.println(i == j);
     }
-
+		
+/*if[FLOATS]*/
     public static void testAutoUnboxingDouble(Double i, double j) {
         System.out.print("Double = double: ");
         System.out.println(i = j);
         System.out.print("Double == double: ");
         System.out.println(i == j);
     }
+/*end[FLOATS]*/
 
     public static void testAutoUnboxingByte(Byte i, byte j) {
         System.out.print("Byte = byte: ");
