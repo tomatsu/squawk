@@ -1843,7 +1843,7 @@ hbp.dumpState();
      * @param index   the index of the variable to print
      */
 /*if[JAVA5SYNTAX]*/
-    @Vm2c(code="cioPrintCString("Global oop:"); cioPrintWord(index);")
+    @Vm2c(code="cioPrintCString(\"Global oop:\"); cioPrintWord(index);")
 /*end[JAVA5SYNTAX]*/
     static void printGlobalOopName(int index) {
         execSyncIO(ChannelConstants.INTERNAL_PRINTGLOBALOOPNAME, index);
