@@ -438,8 +438,6 @@ public final strictfp class Math {
     }
 /*end[DEBUG_CODE_ENABLED]*/
 
-/*end[FLOATS]*/
-
     public static double signum(double d) {
         return (d == 0.0 || Double.isNaN(d))?d:copySign(1.0, d);
     }
@@ -463,4 +461,5 @@ public final strictfp class Math {
     public static int getExponent(double d) {
         return (int)(((Double.doubleToRawLongBits(d) & 0x7FF0000000000000L) >> 52) - 1023);
     }
+/*end[FLOATS]*/
 }

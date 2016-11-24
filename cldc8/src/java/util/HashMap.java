@@ -141,7 +141,7 @@ public class HashMap<K,V>
     /**
      * The load factor used when none specified in constructor.
      */
-    static final float DEFAULT_LOAD_FACTOR = 0.75f;
+    static final int DEFAULT_LOAD_FACTOR_PERCENT = 75;
 
     /**
      * The table, resized as necessary. Length MUST Always be a power of two.
@@ -161,7 +161,7 @@ public class HashMap<K,V>
     /**
      * The load factor for the hash table.
      */
-    final float loadFactor;
+    final int loadFactorPercent;
 
     /**
      * The number of times this HashMap has been structurally modified
@@ -172,6 +172,7 @@ public class HashMap<K,V>
      */
     transient volatile int modCount;
 
+/*if[FLOATS]*/ 	  
     /**
      * Constructs an empty <tt>HashMap</tt> with the specified initial
      * capacity and load factor.
@@ -196,11 +197,12 @@ public class HashMap<K,V>
         while (capacity < initialCapacity)
             capacity <<= 1;
 
-        this.loadFactor = loadFactor;
-        threshold = (int)(capacity * loadFactor);
+        this.loadFactorPercent = (int)(loadFactor * 100);
+        threshold = (int)(capacity * this.loadFactorPercent / 100);
         table = new Entry[capacity];
         init();
     }
+/*end[FLOATS]*/ 	  
 
     /**
      * Constructs an empty <tt>HashMap</tt> with the specified initial
@@ -210,7 +212,29 @@ public class HashMap<K,V>
      * @throws IllegalArgumentException if the initial capacity is negative.
      */
     public HashMap(int initialCapacity) {
-        this(initialCapacity, DEFAULT_LOAD_FACTOR);
+/*if[!FLOATS]*/ 	  			
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal initial capacity: " +
+                                               initialCapacity);
+        if (initialCapacity > MAXIMUM_CAPACITY)
+            initialCapacity = MAXIMUM_CAPACITY;
+//        if (loadFactor <= 0 || Float.isNaN(loadFactor))
+//            throw new IllegalArgumentException("Illegal load factor: " +
+//                                               loadFactor);
+
+        // Find a power of 2 >= initialCapacity
+        int capacity = 1;
+        while (capacity < initialCapacity)
+            capacity <<= 1;
+
+        this.loadFactorPercent = DEFAULT_LOAD_FACTOR_PERCENT;
+        threshold = (int)(capacity * this.loadFactorPercent / 100);
+        table = new Entry[capacity];
+        init();
+/*else[FLOATS]*/		
+//        this(initialCapacity, DEFAULT_LOAD_FACTOR_PERCENT / 100f);
+/*end[FLOATS]*/		
+		
     }
 
     /**
@@ -218,8 +242,8 @@ public class HashMap<K,V>
      * (16) and the default load factor (0.75).
      */
     public HashMap() {
-        this.loadFactor = DEFAULT_LOAD_FACTOR;
-        threshold = (int)(DEFAULT_INITIAL_CAPACITY * DEFAULT_LOAD_FACTOR);
+        this.loadFactorPercent = DEFAULT_LOAD_FACTOR_PERCENT;
+        threshold = (int)(DEFAULT_INITIAL_CAPACITY * DEFAULT_LOAD_FACTOR_PERCENT / 100);
         table = new Entry[DEFAULT_INITIAL_CAPACITY];
         init();
     }
@@ -234,8 +258,8 @@ public class HashMap<K,V>
      * @throws  NullPointerException if the specified map is null
      */
     public HashMap(Map<? extends K, ? extends V> m) {
-        this(Math.max((int) (m.size() / DEFAULT_LOAD_FACTOR) + 1,
-                      DEFAULT_INITIAL_CAPACITY), DEFAULT_LOAD_FACTOR);
+        this(Math.max((int) (m.size() * 100 / DEFAULT_LOAD_FACTOR_PERCENT) + 1,
+                      DEFAULT_INITIAL_CAPACITY));
         putAllForCreate(m);
     }
 
@@ -476,7 +500,7 @@ public class HashMap<K,V>
         Entry[] newTable = new Entry[newCapacity];
         transfer(newTable);
         table = newTable;
-        threshold = (int)(newCapacity * loadFactor);
+        threshold = (int)(newCapacity * loadFactorPercent / 100);
     }
 
     /**
@@ -523,7 +547,7 @@ public class HashMap<K,V>
          * to at most one extra resize.
          */
         if (numKeysToBeAdded > threshold) {
-            int targetCapacity = (int)(numKeysToBeAdded / loadFactor + 1);
+            int targetCapacity = (int)(numKeysToBeAdded * 100 / loadFactorPercent + 1);
             if (targetCapacity > MAXIMUM_CAPACITY)
                 targetCapacity = MAXIMUM_CAPACITY;
             int newCapacity = table.length;

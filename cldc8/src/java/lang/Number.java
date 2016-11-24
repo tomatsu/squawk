@@ -71,6 +71,7 @@ public abstract class Number  {
      */
     public abstract long longValue();
 
+/*if[FLOATS]*/
     /**
      * Returns the value of the specified number as a {@code float},
      * which may involve rounding.
@@ -89,6 +90,7 @@ public abstract class Number  {
      */
     public abstract double doubleValue();
 
+/*end[FLOATS]*/
     /**
      * Returns the value of the specified number as a {@code byte},
      * which may involve rounding or truncation.

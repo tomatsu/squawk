@@ -142,7 +142,7 @@ public class Hashtable<K,V>
      *
      * @serial
      */
-    private float loadFactor;
+    private int loadFactorPercent;
 
     /**
      * The number of times this Hashtable has been structurally modified
@@ -153,6 +153,7 @@ public class Hashtable<K,V>
      */
     private transient int modCount = 0;
 
+/*if[FLOATS]*/	
     /**
      * Constructs a new, empty hashtable with the specified initial
      * capacity and the specified load factor.
@@ -172,10 +173,11 @@ public class Hashtable<K,V>
 
         if (initialCapacity==0)
             initialCapacity = 1;
-        this.loadFactor = loadFactor;
+        this.loadFactorPercent = (int)(loadFactor * 100);
         table = new Entry[initialCapacity];
-        threshold = (int)(initialCapacity * loadFactor);
+        threshold = (int)(initialCapacity * loadFactorPercent / 100);
     }
+/*end[FLOATS]*/	
 
     /**
      * Constructs a new, empty hashtable with the specified initial capacity
@@ -186,7 +188,18 @@ public class Hashtable<K,V>
      *              than zero.
      */
     public Hashtable(int initialCapacity) {
-        this(initialCapacity, 0.75f);
+/*if[!FLOATS]*/
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal Capacity: "+
+                                               initialCapacity);
+        if (initialCapacity==0)
+            initialCapacity = 1;
+        this.loadFactorPercent = 75;
+        table = new Entry[initialCapacity];
+        threshold = (int)(initialCapacity * loadFactorPercent / 100);
+/*else[FLOATS]*/
+//        this(initialCapacity, 0.75f);
+/*end[FLOATS]*/
     }
 
     /**
@@ -194,7 +207,11 @@ public class Hashtable<K,V>
      * and load factor (0.75).
      */
     public Hashtable() {
-        this(11, 0.75f);
+/*if[!FLOATS]*/
+        this(11);
+/*else[FLOATS]*/
+//        this(11, 0.75f);
+/*end[FLOATS]*/
     }
 
     /**
@@ -207,7 +224,12 @@ public class Hashtable<K,V>
      * @since   1.2
      */
     public Hashtable(Map<? extends K, ? extends V> t) {
-        this(Math.max(2*t.size(), 11), 0.75f);
+/*if[!FLOATS]*/
+        this(Math.max(2*t.size(), 11));
+/*else[FLOATS]*/
+//        this(Math.max(2*t.size(), 11), 0.75f);
+/*end[FLOATS]*/
+		
         putAll(t);
     }
 
@@ -370,7 +392,7 @@ public class Hashtable<K,V>
         Entry[] newMap = new Entry[newCapacity];
 
         modCount++;
-        threshold = (int)(newCapacity * loadFactor);
+        threshold = (int)(newCapacity * loadFactorPercent / 100);
         table = newMap;
 
         for (int i = oldCapacity ; i-- > 0 ;) {
@@ -785,15 +807,15 @@ public class Hashtable<K,V>
          * in progress.
          */
         int h = 0;
-        if (count == 0 || loadFactor < 0)
+        if (count == 0 || loadFactorPercent < 0)
             return h;  // Returns zero
 
-        loadFactor = -loadFactor;  // Mark hashCode computation in progress
+        loadFactorPercent = -loadFactorPercent;  // Mark hashCode computation in progress
         Entry[] tab = table;
         for (int i = 0; i < tab.length; i++)
             for (Entry e = tab[i]; e != null; e = e.next)
                 h += e.key.hashCode() ^ e.value.hashCode();
-        loadFactor = -loadFactor;  // Mark hashCode computation complete
+        loadFactorPercent = -loadFactorPercent;  // Mark hashCode computation complete
 
         return h;
     }

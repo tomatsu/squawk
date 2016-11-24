@@ -282,6 +282,7 @@ public class Arrays {
 		sort1(a, fromIndex, toIndex-fromIndex);
     }
 
+/*if[FLOATS]*/
     /**
      * Sorts the specified array into ascending numerical order.
      *
@@ -393,6 +394,7 @@ public class Arrays {
         rangeCheck(a.length, fromIndex, toIndex);
 		sort2(a, fromIndex, toIndex);
     }
+/*end[FLOATS]*/
 
 
     /*
@@ -558,6 +560,7 @@ public class Arrays {
         }
     }
 
+/*if[FLOATS]*/
     private static void sort2(double a[], int fromIndex, int toIndex) {
         final long NEG_ZERO_BITS = Double.doubleToLongBits(-0.0d);
         /*
@@ -644,6 +647,7 @@ public class Arrays {
                 a[++j] = -0.0f;
         }
     }
+/*end[FLOATS]*/
 
     /**
      * Sorts the specified sub-array of longs into ascending order.
@@ -1062,7 +1066,8 @@ public class Arrays {
 		(x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
 
-
+/*if[FLOATS]*/
+		
     /**
      * Sorts the specified sub-array of doubles into ascending order.
      */
@@ -1230,6 +1235,8 @@ public class Arrays {
 		(x[b] > x[c] ? b : x[a] > x[c] ? c : a));
     }
 
+/*end[FLOATS]*/
+		
     /**
      * Swaps x[a] with x[b].
      */
@@ -1835,6 +1842,8 @@ public class Arrays {
         }
         return -(low + 1);  // key not found.
     }
+		
+/*if[FLOATS]*/
 
     /**
      * Searches the specified array of doubles for the specified value using
@@ -2017,6 +2026,7 @@ public class Arrays {
         }
         return -(low + 1);  // key not found.
     }
+/*end[FLOATS]*/
 
     /**
      * Searches the specified array for the specified object using the binary
@@ -2400,6 +2410,7 @@ public class Arrays {
         return true;
     }
 
+/*if[FLOATS]*/
     /**
      * Returns <tt>true</tt> if the two specified arrays of doubles are
      * <i>equal</i> to one another.  Two arrays are considered equal if both
@@ -2469,6 +2480,7 @@ public class Arrays {
 
         return true;
     }
+/*end[FLOATS]*/
 
     /**
      * Returns <tt>true</tt> if the two specified arrays of Objects are

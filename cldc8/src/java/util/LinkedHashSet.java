@@ -119,6 +119,7 @@ public class LinkedHashSet<E>
     extends HashSet<E>
     implements Set<E>, Cloneable {
 
+/*if[FLOATS]*/		
     /**
      * Constructs a new, empty linked hash set with the specified initial
      * capacity and load factor.
@@ -132,6 +133,7 @@ public class LinkedHashSet<E>
         super(initialCapacity, loadFactor, true);
     }
 
+/*end[FLOATS]*/		
     /**
      * Constructs a new, empty linked hash set with the specified initial
      * capacity and the default load factor (0.75).
@@ -141,7 +143,7 @@ public class LinkedHashSet<E>
      *              than zero
      */
     public LinkedHashSet(int initialCapacity) {
-        super(initialCapacity, .75f, true);
+		super(initialCapacity/*, .75f, true*/);
     }
 
     /**
@@ -149,7 +151,7 @@ public class LinkedHashSet<E>
      * capacity (16) and load factor (0.75).
      */
     public LinkedHashSet() {
-        super(16, .75f, true);
+		super(16/*, .75f, true*/);
     }
 
     /**
@@ -163,7 +165,7 @@ public class LinkedHashSet<E>
      * @throws NullPointerException if the specified collection is null
      */
     public LinkedHashSet(Collection<? extends E> c) {
-        super(Math.max(2*c.size(), 11), .75f, true);
+		super(Math.max(2*c.size(), 11)/*, .75f, true*/);
         addAll(c);
     }
 }

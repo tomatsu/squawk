@@ -161,6 +161,7 @@ public class LinkedHashMap<K,V>
      */
     private final boolean accessOrder;
 
+/*if[FLOATS]*/		
     /**
      * Constructs an empty insertion-ordered <tt>LinkedHashMap</tt> instance
      * with the specified initial capacity and load factor.
@@ -174,7 +175,9 @@ public class LinkedHashMap<K,V>
         super(initialCapacity, loadFactor);
         accessOrder = false;
     }
-
+		
+/*end[FLOATS]*/
+		
     /**
      * Constructs an empty insertion-ordered <tt>LinkedHashMap</tt> instance
      * with the specified initial capacity and a default load factor (0.75).
@@ -210,6 +213,7 @@ public class LinkedHashMap<K,V>
         accessOrder = false;
     }
 
+/*if[FLOATS]*/		
     /**
      * Constructs an empty <tt>LinkedHashMap</tt> instance with the
      * specified initial capacity, load factor and ordering mode.
@@ -227,7 +231,8 @@ public class LinkedHashMap<K,V>
         super(initialCapacity, loadFactor);
         this.accessOrder = accessOrder;
     }
-
+/*end[FLOATS]*/
+		
     /**
      * Called by superclass constructors and pseudoconstructors (clone,
      * readObject) before any entries are inserted into the map.  Initializes

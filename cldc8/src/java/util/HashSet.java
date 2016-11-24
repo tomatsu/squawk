@@ -98,6 +98,7 @@ public class HashSet<E>
 	addAll(c);
     }
 
+/*if[FLOATS]*/
     /**
      * Constructs a new, empty set; the backing <tt>HashMap</tt> instance has
      * the specified initial capacity and the specified load factor.
@@ -110,6 +111,7 @@ public class HashSet<E>
     public HashSet(int initialCapacity, float loadFactor) {
 	map = new HashMap<E,Object>(initialCapacity, loadFactor);
     }
+/*end[FLOATS]*/
 
     /**
      * Constructs a new, empty set; the backing <tt>HashMap</tt> instance has
@@ -122,7 +124,8 @@ public class HashSet<E>
     public HashSet(int initialCapacity) {
 	map = new HashMap<E,Object>(initialCapacity);
     }
-
+		
+/*if[FLOATS]*/
     /**
      * Constructs a new, empty linked hash set.  (This package private
      * constructor is only used by LinkedHashSet.) The backing
@@ -139,6 +142,7 @@ public class HashSet<E>
     HashSet(int initialCapacity, float loadFactor, boolean dummy) {
 	map = new LinkedHashMap<E,Object>(initialCapacity, loadFactor);
     }
+/*end[FLOATS]*/
 
     /**
      * Returns an iterator over the elements in this set.  The elements
