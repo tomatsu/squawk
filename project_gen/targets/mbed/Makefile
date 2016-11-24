@@ -2,6 +2,11 @@ BUILD_TOP ?= /tmp
 TARGET ?= LPC1768
 SQUAWK_TOP = ../../..
 
+COLLECTOR = $(shell java -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.util.PropertyUtil $(SQUAWK_TOP)/build.properties | egrep '^GC=' | awk -F '=' '{print $$2}')
+ifneq ($(filter com.sun.squawk.Lisp2%,$(COLLECTOR)),)
+GC_CFLAG = "BUILD_FLAGS += -DLISP2_BITMAP"
+endif
+
 PROJECT ?= helloworld
 PROJECT_DIR = $(BUILD_TOP)/$(shell echo $(TARGET) | tr '[:upper:]' '[:lower:]')_$(PROJECT)
 
@@ -10,7 +15,7 @@ AT = @
 default: all
 
 FILELIST = files.txt
-MBED = mbed/.build/mbed
+MBED = mbed/BUILD/mbed
 TOOL ?= GCC_ARM
 SDK_URL ?= https://github.com/mbedmicro/mbed.git
 
@@ -35,6 +40,7 @@ mbed_hdr :
 makefile:
 	$(AT)echo "MBED = mbed" > $(PROJECT_DIR)/Makefile
 	$(AT)echo "-include target.mk" >> $(PROJECT_DIR)/Makefile
+	$(AT)echo $(GC_CFLAG) >> $(PROJECT_DIR)/Makefile
 	$(AT)python mbed_devices.py ${TARGET} >> $(PROJECT_DIR)/Makefile
 	$(AT)cat $(TEMPLATE) >> $(PROJECT_DIR)/Makefile
 	$(AT)(cd $(TARGET); tar cf - .) | (cd $(PROJECT_DIR)/; tar xf -)

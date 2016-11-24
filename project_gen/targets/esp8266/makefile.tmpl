@@ -18,7 +18,7 @@ BUILD_TOP ?= build
 LINKERSCRIPT = esp8266.ld
 JARFILE = classes.jar
 JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar
-BUILD_FLAGS = -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
+BUILD_FLAGS += -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
 BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE)
 INCLUDE_DIRS += $(ESP_SDK)/include .
 INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/esp8266
@@ -28,9 +28,11 @@ INCLUDE_DIRS += $(SQUAWK_TOP)/spiffs/latest/src
 INCLUDE_DIRS += $(SQUAWK_TOP)/mbedtls/latest/include
 CFLAGS += $(CFLAGS_ARCH) $(DEVICE_OPTIONS) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) $(CFLAGS_DEP)
 LDFLAGS += $(LDLAGS_ARCH) -T$(LINKERSCRIPT) -uuser_init -Wl,--gc-sections -Wl,--Map=$(@:.elf=.map) -Wl,--cref
-LDSUFFIXES += -L$(BUILD_TOP) -lsquawk
+LDSUFFIXES += -L$(SQUAWK_TOP)/mbedtls
+LDSUFFIXES += -L$(BUILD_TOP)
 LIBAR = $(BUILD_TOP)/libsquawk.a
-LDSUFFIXES += -L$(ESP_SDK)/lib -L$(ESP_SDK)/ld -nostdlib -Wl,--start-group -lcrypto -lmain -lnet80211 -lwpa -lwpa2 -lwps -llwip -lpp -lphy -ldriver -lgcc -lcirom -lm -Wl,--end-group 
+LIBS = crypto main net80211 wpa wpa2 wps lwip pp phy driver gcc cirom m mbedtls squawk
+LDSUFFIXES += -L$(ESP_SDK)/lib -L$(ESP_SDK)/ld -nostdlib -Wl,--start-group $(patsubst %,-l%,$(LIBS)) -Wl,--end-group 
 TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
 CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes
 
@@ -110,7 +112,7 @@ $(OBJECT_DIR)/%.o: %.c
 	esptool.py elf2image $^
 
 $(BUILD_TOP)/squawk.elf : $(LIBAR)
-	$(AT)$(CC) $(LDFLAGS) -o $@ $(LDSUFFIXES)
+	$(AT)$(CC) $(LDFLAGS) -o $@ build/obj/os.o build/obj/mem.o build/obj/ets_alt_task.o $(LDSUFFIXES)
 
 link: $(BUILD_TOP)/squawk.elf
 bin: $(BUILD_TOP)/squawk.bin

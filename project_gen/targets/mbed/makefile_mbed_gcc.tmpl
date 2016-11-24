@@ -18,6 +18,7 @@ SQUAWK_TOP = squawk
 BUILD_TOP ?= build
 JARFILE = classes.jar
 JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar mbed_hal.jar
+MAPFILE = $(BUILD_TOP)/squawk.map
 
 BUILD_FLAGS = -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
 BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE)
@@ -26,8 +27,10 @@ INCLUDE_DIRS += $(MBED) $(MBED)/hal $(MBED)/platform $(MBED)/TARGET_$(TARGET) $(
 INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/gcc-arm
 INCLUDE_DIRS += $(SQUAWK_TOP)/targets/mbed/src/native
 CFLAGS += $(CFLAGS_ARCH) $(DEVICE_OPTIONS) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) $(CFLAGS_DEP)
-LDFLAGS += $(CFLAGS_ARCH) -T$(LINKERSCRIPT) --specs=nano.specs $(CFLAGS_OPTS) -Wl,-gc-sections -Wl,--no-wchar-size-warning
+#CFLAGS += -DLISP2_BITMAP
+LDFLAGS += $(CFLAGS_ARCH) -T$(LINKERSCRIPT) --specs=nano.specs $(CFLAGS_OPTS) -Wl,--gc-sections -Wl,--no-wchar-size-warning
 LDSUFFIXES += -L$(LIBDIR) $(LIBDIR)/*.o -lmbed -lc -lm -lnosys
+LDSUFFIXES += -Wl,-Map,$(MAPFILE)
 TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
 CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes hal_classes mbed_hal.jar
 
@@ -60,7 +63,7 @@ $(JARFILE): $(JAVA_SOURCE_FILES)
 	$(AT)$(JAVAC) -bootclasspath $(SQUAWK_TOP)/cldc/classes.target.jar -classpath mbed_hal.jar -d classes $(JAVA_SOURCE_FILES)
 	$(AT)$(JAR) cf classes.jar -C classes .
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-5.1.jar com.sun.squawk.builder.asm.MainFinder $(JARFILE) > $(BUILD_TOP)/MAIN_CLASS_NAME
-	
+
 romize: $(BUILD_TOP)/squawk.suite.c
 
 $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
