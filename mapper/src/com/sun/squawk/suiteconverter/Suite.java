@@ -327,16 +327,52 @@ public class Suite {
 	}
 	sbuf.append(s);
     }
-    
+
+	public void generateRelocatableArrayInAsm(String var, java.io.OutputStream o) throws IOException {
+		java.io.PrintStream out = new java.io.PrintStream(o);
+		out.println("\t.global " + var);
+		out.println("\t.section .rodata");
+		out.println("\t.balign 4");
+//		out.println("\t.type\t_" + var + ", @object");
+		out.println("\t.size\t_" + var + ", " + (objectMemory.length + 12));
+
+		StringBuffer sbuf = new StringBuffer();
+		sbuf.append(var + ":\n");
+		sbuf.append(".long\t");
+		sbuf.append(rootOffset + outputHeaderSize);
+		sbuf.append("\n.long\t");
+		sbuf.append(getHash());
+		sbuf.append("\n.long\t");
+		sbuf.append(memorySize);
+		sbuf.append("\n_" + var + "_memory:\n");
+		out.print(sbuf.toString());
+		for (int i = 0; i < oopMap.length; i++) {
+			byte currentByte = oopMap[i];
+			sbuf = new StringBuffer();
+			for (int j = 0; j < 8; j++) {
+				int index = 4 * ((i * 8) + j);
+				if (index + 3 > objectMemory.length) continue;
+				sbuf.append(".long\t");
+				int pointer = getObjectMemoryWord(objectMemory, index);
+				if (pointer != 0 && ((currentByte >> j) & 1) == 1) {
+					sbuf.append("_" + var + "_memory + ");
+				}
+				sbuf.append(pointer);
+				sbuf.append("\n");
+			}
+			out.print(sbuf.toString());
+		}
+	}
+	
     public void generateRelocatableCArray(int[] memoryAddrs, String var, java.io.OutputStream o) throws IOException {
 	java.io.PrintStream out = new java.io.PrintStream(o);
-	out.print("#define p(a) (unsigned int)((char*)_" + var + ".memory+a)\n");
+	out.print("#define p(a) (unsigned int)((char*)" + var + ".memory+a)\n");
 	out.print("const struct {\n");
 	out.print("  unsigned int off;\n");
 	out.print("  unsigned int hash;\n");
 	out.print("  unsigned int size;\n");
 	out.print("  unsigned int memory[];\n");
-	out.print("} _" + var + " = {\n");
+	out.print("} " + var + " = {\n");
 
 	StringBuffer sbuf = new StringBuffer();
 	sbuf.append("0x");
@@ -372,7 +408,6 @@ public class Suite {
 	    out.print(sbuf.toString());
 	}
 	out.println("}};");
-	out.println("const unsigned int* " + var + " = (unsigned int*)&_" + var + ";");
     }
 
     

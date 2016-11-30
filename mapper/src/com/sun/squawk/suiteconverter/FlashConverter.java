@@ -40,6 +40,7 @@ public class FlashConverter {
     private int libraryAddress;
     private int bootstrapAddress;
     private boolean generateRelocatableCArray;
+	private boolean generateRelocatableArrayInAsm;
     private final static String relocatableCArraySymbol = "/*VAL*/_bootstrap/*BOOTSTRAP_SUITE_ADDR_SYM*/";
 
     /**
@@ -123,6 +124,8 @@ public class FlashConverter {
                 VM.setVeryVerbose(true);
             } else if (arg.equals("-c")) {
 				generateRelocatableCArray = true;
+            } else if (arg.equals("-S")) {
+				generateRelocatableArrayInAsm = true;
             } else if (arg.equals("-h")) {
                 usage(null);
                 return false;
@@ -181,6 +184,8 @@ public class FlashConverter {
     private void run() throws IOException {
 		if (generateRelocatableCArray) {
 			generateRelocatableCArray();
+		} else if (generateRelocatableArrayInAsm) {
+			generateRelocatableArrayInAsm();
 		} else {
 			relocateMemory();
 		}
@@ -195,6 +200,15 @@ public class FlashConverter {
 		suite.generateRelocatableCArray(memoryAddrs, relocatableCArraySymbol, oc);
 		oc.close();
     }
+
+	private void generateRelocatableArrayInAsm() throws IOException {
+		Suite suite = new Suite();
+		suite.loadFromFile(suiteFilePath, new File(bootstrapSuitePath).getPath());
+		
+		FileOutputStream o = new FileOutputStream(suiteFilePath + ".S");
+		suite.generateRelocatableArrayInAsm(relocatableCArraySymbol, o);
+		o.close();
+	}
     
     private void relocateMemory() throws IOException {
         File binFilePath = new File(outFile);

@@ -1135,7 +1135,7 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
 #endif /* FLASH_MEMORY */
 
 #if PLATFORM_TYPE_BARE_METAL
-    bootstrapSize = loadBootstrapSuiteFromFlash(/*VAL*/_bootstrap/*BOOTSTRAP_SUITE_ADDR_SYM*/, &com_sun_squawk_VM_romStart, &suite, &com_sun_squawk_VM_bootstrapHash);
+    bootstrapSize = loadBootstrapSuiteFromFlash((void*)&/*VAL*/_bootstrap/*BOOTSTRAP_SUITE_ADDR_SYM*/, &com_sun_squawk_VM_romStart, &suite, &com_sun_squawk_VM_bootstrapHash);
     com_sun_squawk_VM_bootstrapStart = com_sun_squawk_VM_romStart; 
     com_sun_squawk_VM_romEnd = Address_add(com_sun_squawk_VM_romStart, bootstrapSize);
 
