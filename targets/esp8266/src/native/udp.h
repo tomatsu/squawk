@@ -11,8 +11,8 @@ typedef struct {
 } udp_context_t;
 
 extern udp_context_t* squawk_udp_create(int port);
-extern bool squawk_udp_connect(udp_context_t* udp, ip_addr_t addr, uint16_t port);
+extern bool squawk_udp_connect(udp_context_t* udp, ip_addr_t *addr, uint16_t port);
 extern void squawk_udp_disconnect(udp_context_t* udp);
-extern bool squawk_udp_bind(udp_context_t* udp, ip_addr_t addr, uint16_t port);
+extern bool squawk_udp_bind(udp_context_t* udp, ip_addr_t *addr, uint16_t port);
 extern size_t squawk_udp_read(udp_context_t* udp, char* dst, size_t size);
 extern bool squawk_udp_send(udp_context_t* udp, ip_addr_t* addr, uint16_t port, char* src, size_t size);

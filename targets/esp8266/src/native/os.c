@@ -28,6 +28,7 @@ static void initSerial() {
 }
 
 void sysInitialize() {
+	squawk_init_event();
 }
 
 jlong sysTickCount(){

@@ -3,6 +3,7 @@
 #include <mem.h>
 #include "udp.h"
 #include "events.h"
+#include "events_md.h"
 
 //extern int os_printf_plus(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 //#define printf os_printf_plus
@@ -35,8 +36,8 @@ udp_context_t* squawk_udp_create(int port) {
 }
 
 
-bool squawk_udp_connect(udp_context_t* udp, ip_addr_t addr, uint16_t port) {
-	ip_addr_copy(udp->_pcb->remote_ip, addr);
+bool squawk_udp_connect(udp_context_t* udp, ip_addr_t *addr, uint16_t port) {
+	ip_addr_copy(udp->_pcb->remote_ip, *addr);
 	udp->_pcb->remote_port = port;
 	return true;
 }
@@ -45,8 +46,8 @@ void squawk_udp_disconnect(udp_context_t* udp) {
 	udp_disconnect(udp->_pcb);
 }
 
-bool squawk_udp_bind(udp_context_t* udp, ip_addr_t addr, uint16_t port) {
-	err_t err = udp_bind(udp->_pcb, &addr, port);
+bool squawk_udp_bind(udp_context_t* udp, ip_addr_t *addr, uint16_t port) {
+	err_t err = udp_bind(udp->_pcb, addr, port);
 	return err == ERR_OK;
 }
 

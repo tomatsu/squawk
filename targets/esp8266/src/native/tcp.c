@@ -9,6 +9,7 @@
 #include <mem.h>
 #include "tcp.h"
 #include "events.h"
+#include "events_md.h"
 
 extern int os_printf_plus(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 #define printf os_printf_plus
@@ -79,7 +80,6 @@ static err_t connected_cb(void *arg, struct tcp_pcb *pcb, err_t err) {
     tcp_recv(pcb, recv_cb);
     tcp_sent(pcb, sent_cb);
 //    tcp_poll(pcb, poll_cb, 1);
-
 	squawk_post_event(conn->_blocker, CONNECTED_EVENT, (pcb && err == ERR_OK) ? 0 : -1);
 }
 

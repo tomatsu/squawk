@@ -4,12 +4,11 @@ import com.sun.squawk.VM;
 import com.sun.squawk.*;
 import java.io.*;
 	
-public class TimerIRQ {
+public class TimerIRQ implements Events {
 
 	public static native int init(int delay, boolean repeat);
 	public static native int cancel(int d);
 	
-   	public final static int TIMER_IRQ = 1;
 	static TimerIRQ[] irq = new TimerIRQ[32];
 
 	private int d;

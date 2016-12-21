@@ -3,12 +3,15 @@ hosted-support/squawk.jar.filelist
 tools/linux-x86/preverify
 tools/asm-5.1.jar
 tools/retroweaver-all-squawk.jar
+vmcore/src/vm/squawk.suite.h
 vmcore/src/vm/bytecodes.c.inc
 vmcore/src/vm/metal_sleep.h
 vmcore/src/vm/switch.c.inc
 vmcore/src/vm/globals.h
 vmcore/src/vm/io_native.h
 vmcore/src/vm/squawk.c
+vmcore/src/vm/events.c
+vmcore/src/vm/events.h
 vmcore/src/vm/os_posix.c.inc
 vmcore/src/vm/debugger.c.inc
 vmcore/src/vm/memory.c.inc

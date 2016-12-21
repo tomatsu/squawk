@@ -51,7 +51,7 @@ void add_gpio_event_mask(int pin, int fall) {
 	event_mask |= MASK(pin, fall);
 }
 
-int get_gpio_event(int clear) {
+int get_gpio_event(int clear, int *evt) {
 	int r, result;
 	int event;
 	
@@ -61,7 +61,8 @@ int get_gpio_event(int clear) {
 	if (r < 0) {
 		result = 0;
 	} else {
-		result = event;
+		*evt = event;
+		return = 1;
 	}
 	return result;
 }

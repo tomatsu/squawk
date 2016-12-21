@@ -4,10 +4,9 @@ import com.sun.squawk.VM;
 import com.sun.squawk.*;
 import java.io.*;
 	
-public class GpioIRQ {
+public class GpioIRQ implements Events {
 
 	public static native int init(int pin, boolean fall);
-   	public final static int GPIO_IRQ = 0;
 
 	/*
 	 * GpioIRQ.startIRQ(13, true, new IRQHandler() {

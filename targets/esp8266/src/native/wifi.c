@@ -9,6 +9,7 @@
 #include "classes.h"
 #include "unused.h"
 #include "events.h"
+#include "events_md.h"
 
 #define ICACHE_RAM_ATTR __attribute__((section(".iram0.text")))
 
