@@ -35,13 +35,16 @@ public class DatagramSocket extends AbstractSocket {
 	
 	public void close() throws IOException {
 		close0(handle);
+		this.handle = 0;
 	}
 	
 	public void connect(int addr, int port) throws IOException {
+		if (handle == 0) throw new IOException();
 		connect0(handle, addr, port);
 	}
 
 	public int send(int addr, int port, byte[] buf, int off, int len) throws IOException {
+		if (handle == 0) throw new IOException();
 		int n;
 		VMThread th = VMThread.currentThread();
 		while (true) {
@@ -70,6 +73,7 @@ public class DatagramSocket extends AbstractSocket {
 	}
 	
 	public int write(byte[] buf, int off, int len) throws IOException {
+		if (handle == 0) throw new IOException();
 		int n;
 		VMThread th = VMThread.currentThread();
 		while (true) {
@@ -99,6 +103,7 @@ public class DatagramSocket extends AbstractSocket {
 	}
 
 	public int read(byte[] buf, int off, int len) throws IOException {
+		if (handle == 0) throw new IOException();
 		int n;
 		VMThread th = VMThread.currentThread();
 		while (true) {

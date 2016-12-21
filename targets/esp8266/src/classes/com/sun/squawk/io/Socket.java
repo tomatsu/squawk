@@ -54,14 +54,23 @@ public class Socket extends AbstractSocket {
 	}
 
 	public int getLocalAddress() {
+		if (handle == 0) {
+			return 0;
+		}
 		return getlocaladdr(handle);
 	}
 	
 	public int getLocalPort() {
+		if (handle == 0) {
+			return 0;
+		}
 		return getlocalport(handle);
 	}
 
 	public int read() throws IOException {
+		if (handle == 0) {
+			throw new IOException();
+		}
 		int n;
 		VMThread th = VMThread.currentThread();
 		while (true) {
@@ -85,6 +94,9 @@ public class Socket extends AbstractSocket {
 	}
 	
 	public int read(byte[] buf, int off, int len) throws IOException {
+		if (handle == 0) {
+			throw new IOException();
+		}
 		int n;
 		VMThread th = VMThread.currentThread();
 		while (true) {
@@ -112,6 +124,9 @@ public class Socket extends AbstractSocket {
 	}
 
 	public int write(int b) throws IOException {
+		if (handle == 0) {
+			throw new IOException();
+		}
 		int n;
 		while (true) {
 			n = write1(handle, (byte)b);
@@ -125,6 +140,9 @@ public class Socket extends AbstractSocket {
 	}
 	
 	public int write(byte[] buf, int off, int len) throws IOException {
+		if (handle == 0) {
+			throw new IOException();
+		}
 		int n;
 		VMThread th = VMThread.currentThread();
 		while (true) {
@@ -149,5 +167,6 @@ public class Socket extends AbstractSocket {
 	
 	public void close() throws IOException {
 		close0(handle);
+		this.handle = 0;
 	}
 }
