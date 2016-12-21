@@ -249,8 +249,9 @@ void cioExecute(void) {
 //            break;
 //        }
 
-#if DEBUG_CODE_ENABLED
+#if com_sun_squawk_Klass_DEBUG_CODE_ENABLED
         case ChannelConstants_INTERNAL_PRINTGLOBALS: {
+		    FILE   *vmOut   = streams[currentStream];
             printGlobals();
             fflush(vmOut);
             break;
@@ -265,7 +266,7 @@ void cioExecute(void) {
 #endif /* TRACE */
             break;
         }
-#endif /* DEBUG_CODE_ENABLED */
+#endif /* com_sun_squawk_Klass_DEBUG_CODE_ENABLED */
 
         case ChannelConstants_INTERNAL_GETPATHSEPARATORCHAR: {
             com_sun_squawk_ServiceOperation_result = pathSeparatorChar;
