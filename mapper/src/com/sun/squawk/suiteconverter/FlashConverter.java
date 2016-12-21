@@ -41,7 +41,7 @@ public class FlashConverter {
     private int bootstrapAddress;
     private boolean generateRelocatableCArray;
 	private boolean generateRelocatableArrayInAsm;
-    private final static String relocatableCArraySymbol = "/*VAL*/_bootstrap/*BOOTSTRAP_SUITE_ADDR_SYM*/";
+    private final static String relocatableArraySymbol = "/*VAL*/_bootstrap_suite/*BOOTSTRAP_SUITE_ADDR_SYM*/";
 
     /**
      * Prints the usage message.
@@ -197,7 +197,7 @@ public class FlashConverter {
 		suite.loadFromFile(suiteFilePath, new File(bootstrapSuitePath).getPath());
 		
 		FileOutputStream oc = new FileOutputStream(suiteFilePath + ".c");
-		suite.generateRelocatableCArray(memoryAddrs, relocatableCArraySymbol, oc);
+		suite.generateRelocatableCArray(memoryAddrs, relocatableArraySymbol, oc);
 		oc.close();
     }
 
@@ -206,7 +206,7 @@ public class FlashConverter {
 		suite.loadFromFile(suiteFilePath, new File(bootstrapSuitePath).getPath());
 		
 		FileOutputStream o = new FileOutputStream(suiteFilePath + ".S");
-		suite.generateRelocatableArrayInAsm(relocatableCArraySymbol, o);
+		suite.generateRelocatableArrayInAsm(relocatableArraySymbol, o);
 		o.close();
 	}
     
