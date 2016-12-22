@@ -62,7 +62,7 @@ int get_gpio_event(int clear, int *evt) {
 		result = 0;
 	} else {
 		*evt = event;
-		return = 1;
+		result = 1;
 	}
 	return result;
 }
