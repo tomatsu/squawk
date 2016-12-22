@@ -17,7 +17,7 @@ default: all
 FILELIST = files.txt
 
 makefile:
-	$(AT)echo $(GC_CFLAG) >> $(PROJECT_DIR)/Makefile
+	$(AT)echo $(GC_CFLAG) > $(PROJECT_DIR)/Makefile
 	$(AT)cat makefile.tmpl >> $(PROJECT_DIR)/Makefile
 	$(AT)cp target.mk $(PROJECT_DIR)/
 
