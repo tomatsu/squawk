@@ -1,6 +1,6 @@
 squawk
 =======
-An experimental project to customize squawk virtual machine for microcontrollers
+An experimental project to customize squawk virtual machine for microcontrollers.  Users can write embedded application programs in Java (with CLDC API) that can run on small embedded system without RTOS.
 
 Highlights
 -----------
