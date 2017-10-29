@@ -25,6 +25,7 @@
  */
 
 package java.io;
+import com.sun.cldc.i18n.*;
 // TODO
 //import java.util.Formatter;
 
@@ -73,7 +74,9 @@ public class PrintStream extends OutputStream
             );
         }
         byteOut = out;
-        this.charOut = new OutputStreamWriter(out);
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    this.charOut = new OutputStreamWriter(out);
+	}
     }
 
     /**
@@ -116,20 +119,32 @@ public class PrintStream extends OutputStream
         if (out == null) 
             throw new NullPointerException();
         this.byteOut = out;
-        this.charOut = new OutputStreamWriter(this, encoding);
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    this.charOut = new OutputStreamWriter(this, encoding);
+	}
     }
 
     /**
      * Check to make sure that the stream has not been closed
      */
     private void ensureOpen() throws IOException {
-        if (charOut == null) {
-            throw new IOException(
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    if (charOut == null) {
+		throw new IOException(
 /* #ifdef VERBOSE_EXCEPTIONS */
 /// skipped                       "Stream closed"
 /* #endif */
             );
-        }
+	    }
+	} else {
+	    if (byteOut == null) {
+		throw new IOException(
+/* #ifdef VERBOSE_EXCEPTIONS */
+/// skipped                       "Stream closed"
+/* #endif */
+            );
+	    }
+	}
     }
 
     /**
@@ -139,15 +154,17 @@ public class PrintStream extends OutputStream
      * @see        java.io.OutputStream#flush()
      */
     public void flush() {
-        synchronized (this) {
-            try {
-                ensureOpen();
-                charOut.flush();
-            }
-            catch (IOException x) {
-                trouble = true;
-            }
-        }
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    synchronized (this) {
+		try {
+		    ensureOpen();
+		    charOut.flush();
+		}
+		catch (IOException x) {
+		    trouble = true;
+		}
+	    }
+	}
     }
 
     private boolean closing = false; /* To avoid recursive closing */
@@ -159,19 +176,23 @@ public class PrintStream extends OutputStream
      * @see        java.io.OutputStream#close()
      */
     public void close() {
-        synchronized (this) {
-            if (! closing) {
-                closing = true;
-                try {
-                      charOut.close();
-                }
-                catch (IOException x) {
-                    trouble = true;
-                }
-                charOut = null;
-                byteOut = null;
-            }
-        }
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    synchronized (this) {
+		if (! closing) {
+		    closing = true;
+		    try {
+			charOut.close();
+		    }
+		    catch (IOException x) {
+			trouble = true;
+		    }
+		    charOut = null;
+		    byteOut = null;
+		}
+	    }
+	} else {
+	    byteOut = null;
+	}
     }
 
     /**
@@ -185,8 +206,10 @@ public class PrintStream extends OutputStream
      *         <code>setError</code> method has been invoked
      */
     public boolean checkError() {
-        if (charOut != null)
-            flush();
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    if (charOut != null)
+		flush();
+	}
         return trouble;
     }
 
@@ -231,14 +254,22 @@ public class PrintStream extends OutputStream
      * @see #println(char)
      */
     public void write(int b) {
-        try {
-            synchronized (this) {
-                ensureOpen();
-                byteOut.write(b);
-            }
-        } catch (IOException x) {
-            trouble = true;
-        }
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    try {
+		synchronized (this) {
+		    ensureOpen();
+		    byteOut.write(b);
+		}
+	    } catch (IOException x) {
+		trouble = true;
+	    }
+	} else {
+	    try {
+		byteOut.write(b);
+	    } catch (IOException x) {
+		trouble = true;
+	    }
+	}
     }
 
     /**
@@ -255,14 +286,22 @@ public class PrintStream extends OutputStream
      * @param  len   Number of bytes to write
      */
     public void write(byte buf[], int off, int len) {
-        try {
-            synchronized (this) {
-                ensureOpen();
-                byteOut.write(buf, off, len);
-            }
-        } catch (IOException x) {
-            trouble = true;
-        }
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    try {
+		synchronized (this) {
+		    ensureOpen();
+		    byteOut.write(buf, off, len);
+		}
+	    } catch (IOException x) {
+		trouble = true;
+	    }
+	} else {
+	    try {
+		byteOut.write(buf, off, len);
+	    } catch (IOException x) {
+		trouble = true;
+	    }
+	}
     }
 
     /*
@@ -272,36 +311,59 @@ public class PrintStream extends OutputStream
      */
 
     private void write(char buf[]) {
-        try {
-            synchronized (this) {
-                ensureOpen();
-                charOut.write(buf);
-            }
-        } catch (IOException x) {
-            trouble = true;
-        }
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    try {
+		synchronized (this) {
+		    ensureOpen();
+		    charOut.write(buf);
+		}
+	    } catch (IOException x) {
+		trouble = true;
+	    }
+	} else {
+	    for (int i = 0; i < buf.length; i++) {
+		write(buf[i]);
+	    }
+	}
     }
 
     private void write(String s) {
-        try {
-            synchronized (this) {
-                ensureOpen();
-                charOut.write(s);
-            }
-        } catch (IOException x) {
-            trouble = true;
-        }
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    try {
+		synchronized (this) {
+		    ensureOpen();
+		    charOut.write(s);
+		}
+	    } catch (IOException x) {
+		trouble = true;
+	    }
+	} else {
+	    byte[] bytes = s.getBytes();
+	    try {
+		byteOut.write(bytes, 0, bytes.length);
+	    } catch (IOException e) {
+		trouble = true;
+	    }
+	}
     }
 
     private void newLine() {
-        try {
-            synchronized (this) {
-                ensureOpen();
-                charOut.write('\n');
-            }
-        } catch (IOException x) {
-            trouble = true;
-        }
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    try {
+		synchronized (this) {
+		    ensureOpen();
+		    charOut.write('\n');
+		}
+	    } catch (IOException x) {
+		trouble = true;
+	    }
+	} else {
+	    try {
+		byteOut.write('\n');
+	    } catch (IOException x) {
+		trouble = true;
+	    }
+	}
     }
 
 

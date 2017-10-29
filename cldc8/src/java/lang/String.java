@@ -388,9 +388,11 @@ public final class String implements Comparable<String>, CharSequence {
      * @throws NullPointerException If <code>buffer</code> is
      * <code>null</code>.
      */
+
     public String(StringBuffer buffer) {
         VM.fatalVMError();
     }
+
     static String _init_(String self, StringBuffer buffer) throws ReplacementConstructorPragma {
         return init(buffer.getValue(), 0, buffer.length(), buffer.isEightBit());
     }
@@ -501,7 +503,11 @@ public final class String implements Comparable<String>, CharSequence {
      * @since      JDK1.1
      */
     public byte[] getBytes(String enc) throws UnsupportedEncodingException {
-        return Helper.charToByteArray(toCharArray(), 0, length(), enc);
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    return Helper.charToByteArray(toCharArray(), 0, length(), enc);
+	} else {
+	    return getBytes();
+	}
     }
 
     /**
@@ -520,7 +526,13 @@ public final class String implements Comparable<String>, CharSequence {
 //            stringcopy(this, 0, result, 0, result.length);
 //            return result;
 //        }
-        return Helper.charToByteArray(toCharArray(), 0, length());
+	if (!Helper.ISO8859_1_ONLY_SUPPORTED) {
+	    return Helper.charToByteArray(toCharArray(), 0, length());
+	} else {
+	    byte[] b = new byte[length()];
+	    stringcopy(this, 0, b, 0, b.length);
+	    return b;
+	}
     }
 
     /**
