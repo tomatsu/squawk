@@ -20,6 +20,7 @@ BUILD_TOP ?= build
 JARFILE = classes.jar
 JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar mbed_hal.jar
 MAPFILE = $(BUILD_TOP)/squawk.map
+DCA_CONFIG = $(SQUAWK_TOP)/builder/dca.config
 
 BUILD_FLAGS = -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
 BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE)
@@ -63,7 +64,7 @@ $(JARFILE): $(JAVA_SOURCE_FILES)
 	$(AT)mkdir -p classes
 	$(AT)$(JAVAC) -bootclasspath $(SQUAWK_TOP)/cldc/classes.target.jar -classpath mbed_hal.jar -d classes $(JAVA_SOURCE_FILES)
 	$(AT)$(JAR) cf classes.jar -C classes .
-	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-5.1.jar com.sun.squawk.builder.asm.MainFinder $(JARFILE) > $(BUILD_TOP)/MAIN_CLASS_NAME
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.asm.MainFinder $(JARFILE) > $(BUILD_TOP)/MAIN_CLASS_NAME
 
 romize: $(BUILD_TOP)/squawk.suite.c
 
@@ -71,10 +72,19 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 	$(AT)rm -rf $(TMP)
 	$(AT)mkdir -p $(TMP)/classes $(BUILD_TOP)
 	$(AT)for i in $(JARFILES); do (cd $(TMP)/classes; $(JAR) x) < $$i; done
-	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-5.1.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.glue.NativeGlueGen -d:$(BUILD_TOP) $(TMP)/classes
+	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-all-5.2.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.glue.NativeGlueGen -d:$(BUILD_TOP) $(TMP)/classes
 	$(AT)tar cf - -C $(BUILD_TOP)/cldc/classes .  | (cd $(TMP)/classes; tar xf -)
 	$(AT)mkdir -p $(TMP)/classes2
-	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-5.1.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.asm.Shrink $(TMP)/classes $(TMP)/classes2 $(shell cat $(BUILD_TOP)/MAIN_CLASS_NAME) $(TMP)/classes
+	$(AT)jar cf $(TMP)/classes.jar -C $(TMP)/classes .
+	$(AT)cp $(DCA_CONFIG) $(TMP)/config.txt
+	$(AT)cat $(BUILD_TOP)/MAIN_CLASS_NAME >> $(TMP)/config.txt
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(TMP)/config.txt -o $(TMP)/unused -u $(TMP)/used -i $(TMP)/itf -x $(TMP)/xref $(TMP)/classes.jar
+	$(AT)cat $(TMP)/itf >> $(TMP)/unused
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.filter.Filter $(TMP)/unused $(TMP)/classes.jar $(TMP)/classes2.jar
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(TMP)/config.txt -o $(TMP)/unused2 -u $(TMP)/used2 -i $(TMP)/itf2 -x $(TMP)/xref2 $(TMP)/classes2.jar
+	$(AT)cat $(TMP)/itf2 >> $(TMP)/unused2
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.filter.Filter $(TMP)/unused2 $(TMP)/classes2.jar $(TMP)/classes3.jar
+	$(AT)(cd $(TMP)/classes2; jar xf $(TMP)/classes3.jar)
 	$(AT)mkdir -p $(TMP)/weaved
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/tools/retroweaver-all-squawk.jar:$(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/romizer/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar com.sun.squawk.SquawkRetroWeaver $(TMP)/classes2 $(TMP)/weaved
 	$(AT)mkdir -p $(TMP)/j2meclasses

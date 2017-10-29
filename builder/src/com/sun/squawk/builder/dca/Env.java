@@ -359,16 +359,16 @@ public class Env {
 		notFound(id);
 	    } else {
 		mn.required = true;
-	    }
 	    mandatoryClassEntries.add(mn.getClassNode());
+	    }
 	} else if (type == FIELD) {
 	    FieldNode fn = getFieldNode(id);
 	    if (fn == null) {
 		notFound(id);
 	    } else {
 		fn.required = true;
-	    }
 	    mandatoryClassEntries.add(fn.getClassNode());
+	    }
 	} else if (type == CLASS) {
 	    ClassNode cn = getClassNode(id);
 	    if (cn == null) {
@@ -389,8 +389,8 @@ public class Env {
 	    } else {
 		cn.setRequired(this);
 		cn.requireAllMembers(this);
-	    }
 	    mandatoryClassEntries.add(cn);			    
+	    }
 	}
     }
     

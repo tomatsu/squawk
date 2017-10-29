@@ -1,7 +1,7 @@
 hosted-support/classes.jar
 hosted-support/squawk.jar.filelist
 tools/linux-x86/preverify
-tools/asm-5.1.jar
+tools/asm-all-5.2.jar
 tools/retroweaver-all-squawk.jar
 vmcore/src/vm/squawk.suite.h
 vmcore/src/vm/bytecodes.c.inc
@@ -65,3 +65,4 @@ romizer/classes.jar
 build.properties
 squawk.exclude
 squawk.library.properties
+builder/dca.config

@@ -51,7 +51,7 @@ rm -rf classes
 mkdir classes
 $JAVAC -target 1.5 -source 1.5 -d classes -g src/com/sun/squawk/builder/launcher/*.java
 #$JAVAC -target 1.5 -source 1.5 -d classes -cp ../tools/asm-5.1.jar -g src/com/sun/squawk/builder/asm/*.java src/com/sun/squawk/builder/glue/*.java
-$JAVAC -d classes -cp ../tools/asm-5.1.jar src/com/sun/squawk/builder/asm/*.java src/com/sun/squawk/builder/glue/*.java
+$JAVAC -d classes -cp ../tools/asm-all-5.2.jar src/com/sun/squawk/builder/dca/*.java src/com/sun/squawk/builder/filter/*.java src/com/sun/squawk/builder/glue/*.java src/com/sun/squawk/builder/asm/*.java
 $JAVAC -target 1.5 -source 1.5 -d classes -g src/com/sun/squawk/builder/util/*.java
 $JAR cfm ../build.jar build-manifest.mf -C classes .
 rm -fr classes
@@ -59,6 +59,6 @@ mkdir classes
 cd classes
 $JAR xf ../../tools/retroweaver-all-squawk.jar
 cd ..
-$JAVAC -cp classes:../vm2c/lib/openjdk-javac-6-b12.jar:$JAVA_HOME/lib/tools.jar -target 1.5 -source 1.5 -d classes -g `find src -name asm -prune -o -name glue -prune -o -name '*.java' -print`
+$JAVAC -cp classes:../vm2c/lib/openjdk-javac-6-b12.jar:$JAVA_HOME/lib/tools.jar -target 1.5 -source 1.5 -d classes -g `find src -name asm -prune -o -name dca -prune -o -name filter -prune -o -name glue -prune -o -name '*.java' -print`
 $JAR cfm ../build-commands.jar build-commands-manifest.mf -C classes .
 rm -fr classes
