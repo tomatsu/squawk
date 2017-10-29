@@ -509,6 +509,17 @@ public final class Isolate implements Runnable {
 /*end[ENABLE_MULTI_ISOLATE]*/
     }
 
+/*if[STATIC_MAIN_CLASS]*/		
+    public Isolate(Suite suite) {
+        this.leafSuite = suite;
+		this.bootstrapSuite = suite;
+        this.state = NEW;
+		this.id = 1;
+		this.args = new String[0];
+		this.mainClassName = "Hello";
+	}
+/*end[STATIC_MAIN_CLASS]*/		
+		
     /**
      * Creates an new isolate. {@link Isolate#start()} will create a new execution context, and start executing the <code>main</code> method of the class
      * specified by <code>mainClassName</code>.
@@ -1764,7 +1775,11 @@ public final class Isolate implements Runnable {
         }
 /*end[ENABLE_SDA_DEBUGGER]*/
 
+/*if[!STATIC_MAIN_CLASS]*/
         runMain(mainClassName, args);
+/*else[STATIC_MAIN_CLASS]*/
+//      bootstrapSuite.main(args);
+/*end[STATIC_MAIN_CLASS]*/
     }
     
     /** 
@@ -1976,6 +1991,9 @@ public final class Isolate implements Runnable {
             e.printStackTrace();
             Assert.shouldNotReachHere();
         }
+/*else[ENABLE_MULTI_ISOLATE]*/
+//      changeState(EXITED);
+//		VM.haltVM(exitCode);
 /*end[ENABLE_MULTI_ISOLATE]*/
     }
 
@@ -2849,6 +2867,7 @@ public final class Isolate implements Runnable {
      *                            Debugger Support                               *
     \*---------------------------------------------------------------------------*/
 
+/*if[ENABLE_MULTI_ISOLATE]*/    
     /**
      * Print out the thread state and stack trace for each thread belonging this isolate.
      *
@@ -2880,7 +2899,8 @@ public final class Isolate implements Runnable {
             iso.printAllThreadStates(out);
         }
     }
-
+/*end[ENABLE_MULTI_ISOLATE]*/
+    
     /**
      * A Breakpoint instance describes a point in a method at which a breakpoint has been set.
      */

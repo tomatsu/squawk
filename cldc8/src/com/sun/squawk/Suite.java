@@ -107,7 +107,11 @@ public final class Suite {
      * This field not saved in the suite file.
      */
     private Klass[] stripClassesLater;
-	
+
+/*if[STATIC_MAIN_CLASS]*/
+    int mainKlassId;
+/*end[STATIC_MAIN_CLASS]*/
+    
     /**
      * Creates a new <code>Suite</code> instance.
      *
@@ -221,6 +225,12 @@ public final class Suite {
         return classes[suiteID];
     }
 
+/*if[STATIC_MAIN_CLASS]*/    
+    void main(String[] args) {
+        getKlass(mainKlassId).main(args);
+    }
+/*end[STATIC_MAIN_CLASS]*/
+    
 	/**
 	 * Gets the contents of a resource file embedded in the suite. 
      * Search parent suites for data before this suite.
@@ -434,7 +444,7 @@ public final class Suite {
         }
         classes[suiteID] = klass;
     }
-
+    
     /**
      * Installs a given class into this suite.
      *

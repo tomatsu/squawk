@@ -44,6 +44,7 @@ static void* const opclabels[] = {
 &&opc_336, &&opc_337, &&opc_338, &&opc_339, &&opc_340, &&opc_341, &&opc_342, &&opc_343, 
 &&opc_344, &&opc_345, &&opc_346, &&opc_347, &&opc_348, &&opc_349,
 /*if[FLOATS]*/
+#if ENABLE_FLOATS
 &&opc_350, &&opc_351, &&opc_352, &&opc_353, &&opc_354, &&opc_355, &&opc_356, &&opc_357,
 &&opc_358, &&opc_359, &&opc_360, &&opc_361, &&opc_362, &&opc_363, &&opc_364, &&opc_365,
 &&opc_366, &&opc_367, &&opc_368, &&opc_369, &&opc_370, &&opc_371, &&opc_372, &&opc_373,
@@ -55,5 +56,6 @@ static void* const opclabels[] = {
 &&opc_414, &&opc_415, &&opc_416, &&opc_417, &&opc_418, &&opc_419, &&opc_420, &&opc_421,
 &&opc_422, &&opc_423, &&opc_424, &&opc_425, &&opc_426, &&opc_427, &&opc_428, &&opc_429,
 &&opc_430, &&opc_431, &&opc_432, &&opc_433
+#endif /* ENABLE_FLOATS */
 /*end[FLOATS]*/
 };

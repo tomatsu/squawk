@@ -76,7 +76,7 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 	$(AT)mkdir -p $(TMP)/j2meclasses
 	$(AT)$(SQUAWK_TOP)/tools/linux-x86/preverify -classpath $(SQUAWK_TOP)/cldc/classes.target.jar -d $(TMP)/j2meclasses $(TMP)/weaved
 	$(AT)$(JAVA) -cp $(BUILD_TOP)/cldc/classes:$(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/romizer/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar \
-		com.sun.squawk.Romizer -strip:a -DGC_com.sun.squawk.Lisp2Collector=false -DPLATFORM_TYPE_DELEGATING=false \
+		com.sun.squawk.Romizer -mainclass:$(shell cat $(BUILD_TOP)/MAIN_CLASS_NAME) -DGC_com.sun.squawk.Lisp2Collector=false -DPLATFORM_TYPE_DELEGATING=false \
 		-DGC_com.sun.squawk.Lisp2GenerationalCollector=false -DPLATFORM_TYPE_SOCKET=false \
 		-DMACROIZE=true -DGC_com.sun.squawk.CheneyCollector=true -DPLATFORM_TYPE_BARE_METAL=true -DPLATFORM_TYPE_NATIVE=false \
 		-d:$(BUILD_TOP) -o:squawk -arch:X86 -endian:little -cp:$(TMP)/j2meclasses -java5cp:$(TMP)/j2meclasses -nometadata -noApi $(TMP)/j2meclasses

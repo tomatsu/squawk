@@ -574,8 +574,10 @@ public class InstructionEmitter implements InstructionVisitor {
     private void emitOpcode(int opcode) {
         if (opcode > 255) {
             emit(OPC.ESCAPE);
+	    Translator.opcodeSet.set(OPC.ESCAPE);
         }
         emit(opcode & 0xFF);
+	Translator.opcodeSet.set(opcode & 0xFF);
     }
 
     /**
@@ -603,9 +605,12 @@ public class InstructionEmitter implements InstructionVisitor {
     private void emitWide0Opcode(int opcode) {
         if (opcode < 256) {
             emit(OPC.WIDE_0);
+	    Translator.opcodeSet.set(OPC.WIDE_0);
         } else {
             emit(OPC.ESCAPE_WIDE_0);
+	    Translator.opcodeSet.set(OPC.ESCAPE_WIDE_0);
         }
+	Translator.opcodeSet.set(opcode);
         emitOpcode(opcode & 0xFF);
     }
 
@@ -617,9 +622,12 @@ public class InstructionEmitter implements InstructionVisitor {
     private void emitWide1Opcode(int opcode) {
         if (opcode < 256) {
             emit(OPC.WIDE_1);
+	    Translator.opcodeSet.set(OPC.WIDE_1);
         } else {
             emit(OPC.ESCAPE_WIDE_1);
+	    Translator.opcodeSet.set(OPC.ESCAPE_WIDE_1);
         }
+	Translator.opcodeSet.set(opcode);
         emitOpcode(opcode & 0xFF);
     }
 
@@ -631,9 +639,12 @@ public class InstructionEmitter implements InstructionVisitor {
     private void emitWideM1Opcode(int opcode) {
         if (opcode < 256) {
             emit(OPC.WIDE_M1);
+	    Translator.opcodeSet.set(OPC.WIDE_M1);
         } else {
             emit(OPC.ESCAPE_WIDE_M1);
+	    Translator.opcodeSet.set(OPC.ESCAPE_WIDE_M1);
         }
+	Translator.opcodeSet.set(opcode);
         emitOpcode(opcode & 0xFF);
     }
 
@@ -645,9 +656,12 @@ public class InstructionEmitter implements InstructionVisitor {
     private void emitWideShortOpcode(int opcode) {
         if (opcode < 256) {
             emit(OPC.WIDE_SHORT);
+	    Translator.opcodeSet.set(OPC.WIDE_SHORT);
         } else {
             emit(OPC.ESCAPE_WIDE_SHORT);
+	    Translator.opcodeSet.set(OPC.ESCAPE_WIDE_SHORT);
         }
+	Translator.opcodeSet.set(opcode);
         emitOpcode(opcode & 0xFF);
     }
 
@@ -659,9 +673,12 @@ public class InstructionEmitter implements InstructionVisitor {
     private void emitWideIntOpcode(int opcode) {
         if (opcode < 256) {
             emit(OPC.WIDE_INT);
+	    Translator.opcodeSet.set(OPC.WIDE_INT);
         } else {
             emit(OPC.ESCAPE_WIDE_INT);
+	    Translator.opcodeSet.set(OPC.ESCAPE_WIDE_INT);
         }
+	Translator.opcodeSet.set(opcode);
         emitOpcode(opcode & 0xFF);
     }
 

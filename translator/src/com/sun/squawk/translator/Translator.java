@@ -30,6 +30,7 @@ import java.io.*;
 import javax.microedition.io.Connector;
 import java.util.Hashtable;
 import java.util.Stack;
+import java.util.BitSet;
 
 import com.sun.squawk.util.Assert;
 import com.sun.squawk.io.connections.*;
@@ -46,6 +47,8 @@ import com.sun.squawk.translator.ir.InstructionEmitter;
  *
  */
 public final class Translator implements TranslatorInterface {
+    
+    public static BitSet opcodeSet = new BitSet();
     
     public final static boolean TRACING_ENABLED = true;
 

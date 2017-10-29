@@ -37,6 +37,7 @@ import com.sun.squawk.util.*;
 import com.sun.squawk.translator.*;
 import com.sun.squawk.translator.ir.InstructionEmitter;
 import com.sun.squawk.io.connections.ClasspathConnection;
+import com.sun.squawk.vm.OPC;
 
 /**
  * The romizer statically executes the translator over a set of classes
@@ -114,6 +115,11 @@ public class Romizer {
      */
     private String suiteName;
 
+    /*
+     * main class name
+     */
+    private String mainClassName;
+    
     /**
      * The suite being romized.
      */
@@ -202,7 +208,9 @@ public class Romizer {
      * If true, do not create the file "*.api"
      */
     private boolean noApi;
-	
+
+    static boolean stripSystemClassName = false;
+    
     /**
      * Creates the romizer instance used to romize a suite.
      *
@@ -263,6 +271,7 @@ public class Romizer {
         out.println("                                 for private/package-private fields and methods");
         out.println("                           'e' - extendable library: discard symbolic info");
         out.println("                                 for private fields and methods");
+	out.println("    -stripSystemClassName");
         out.println("    -lnt                retain line number tables");
         out.println("    -lvt                retain local variable tables");
         out.println("    -timer              print various phase timing statistics");
@@ -427,6 +436,7 @@ public class Romizer {
                     return null;
                 }
             });
+
             // Install resources found
             for (int i=0, maxI=resources.size(); i < maxI; i++) {
                 ResourceFile resourceFile = (ResourceFile) resources.elementAt(i);
@@ -544,6 +554,8 @@ public class Romizer {
                 suiteName = arg.substring("-o:".length());
             } else if (arg.equals("-jars")) {
                 createJars = true;
+            } else if (arg.startsWith("-mainclass:")) {
+                mainClassName = arg.substring("-mainclass:".length());		
             } else if (arg.equals("-metadata")) {
                 createMetadata = true;
             } else if (arg.equals("-nometadata")) {
@@ -575,6 +587,8 @@ public class Romizer {
                     usage("invalid suite type: " + type);
                     throw new RuntimeException();
                 }
+	    } else if (arg.equals("-stripSystemClassName")) {
+		stripSystemClassName = true;
             } else if (arg.equals("-lnt")) {
                 MethodMetadata.preserveLineNumberTables();
             } else if (arg.equals("-lvt")) {
@@ -708,6 +722,7 @@ public class Romizer {
                 excludeClasses(classNames, excludeFile);
             }
             suite = new Suite(new File(suiteName).getName(), parentSuite, suiteType);
+	    
             for (String className: noClassDefFoundErrorClasses) {
             	if (suite.shouldThrowNoClassDefFoundErrorFor(className)) {
             		noClassDefFoundErrorClasses.remove(className);
@@ -827,7 +842,7 @@ public class Romizer {
 	        for (String className: sortedClassNames) {
 	        	if (noClassDefFoundErrorClasses.indexOf(className) == -1) {
 	        		Klass.getClass(className, false);
-	        	}
+				}
 	        }
 
 	        // Compute the complete class closure.
@@ -927,6 +942,17 @@ public class Romizer {
 
         // Strip the symbols in the suite and close it.
         Suite strippedSuite = suite.strip(suiteType, suite.getName(), suite.getParent());
+
+	// Set main class ID
+	if (mainClassName != null) {
+	    Klass mainKlass = strippedSuite.lookup(mainClassName);
+	    if (mainKlass == null) {
+		throw new RuntimeException("Class not found: " + mainClassName);
+	    }
+	    int id = Klass.getSystemID(mainKlass);
+	    strippedSuite.mainKlassId = -(id+1);
+	}
+
         strippedSuite.close();
         // Ensure no classes that were meant to be excluded have been included
         verifyExclusions(strippedSuite);
@@ -1112,6 +1138,65 @@ public class Romizer {
 				System.out.println(headerFile.getAbsolutePath() + " is already up to date");
 			}
         }
+	// opcode set
+        File opcHdr = getOutputFile("vmcore/src/vm/opc.h");
+	PrintWriter w = new PrintWriter(new FileOutputStream(opcHdr));
+	java.lang.reflect.Field[] fields = com.sun.squawk.vm.OPC.class.getFields();
+	try {
+	    for (int i = 0; i < fields.length; i++) {
+		java.lang.reflect.Field f = fields[i];
+		if (f.getType().equals(int.class)) {
+		    String name = f.getName();
+		    int value = ((Integer)f.get(null)).intValue();
+		    if (Translator.opcodeSet.get(value)) {
+			w.println("#define Mask_OPC_" + name + "(x) x");
+		    } else {
+			w.println("#define Mask_OPC_" + name + "(x)");
+		    }
+		}
+	    }
+	    for (int i = 0; i < fields.length; i++) {
+			java.lang.reflect.Field f = fields[i];
+			if (f.getType().equals(int.class)) {
+				String name = f.getName();
+				int value = ((Integer)f.get(null)).intValue();
+				if (value >= OPC.OBJECT && value <= OPC.EXTEND
+/*if[FLOATS]*/
+					|| value >= OPC.GETSTATIC_F && value <= OPC.INVOKENATIVE_D
+/*end[FLOATS]*/			
+					)
+				{
+					if (!name.endsWith("WIDE")) {
+						java.lang.reflect.Field wide = com.sun.squawk.vm.OPC.class.getField(name + "_WIDE");
+						int v = ((Integer)wide.get(null)).intValue();
+						if (Translator.opcodeSet.get(value) || Translator.opcodeSet.get(v)) {
+							w.println("#define Mask_OPC_" + name + "_OR_OPC_" + name + "_WIDE(x) x");
+						} else {
+							w.println("#define Mask_OPC_" + name + "_OR_OPC_" + name + "_WIDE(x)");
+						}
+					}
+				}
+			}
+	    }
+		boolean floatEnabled = false;
+		for (int i = OPC.Properties.NON_FLOAT_BYTECODE_COUNT; i < OPC.Properties.BYTECODE_COUNT; i++) {
+			if (Translator.opcodeSet.get(i)) {
+				floatEnabled = true;
+				break;
+			}
+		}
+		if (floatEnabled) {
+			w.println("#define ENABLE_FLOATS 1");
+		} else {
+			w.println("#define ENABLE_FLOATS 0");
+		}
+	} catch (IllegalAccessException iae) {
+	    iae.printStackTrace();
+	} catch (NoSuchFieldException nsf) {
+	    nsf.printStackTrace();
+	} finally {
+	    w.close();
+	}
     }
 
     /*---------------------------------------------------------------------------*\

@@ -54,13 +54,6 @@
 #    define INLINE inline static
 #endif
 
-// Convert build property to macro value
-/*if[FLOATS]*/
-#define ENABLE_FLOATS 1
-/*else[FLOATS]*/
-//#define ENABLE_FLOATS 0
-/*end[FLOATS]*/
-
 /* It actualy never seems to pay off to inline this FP code.
    But the switch is here to play with.
 */

@@ -297,8 +297,13 @@ public class VM implements GlobalStaticFields {
         /*
          * Create the root isolate and manually initialize com.sun.squawk.Klass.
          */
+/*if[!STATIC_MAIN_CLASS]*/
         String[] args  = new String[argc];
         currentIsolate = new Isolate("com.sun.squawk.JavaApplicationManager", args, bootstrapSuite);
+/*else[STATIC_MAIN_CLASS]*/		
+//        String[] args  = new String[argc];
+//        currentIsolate = new Isolate(bootstrapSuite);
+/*end[STATIC_MAIN_CLASS]*/
         currentIsolate.initializeClassKlass();
 
         /*
