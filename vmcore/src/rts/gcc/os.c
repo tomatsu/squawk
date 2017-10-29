@@ -25,11 +25,12 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <dlfcn.h>
+#include <stdint.h>
 #if PLATFORM_TYPE_DELEGATING
 #include <jni.h>
 #endif
 
-#define jlong  int64_t
+typedef int64_t jlong;
 
 /* The package that conmtains the native code to use for a "NATIVE" platform type*/
 #if !PLATFORM_TYPE_BARE_METAL

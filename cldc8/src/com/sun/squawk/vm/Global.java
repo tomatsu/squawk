@@ -80,16 +80,18 @@ public final class Global {
 
         Int("com.sun.squawk.GC.traceFlags");
         Int("com.sun.squawk.GC.collecting");
+	/*
         Int("com.sun.squawk.GC.monitorExitCount");
         Int("com.sun.squawk.GC.monitorReleaseCount");
+	*/
         Int("com.sun.squawk.GC.newCount");
         Int("com.sun.squawk.GC.newHits");
-
+	/*
         Int("com.sun.squawk.VMThread.nextThreadNumber");
+	*/
         Oop("com.sun.squawk.VMThread.currentThread");
         Oop("com.sun.squawk.VMThread.otherThread");
         Oop("com.sun.squawk.VMThread.serviceThread");
-
         Oop("com.sun.squawk.ServiceOperation.pendingException");
         Int("com.sun.squawk.ServiceOperation.code");
         Int("com.sun.squawk.ServiceOperation.context");
@@ -107,6 +109,7 @@ public final class Global {
         Add("com.sun.squawk.ServiceOperation.addressResult");
         Int("com.sun.squawk.ServiceOperation.requestor");
 
+	/*
         Int("branchCountHigh");
         Int("branchCountLow");
         Int("traceStartHigh");
@@ -114,6 +117,7 @@ public final class Global {
         Int("traceEndHigh");
         Int("traceEndLow");
         Int("com.sun.squawk.VM.tracing");
+	*/
         Int("runningOnServiceThread");
         Int("currentThreadID");
 /*if[GC_com.sun.squawk.CheneyCollector]*/

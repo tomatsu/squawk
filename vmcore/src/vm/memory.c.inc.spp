@@ -61,7 +61,9 @@
 /**
  * Fast object allocation
  */
+#ifndef FASTALLOC
 #define FASTALLOC true
+#endif
 
 #if SETASSUMES
 #define setAssume(x) assume(x)

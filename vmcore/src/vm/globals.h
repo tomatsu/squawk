@@ -63,7 +63,7 @@ typedef struct globalsStruct {
     Address     _Oops[GLOBAL_OOP_COUNT];     /* Storage for the reference typed Java globals. */
     Address     _Buffers[MAX_BUFFERS];       /* Buffers that are allocated by native code. */
     int         _BufferCount;                /* Number of buffers that are currently allocated by native code. */
-#if HAS_STDIO		
+#if HAS_STREAM_IO
     FILE       *_streams[MAX_STREAMS];       /* The file streams to which the VM printing directives sent. */
     int         _currentStream;              /* The currently selected stream */
 #endif
@@ -231,7 +231,7 @@ boolean     notrap;
 #define pendingMonitorHits                  defineGlobal(pendingMonitorHits)
 #endif /* INTERPRETER_STATS */
 
-#if HAS_STDIO
+#if HAS_STREAM_IO
 #define streams                             defineGlobal(streams)
 #define currentStream                       defineGlobal(currentStream)
 #endif
@@ -288,7 +288,7 @@ int initializeGlobals(Globals *globals) {
     runningOnServiceThread = true;
     pendingMonitors = &Oops[ROM_GLOBAL_OOP_COUNT];
 
-#if HAS_STDIO
+#if HAS_STREAM_IO
     streams[com_sun_squawk_VM_STREAM_STDOUT] = stdout;
     streams[com_sun_squawk_VM_STREAM_STDERR] = stderr;
     currentStream = com_sun_squawk_VM_STREAM_STDERR;
@@ -313,7 +313,7 @@ int initializeGlobals(Globals *globals) {
 /**
  * Prints the name and current value of all the globals.
  */
-#if HAS_STDIO
+#if HAS_STREAM_IO
 void printGlobals() {
     FILE *vmOut = streams[currentStream];
 #if TRACE
@@ -339,6 +339,8 @@ void printGlobals() {
 #else
     fprintf(vmOut, "printGlobals() requires tracing\n");
 #endif /* TRACE */
+    
+    fflush(vmOut);
 }
 #endif /* HAS_STDIO */
 #endif /* DEBUG_CODE_ENABLED */
@@ -352,7 +354,7 @@ void printGlobals() {
  * @vm2c proxy( setStream )
  */
 int setStream(int stream) {
-#if HAS_STDIO	
+#if HAS_STREAM_IO	
     int result = currentStream;
     currentStream = stream;
     if (streams[currentStream] == null) {
@@ -379,7 +381,7 @@ int setStream(int stream) {
  * Closes all the open files used for VM printing.
  */
 void finalizeStreams() {
-#if HAS_STDIO		
+#if HAS_STREAM_IO		
     int i;
     for (i = 0 ; i < MAX_STREAMS ; i++) {
         FILE *file = streams[i];

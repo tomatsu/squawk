@@ -1165,7 +1165,7 @@ public class VM {
 		}
 		return sbuf.toString();
 	}
-	
+
     public static void listUnusedNativeMethods(PrintStream out) {
     	for (Map.Entry<String, Integer> entry : methodTable.entrySet()) {
 		String key = entry.getKey();
@@ -1175,6 +1175,76 @@ public class VM {
 			out.println("#define Mask_"+ mangle(key) + "(b) b");
 		}
         }
+
+	if (unused.get("com.sun.squawk.Offset.eq") != null && unused.get("com.sun.squawk.UWord.eq") != null) {
+	    out.println("#define Mask_com_sun_squawk_Offset_eq_com_sun_squawk_UWord_eq(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_Offset_eq_com_sun_squawk_UWord_eq(b) b");
+	}
+	if (unused.get("com.sun.squawk.Offset.ne") != null && unused.get("com.sun.squawk.UWord.ne") != null) {
+	    out.println("#define Mask_com_sun_squawk_Offset_ne_com_sun_squawk_UWord_ne(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_Offset_ne_com_sun_squawk_UWord_ne(b) b");
+	}
+	if (unused.get("com.sun.squawk.Offset.fromPrimitive") != null && unused.get("com.sun.squawk.UWord.fromPrimitive") != null) {
+	    out.println("#define Mask_com_sun_squawk_Offset_fromPrimitive_com_sun_squawk_UWord_fromPrimitive(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_Offset_fromPrimitive_com_sun_squawk_UWord_fromPrimitive(b) b");
+	}
+	if (unused.get("com.sun.squawk.Offset.toPrimitive") != null && unused.get("com.sun.squawk.UWord.toPrimitive") != null) {
+	    out.println("#define Mask_com_sun_squawk_Offset_toPrimitive_com_sun_squawk_UWord_toPrimitive(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_Offset_toPrimitive_com_sun_squawk_UWord_toPrimitive(b) b");
+	}
+	if (unused.get("com.sun.squawk.Offset.toInt") != null && unused.get("com.sun.squawk.UWord.toInt") != null) {
+	    out.println("#define Mask_com_sun_squawk_Offset_toInt_com_sun_squawk_UWord_toInt(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_Offset_toInt_com_sun_squawk_UWord_toInt(b) b");
+	}
+	if (unused.get("com.sun.squawk.Offset.zero") != null && unused.get("com.sun.squawk.UWord.zero") != null) {
+	    out.println("#define Mask_com_sun_squawk_Offset_zero_com_sun_squawk_UWord_zero(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_Offset_zero_com_sun_squawk_UWord_zero(b) b");
+	}
+	if (unused.get("com.sun.squawk.Offset.isZero") != null && unused.get("com.sun.squawk.UWord.isZero") != null) {
+	    out.println("#define Mask_com_sun_squawk_Offset_isZero_com_sun_squawk_UWord_isZero(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_Offset_isZero_com_sun_squawk_UWord_isZero(b) b");
+	}
+	if (unused.get("com.sun.squawk.Offset.toUWord") != null && unused.get("com.sun.squawk.UWord.toOffset") != null) {
+	    out.println("#define Mask_com_sun_squawk_Offset_toUWord_com_sun_squawk_UWord_toOffset(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_Offset_toUWord_com_sun_squawk_UWord_toOffset(b) b");
+	}
+	if (unused.get("com.sun.squawk.NativeUnsafe.setShort") != null && unused.get("com.sun.squawk.NativeUnsafe.setChar") != null) {
+	    out.println("#define Mask_com_sun_squawk_NativeUnsafe_setShort_com_sun_squawk_NativeUnsafe_setChar(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_NativeUnsafe_setShort_com_sun_squawk_NativeUnsafe_setChar(b) b");
+	}
+	if (unused.get("com.sun.squawk.NativeUnsafe.getAddress") != null && unused.get("com.sun.squawk.NativeUnsafe.getObject") != null) {
+	    out.println("#define Mask_com_sun_squawk_NativeUnsafe_getAddress_com_sun_squawk_NativeUnsafe_getObject(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_NativeUnsafe_getAddress_com_sun_squawk_NativeUnsafe_getObject(b) b");
+	}
+	if (unused.get("com.sun.squawk.Address.toObject") != null && unused.get("com.sun.squawk.Address.fromObject") != null) {
+	    out.println("#define Mask_com_sun_squawk_Address_toObject_com_sun_squawk_Address_fromObject(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_Address_toObject_com_sun_squawk_Address_fromObject(b) b");
+	}
+	if (unused.get("com.sun.squawk.VM.hashcode") != null && unused.get("com.sun.squawk.VM.asKlass") != null) {
+	    out.println("#define Mask_com_sun_squawk_VM_hashcode_com_sun_squawk_VM_asKlass(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_VM_hashcode_com_sun_squawk_VM_asKlass(b) b");
+	}
+	if (unused.get("com.sun.squawk.VM.doubleToLongBits") != null &&
+	    unused.get("com.sun.squawk.VM.floatToIntBits") != null &&
+	    unused.get("com.sun.squawk.VM.longBitsToDouble") != null &&
+	    unused.get("com.sun.squawk.VM.intBitsToFloat") != null)
+	{
+	    out.println("#define Mask_com_sun_squawk_VM_doubleToLongBits_com_sun_squawk_VM_floatToIntBits_com_sun_squawk_VM_longBitsToDouble_com_sun_squawk_VM_intBitsToFloat(b)");
+	} else {
+	    out.println("#define Mask_com_sun_squawk_VM_doubleToLongBits_com_sun_squawk_VM_floatToIntBits_com_sun_squawk_VM_longBitsToDouble_com_sun_squawk_VM_intBitsToFloat(b) b");
+	}
     }
 
     private VM() {

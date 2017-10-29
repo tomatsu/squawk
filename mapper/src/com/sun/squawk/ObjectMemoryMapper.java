@@ -1621,13 +1621,32 @@ public class ObjectMemoryMapper {
         registeredSuite = true;
         updateOwner(SUITE_STATS, oop);
         claimObjectGraph(SUITE_STATS, getField(oop, suiteKlass, Klass.STRING, "name"), false);
-        claimObjectGraph(SUITE_STATS, getField(oop, suiteKlass, Klass.STRING, "configuration"), false);
+	try {
+	    claimObjectGraph(SUITE_STATS, getField(oop, suiteKlass, Klass.STRING, "configuration"), false);
+	} catch (RuntimeException e) {
+	    System.err.println(e);
+	}
         claimObjectGraph(SUITE_STATS, getField(oop, suiteKlass, "[com.sun.squawk.Klass", "classes"), false);
-        claimObjectGraph(SUITE_STATS, getField(oop, suiteKlass, Klass.STRING_ARRAY, "noClassDefFoundErrorClassNames"), false);
-        
-        claimObjectGraph(METADATA_STATS,       getField(oop, suiteKlass, "[com.sun.squawk.KlassMetadata", "metadatas"), false);
-        claimObjectGraph(RESOURCE_FILES_STATS, getField(oop, suiteKlass, "[com.sun.squawk.ResourceFile", "resourceFiles"), false);
-        claimObjectGraph(PROPERTIES_STATS,     getField(oop, suiteKlass, "[com.sun.squawk.ManifestProperty", "manifestProperties"), false);
+	try {
+	    claimObjectGraph(SUITE_STATS, getField(oop, suiteKlass, Klass.STRING_ARRAY, "noClassDefFoundErrorClassNames"), false);
+	} catch (RuntimeException e) {
+	    System.err.println(e);
+	}
+	try {
+	    claimObjectGraph(METADATA_STATS,       getField(oop, suiteKlass, "[com.sun.squawk.KlassMetadata", "metadatas"), false);
+	} catch (RuntimeException e) {
+	    System.err.println(e);
+	}
+	try {
+	    claimObjectGraph(RESOURCE_FILES_STATS, getField(oop, suiteKlass, "[com.sun.squawk.ResourceFile", "resourceFiles"), false);
+	} catch (RuntimeException e) {
+	    System.err.println(e);
+	}
+	try {
+	    claimObjectGraph(PROPERTIES_STATS,     getField(oop, suiteKlass, "[com.sun.squawk.ManifestProperty", "manifestProperties"), false);
+	} catch (RuntimeException e) {
+	    System.err.println(e);
+	}
     }
     
     /**

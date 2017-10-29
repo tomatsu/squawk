@@ -23,9 +23,9 @@
  * information or have any questions.
  */
 #ifdef __GNUC__
-/*if[GCC_OPTIMIZE_INTERPRETER_LOOP]*/
+#if GCC_OPTIMIZE_INTERPRETER_LOOP
 #define USELABELS
-/*end[GCC_OPTIMIZE_INTERPRETER_LOOP]*/
+#endif /* GCC_OPTIMIZE_INTERPRETER_LOOP */
 #endif
 
 // Size of class to class state cache.
@@ -817,7 +817,9 @@ NORETURN void stopVM(int exitCode) {
  * @param exitCode the exit code
  */
 NORETURN void stopVM0(int exitCode, boolean cleanup) {
+#ifdef VERBOSE
     printf("stopVM0 %d %d\n", exitCode, cleanup);
+#endif	
     static boolean inStop = false;
 
 /*
@@ -835,6 +837,7 @@ fprintf(stderr, "VM is in a blocking system call!!! WILL CRASH????");
             freeBuffers();
         }
 #endif
+#ifdef VERBOSE
 /*if[!EMULATOR_LAUNCHER]*/
         fprintf(stderr, "\n\n");
 #ifndef FLASH_MEMORY
@@ -858,6 +861,7 @@ fprintf(stderr, "VM is in a blocking system call!!! WILL CRASH????");
         fflush(stderr);
 /*else[EMULATOR_LAUNCHER]*/
 /*end[EMULATOR_LAUNCHER]*/
+#endif /* VERBOSE */
 
 #ifdef DB_DEBUG
         db_vm_exiting();
@@ -873,10 +877,14 @@ fprintf(stderr, "VM is in a blocking system call!!! WILL CRASH????");
     IO_shutdown();
 #endif
 
+#if VERBOSE
     printf("osfinish\n");
+#endif	
     osfinish();
 	inStop = false;
+#if VERBOSE	
     printf("exit %d\n", exitCode);
+#endif	
     exit(exitCode);
 }
 
@@ -1213,6 +1221,7 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     assume(isWordAligned((UWord)com_sun_squawk_GC_ramStart));
     assume(isWordAligned((UWord)com_sun_squawk_VMThread_serviceStack));
 
+/*if[ENABLE_VERBOSE]*/
     if (DEBUG_STARTUP || com_sun_squawk_GC_traceFlags != 0) {
         printRange("ROM       ", (char*)com_sun_squawk_VM_romStart, (char*)com_sun_squawk_VM_romEnd);
         printRange("Suite     ", (char*)suite, (char*)((char*) suite + bootstrapSize));
@@ -1229,7 +1238,7 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
         printRange("argv      ", (char*)com_sun_squawk_VM_argv, (char*)Address_add(memory, offset));
 #endif
     }
-
+/*end[ENABLE_VERBOSE]*/
     return suite;
 }
 
@@ -1420,6 +1429,7 @@ Address processArgs(char *argv[], const int argc) {
 #if TRACE
     fprintf(stderr, "*************** Tracing version ***************\n");
 #endif
+#if !PLATFORM_TYPE_BARE_METAL
 
     while (oldIndex != argc) {
         char *arg = argv[oldIndex];
@@ -1514,7 +1524,6 @@ Address processArgs(char *argv[], const int argc) {
 //    newIndex = argc;
 /*end[EMULATOR_LAUNCHER]*/
 
-#if !PLATFORM_TYPE_BARE_METAL
 #ifndef FLASH_MEMORY
     if (!notrap) {
         setupSignals();
@@ -1522,7 +1531,6 @@ Address processArgs(char *argv[], const int argc) {
         printf("Trap handling disabled\n");
     }
 #endif /* FLASH_MEMORY */
-#endif
 
 #if PLATFORM_TYPE_DELEGATING
     /*
@@ -1534,6 +1542,7 @@ Address processArgs(char *argv[], const int argc) {
 #elif PLATFORM_TYPE_SOCKET
     IO_initialize();
 #endif
+#endif /* PLATFORM_TYPE_BARE_METAL */
 
     /*
      * Set up the buffer that will be used for the ROM, NVM and RAM, remaining.
@@ -1765,7 +1774,7 @@ void testWordAt() {
 
 /*if[FLOATS]*/
 void fpTest() {
-#if HAS_STDIO
+#if HAS_STREAM_IO
     float f0 = 0.0;
     float f1 = 1.0;
     double d0 = 0.0;
@@ -2096,6 +2105,7 @@ void printJavaStrSafely(Address value, char* valueName) {
  * Exits the VM with an error message including various interpreter state.
  */
 extern  void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddress _ip, UWordAddress _fp, UWordAddress _sp, char* file, int line) {
+#ifndef MINIMAL_ERROR_REPORT
     Address stackHigh = com_sun_squawk_GC_ramEnd;
     boolean userStack = FALSE;
 
@@ -2167,6 +2177,9 @@ extern  void fatalInterpreterError0(char *msg, int opcode, int _iparm, ByteAddre
     }
 
     fatalVMError("");
+#else
+    fatalVMError(msg);
+#endif
 }
 
 /**

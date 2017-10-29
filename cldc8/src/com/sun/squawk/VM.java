@@ -305,7 +305,7 @@ public class VM implements GlobalStaticFields {
 //        currentIsolate = new Isolate(bootstrapSuite);
 /*end[STATIC_MAIN_CLASS]*/
         currentIsolate.initializeClassKlass();
-
+		
         /*
          * Initialise threading.
          */
@@ -1178,7 +1178,8 @@ public class VM implements GlobalStaticFields {
         if (exceptionsEnabled) {
             exceptionsEnabled = false;
         } else {
-            Assert.shouldNotReachHere("do_throw called recursively");
+//            Assert.shouldNotReachHere("do_throw called recursively");
+	    throw new AssertionError("do_throw called recursively");
         }
 
         throwCount++;
@@ -2563,8 +2564,9 @@ hbp.dumpState();
      */
     static ObjectMemorySerializer.ControlBlock copyObjectGraph(Object object) throws HostedPragma {
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
-        Assert.shouldNotReachHere();
-        return null;
+//        Assert.shouldNotReachHere();
+//        return null;
+	throw new AssertionError();
 /*else[ENABLE_ISOLATE_MIGRATION]*/
 //        Assert.always(GC.inRam(object));
 //
@@ -2656,7 +2658,8 @@ hbp.dumpState();
      */
     public static void haltVM(int code) {
         execSyncIO(ChannelConstants.INTERNAL_STOPVM, code);
-        Assert.shouldNotReachHere();
+//        Assert.shouldNotReachHere();
+	throw new AssertionError();
     }
 
     /**
@@ -3001,7 +3004,8 @@ hbp.dumpState();
                 max = MAXMOVE / 2;
                 break;
             default:
-                Assert.shouldNotReachHere();
+//                Assert.shouldNotReachHere();
+		throw new AssertionError();
         }
         
         Assert.that(src != null && GC.getKlass(src).isArray());
@@ -3516,6 +3520,7 @@ hbp.dumpState();
      * @return Secondary exception, or null if none.
      */
     public static Throwable printExceptionAndTrace(Throwable exc, String msg, boolean printUsingThrowable) {
+/*if[!MINIMAL_ERROR_REPORT]*/
         String origExcName = "unknown";
         
         // print preamble. Should never fail:
@@ -3531,7 +3536,6 @@ hbp.dumpState();
             VM.println("Error in VM.printExceptionAndTrace");
             VM.fatalVMError();
         }
-
         try {
            /* 
             * Try to print stack trace normally, via streams. If that fails, try to print to
@@ -3574,6 +3578,20 @@ hbp.dumpState();
             VM.println(GC.getKlass(exc2).getInternalName());
             return exc2;
         }
+/*else[MINIMAL_ERROR_REPORT]*/
+//   try {
+//      VM.println(msg);
+//	VM.print("    ");
+//      VM.print("on thread ");
+//      VM.printThread(VMThread.currentThread());
+//      VM.println();
+//   } catch (Throwable e) {
+//      VM.println("Error in VM.printExceptionAndTrace");
+//      VM.fatalVMError();
+//   }
+//   return null;
+/*end[MINIMAL_ERROR_REPORT]*/
+	
     }
     
     /*-----------------------------------------------------------------------*\

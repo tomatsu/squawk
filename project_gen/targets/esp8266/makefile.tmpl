@@ -19,21 +19,27 @@ LINKERSCRIPT = esp8266.ld
 JARFILE = classes.jar
 JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar
 DCA_CONFIG = $(SQUAWK_TOP)/builder/dca.config
+FASTALLOC = true
 
 BUILD_FLAGS += -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
 BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE)
+BUILD_FLAGS += -DSERVICE_CHUNK_SIZE=$(SERVICE_CHUNK_SIZE)
+BUILD_FLAGS += -DFASTALLOC=$(FASTALLOC)
+BUILD_FLAGS += -DGCC_OPTIMIZE_INTERPRETER_LOOP=1
+# BUILD_FLAGS += -DMINIMAL_ERROR_REPORT
+
 INCLUDE_DIRS += $(ESP_SDK)/include .
 INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/esp8266
 INCLUDE_DIRS += $(ESP_SDK)/include $(ESP_SDK)/driver_lib/include/driver $(ESP_SDK)/../esp-open-lwip/include
 INCLUDE_DIRS += $(SQUAWK_TOP)/targets/esp8266/src/native
 INCLUDE_DIRS += $(SQUAWK_TOP)/spiffs/latest/src
-INCLUDE_DIRS += $(SQUAWK_TOP)/mbedtls/latest/include
+#INCLUDE_DIRS += $(SQUAWK_TOP)/mbedtls/latest/include
 CFLAGS += $(CFLAGS_ARCH) $(DEVICE_OPTIONS) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) $(CFLAGS_DEP)
 LDFLAGS += $(LDLAGS_ARCH) -T$(LINKERSCRIPT) -uuser_init -Wl,--gc-sections -Wl,--Map=$(@:.elf=.map) -Wl,--cref
-LDSUFFIXES += -L$(SQUAWK_TOP)/mbedtls
+#LDSUFFIXES += -L$(SQUAWK_TOP)/mbedtls
 LDSUFFIXES += -L$(BUILD_TOP)
 LIBAR = $(BUILD_TOP)/libsquawk.a
-LIBS = crypto main net80211 wpa wpa2 wps lwip pp phy driver gcc cirom m mbedtls squawk
+LIBS = crypto main net80211 wpa wpa2 wps lwip pp phy driver gcc cirom m squawk
 LDSUFFIXES += -L$(ESP_SDK)/lib -L$(ESP_SDK)/ld -nostdlib -Wl,--start-group $(patsubst %,-l%,$(LIBS)) -Wl,--end-group 
 TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
 CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes
@@ -61,7 +67,7 @@ $(JARFILE): $(JAVA_SOURCE_FILES)
 	$(AT)mkdir -p classes
 	$(AT)$(JAVAC) -bootclasspath $(SQUAWK_TOP)/cldc/classes.target.jar -d classes $(JAVA_SOURCE_FILES)
 	$(AT)$(JAR) cf $(JARFILE) -C classes .
-	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-5.1.jar com.sun.squawk.builder.asm.MainFinder $(JARFILE) > $(BUILD_TOP)/MAIN_CLASS_NAME
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.asm.MainFinder $(JARFILE) > $(BUILD_TOP)/MAIN_CLASS_NAME
 
 romize: $(BUILD_TOP)/squawk.suite.c
 
@@ -69,7 +75,7 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 	$(AT)rm -rf $(TMP)
 	$(AT)mkdir -p $(TMP)/classes $(BUILD_TOP)
 	$(AT)for i in $(JARFILES); do (cd $(TMP)/classes; $(JAR) x) < $$i; done
-	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-5.1.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.glue.NativeGlueGen -d:$(BUILD_TOP) $(TMP)/classes
+	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-all-5.2.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.glue.NativeGlueGen -d:$(BUILD_TOP) $(TMP)/classes
 	$(AT)tar cf - -C $(BUILD_TOP)/cldc/classes .  | (cd $(TMP)/classes; tar xf -)
 	$(AT)mkdir -p $(TMP)/classes2
 	$(AT)jar cf $(TMP)/classes.jar -C $(TMP)/classes .

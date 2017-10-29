@@ -171,6 +171,7 @@ public final class ObjectGraphSerializer {
                 KlassMetadata metadata = suite.getMetadata(klass);
                 Assert.always(metadata != null, "Must have metadata to save instances of type: " + name);
             }
+
             classKlassMap.put(cls, klass);
         }
         return klass;
@@ -536,9 +537,22 @@ public final class ObjectGraphSerializer {
                 default: {
                     Object value = FieldReflector.getObject(object, field);
                     Object serializedValue = Address.zero();
-
                     if (value != null) {
-                        serializedValue = save(value);
+			if (Romizer.stripSystemClassName) {
+			    /* Strip class name of com.sun.squawk.* */
+			    if (klass.getName().equals("com.sun.squawk.Klass") && field.getName().equals("name")) {
+				String s = (String)value;
+				if (s.startsWith("com.sun.squawk.") || s.startsWith("[com.sun.squawk.")) {
+				    serializedValue = save("");
+				} else {
+				    serializedValue = save(value);
+				}
+			    } else {
+				serializedValue = save(value);
+			    }
+			} else {
+			    serializedValue = save(value);
+			}
                     }
                     NativeUnsafe.setObject(serializedObject, field.getOffset(), serializedValue);
                     break;

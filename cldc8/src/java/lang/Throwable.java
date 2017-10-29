@@ -87,11 +87,15 @@ public class Throwable {
      * its error message string.
      */
     public Throwable() {
+/*if[PRINT_STACK_TRACE]*/
         if (VMThread.currentThread() != null) {
             trace = VM.reifyCurrentStack( -1);
         } else {
             trace = null;
         }
+/*else[PRINT_STACK_TRACE]*/
+//	trace = null;
+/*end[PRINT_STACK_TRACE]*/	
     }
 
     /**
@@ -193,7 +197,8 @@ public class Throwable {
             boolean internalFrame = !VM.isVeryVerbose();
 /*else[ENABLE_VERBOSE]*/
 //            boolean internalFrame = true;
-/*end[ENABLE_VERBOSE]*/		    
+/*end[ENABLE_VERBOSE]*/
+/*if[PRINT_STACK_TRACE]*/
             if (this != VM.getOutOfMemoryError() && trace != null) {
                 for (int i = 0; i != trace.length; ++i) {
                     internalFrame = internalFrame && internalFrame(trace[i]);
@@ -208,6 +213,7 @@ public class Throwable {
                     }
                 }
             }
+/*end[PRINT_STACK_TRACE]*/
         }
     }
 

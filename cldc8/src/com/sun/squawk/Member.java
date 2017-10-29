@@ -261,10 +261,11 @@ public abstract class Member {
      * @return  a hash code value for this object.
      */
     public int hashCode() {
-        throw Assert.shouldNotReachHere(
-/*if[DEBUG_CODE_ENABLED]*/
-                "Should not be put in hashtables"
-/*end[DEBUG_CODE_ENABLED]*/
-                );
+//        throw Assert.shouldNotReachHere(
+///*if[DEBUG_CODE_ENABLED]*/
+//                "Should not be put in hashtables"
+///*end[DEBUG_CODE_ENABLED]*/
+//                );
+	throw new AssertionError();
     }
 }

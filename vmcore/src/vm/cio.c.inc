@@ -83,7 +83,7 @@ INLINE void returnAddressResult(Address value) {
 
 
 
-#if HAS_STDIO
+#if HAS_STREAM_IO
 
 void cioPrintAddress(Address o) {
     FILE   *vmOut   = streams[currentStream];
@@ -142,7 +142,29 @@ void cioPrintBytes(char* bytes, int len) {
     fflush(vmOut);
 }
 
-#endif /* HAS_STDIO */
+#elif HAS_STDIO
+
+void cioPrintCString(char* s) {
+	 puts(s);
+}
+
+void cioPrintBytes(char* bytes, int len) {
+	 write(1, bytes, len);
+}
+
+void cioPrintChar(int ch) {
+	 putchar(ch);
+}
+
+void cioPrintLong(jlong x) {
+     fprintf(stdout, "0x%llx", x);
+}
+
+void cioPrintWord(int x) {
+         printf("%d", x);
+}
+
+#endif /* HAS_STREAM_IO */
 
 void cioPrintJavaString(Address str) {
 	if (str == null) {
@@ -176,61 +198,81 @@ void cioExecute(void) {
 
     switch (op) {
 
+#ifdef ChannelConstants_INTERNAL_SETSTREAM
         case ChannelConstants_INTERNAL_SETSTREAM: {
             com_sun_squawk_ServiceOperation_result = setStream(i1);
             break;
         }
+#endif
 
+#ifdef ChannelConstants_INTERNAL_PRINTSTRING
         case ChannelConstants_INTERNAL_PRINTSTRING: {
             cioPrintJavaString(o1);
             break;
         }
+#endif
 
+#ifdef ChannelConstants_INTERNAL_PRINTCHAR
         case ChannelConstants_INTERNAL_PRINTCHAR: {
 		    cioPrintChar(i1);
             break;
         }
+#endif
 
+#ifdef ChannelConstants_INTERNAL_PRINTINT
         case ChannelConstants_INTERNAL_PRINTINT: {
 		    cioPrintWord(i1);
             break;
         }
+#endif
 
 /* use this as a proxy for /*if[FLOATS], which can't be used because this file isn't an .spp file */
 #ifdef F_POS_INFINITY
+#ifdef ChannelConstants_INTERNAL_PRINTDOUBLE
         case ChannelConstants_INTERNAL_PRINTDOUBLE: {
 			cioPrintDouble(lb2d(makeLong(i1, i2)));
             break;
         }
-
+#endif
+#ifdef ChannelConstants_INTERNAL_PRINTFLOAT
         case ChannelConstants_INTERNAL_PRINTFLOAT: {
 			cioPrintFloat(ib2f(i1));
             break;
         }
 #endif
+#endif
 
+#ifdef ChannelConstants_INTERNAL_PRINTUWORD
         case ChannelConstants_INTERNAL_PRINTUWORD: {
 		    cioPrintUWord(i1);
             break;
         }
+#endif
 
+#ifdef ChannelConstants_INTERNAL_PRINTOFFSET
         case ChannelConstants_INTERNAL_PRINTOFFSET: {
 		    cioPrintWord(i1);
             break;
         }
+#endif
 
+#ifdef ChannelConstants_INTERNAL_PRINTLONG
         case ChannelConstants_INTERNAL_PRINTLONG: {
             jlong val = makeLong(i1, i2);
 			cioPrintLong(val);
             break;
         }
+#endif
 
+#ifdef ChannelConstants_INTERNAL_PRINTADDRESS
         case ChannelConstants_INTERNAL_PRINTADDRESS: {
             Address val = o1;
 			cioPrintWord((int)val);
             break;
         }
+#endif
 
+#ifdef ChannelConstants_INTERNAL_PRINTBYTES
         case ChannelConstants_INTERNAL_PRINTBYTES: {
             Address bytes = o1;
             int offset = i1;
@@ -243,6 +285,7 @@ void cioExecute(void) {
 			cioPrintBytes((char*)bytes + offset, len);
             break;
         }
+#endif
 
 //        case ChannelConstants_INTERNAL_PRINTCONFIGURATION: {
 //            fprintf(stderr, "native VM build flags: %s\n", BUILD_FLAGS);
@@ -253,7 +296,6 @@ void cioExecute(void) {
         case ChannelConstants_INTERNAL_PRINTGLOBALS: {
 		    FILE   *vmOut   = streams[currentStream];
             printGlobals();
-            fflush(vmOut);
             break;
         }
 
@@ -268,35 +310,47 @@ void cioExecute(void) {
         }
 #endif /* com_sun_squawk_Klass_DEBUG_CODE_ENABLED */
 
+#ifdef ChannelConstants_INTERNAL_GETPATHSEPARATORCHAR
         case ChannelConstants_INTERNAL_GETPATHSEPARATORCHAR: {
             com_sun_squawk_ServiceOperation_result = pathSeparatorChar;
             break;
         }
+#endif
 
+#ifdef ChannelConstants_INTERNAL_GETFILESEPARATORCHAR
         case ChannelConstants_INTERNAL_GETFILESEPARATORCHAR:  {
             com_sun_squawk_ServiceOperation_result = fileSeparatorChar;
             break;
         }
+#endif
 
+#ifdef ChannelConstants_INTERNAL_GETTIMEMICROS_HIGH
         case ChannelConstants_INTERNAL_GETTIMEMICROS_HIGH: {
             returnLongResult(sysTimeMicros());
             break;
         }
+#endif
 
+#ifdef ChannelConstants_INTERNAL_GETTIMEMILLIS_HIGH
         case ChannelConstants_INTERNAL_GETTIMEMILLIS_HIGH: {
             returnLongResult(sysTimeMillis());
             break;
         }
+#endif
 
+#ifdef ChannelConstants_INTERNAL_LOW_RESULT
         case ChannelConstants_INTERNAL_LOW_RESULT: {
             com_sun_squawk_ServiceOperation_result = internalLowResult;
             break;
         }
+#endif
 
+#ifdef ChannelConstants_INTERNAL_STOPVM
         case ChannelConstants_INTERNAL_STOPVM: {
             stopVM(i1);
             break;
         }
+#endif
 
 #ifdef OLD_IIC_MESSAGES
         case ChannelConstants_INTERNAL_ALLOCATE_MESSAGE_BUFFER: {
@@ -348,26 +402,31 @@ void cioExecute(void) {
             break;
         }
 
+#ifdef ChannelConstants_GLOBAL_WAITFOREVENT
         case ChannelConstants_GLOBAL_WAITFOREVENT: {
             if (!checkForMessageEvent()) {
                 ioExecute();
             }
             break;
         }
-
+#endif
+#ifdef ChannelConstants_GLOBAL_GETEVENT
         case ChannelConstants_GLOBAL_GETEVENT: {
             if (!getMessageEvent()) {
                 ioExecute();
             }
             break;
         }
+#endif		
 #endif /* OLD_IIC_MESSAGES */
 
         /* WARNING! NOT 64-bit safe! */
+#ifdef ChannelConstants_INTERNAL_NATIVE_PLATFORM_NAME		
         case ChannelConstants_INTERNAL_NATIVE_PLATFORM_NAME: {
             com_sun_squawk_ServiceOperation_result = (int)sysPlatformName();
             break;
         }
+#endif
 
 #if NATIVE_VERIFICATION
         case ChannelConstants_INTERNAL_COMPUTE_SHA1_FOR_MEMORY_REGION:{

@@ -297,7 +297,8 @@ public final class VMThread implements GlobalStaticFields {
             if (threadNumber == 0) {
                 this.name = "Thread-0";
             } else {
-                this.name = "Thread-".concat(String.valueOf(threadNumber));
+//                this.name = "Thread-".concat(String.valueOf(threadNumber));
+                this.name = "Thread-" + threadNumber;
             }
         }
     }
@@ -1379,7 +1380,6 @@ VM.println();
         Assert.always(state == NEW);
         stack = newStack(stackSize, this, true);
         if (stack == null) {
-VM.println("creating stack:");
             throw VM.getOutOfMemoryError();
         }
 
@@ -1755,7 +1755,7 @@ VM.println("creating stack:");
             if ((thread = runnableThreads.next()) != null) {
                 break;
             }
-
+			
             /*
              * Wait for an event or until timeout.
              */
@@ -1773,7 +1773,8 @@ VM.println("creating stack:");
 /*if[ENABLE_MULTI_ISOLATE]*/
                     Isolate.printAllIsolateStates(System.err);
 /*end[ENABLE_MULTI_ISOLATE]*/
-                    Assert.shouldNotReachHere("Dead-locked system: no schedulable threads");
+//                    Assert.shouldNotReachHere("Dead-locked system: no schedulable threads");
+		    throw new AssertionError("Dead-locked system: no schedulable threads");
                 }
 //VM.println("waitForEvent timeout");
                 // Emergency switch in case waitForEvent() "breaks" (misses wakeups and hangs)

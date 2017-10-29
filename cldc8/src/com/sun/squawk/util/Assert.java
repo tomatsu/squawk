@@ -345,7 +345,7 @@ public class Assert {
     @Vm2c(macro="if (!(cond)) { fprintf(stderr, \"Assertion failed: %s, at %s:%d\n\", (char*)msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
 /*end[JAVA5SYNTAX]*/
     public static void always(boolean cond, String msg) {
-        if (!cond) {
+        if (ASSERTS_ENABLED && !cond) {
             if (ASSERT_ALWAYS_IS_FATAL || VMThread.currentThread().isServiceThread()) {
                 VM.print("Assertion failed: ");
                 VM.println(msg);

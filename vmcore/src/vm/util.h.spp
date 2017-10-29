@@ -97,12 +97,13 @@ NORETURN void fatalVMError0(char *msg, boolean cleanup) {
         msg = "fatal VM error";
     }
     if (inFatalVMError) {
-        fprintf(stderr, "Recursive call to fatalVMError(%s)\n", msg);
-        fflush(stderr);
+        cioPrintCString("Recursive call to fatalVMError(");
+	cioPrintCString(msg);
+        cioPrintCString(")\n");
 //exit(1);
     } else {
-        fprintf(stderr, "%s\n", msg);
-        fflush(stderr);
+        cioPrintCString(msg);
+	cioPrintChar('\n');
         inFatalVMError = true;
 #if TRACE
         printStackTrace(msg);

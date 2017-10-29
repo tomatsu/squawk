@@ -3496,12 +3496,15 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
 #endif
 
 #define CASE_(n, block) Mask_##n(case Native_##n: block)
+#define CASE_2(a, b, block) Mask_##a##_##b(case Native_##a: case Native_##b: block)
+#define CASE_4(a, b, c, d, block) Mask_##a##_##b##_##c##_##d(case Native_##a: case Native_##b: case Native_##c: case Native_##d: block)
 
 #ifdef INCLUDE_NATIVE
 #include "native.c.inc"
 #else
 #define CUSTOM_NATIVE_CODE
 #endif
+	    
 
         /**
          * invokenativemain.
@@ -3509,6 +3512,19 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
 /*MAC*/ void invokenativemain() {
             checkReferenceSlots();
             switch(iparm) {
+	        CASE_2(com_sun_squawk_Offset_eq, com_sun_squawk_UWord_eq, {
+                    UWord value2 = popWord();
+                    UWord value1 = popWord();
+                    pushInt(value1 == value2);
+                    break;
+                })
+                CASE_2(com_sun_squawk_Offset_ne, com_sun_squawk_UWord_ne, {
+                    UWord value2 = popWord();
+                    UWord value1 = popWord();
+                    pushInt(value1 != value2);
+                    break;
+                })
+/*
                 case Native_com_sun_squawk_Offset_eq:
                 case Native_com_sun_squawk_UWord_eq: {
                     UWord value2 = popWord();
@@ -3516,7 +3532,6 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                     pushInt(value1 == value2);
                     break;
                 }
-
                 case Native_com_sun_squawk_Offset_ne:
                 case Native_com_sun_squawk_UWord_ne: {
                     UWord value2 = popWord();
@@ -3524,6 +3539,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                     pushInt(value1 != value2);
                     break;
                 }
+*/
 
                 CASE_(com_sun_squawk_Offset_add, {
                     int delta = popInt();
@@ -3560,17 +3576,16 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                     break;
                 })
 
-                case Native_com_sun_squawk_Offset_fromPrimitive:
-                case Native_com_sun_squawk_UWord_fromPrimitive: {
+                CASE_2(com_sun_squawk_Offset_fromPrimitive,
+                       com_sun_squawk_UWord_fromPrimitive, {
                     if (TYPEMAP) {
                         UWord value = SQUAWK_64 ? popLong() : popInt();
                         pushWord(value);
                     }
                     break;
-                }
+                })
 
-                case Native_com_sun_squawk_Offset_toPrimitive:
-                case Native_com_sun_squawk_UWord_toPrimitive: {
+                CASE_2(com_sun_squawk_Offset_toPrimitive, com_sun_squawk_UWord_toPrimitive, {
                     if (TYPEMAP) {
                         UWord value = popWord();
                         if (SQUAWK_64) {
@@ -3588,10 +3603,9 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                         }
                     }
                     break;
-                }
+                })
 
-                case Native_com_sun_squawk_Offset_toInt:
-                case Native_com_sun_squawk_UWord_toInt: {
+                CASE_2(com_sun_squawk_Offset_toInt, com_sun_squawk_UWord_toInt, {
                     if (TYPEMAP || SQUAWK_64 || ASSUME) {
                         UWord value = popWord();
                         /* this catches a (false) assumption that a given offset won't loose its sign or magnitude when converted to an int */
@@ -3601,23 +3615,21 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                         pushInt((int)value);
                     }
                     break;
-                }
+                })
 
-                case Native_com_sun_squawk_UWord_toOffset:
-                case Native_com_sun_squawk_Offset_toUWord: {
+                CASE_2(com_sun_squawk_Offset_toUWord, com_sun_squawk_UWord_toOffset, {
                     break;
-                }
+                })
 
                 CASE_(com_sun_squawk_UWord_max, {
                     pushWord(WORD_MAX);
                     break;
                 })
 
-                case Native_com_sun_squawk_Offset_zero:
-                case Native_com_sun_squawk_UWord_zero: {
+                CASE_2(com_sun_squawk_Offset_zero, com_sun_squawk_UWord_zero, {
                     pushWord(0);
                     break;
-                }
+                })
 
                 CASE_(com_sun_squawk_UWord_and, {
                     UWord value2 = popWord();
@@ -3689,12 +3701,11 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                     break;
                 })
 
-                case Native_com_sun_squawk_Offset_isZero:
-                case Native_com_sun_squawk_UWord_isZero: {
+                CASE_2(com_sun_squawk_Offset_isZero, com_sun_squawk_UWord_isZero, {
                     UWord value = popWord();
                     pushInt(value == 0);
                     break;
-                }
+                })
 
                 CASE_(com_sun_squawk_UWord_isMax, {
                     UWord value = popWord();
@@ -3762,22 +3773,20 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                     break;
                 })
                 
-                case Native_com_sun_squawk_NativeUnsafe_setShort:
-                case Native_com_sun_squawk_NativeUnsafe_setChar: {
+                CASE_2(com_sun_squawk_NativeUnsafe_setShort, com_sun_squawk_NativeUnsafe_setChar, {
                     int     val = popInt();
                     int     off = popInt();
                     Address base = popAddress();
                     setShort(base,  off, val);
                     break;
-                }
+                })
 
-                case Native_com_sun_squawk_NativeUnsafe_getAddress:
-                case Native_com_sun_squawk_NativeUnsafe_getObject: {
+                CASE_2(com_sun_squawk_NativeUnsafe_getAddress, com_sun_squawk_NativeUnsafe_getObject, {
                     int     off = popInt();
                     Address base = popAddress();
                     pushAddress(getObject(base, off));
                     break;
-                }
+                })
 
                CASE_(com_sun_squawk_NativeUnsafe_getAsUWord,
                     if (TYPEMAP) {
@@ -4243,10 +4252,9 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                     break;
                 })
 
-                case Native_com_sun_squawk_Address_toObject:
-                case Native_com_sun_squawk_Address_fromObject: {
+                CASE_2(com_sun_squawk_Address_toObject, com_sun_squawk_Address_fromObject, {
                     break;
-                }
+                })
 
                 CASE_(com_sun_squawk_Address_eq, {
                     Address addr2 = popAddress();
@@ -4518,10 +4526,9 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                     break;
                 })
 /*else[TYPEMAP]*/
-//                case Native_com_sun_squawk_VM_hashcode:
-//                case Native_com_sun_squawk_VM_asKlass: {
+//                CASE_2(com_sun_squawk_VM_hashcode, com_sun_squawk_VM_asKlass, {
 //                    break;
-//                }
+//                })
 /*end[TYPEMAP]*/
 
                 CASE_(com_sun_squawk_VM_fatalVMError, {
@@ -4669,13 +4676,13 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                 })
 
 /*if[FLOATS]*/
-                case Native_com_sun_squawk_VM_doubleToLongBits:
-                case Native_com_sun_squawk_VM_floatToIntBits:
-                case Native_com_sun_squawk_VM_longBitsToDouble:
-                case Native_com_sun_squawk_VM_intBitsToFloat: {
+                CASE_4(com_sun_squawk_VM_doubleToLongBits, 
+                       com_sun_squawk_VM_floatToIntBits,
+                       com_sun_squawk_VM_longBitsToDouble,
+                       com_sun_squawk_VM_intBitsToFloat, {
                     /* simply leave bits on the stack: */
                     break;
-                }
+                })
 
                 CASE_(com_sun_squawk_VM_floor, {
                     jlong value1 = popLong();

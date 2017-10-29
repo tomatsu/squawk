@@ -1,9 +1,10 @@
-RAM_SIZE ?= 13*1024
+RAM_SIZE ?= 10*1024
+SERVICE_CHUNK_SIZE ?= 1024
 
 AT ?= @
 CFLAGS_ARCH = -m32
-CFLAGS_OPTS = -Os
-#CFLAGS_OPTS = -Os -flto
+#CFLAGS_OPTS = -Os
+CFLAGS_OPTS = -Os -flto
 
 JAVA = java
 JAVAC = javac
@@ -18,9 +19,14 @@ BUILD_TOP ?= build
 JARFILE = classes.jar
 JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar
 DCA_CONFIG = $(SQUAWK_TOP)/builder/dca.config
+FASTALLOC = false
 
 BUILD_FLAGS += -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
 BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE)
+BUILD_FLAGS += -DSERVICE_CHUNK_SIZE=$(SERVICE_CHUNK_SIZE)
+BUILD_FLAGS += -DFASTALLOC=$(FASTALLOC)
+BUILD_FLAGS += -DGCC_OPTIMIZE_INTERPRETER_LOOP=0
+BUILD_FLAGS += -DMINIMAL_ERROR_REPORT
 
 INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/gcc
 CFLAGS += $(CFLAGS_ARCH) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) -fdata-sections -ffunction-sections -MD
@@ -111,6 +117,7 @@ $(BUILD_TOP)/squawk : $(OBJECT_FILES)
 link: $(BUILD_TOP)/squawk
 
 strip:
+	$(AT)cp $(BUILD_TOP)/squawk $(BUILD_TOP)/squawk.elf
 	$(AT)$(STRIP) $(BUILD_TOP)/squawk
 
 map:

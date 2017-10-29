@@ -232,7 +232,7 @@ public class Klass<T> {
      * The bottom 8 bits of the modifier for <init>() (if present).
      */
     private byte initModifiers;
-    
+
     /**
      * offset given to methods that are illegal to call, such as hosted methods.
      */
@@ -457,7 +457,8 @@ T
      *          <code>false</code> otherwise.
      */
     public final boolean isInterface() throws ForceInlinedPragma {
-        return Modifier.isInterface(getModifiers());
+//        return Modifier.isInterface(getModifiers());
+	return (modifiers & Modifier.INTERFACE) != 0;
     }
 
     /**
@@ -466,7 +467,8 @@ T
      * @return   true if this class represents a primitive type
      */
     public final boolean isPrimitive() {
-        return Modifier.isPrimitive(getModifiers());
+//        return Modifier.isPrimitive(getModifiers());
+	return (modifiers & Modifier.PRIMITIVE) != 0;
     }
 
     /**
@@ -475,7 +477,8 @@ T
      * @return   true if the static fields of this class are {@link Global VM global}
      */
     public final boolean hasGlobalStatics() {
-        return Modifier.hasGlobalStatics(getModifiers());
+//        return Modifier.hasGlobalStatics(getModifiers());
+        return (modifiers & Modifier.GLOBAL_STATICS) != 0;
     }
 
 /*if[FINALIZATION]*/
@@ -485,7 +488,8 @@ T
      * @return true if it does
      */
     public final boolean hasFinalizer() {
-        return Modifier.hasFinalizer(getModifiers());
+//        return Modifier.hasFinalizer(getModifiers());
+        return (modifiers & Modifier.HASFINALIZER) != 0;	
     }
 /*end[FINALIZATION]*/
 
@@ -615,7 +619,8 @@ T
      *          <code>false</code> otherwise.
      */
     public final boolean isArray() throws ForceInlinedPragma {
-        return Modifier.isArray(getModifiers());
+//        return Modifier.isArray(getModifiers());
+        return (modifiers & Modifier.ARRAY) != 0;
     }
 
     /**
@@ -628,7 +633,8 @@ T
      *          <code>false</code> otherwise.
      */
     public final boolean isSquawkPrimitive() {
-        return Modifier.isSquawkPrimitive(getModifiers());
+//        return Modifier.isSquawkPrimitive(getModifiers());
+        return (modifiers & Modifier.SQUAWKPRIMITIVE) != 0;	
     }
 
     /**
@@ -639,7 +645,8 @@ T
      *          <code>false</code> otherwise.
      */
     public final boolean isSquawkArray() throws ForceInlinedPragma {
-        return isSquawkArray(this);
+//        return isSquawkArray(this);
+	return (modifiers & Modifier.SQUAWKARRAY) != 0;		
     }
 
     /**
@@ -647,7 +654,8 @@ T
      * invoke this method on a possibly forwarded Klass object.
      */
     static boolean isSquawkArray(Klass klass) throws ForceInlinedPragma {
-        return Modifier.isSquawkArray(klass.modifiers);
+//        return Modifier.isSquawkArray(klass.modifiers);
+        return (klass.modifiers & Modifier.SQUAWKARRAY) != 0;	
     }
 
     /**
@@ -857,7 +865,7 @@ T
      * @param hasSystemID    denotes if <code>suiteID</code> is also a system wide ID
      */
     private Klass(String name, Klass componentType, int suiteID, boolean hasSystemID) {
-        this.name = name;
+		this.name = name;
         this.id = hasSystemID ? (short)suiteID : (short)-(suiteID+1);
         this.oopMapWord = UWord.zero();
         Assert.always((suiteID & 0xFFFF) == suiteID);
@@ -910,7 +918,7 @@ T
      * @param superType  must be {@link #UNINITIALIZED_NEW}
      */
     protected Klass(String name, Klass superType) {
-        this.name          = name;
+		this.name          = name;
         this.id            = Short.MIN_VALUE;
         this.modifiers     = Modifier.PUBLIC | Modifier.SYNTHETIC;
         this.superType     = superType;
@@ -1188,7 +1196,8 @@ T
      * @return   true if this is a public class
      */
     public final boolean isPublic() {
-        return Modifier.isPublic(getModifiers());
+//        return Modifier.isPublic(getModifiers());
+        return (modifiers & Modifier.PUBLIC) != 0;	
     }
 
     /**
@@ -1197,7 +1206,8 @@ T
      * @return   true if this is an abstract class
      */
     public final boolean isAbstract() {
-        return Modifier.isAbstract(getModifiers());
+//        return Modifier.isAbstract(getModifiers());
+        return (modifiers & Modifier.ABSTRACT) != 0;	
     }
 
     /**
@@ -1206,7 +1216,8 @@ T
      * @return  true if this class can be subclassed
      */
     public final boolean isFinal() {
-        return Modifier.isFinal(getModifiers());
+//        return Modifier.isFinal(getModifiers());
+        return (modifiers & Modifier.FINAL) != 0;	
     }
 
     /**
@@ -1219,7 +1230,8 @@ T
      * @return  true if this class is not defined by a class file
      */
     public final boolean isSynthetic() {
-        return Modifier.isSynthetic(getModifiers());
+//        return Modifier.isSynthetic(getModifiers());
+        return (modifiers & Modifier.SYNTHETIC) != 0;
     }
 
     /**
@@ -1228,7 +1240,8 @@ T
      * @return  true if this class does not appear in any source code
      */
     public final boolean isSourceSynthetic() {
-        return Modifier.isSourceSynthetic(getModifiers());
+//        return Modifier.isSourceSynthetic(getModifiers());
+        return (modifiers & Modifier.SOURCE_SYNTHETIC) != 0;	
     }
 
     /**
@@ -1248,7 +1261,7 @@ T
      * @return true if this is a VM internal type
      */
     public final boolean isInternalType() {
-        return name.charAt(name.length() - 1) == '-';
+		return name.charAt(name.length() - 1) == '-';
     }
 
     /**
@@ -1603,7 +1616,8 @@ T
      *              32-bit words, false otherwise
      */
     public final boolean isDoubleWord() {
-        return Modifier.isDoubleWord(getModifiers());
+//        return Modifier.isDoubleWord(getModifiers());
+        return (modifiers & Modifier.DOUBLEWORD) != 0;	
     }
 
     /*---------------------------------------------------------------------------*\
@@ -2973,6 +2987,7 @@ T
         int category = isStatic ? SymbolParser.STATIC_METHODS : SymbolParser.VIRTUAL_METHODS;
         KlassMetadata metadata = getMetadata();
         if (metadata == null) {
+//	    throw new RuntimeException("index="+index + ", isStatic="+ isStatic + ", this="+ this);
             return null;
         }
         SymbolParser parser = metadata.getSymbolParser();
@@ -3560,7 +3575,8 @@ T
      *           for this class; false otherwise
      */
     public final boolean mustClinit() {
-        return Modifier.mustClinit(modifiers);
+//        return Modifier.mustClinit(modifiers);
+        return (modifiers & Modifier.KLASS_MUSTCLINIT) != 0;	
     }
 
     /**
@@ -3830,19 +3846,24 @@ T
         Isolate isolate = VM.getCurrentIsolate();
         Suite bootstrapSuite = isolate.getBootstrapSuite();
         Klass klass = bootstrapSuite.getKlass(systemID);
+
+        // Should never get here in a non-hosted system as all the bootstrap classes must be in the bootstrap suite
+/*if[ENABLE_HOSTED]*/	    	
         if (klass != null) {
             Assert.that(klass.getSuperType() == superType);
             Assert.that(klass.getSystemID() == systemID);
             Assert.that((klass.getModifiers() & modifiers) == modifiers);
             return klass;
         }
-
-        // Should never get here in a non-hosted system as all the bootstrap classes must be in the bootstrap suite
-/*if[ENABLE_HOSTED]*/	    	
         Assert.always(VM.isHosted());
+        return bootHosted(superType, name, systemID, modifiers, bootstrapSuite);
+/*else[ENABLE_HOSTED]*/
+//		Assert.that(klass.getSuperType() == superType);
+//		Assert.that(klass.getSystemID() == systemID);
+//		Assert.that((klass.getModifiers() & modifiers) == modifiers);
+//		return klass;
 /*end[ENABLE_HOSTED]*/
 	
-        return bootHosted(superType, name, systemID, modifiers, bootstrapSuite);
     }
 
     /**
