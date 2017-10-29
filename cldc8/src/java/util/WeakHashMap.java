@@ -165,7 +165,7 @@ public class WeakHashMap<K,V>
     /**
      * The load factor for the hash table.
      */
-    private final int loadFactorPercent;
+    private int loadFactorPercent;
 
     /**
      * Reference queue for cleared WeakEntries
@@ -199,21 +199,7 @@ public class WeakHashMap<K,V>
      *         or if the load factor is nonpositive.
      */
     public WeakHashMap(int initialCapacity, float loadFactor) {
-        if (initialCapacity < 0)
-            throw new IllegalArgumentException("Illegal Initial Capacity: "+
-                                               initialCapacity);
-        if (initialCapacity > MAXIMUM_CAPACITY)
-            initialCapacity = MAXIMUM_CAPACITY;
-
-        if (loadFactor <= 0 || Float.isNaN(loadFactor))
-            throw new IllegalArgumentException("Illegal Load factor: "+
-                                               loadFactor);
-        int capacity = 1;
-        while (capacity < initialCapacity)
-            capacity <<= 1;
-        table = newTable(capacity);
-        this.loadFactorPercent = (int)(loadFactor * 100);
-        threshold = (int)(capacity * loadFactor);
+	initialize(initialCapacity, (int)(loadFactor * 100));
     }
 /*end[FLOATS]*/		
 
@@ -225,21 +211,7 @@ public class WeakHashMap<K,V>
      * @throws IllegalArgumentException if the initial capacity is negative
      */
     public WeakHashMap(int initialCapacity) {
-/*if[!FLOATS]*/
-        if (initialCapacity < 0)
-            throw new IllegalArgumentException("Illegal Initial Capacity: "+
-                                               initialCapacity);
-        if (initialCapacity > MAXIMUM_CAPACITY)
-            initialCapacity = MAXIMUM_CAPACITY;
-        int capacity = 1;
-        while (capacity < initialCapacity)
-            capacity <<= 1;
-        table = newTable(capacity);
-        this.loadFactorPercent = DEFAULT_LOAD_FACTOR_PERCENT;
-        threshold = (int)(capacity * loadFactorPercent / 100);
-/*else[FLOATS]*/
-//        this(initialCapacity, DEFAULT_LOAD_FACTOR_PERCENT / 100f);
-/*end[FLOATS]*/
+	initialize(initialCapacity, DEFAULT_LOAD_FACTOR_PERCENT);
     }
 
     /**
@@ -247,9 +219,7 @@ public class WeakHashMap<K,V>
      * capacity (16) and load factor (0.75).
      */
     public WeakHashMap() {
-        this.loadFactorPercent = DEFAULT_LOAD_FACTOR_PERCENT;
-        threshold = DEFAULT_INITIAL_CAPACITY;
-        table = newTable(DEFAULT_INITIAL_CAPACITY);
+	initialize(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR_PERCENT);
     }
 
     /**
@@ -263,12 +233,26 @@ public class WeakHashMap<K,V>
      * @since   1.3
      */
     public WeakHashMap(Map<? extends K, ? extends V> m) {
-		this(Math.max((int) (m.size() * 100 / DEFAULT_LOAD_FACTOR_PERCENT) + 1, 16));
+	this(Math.max((int) (m.size() * 100 / DEFAULT_LOAD_FACTOR_PERCENT) + 1, 16));
         putAll(m);
     }
 
     // internal utilities
 
+    private void initialize(int initialCapacity, int loadFactorPercent) {
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal Initial Capacity: "+
+                                               initialCapacity);
+        if (initialCapacity > MAXIMUM_CAPACITY)
+            initialCapacity = MAXIMUM_CAPACITY;
+        int capacity = 1;
+        while (capacity < initialCapacity)
+            capacity <<= 1;
+        table = newTable(capacity);
+        this.loadFactorPercent = loadFactorPercent;
+        threshold = (int)(capacity * loadFactorPercent / 100);
+    }
+    
     /**
      * Value representing null keys inside tables.
      */

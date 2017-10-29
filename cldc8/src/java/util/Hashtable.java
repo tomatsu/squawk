@@ -164,18 +164,7 @@ public class Hashtable<K,V>
      *             than zero, or if the load factor is nonpositive.
      */
     public Hashtable(int initialCapacity, float loadFactor) {
-        if (initialCapacity < 0)
-            throw new IllegalArgumentException("Illegal Capacity: "+
-                                               initialCapacity);
-        if (loadFactor <= 0 || /*Float.isNaN(loadFactor)*/(loadFactor != loadFactor))
-			throw new IllegalArgumentException("Illegal Load Factor");
-//            throw new IllegalArgumentException("Illegal Load: "+loadFactor);
-
-        if (initialCapacity==0)
-            initialCapacity = 1;
-        this.loadFactorPercent = (int)(loadFactor * 100);
-        table = new Entry[initialCapacity];
-        threshold = (int)(initialCapacity * loadFactorPercent / 100);
+	initialize(initialCapacity, (int)(loadFactor * 100));
     }
 /*end[FLOATS]*/	
 
@@ -188,18 +177,7 @@ public class Hashtable<K,V>
      *              than zero.
      */
     public Hashtable(int initialCapacity) {
-/*if[!FLOATS]*/
-        if (initialCapacity < 0)
-            throw new IllegalArgumentException("Illegal Capacity: "+
-                                               initialCapacity);
-        if (initialCapacity==0)
-            initialCapacity = 1;
-        this.loadFactorPercent = 75;
-        table = new Entry[initialCapacity];
-        threshold = (int)(initialCapacity * loadFactorPercent / 100);
-/*else[FLOATS]*/
-//        this(initialCapacity, 0.75f);
-/*end[FLOATS]*/
+	initialize(initialCapacity, 75);
     }
 
     /**
@@ -207,11 +185,7 @@ public class Hashtable<K,V>
      * and load factor (0.75).
      */
     public Hashtable() {
-/*if[!FLOATS]*/
-        this(11);
-/*else[FLOATS]*/
-//        this(11, 0.75f);
-/*end[FLOATS]*/
+	initialize(11, 75);
     }
 
     /**
@@ -224,15 +198,21 @@ public class Hashtable<K,V>
      * @since   1.2
      */
     public Hashtable(Map<? extends K, ? extends V> t) {
-/*if[!FLOATS]*/
         this(Math.max(2*t.size(), 11));
-/*else[FLOATS]*/
-//        this(Math.max(2*t.size(), 11), 0.75f);
-/*end[FLOATS]*/
-		
         putAll(t);
     }
 
+    private void initialize(int initialCapacity, int loadFactorPercent) {
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal Capacity: "+
+                                               initialCapacity);
+        if (initialCapacity==0)
+            initialCapacity = 1;
+        this.loadFactorPercent = loadFactorPercent;
+        table = new Entry[initialCapacity];
+        threshold = (int)(initialCapacity * loadFactorPercent / 100);
+    }
+    
     /**
      * Returns the number of keys in this hashtable.
      *

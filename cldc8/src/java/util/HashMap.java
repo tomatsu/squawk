@@ -161,7 +161,7 @@ public class HashMap<K,V>
     /**
      * The load factor for the hash table.
      */
-    final int loadFactorPercent;
+    int loadFactorPercent;
 
     /**
      * The number of times this HashMap has been structurally modified
@@ -183,24 +183,7 @@ public class HashMap<K,V>
      *         or the load factor is nonpositive
      */
     public HashMap(int initialCapacity, float loadFactor) {
-        if (initialCapacity < 0)
-            throw new IllegalArgumentException("Illegal initial capacity: " +
-                                               initialCapacity);
-        if (initialCapacity > MAXIMUM_CAPACITY)
-            initialCapacity = MAXIMUM_CAPACITY;
-        if (loadFactor <= 0 || Float.isNaN(loadFactor))
-            throw new IllegalArgumentException("Illegal load factor: " +
-                                               loadFactor);
-
-        // Find a power of 2 >= initialCapacity
-        int capacity = 1;
-        while (capacity < initialCapacity)
-            capacity <<= 1;
-
-        this.loadFactorPercent = (int)(loadFactor * 100);
-        threshold = (int)(capacity * this.loadFactorPercent / 100);
-        table = new Entry[capacity];
-        init();
+	initialize(initialCapacity, (int)(loadFactor * 100));
     }
 /*end[FLOATS]*/ 	  
 
@@ -212,29 +195,7 @@ public class HashMap<K,V>
      * @throws IllegalArgumentException if the initial capacity is negative.
      */
     public HashMap(int initialCapacity) {
-/*if[!FLOATS]*/ 	  			
-        if (initialCapacity < 0)
-            throw new IllegalArgumentException("Illegal initial capacity: " +
-                                               initialCapacity);
-        if (initialCapacity > MAXIMUM_CAPACITY)
-            initialCapacity = MAXIMUM_CAPACITY;
-//        if (loadFactor <= 0 || Float.isNaN(loadFactor))
-//            throw new IllegalArgumentException("Illegal load factor: " +
-//                                               loadFactor);
-
-        // Find a power of 2 >= initialCapacity
-        int capacity = 1;
-        while (capacity < initialCapacity)
-            capacity <<= 1;
-
-        this.loadFactorPercent = DEFAULT_LOAD_FACTOR_PERCENT;
-        threshold = (int)(capacity * this.loadFactorPercent / 100);
-        table = new Entry[capacity];
-        init();
-/*else[FLOATS]*/		
-//        this(initialCapacity, DEFAULT_LOAD_FACTOR_PERCENT / 100f);
-/*end[FLOATS]*/		
-		
+	initialize(initialCapacity, DEFAULT_LOAD_FACTOR_PERCENT);
     }
 
     /**
@@ -242,10 +203,7 @@ public class HashMap<K,V>
      * (16) and the default load factor (0.75).
      */
     public HashMap() {
-        this.loadFactorPercent = DEFAULT_LOAD_FACTOR_PERCENT;
-        threshold = (int)(DEFAULT_INITIAL_CAPACITY * DEFAULT_LOAD_FACTOR_PERCENT / 100);
-        table = new Entry[DEFAULT_INITIAL_CAPACITY];
-        init();
+	initialize(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR_PERCENT);
     }
 
     /**
@@ -265,6 +223,24 @@ public class HashMap<K,V>
 
     // internal utilities
 
+    private void initialize(int initialCapacity, int loadFactorPercent) {
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal initial capacity: " +
+                                               initialCapacity);
+        if (initialCapacity > MAXIMUM_CAPACITY)
+            initialCapacity = MAXIMUM_CAPACITY;
+	
+        // Find a power of 2 >= initialCapacity
+        int capacity = 1;
+        while (capacity < initialCapacity)
+            capacity <<= 1;
+	
+        this.loadFactorPercent = loadFactorPercent;
+        threshold = (int)(capacity * this.loadFactorPercent / 100);
+        table = new Entry[capacity];
+        init();
+    }
+    
     /**
      * Initialization hook for subclasses. This method is called
      * in all constructors and pseudo-constructors (clone, readObject)
