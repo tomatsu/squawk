@@ -176,6 +176,7 @@ public final class Lisp2Collector extends GarbageCollector {
         }
     }
 
+/*if[ENABLE_GC_STATISTICS]*/    
     static final class Timings {
         long setup;
         long mark;
@@ -191,7 +192,8 @@ public final class Lisp2Collector extends GarbageCollector {
             return setup + mark + computeAddresses + updatePointers + compactObjects + fixupOopMaps + post + finalize + unforward;
         }
     }
-
+/*end[ENABLE_GC_STATISTICS]*/
+    
     /**
      * Start of the memory region in which the permanent objects have already been allocated.
      */
@@ -320,8 +322,11 @@ public final class Lisp2Collector extends GarbageCollector {
 
         // Create the marking stack.
         markingStack = new MarkingStack();
-
+	
+/*if[ENABLE_GC_STATISTICS]*/
         collectionTimings = new Timings();
+/*end[ENABLE_GC_STATISTICS]*/
+	
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
 /*else[ENABLE_ISOLATE_MIGRATION]*/
 //        copyTimings = new Timings();
@@ -547,7 +552,8 @@ public final class Lisp2Collector extends GarbageCollector {
         }
         return (total == 0 ? 0 : (int)((part * 100) / total));
     }
-
+    
+/*if[ENABLE_GC_STATISTICS]*/
     private void dumpTiming(java.io.PrintStream out, String label, long value, long total) {
         out.println(label + value + timerUnitSuffix() + "\t[" + asPercentOf(value, total) + "%]");
     }
@@ -573,39 +579,40 @@ public final class Lisp2Collector extends GarbageCollector {
                 dumpTiming(out, "    post:             ", timings.post, total);
             }
         }
-
-/*if[!ENABLE_ISOLATE_MIGRATION]*/
-/*else[ENABLE_ISOLATE_MIGRATION]*/
-//        if (GC.GC_TRACING_SUPPORTED) {
-//        timings = copyTimings;
-//        total = timings.getTotal();
-//        out.println("Copying:");
-//        dumpTiming(out, "    setup:            ", timings.setup, total);
-//        dumpTiming(out, "    mark:             ", timings.mark, total);
-//        dumpTiming(out, "    computeAddresses: ", timings.computeAddresses, total);
-//        dumpTiming(out, "    updatePointers:   ", timings.updatePointers, total);
-//        dumpTiming(out, "    unforward:        ", timings.unforward, total);
-//        dumpTiming(out, "    finalize:         ", timings.finalize, total);
-//        }
-/*end[ENABLE_ISOLATE_MIGRATION]*/
+	
+        if (GC.GC_TRACING_SUPPORTED) {
+	    timings = copyTimings;
+	    total = timings.getTotal();
+	    out.println("Copying:");
+	    dumpTiming(out, "    setup:            ", timings.setup, total);
+	    dumpTiming(out, "    mark:             ", timings.mark, total);
+	    dumpTiming(out, "    computeAddresses: ", timings.computeAddresses, total);
+	    dumpTiming(out, "    updatePointers:   ", timings.updatePointers, total);
+	    dumpTiming(out, "    unforward:        ", timings.unforward, total);
+	    dumpTiming(out, "    finalize:         ", timings.finalize, total);
+        }
     }
+/*end[ENABLE_GC_STATISTICS]*/
 
     /*---------------------------------------------------------------------------*\
      *                               Collection                                  *
     \*---------------------------------------------------------------------------*/
-
+    
+/*if[ENABLE_GC_STATISTICS]*/
     /**
      * The timing statistics related to garbage collection.
      */
     private final Timings collectionTimings;
-
+/*end[ENABLE_GC_STATISTICS]*/
+    
 /*if[JAVA5SYNTAX]*/
     @Vm2c(root="collectGarbage")
 /*end[JAVA5SYNTAX]*/
     boolean collectGarbageInJava (Address allocTop, boolean forceFullGC) {
-
+/*if[ENABLE_GC_STATISTICS]*/	
         long start = now();
-
+/*end[ENABLE_GC_STATISTICS]*/
+	
         // Set up the limits of the space to be collected.
         collectionStart = heapStart;
         collectionEnd = allocTop;
@@ -629,8 +636,10 @@ public final class Lisp2Collector extends GarbageCollector {
         // end of the collection area as there can be an object there that has a zero length body.
         Lisp2Bitmap.clearBitsFor(collectionStart, collectionEnd.add(HDR.BYTES_PER_WORD));
 
+/*if[ENABLE_GC_STATISTICS]*/	
         collectionTimings.setup += now() - start;
-
+/*end[ENABLE_GC_STATISTICS]*/
+	
         // Phase 1: Mark objects transitively from roots
         mark();
 
@@ -653,9 +662,11 @@ public final class Lisp2Collector extends GarbageCollector {
             // No objects to be moved
             allocTop = lastDeadBlock;
         }
-
+	
+/*if[ENABLE_GC_STATISTICS]*/	
         start = now();
-
+/*end[ENABLE_GC_STATISTICS]*/
+	
         // Zap the free space with deadbeefs
         VM.deadbeef(allocTop, heapEnd);
 
@@ -675,9 +686,10 @@ public final class Lisp2Collector extends GarbageCollector {
         verifyObjectMemory(permanentMemoryStart, memoryStart);
         verifyObjectMemory(heapStart, allocTop);
 /*end[DEBUG_CODE_ENABLED]*/
-
+	
+/*if[ENABLE_GC_STATISTICS]*/
         collectionTimings.finalize += (now() - start);
-
+/*end[ENABLE_GC_STATISTICS]*/
         return true;
     }
 
@@ -721,12 +733,13 @@ public final class Lisp2Collector extends GarbageCollector {
         if (GC.GC_TRACING_SUPPORTED && tracing()) {
             VM.println("Lisp2Collector::fixupOopMaps --------------- End");
         }
-
+/*if[ENABLE_GC_STATISTICS]*/
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
         collectionTimings.fixupOopMaps += now() - begin;
 /*else[ENABLE_ISOLATE_MIGRATION]*/
 //      (copyingObjectGraph ? copyTimings : collectionTimings).fixupOopMaps += now() - begin;
 /*end[ENABLE_ISOLATE_MIGRATION]*/
+/*end[ENABLE_GC_STATISTICS]*/	
     }
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
     
@@ -734,13 +747,18 @@ public final class Lisp2Collector extends GarbageCollector {
      * {@inheritDoc}
      */
     void postCollection() {
+/*if[ENABLE_GC_STATISTICS]*/		
         long start = now();
+/*end[ENABLE_GC_STATISTICS]*/
+	
 /*if[!FINALIZATION]*/
 /*else[FINALIZATION]*/
 //      postProcessFinalizers();
 /*end[FINALIZATION]*/
         postProcessWeakReferences();
+/*if[ENABLE_GC_STATISTICS]*/	
         collectionTimings.post += now() - start;
+/*end[ENABLE_GC_STATISTICS]*/	
     }
 
 /*if[!FINALIZATION]*/
@@ -1534,12 +1552,13 @@ public final class Lisp2Collector extends GarbageCollector {
             VM.println("********** End Lisp2Collector::mark **********");
             VM.println();
         }
-
+/*if[ENABLE_GC_STATISTICS]*/
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
         collectionTimings.mark += now() - start;
 /*else[ENABLE_ISOLATE_MIGRATION]*/
 //      (copyingObjectGraph ? copyTimings : collectionTimings).mark += now() - start;
 /*end[ENABLE_ISOLATE_MIGRATION]*/
+/*end[ENABLE_GC_STATISTICS]*/	
     }
 
     /**
@@ -1933,12 +1952,14 @@ public final class Lisp2Collector extends GarbageCollector {
             VM.println("********** End Lisp2Collector::computeAddresses **********");
             VM.println();
         }
-
+	
+/*if[ENABLE_GC_STATISTICS]*/
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
         collectionTimings.computeAddresses += now() - start;
 /*else[ENABLE_ISOLATE_MIGRATION]*/
 //      (copyingObjectGraph ? copyTimings : collectionTimings).computeAddresses += now() - start;
 /*end[ENABLE_ISOLATE_MIGRATION]*/
+/*end[ENABLE_GC_STATISTICS]*/	
         return returnValue;
     }
 
@@ -2440,12 +2461,13 @@ public final class Lisp2Collector extends GarbageCollector {
         if (GC.GC_TRACING_SUPPORTED && tracing()) {
             VM.println("********** End Lisp2Collector::updatePointers **********");
         }
-
+/*if[ENABLE_GC_STATISTICS]*/
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
         collectionTimings.updatePointers += now() - start;
 /*else[ENABLE_ISOLATE_MIGRATION]*/
 //      (copyingObjectGraph ? copyTimings : collectionTimings).updatePointers += now() - start;
 /*end[ENABLE_ISOLATE_MIGRATION]*/
+/*end[ENABLE_GC_STATISTICS]*/	
     }
 
     /**
@@ -3078,13 +3100,13 @@ public final class Lisp2Collector extends GarbageCollector {
         if (GC.GC_TRACING_SUPPORTED && tracing()) {
             VM.println("********** End Lisp2Collector::compactObjects **********");
         }
-
+/*if[ENABLE_GC_STATISTICS]*/
 /*if[!ENABLE_ISOLATE_MIGRATION]*/
         collectionTimings.compactObjects += now() - start;
 /*else[ENABLE_ISOLATE_MIGRATION]*/
 //        (copyingObjectGraph ? copyTimings : collectionTimings).compactObjects += now() - start;
 /*end[ENABLE_ISOLATE_MIGRATION]*/
-
+/*end[ENABLE_GC_STATISTICS]*/
         return free;
     }
 

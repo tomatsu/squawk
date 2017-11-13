@@ -29,10 +29,14 @@
 #endif
 
 // Size of class to class state cache.
+#ifndef CLASS_CACHE_SIZE
 #define CLASS_CACHE_SIZE 6
+#endif
 
 // The number of pending monitors.
+#ifndef MONITOR_CACHE_SIZE
 #define MONITOR_CACHE_SIZE 6
+#endif
 
 #include "platform.h"
 #include "buildflags.h"

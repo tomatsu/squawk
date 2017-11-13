@@ -61,8 +61,10 @@ typedef struct globalsStruct {
     int         _Ints[GLOBAL_INT_COUNT];     /* Storage for the primitive typed Java globals. */
     Address     _Addrs[GLOBAL_ADDR_COUNT];   /* Storage for the primitive typed Java globals. */
     Address     _Oops[GLOBAL_OOP_COUNT];     /* Storage for the reference typed Java globals. */
+#if !PLATFORM_TYPE_BARE_METAL
     Address     _Buffers[MAX_BUFFERS];       /* Buffers that are allocated by native code. */
     int         _BufferCount;                /* Number of buffers that are currently allocated by native code. */
+#endif    
 #if HAS_STREAM_IO
     FILE       *_streams[MAX_STREAMS];       /* The file streams to which the VM printing directives sent. */
     int         _currentStream;              /* The currently selected stream */

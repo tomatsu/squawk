@@ -593,9 +593,12 @@ public class Preprocessor {
                     }
                     line = newLine;
                 } else if (method.startsWith("always")) {
+					line = line.substring(0, invoke) + "if (false) " + line.substring(invoke);
+					/*
                     if (showLineNumbers) {
                         line = prependContext(line, invoke, in);
                     }
+					*/
                 }
             } else {
                 if (makeAssertionsFatal) {

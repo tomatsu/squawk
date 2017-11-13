@@ -1297,7 +1297,11 @@ public final class Suite {
                 }
 
                 // strip metadata for dead classes:
-               copy.metadatas = removeStrippedKlassesFromMetadata(tempMetadatas, deadClasses);
+/*if[ENABLE_RUNTIME_METADATA]*/
+		copy.metadatas = removeStrippedKlassesFromMetadata(tempMetadatas, deadClasses);
+/*else[ENABLE_RUNTIME_METADATA]*/
+//		copy.metadatas = null;
+/*end[ENABLE_RUNTIME_METADATA]*/
 
 //                for (int i = 0; i < copy.classes.length; i++) {
 //                    Klass klass = copy.classes[i];

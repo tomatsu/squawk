@@ -37,12 +37,12 @@ public abstract class Member {
     /**
      * The metadata of the class that declared this method or field.
      */
-    final KlassMetadata metadata;
+    KlassMetadata metadata;
 
     /**
      * The index of this field or method within <code>metadata</code>.
      */
-    final int id;
+    int id;
 
     /**
      * Gets the parser for this field or method's components.
@@ -62,6 +62,9 @@ public abstract class Member {
     Member(KlassMetadata metadata, int id) {
         this.metadata = metadata;
         this.id = id;
+    }
+
+    Member() {
     }
 
     /**

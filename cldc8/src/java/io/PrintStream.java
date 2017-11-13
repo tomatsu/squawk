@@ -338,9 +338,11 @@ public class PrintStream extends OutputStream
 		trouble = true;
 	    }
 	} else {
-	    byte[] bytes = s.getBytes();
+	    int len = s.length();
 	    try {
-		byteOut.write(bytes, 0, bytes.length);
+		for (int i = 0; i < len; i++) {
+		    byteOut.write(s.charAt(i));
+		}
 	    } catch (IOException e) {
 		trouble = true;
 	    }

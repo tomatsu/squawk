@@ -198,7 +198,7 @@ public class JavaApplicationManager {
         /*
          * Show execution statistics if requested
          */
-/*if[!PLATFORM_TYPE_BARE_METAL]*/		
+/*if[ENABLE_GC_STATISTICS]*/
         if (displayExecutionStatistics) {
             long endTime = System.currentTimeMillis();
             System.out.println();
@@ -209,7 +209,7 @@ public class JavaApplicationManager {
             System.out.println("=============================");
             System.out.println();
         }
-/*end[PLATFORM_TYPE_BARE_METAL]*/
+/*end[ENABLE_GC_STATISTICS]*/
         /*
          * Stop the VM.
          */

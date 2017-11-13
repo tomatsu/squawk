@@ -114,12 +114,13 @@ public final class CheneyCollector extends GarbageCollector {
      * The decoder used to decode the type table of a method.
      */
     private final VMBufferDecoder decoder;
-
+    
+/*if[ENABLE_GC_STATISTICS]*/
     /**
      * The timing statistics related to garbage collection.
      */
     private final Timings collectionTimings;
-
+    
     /**
      * The timing statistics related to object graph copying.
      */
@@ -136,6 +137,7 @@ public final class CheneyCollector extends GarbageCollector {
             return setup + copyRoots + copyNonRoots + repair + finalize;
         }
     }
+/*end[ENABLE_GC_STATISTICS]*/
 
     /**
      * Creates a CheneyCollector.
@@ -153,8 +155,10 @@ public final class CheneyCollector extends GarbageCollector {
         }
 
         decoder = Klass.DEBUG_CODE_ENABLED ? new VMBufferDecoder() : null;
+/*if[ENABLE_GC_STATISTICS]*/	
         collectionTimings = new Timings();
         copyTimings = new Timings();
+/*end[ENABLE_GC_STATISTICS]*/	
     }
 
     /**
@@ -1164,9 +1168,10 @@ public final class CheneyCollector extends GarbageCollector {
     @Vm2c(root="collectGarbage")
 /*end[JAVA5SYNTAX]*/
     boolean collectGarbageInJava(Address allocTop, boolean forceFullGC) {
-
+/*if[ENABLE_GC_STATISTICS]*/
         long start = now();
-
+/*end[ENABLE_GC_STATISTICS]*/
+	
         // Output heap trace
         if ((HEAP_TRACE || GC.GC_TRACING_SUPPORTED) && GC.isTracing(GC.TRACE_HEAP_BEFORE_GC)) {
             traceHeap("Before collection", allocTop);
@@ -1178,20 +1183,27 @@ public final class CheneyCollector extends GarbageCollector {
 
         // Set the from space to be read-only
         memoryProtect(fromSpaceStartPointer, fromSpaceEndPointer);
-
+	
+/*if[ENABLE_GC_STATISTICS]*/
         collectionTimings.setup += now() - start;
-
+	
         // Copy all the reachable objects.
         start = now();
+/*end[ENABLE_GC_STATISTICS]*/
+	
         copyRootObjects();
+/*if[ENABLE_GC_STATISTICS]*/	
         collectionTimings.copyRoots =+ now() - start;
-
+	
         start = now();
+/*end[ENABLE_GC_STATISTICS]*/
 
         Address toSpaceUpdatePointer = copyNonRootObjects(toSpaceStartPointer);
 
+/*if[ENABLE_GC_STATISTICS]*/		
         collectionTimings.copyNonRoots += now() - start;
         start = now();
+/*end[ENABLE_GC_STATISTICS]*/		
 
 /*if[FINALIZATION]*/
         // Process the finalizer queue
@@ -1214,9 +1226,11 @@ public final class CheneyCollector extends GarbageCollector {
         if ((HEAP_TRACE || GC.GC_TRACING_SUPPORTED) && GC.isTracing(GC.TRACE_HEAP_AFTER_GC)) {
             traceHeap("After collection", toSpaceAllocationPointer);
         }
-
+	
+/*if[ENABLE_GC_STATISTICS]*/
         collectionTimings.finalize += now() - start;
-
+/*end[ENABLE_GC_STATISTICS]*/
+	
         // The Cheney collector always collects the full heap
         return true;
     }
@@ -1232,10 +1246,10 @@ public final class CheneyCollector extends GarbageCollector {
         return (total == 0 ? 0 : (int)((part * 100) / total));
     }
 
+/*if[ENABLE_GC_STATISTICS]*/
     private void dumpTiming(java.io.PrintStream out, String label, long value, long total) {
         out.println(label + value + timerUnitSuffix() + " [" + percent(value, total) + "%]");
     }
-
 
     /**
      * {@inheritDoc}
@@ -1262,7 +1276,8 @@ public final class CheneyCollector extends GarbageCollector {
         dumpTiming(out, "    finalize:     ", timings.finalize, total);
 
     }
-
+/*end[ENABLE_GC_STATISTICS]*/
+    
     /*---------------------------------------------------------------------------*\
      *                          Object graph copying                             *
     \*---------------------------------------------------------------------------*/
@@ -1286,9 +1301,11 @@ public final class CheneyCollector extends GarbageCollector {
             ObjectMemoryKlass = bootstrapSuite.lookup("com.sun.squawk.ObjectMemory");
 /*end[DEBUG_CODE_ENABLED]*/
         }
-
+	
+/*if[ENABLE_GC_STATISTICS]*/
         long start = now();
-
+/*end[ENABLE_GC_STATISTICS]*/
+	
         // Set up the map that will be used to undo pointer forwarding
         if (!initializeForwardingRepairMap(toSpaceStartPointer, allocTop, toSpaceEndPointer)) {
             return Address.zero();
@@ -1303,15 +1320,19 @@ public final class CheneyCollector extends GarbageCollector {
 
         // Switch semi-spaces
         toggleSpaces();
-
+	
+/*if[ENABLE_GC_STATISTICS]*/
         copyTimings.setup += now() - start;
-
+	
         // Copy all the reachable objects.
         start = now();
+/*end[ENABLE_GC_STATISTICS]*/
         object = copyObject(object);
         copyNonRootObjects(toSpaceStartPointer);
+/*if[ENABLE_GC_STATISTICS]*/	
         copyTimings.copyNonRoots += now() - start;
-
+/*end[ENABLE_GC_STATISTICS]*/
+	
         // Get the start and end of the serialized graph
         Address graph = toSpaceStartPointer;
         Address graphEnd = toSpaceAllocationPointer;
@@ -1321,17 +1342,21 @@ public final class CheneyCollector extends GarbageCollector {
         toggleSpaces();
 
         // Repair the class word of the forwarded objects
+/*if[ENABLE_GC_STATISTICS]*/		
         start = now();
+/*end[ENABLE_GC_STATISTICS]*/		
         repairForwardedObjects();
+/*if[ENABLE_GC_STATISTICS]*/	
         copyTimings.repair += now() - start;
-
+/*end[ENABLE_GC_STATISTICS]*/
+	
         int graphSize = graphEnd.diff(graph).toInt();
         int freeSpace = toSpaceEndPointer.diff(allocTop).toInt() - HDR.arrayHeaderSize;
 
         if (graphSize <= freeSpace) {
-
+/*if[ENABLE_GC_STATISTICS]*/	
             start = now();
-
+/*end[ENABLE_GC_STATISTICS]*/	
             // Copy the serialized graph to the start of free memory and make it a byte array
             graphCopy = allocTop.add(HDR.basicHeaderSize);
             GC.setHeaderClass(graphCopy, ByteArrayKlass);
@@ -1361,15 +1386,18 @@ public final class CheneyCollector extends GarbageCollector {
             }
 
         } else {
+/*if[ENABLE_GC_STATISTICS]*/		    
             start = now();
+/*end[ENABLE_GC_STATISTICS]*/		    
             graphCopy = Address.zero();
         }
 
         copyingObjectGraph = false;
         theIsolate = null;
         oopMap = null;
-
+/*if[ENABLE_GC_STATISTICS]*/
         copyTimings.finalize += now() - start;
+/*end[ENABLE_GC_STATISTICS]*/	
         return graphCopy;
     }
 

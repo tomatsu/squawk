@@ -438,7 +438,9 @@ public final class VMThread implements GlobalStaticFields {
      */
     private static void addToRunnableThreadsQueue(VMThread thread) {
         Assert.that(!thread.isServiceThread());
+/*if[ASSERTIONS_ENABLED]*/
         thread.checkInQueue(Q_NONE);
+/*end[ASSERTIONS_ENABLED]*/
         runnableThreads.add(thread);
     }
 
@@ -1798,7 +1800,9 @@ VM.println();
          * Set the next thread.
          */
         Assert.that(thread != null);
+/*if[ASSERTIONS_ENABLED]*/
         thread.checkInQueue(Q_NONE);
+/*end[ASSERTIONS_ENABLED]*/
         otherThread = thread;
     }
     
@@ -1987,9 +1991,11 @@ VM.println();
 
         rescheduleNext();        // Select the next thread
         VM.threadSwitch();       // and switch
-        
+
+/*if[ASSERTIONS_ENABLED]*/
         currentThread.checkInQueue(Q_NONE);
         currentThread.checkInvarients();
+/*end[ASSERTIONS_ENABLED]*/
     }
 
     /**
@@ -2306,7 +2312,9 @@ VM.println();
             // if not, cut to the head of the queue (we've already waited our turn.)
             monitor.addMonitorWaitHead(currentThread);
             reschedule();
+/*if[ASSERTIONS_ENABLED]*/
             currentThread.checkInvarients();
+/*end[ASSERTIONS_ENABLED]*/
             monitor = getMonitor(object);
         }
 
@@ -2332,7 +2340,9 @@ VM.println();
      * @param object the object to be synchronized upon
      */
     static void monitorEnter(Object object) {
+/*if[ASSERTIONS_ENABLED]*/
         currentThread.checkInvarients();
+/*end[ASSERTIONS_ENABLED]*/
         Monitor monitor = getMonitor(object);
         if (monitor.owner == null) {
 //traceMonitor("monitorEnter:  1st lock", monitor, object);
@@ -2387,7 +2397,9 @@ VM.println();
             /*
              * Safety.
              */
+/*if[ASSERTIONS_ENABLED]*/
             currentThread.checkInvarients();
+/*end[ASSERTIONS_ENABLED]*/
             Assert.that(currentThread.isolate.isExited() || monitor.owner == currentThread);
         }
     }
@@ -2398,7 +2410,9 @@ VM.println();
      * @param object the object to be unsynchronized
      */
     static void monitorExit(Object object) {
+/*if[ASSERTIONS_ENABLED]*/
         currentThread.checkInvarients();
+/*end[ASSERTIONS_ENABLED]*/
         Monitor monitor = getMonitor(object);
 
         /*
@@ -2462,7 +2476,9 @@ VM.println();
          * Check that the monitor's depth is zero if it is not in use.
          */
         Assert.that(monitor.owner != null || monitor.condvarQueue != null || monitor.monitorQueue != null || monitor.depth == 0);
+/*if[ASSERTIONS_ENABLED]*/
         currentThread.checkInvarients();
+/*end[ASSERTIONS_ENABLED]*/	
     }
 
     /**
@@ -2490,7 +2506,9 @@ VM.println();
      */
     public static void monitorWait(Object object, long delta) throws InterruptedException {
         VMThread theCurrentThread = VMThread.currentThread;
+/*if[ASSERTIONS_ENABLED]*/
         theCurrentThread.checkInvarients();
+/*end[ASSERTIONS_ENABLED]*/	
         Monitor monitor = getMonitor(object);
 
         // Throw an exception if things look bad
@@ -2540,7 +2558,9 @@ VM.println();
         theCurrentThread.handlePendingInterrupt();
 
         // Safety...
+/*if[ASSERTIONS_ENABLED]*/
         theCurrentThread.checkInvarients();
+/*end[ASSERTIONS_ENABLED]*/
         Assert.that(monitor.owner == theCurrentThread);
     }
 

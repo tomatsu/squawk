@@ -315,13 +315,15 @@ public abstract class GarbageCollector implements GlobalStaticFields {
 //    abstract Address copyObjectGraphInJava(Address object, ObjectMemorySerializer.ControlBlock cb, Address allocTop);
 /*end[ENABLE_ISOLATE_MIGRATION]*/
 
+/*if[ENABLE_GC_STATISTICS]*/
     /**
      * Dumps various timing information to the console.
      *
      * @param out  where to dump the timing info
      */
     abstract void dumpTimings(java.io.PrintStream out);
-
+/*end[ENABLE_GC_STATISTICS]*/
+    
     /**
      * Returns the amount of free memory in the system. Calling the <code>gc</code>
      * method may result in increasing the value returned by <code>freeMemory.</code>
