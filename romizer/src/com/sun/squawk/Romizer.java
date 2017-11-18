@@ -943,15 +943,15 @@ public class Romizer {
         // Strip the symbols in the suite and close it.
         Suite strippedSuite = suite.strip(suiteType, suite.getName(), suite.getParent());
 
-	// Set main class ID
-	if (mainClassName != null) {
-	    Klass mainKlass = strippedSuite.lookup(mainClassName);
-	    if (mainKlass == null) {
-		throw new RuntimeException("Class not found: " + mainClassName);
-	    }
-	    int id = Klass.getSystemID(mainKlass);
-	    strippedSuite.mainKlassId = -(id+1);
-	}
+		// Set main class ID
+		if (mainClassName != null) {
+			Klass mainKlass = strippedSuite.lookup(mainClassName);
+			if (mainKlass == null) {
+				throw new RuntimeException("Class not found: " + mainClassName);
+			}
+			strippedSuite.mainKlass = mainKlass;
+		}
+		strippedSuite.classKlass = strippedSuite.lookup("java.lang.Class");
 
         strippedSuite.close();
         // Ensure no classes that were meant to be excluded have been included

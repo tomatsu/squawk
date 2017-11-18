@@ -109,8 +109,12 @@ public final class Suite {
     private Klass[] stripClassesLater;
 
 /*if[STATIC_MAIN_CLASS]*/
-    int mainKlassId;
+    Klass mainKlass;
 /*end[STATIC_MAIN_CLASS]*/
+
+/*if[BOOTSTRAP_SUITE_ONLY]*/	
+    Klass classKlass;
+/*end[BOOTSTRAP_SUITE_ONLY]*/	
     
     /**
      * Creates a new <code>Suite</code> instance.
@@ -121,7 +125,11 @@ public final class Suite {
     Suite(String name, Suite parent, int type) {
         this.name = name;
         this.parent = parent;
-        int count = (isBootstrap() ? CID.LAST_SYSTEM_ID + 1 : 0);
+/*if[BOOTSTRAP_SUITE_ONLY]*/
+		int count = CID.LAST_SYSTEM_ID + 1;
+/*else[BOOTSTRAP_SUITE_ONLY]*/
+//        int count = (isBootstrap() ? CID.LAST_SYSTEM_ID + 1 : 0);
+/*end[BOOTSTRAP_SUITE_ONLY]*/
         classes = new Klass[count];
         metadatas = new KlassMetadata[0];
         resourceFiles = new ResourceFile[0];
@@ -227,7 +235,7 @@ public final class Suite {
 
 /*if[STATIC_MAIN_CLASS]*/    
     void main(String[] args) {
-        getKlass(mainKlassId).main(args);
+        mainKlass.main(args);
     }
 /*end[STATIC_MAIN_CLASS]*/
     
@@ -911,6 +919,7 @@ public final class Suite {
      *                            hashcode & equals                              *
     \*---------------------------------------------------------------------------*/
 
+/*if[!BOOTSTRAP_SUITE_ONLY]*/
     /**
      * Compares this suite with another object for equality. The result is true
      * if and only if <code>other</code> is a <code>Suite</code> instance
@@ -919,7 +928,7 @@ public final class Suite {
      * @param   other   the object to compare this suite against
      * @return  true if <code>other</code> is a <code>Suite</code> instance
      *                  and its name is equal to this suite's name
-     */
+     */	
     public final boolean equals(Object other) {
         if (this == other) {
             return true;
@@ -929,7 +938,7 @@ public final class Suite {
         }
         return false;
     }
-
+	
     /**
      * Returns a hashcode for this suite which is derived solely from the
      * suite's name.
@@ -939,6 +948,7 @@ public final class Suite {
     public final int hashCode() {
         return name.hashCode();
     }
+/*end[BOOTSTRAP_SUITE_ONLY]*/		
 
     /**
      * Gets the Suite corresponding to a given URI, loading it if necessary.

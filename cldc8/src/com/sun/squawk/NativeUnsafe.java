@@ -192,7 +192,9 @@ public final class NativeUnsafe {
                 setUWord(ea, 0, ((Address)value).toUWord());
             }
         }
+/*if[ENABLE_HOSTED]*/		
         oopMap.set(ea.asIndex() / HDR.BYTES_PER_WORD);
+/*end[ENABLE_HOSTED]*/		
         setType0(ea.asIndex(), AddressType.REF);
     }
 
