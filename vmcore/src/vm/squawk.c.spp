@@ -108,7 +108,7 @@ void diagnosticWithValue(char * msg, int val) {
 #elif PLATFORM_TYPE_BARE_METAL
 /* Different bare metal platforms handle this differently - eg set IODOTC to a specific file.
  * Also include io_metal.c*/
-extern unsigned int* /*VAL*/_bootstrap/*BOOTSTRAP_SUITE_ADDR_SYM*/;
+extern unsigned int /*VAL*/_bootstrap/*BOOTSTRAP_SUITE_ADDR_SYM*/[];
 #else
 #error "unspecified platform type"
 #endif

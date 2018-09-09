@@ -366,13 +366,14 @@ public class Suite {
 	
     public void generateRelocatableCArray(int[] memoryAddrs, String var, java.io.OutputStream o) throws IOException {
 	java.io.PrintStream out = new java.io.PrintStream(o);
-	out.print("#define p(a) (unsigned int)((char*)" + var + ".memory+a)\n");
-	out.print("const struct {\n");
-	out.print("  unsigned int off;\n");
-	out.print("  unsigned int hash;\n");
-	out.print("  unsigned int size;\n");
-	out.print("  unsigned int memory[];\n");
-	out.print("} " + var + " = {\n");
+	out.print("#define p(a) (unsigned int)((char*)&(((suite_header_t*)&" + var + ")->memory) + a)\n");
+	out.print("typedef struct {\n" +
+		  "\tunsigned int off;\n" +
+		  "\tunsigned int hash;\n" +
+		  "\tunsigned int size;\n" +
+		  "\tunsigned int memory[0];\n" +
+		  "} suite_header_t;\n");
+	out.print("const unsigned int " + var + "[] = {\n");
 
 	StringBuffer sbuf = new StringBuffer();
 	sbuf.append("0x");
@@ -381,7 +382,7 @@ public class Suite {
 	toHex(sbuf, getHash(), 8);
 	sbuf.append(",0x");
 	toHex(sbuf, memorySize, 8);
-	sbuf.append(", {");
+	sbuf.append(",");
 	out.println(sbuf);
 		
 	for (int i = 0; i < oopMap.length; i++) {
@@ -407,7 +408,7 @@ public class Suite {
 	    sbuf.append("\n");
 	    out.print(sbuf.toString());
 	}
-	out.println("}};");
+	out.println("};");
     }
 
     
