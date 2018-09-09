@@ -251,7 +251,6 @@ public final class CHeaderFileCreator {
 
 
                 Klass klass = lookupClass(suite, className, field.toString());
-		System.out.println(klass);
 		
                 int methodCount = klass.getMethodCount(isStatic);
                 boolean found = false;
