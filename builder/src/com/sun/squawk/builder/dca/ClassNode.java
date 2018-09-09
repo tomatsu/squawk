@@ -266,7 +266,16 @@ public class ClassNode implements Opcodes {
 		for (Map.Entry<String,MethodNode> entry : t.methodNodes.entrySet()) {
 		    MethodNode mn = entry.getValue();
 		    if (mn.required) {
-			requiredMethods.add(mn.getName() + mn.getDesc());
+/*if[MINIMAL_ERROR_REPORT]*/
+			if (!mn.getId().equals("java/lang/Object.toString()Ljava/lang/String;")) {
+			    if (env.debug) {
+				System.out.println(getName() + "." + mn.getName() + mn.getDesc() + " overrides " + mn.getId());
+			    }
+			    requiredMethods.add(mn.getName() + mn.getDesc());
+			}
+/*else[MINIMAL_ERROR_REPORT]*/
+//			requiredMethods.add(mn.getName() + mn.getDesc());
+/*end[MINIMAL_ERROR_REPORT]*/
 		    }
 		}
 	    }
@@ -274,7 +283,7 @@ public class ClassNode implements Opcodes {
 		MethodNode mn = entry.getValue();
 		if (!mn.name.equals("<init>") && requiredMethods.contains(mn.getName() + mn.getDesc())) {
 		    if (env.debug) {
-			System.out.println(mn.getId() + " is required, because " + getName() + " is required.");
+			System.out.println(mn.getId() + " is required.");
 		    }
 		    mn.setRequired(env);
 		}

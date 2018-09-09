@@ -64,6 +64,10 @@ class StringIndexOutOfBoundsException extends IndexOutOfBoundsException {
      * @param   index   the illegal index.
      */
     public StringIndexOutOfBoundsException(int index) {
+/*if[!MINIMAL_ERROR_REPORT]*/	
         super("String index out of range: " + index);
+/*else[MINIMAL_ERROR_REPORT]*/	
+//        super();
+/*end[MINIMAL_ERROR_REPORT]*/	
     }
 }

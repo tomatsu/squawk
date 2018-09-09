@@ -234,7 +234,11 @@ public final class System {
                              srcComponentType.isSquawkPrimitive() ||
                              dstComponentType.isSquawkPrimitive();
         if (primitive && srcComponentType != dstComponentType) {
+/*if[!MINIMAL_ERROR_REPORT]*/
             throw new ArrayStoreException(srcComponentType.getName() + " != " + dstComponentType.getName());
+/*else[MINIMAL_ERROR_REPORT]*/
+//            throw new ArrayStoreException();
+/*end[MINIMAL_ERROR_REPORT]*/
         }
 
         int srcEnd = length + srcPos;

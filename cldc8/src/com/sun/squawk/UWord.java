@@ -328,11 +328,15 @@ public final class UWord {
         UWord instance = (UWord)pool.get(value);
         if (instance == null) {
             instance = new UWord(value);
+/*if[!MINIMAL_ERROR_REPORT]*/				
             try {
                 pool.put(value, instance);
             } catch (OutOfMemoryError e) {
                 throw new OutOfMemoryError("Failed to grow pool when adding " + value);
             }
+/*else[MINIMAL_ERROR_REPORT]*/				
+//	    pool.put(value, instance);
+/*end[MINIMAL_ERROR_REPORT]*/				
         }
         return instance;
     }

@@ -4714,7 +4714,6 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                     pushInt(collectGarbage(collector, allocTop, forceFullGC));
                     break;
                 })
-
 /*else[GC2C]*/
 //              CASE_(com_sun_squawk_GarbageCollector_hasNativeImplementation, {
 //                  pushInt(false);

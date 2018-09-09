@@ -330,6 +330,10 @@ public class Thread implements Runnable {
      * @return  a string representation of this thread.
      */
     public String toString() {
+/*if[ENABLE_HOSTED]*/    	
         return vmThread.toString();
+/*else[ENABLE_HOSTED]*/    	
+//        return vmThread.getName();
+/*end[ENABLE_HOSTED]*/    		
     }
 }

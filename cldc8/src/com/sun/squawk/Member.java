@@ -231,19 +231,19 @@ public abstract class Member {
         return parser().getModifiers();
     }
 
+/*if[ENABLE_HOSTED]*/	
     /**
      * Gets a String representation of this field or method.
      */
     public final String toString() {
-/*if[ENABLE_HOSTED]*/	
         if (VM.isHosted()) {
             return Klass.toString(this, true);
         } else
-/*end[ENABLE_HOSTED]*/	    
 	{
             return super.toString();
         }
     }
+/*end[ENABLE_HOSTED]*/	    
 
     /*---------------------------------------------------------------------------*\
      *                       Access permission checking                          *

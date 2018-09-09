@@ -188,16 +188,18 @@ public class VM implements GlobalStaticFields {
 //    private static ServerConnectionHandler serverConnectionHandlers;
 /*end[OLD_IIC_MESSAGES]*/
 
+/*if[!PLATFORM_TYPE_BARE_METAL]*/    
     /**
      * The C array of the null terminated C strings representing the command line
      * arguments that will be converted to a String[] and passed to the {@link JavaApplicationManager}.
      */
     private static Address argv;
-
+    
     /**
      * The number of elements in the {@link #argv} array.
      */
     private static int argc;
+/*end[PLATFORM_TYPE_BARE_METAL]*/
     
 /*if[ENABLE_ISOLATE_INITIALIZER]*/
     /**
@@ -297,6 +299,7 @@ public class VM implements GlobalStaticFields {
         /*
          * Create the root isolate and manually initialize com.sun.squawk.Klass.
          */
+/*if[!PLATFORM_TYPE_BARE_METAL]*/	
 /*if[!STATIC_MAIN_CLASS]*/
         String[] args  = new String[argc];
         currentIsolate = new Isolate("com.sun.squawk.JavaApplicationManager", args, bootstrapSuite);
@@ -304,6 +307,10 @@ public class VM implements GlobalStaticFields {
 //        String[] args  = new String[argc];
 //        currentIsolate = new Isolate(bootstrapSuite);
 /*end[STATIC_MAIN_CLASS]*/
+/*else[PLATFORM_TYPE_BARE_METAL]*/
+//	currentIsolate = new Isolate(bootstrapSuite);
+/*end[PLATFORM_TYPE_BARE_METAL]*/
+	
         currentIsolate.initializeClassKlass();
 		
         /*
@@ -312,12 +319,13 @@ public class VM implements GlobalStaticFields {
         VMThread.initializeThreading();
         synchronizationEnabled = true;
 
+
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
         /*
          * Fill in the args array with the C command line arguments.
          */
         GC.copyCStringArray(argv, args);
-
-/*if[!PLATFORM_TYPE_BARE_METAL]*/
+	
         taskCache = new Stack();
 /*end[PLATFORM_TYPE_BARE_METAL]*/
         /*
@@ -344,7 +352,11 @@ public class VM implements GlobalStaticFields {
      * @param id the identifier of the unknown native method
      */
     static void undefinedNativeMethod(int id) throws InterpreterInvokedPragma {
+/*if[!MINIMAL_ERROR_REPORT]*/
         throw new Error("Undefined native method: " + id);
+/*else[MINIMAL_ERROR_REPORT]*/
+//        throw new Error();
+/*end[MINIMAL_ERROR_REPORT]*/
     }
 
     /**
@@ -446,6 +458,7 @@ public class VM implements GlobalStaticFields {
      * Throws an ArrayIndexOutOfBoundsException.
      */
     static void arrayIndexOutOfBoundsException() throws InterpreterInvokedPragma {
+/*if[!MINIMAL_ERROR_REPORT]*/
         if (reportedArray != null) {
             Object array = reportedArray;
             reportedArray = null;
@@ -453,6 +466,9 @@ public class VM implements GlobalStaticFields {
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }
+/*else[MINIMAL_ERROR_REPORT]*/
+//	throw new ArrayIndexOutOfBoundsException();
+/*end[MINIMAL_ERROR_REPORT]*/
     }
 
     /**
@@ -466,13 +482,18 @@ public class VM implements GlobalStaticFields {
      * Throws an AbstractMethodError.
      */
     static void abstractMethodError() throws InterpreterInvokedPragma {
+/*if[!MINIMAL_ERROR_REPORT]*/
         throw new Error("AbstractMethodError");
+/*else[MINIMAL_ERROR_REPORT]*/
+//	throw new Error();
+/*end[MINIMAL_ERROR_REPORT]*/
     }
 
     /**
      * Throws an ArrayStoreException.
      */
     static void arrayStoreException() throws InterpreterInvokedPragma {
+/*if[!MINIMAL_ERROR_REPORT]*/
         if (reportedArray != null) {
             Object array = reportedArray;
             reportedArray = null;
@@ -480,6 +501,9 @@ public class VM implements GlobalStaticFields {
         } else {
             throw new ArrayStoreException();
         }
+/*else[MINIMAL_ERROR_REPORT]*/
+//	throw new ArrayStoreException();
+/*end[MINIMAL_ERROR_REPORT]*/
     }
 
     /**
@@ -535,7 +559,11 @@ public class VM implements GlobalStaticFields {
             }
         }
 
+/*if[!MINIMAL_ERROR_REPORT]*/
         throw new ClassCastException("Expected object of type " + klass.toString() + " but got object of type " + GC.getKlass(obj).toString());
+/*else[MINIMAL_ERROR_REPORT]*/
+//	throw new ClassCastException();
+/*end[MINIMAL_ERROR_REPORT]*/
     }
 
     /**
@@ -1179,7 +1207,11 @@ public class VM implements GlobalStaticFields {
             exceptionsEnabled = false;
         } else {
 //            Assert.shouldNotReachHere("do_throw called recursively");
+/*if[!MINIMAL_ERROR_REPORT]*/
 	    throw new AssertionError("do_throw called recursively");
+/*else[MINIMAL_ERROR_REPORT]*/
+//	    throw new AssertionError();
+/*end[MINIMAL_ERROR_REPORT]*/
         }
 
         throwCount++;
@@ -3580,13 +3612,13 @@ hbp.dumpState();
         }
 /*else[MINIMAL_ERROR_REPORT]*/
 //   try {
-//      VM.println(msg);
-//	VM.print("    ");
-//      VM.print("on thread ");
-//      VM.printThread(VMThread.currentThread());
-//      VM.println();
+//          if (printUsingThrowable) {
+//               exc.printStackTrace();
+//          } else {
+//               printVMStackTrace(exc, GC.getKlass(exc).getInternalName(), exc.getMessage());
+//          }
+//          return null;
 //   } catch (Throwable e) {
-//      VM.println("Error in VM.printExceptionAndTrace");
 //      VM.fatalVMError();
 //   }
 //   return null;
@@ -3763,7 +3795,11 @@ hbp.dumpState();
      */
     private static void raiseChannelException(int context) throws IOException {
         String name = getExceptionMessage(context);
+/*if[!MINIMAL_ERROR_REPORT]*/
         throw new IOException("Channel Exception: " + name);
+/*else[MINIMAL_ERROR_REPORT]*/
+//	throw new IOException();
+/*end[MINIMAL_ERROR_REPORT]*/
     }
 
     /**
@@ -3789,7 +3825,11 @@ hbp.dumpState();
     public static int execIO(int op, int channel, int i1, int i2, int i3, int i4, int i5, int i6, Object send, Object receive) throws IOException {
         int context = currentIsolate.getChannelContext();
         if ((Platform.IS_DELEGATING || Platform.IS_SOCKET) && context == 0) {
+/*if[!MINIMAL_ERROR_REPORT]*/
             throw new IOException("No native I/O peer for isolate");
+/*else[MINIMAL_ERROR_REPORT]*/
+//	    throw new IOException();
+/*end[MINIMAL_ERROR_REPORT]*/
         }
         checkOpcode(op);
         for (;;) {
@@ -3801,7 +3841,12 @@ hbp.dumpState();
                 if (result == ChannelConstants.RESULT_EXCEPTION) {
                     raiseChannelException(context);
                 }
+/*if[!MINIMAL_ERROR_REPORT]*/
                 throw new IOException("Bad result from execIO on op " + op + " result "+ result);
+/*else[MINIMAL_ERROR_REPORT]*/
+//                throw new IOException();
+/*end[MINIMAL_ERROR_REPORT]*/
+		
             } else {
                 VMThread.waitForEvent(result);
 /*if[ENABLE_ISOLATE_MIGRATION]*/
@@ -3919,7 +3964,11 @@ hbp.dumpState();
             if (result == ChannelConstants.RESULT_EXCEPTION) {
                 raiseChannelException(0);
             }
+/*if[!MINIMAL_ERROR_REPORT]*/
             throw new IOException("Bad result from cioExecute "+ result);
+/*else[MINIMAL_ERROR_REPORT]*/	    
+//            throw new IOException();
+/*end[MINIMAL_ERROR_REPORT]*/	    
         } else if (result != ChannelConstants.RESULT_OK) {
             VMThread.waitForEvent(result);
         }
@@ -3999,7 +4048,12 @@ hbp.dumpState();
     public static int getChannel(int type) throws IOException {
         int context = currentIsolate.getChannelContext();
         if ((Platform.IS_DELEGATING || Platform.IS_SOCKET) && context == 0) {
+/*if[!MINIMAL_ERROR_REPORT]*/
             throw new IOException("no native I/O peer for isolate");
+/*else[MINIMAL_ERROR_REPORT]*/
+//            throw new IOException();
+/*end[MINIMAL_ERROR_REPORT]*/
+	    
         }
         return execSyncIO(context, ChannelConstants.CONTEXT_GETCHANNEL, type, 0);
     }
@@ -4015,7 +4069,12 @@ hbp.dumpState();
     public static void freeChannel(int channel) throws IOException {
         int context = currentIsolate.getChannelContext();
         if ((Platform.IS_DELEGATING || Platform.IS_SOCKET) && context == 0) {
+/*if[!MINIMAL_ERROR_REPORT]*/
             throw new IOException("no native I/O peer for isolate");
+/*else[MINIMAL_ERROR_REPORT]*/
+//            throw new IOException();
+/*end[MINIMAL_ERROR_REPORT]*/
+	    
         }
         executeCIO(context, ChannelConstants.CONTEXT_FREECHANNEL, channel, 0, 0, 0, 0, 0, 0, null, null);
     }
@@ -4073,6 +4132,7 @@ hbp.dumpState();
 /*end[OLD_IIC_MESSAGES]*/
 
 
+/*if[ENABLE_VM_STATISTICS]*/    
     /*=======================================================================*\
      *                           USER VISIBLE STATS                          *
     \*=======================================================================*/
@@ -4341,6 +4401,7 @@ hbp.dumpState();
         }
         
     } /* Stats */
+/*end[ENABLE_VM_STATISTICS]*/    
     
    /*=======================================================================*\
      *                           Core VM functions                           *
@@ -4746,7 +4807,11 @@ hbp.dumpState();
     public static void unregisterMailbox(String name, Mailbox mailbox) {
         if (registeredMailboxes == null ||
             registeredMailboxes.get(name) == null) {
+/*if[!MINIMAL_ERROR_REPORT]*/	    
             throw new IllegalStateException("Mailbox " + name + " is not registered");
+/*else[MINIMAL_ERROR_REPORT]*/	    
+//            throw new IllegalStateException();
+/*end[MINIMAL_ERROR_REPORT]*/	    
         }
         
         registeredMailboxes.remove(name);

@@ -75,7 +75,7 @@ public abstract class GarbageCollector implements GlobalStaticFields {
         } else {
             didFull = collectGarbageInC(allocTop, forceFullGC);
         }
-        
+/*if[ENABLE_VM_STATISTICS]*/            
         lastCollectionTime = VM.getTimeMillis() - start;
         if (didFull) {
             totalFullCollectionTime += lastCollectionTime;
@@ -92,6 +92,7 @@ public abstract class GarbageCollector implements GlobalStaticFields {
         numBytesLastFreed = GC.freeMemory() - freeBeforeGC;
         numBytesFreedTotal += numBytesLastFreed;
         totalBytesAllocatedCheckPoint += bytesAllocated; // update running total.
+/*end[ENABLE_VM_STATISTICS]*/    	
         return didFull;
     }
 
@@ -315,14 +316,14 @@ public abstract class GarbageCollector implements GlobalStaticFields {
 //    abstract Address copyObjectGraphInJava(Address object, ObjectMemorySerializer.ControlBlock cb, Address allocTop);
 /*end[ENABLE_ISOLATE_MIGRATION]*/
 
-/*if[ENABLE_GC_STATISTICS]*/
+/*if[ENABLE_VM_STATISTICS]*/
     /**
      * Dumps various timing information to the console.
      *
      * @param out  where to dump the timing info
      */
     abstract void dumpTimings(java.io.PrintStream out);
-/*end[ENABLE_GC_STATISTICS]*/
+/*end[ENABLE_VM_STATISTICS]*/
     
     /**
      * Returns the amount of free memory in the system. Calling the <code>gc</code>

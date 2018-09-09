@@ -78,12 +78,14 @@ public class GC implements GlobalStaticFields {
     public static GarbageCollector getCollector() {
         return collector;
     }
-
+    
+/*if[ENABLE_EXCESSIVE_GC]*/
     /**
      * Excessive GC flag.
      */
     private static boolean excessiveGC;
-
+/*end[ENABLE_EXCESSIVE_GC]*/
+    
     /**
      * Counter for the number of monitor exit operations.
      */
@@ -94,6 +96,7 @@ public class GC implements GlobalStaticFields {
      */
     private static int monitorReleaseCount;
 
+/*if[ENABLE_EXCESSIVE_GC]*/
     /**
      * Sets the state of the excessive GC flag.
      *
@@ -111,7 +114,8 @@ public class GC implements GlobalStaticFields {
     static boolean getExcessiveGC() {
         return excessiveGC;
     }
-
+/*end[ENABLE_EXCESSIVE_GC]*/
+    
     /**
      * Rounds up a 32 bit value to the next word boundry.
      *
@@ -264,7 +268,7 @@ public class GC implements GlobalStaticFields {
      * an ObjectMemory instance is never part of a copied object graph.
      */
     private static ObjectMemory[] readOnlyObjectMemories;
-
+    
     /**
      * Searches for an ObjectMemory in read-only memory that corresponds to a given URI.
      *
@@ -588,8 +592,10 @@ public class GC implements GlobalStaticFields {
         GarbageCollector newcollector = new /*VAL*/CheneyCollector/*GC*/(ramStart, ramEnd);
         // Initialize the collector.
         newcollector.initialize(ramStart, allocTop, ramEnd);
+/*if[!PLATFORM_TYPE_BARE_METAL]*/	
         // Initialize the record of loaded/resident object memories
         readOnlyObjectMemories = new ObjectMemory[]{ObjectMemory.createBootstrapObjectMemory(bootstrapSuite)};
+/*end[PLATFORM_TYPE_BARE_METAL]*/	
         // Enable GC.
         GC.collector = newcollector;
         gcEnabled = true;
@@ -879,7 +885,11 @@ public class GC implements GlobalStaticFields {
      * @exception OutOfMemoryError if the allocation fails
      */
     private static Object allocate(int size, Object klass, int arrayLength) {
+/*if[ENABLE_EXCESSIVE_GC]*/
         Object oop = (excessiveGC && !VMThread.currentThread().isServiceThread()) ? null : allocatePrim(size, klass, arrayLength);
+/*else[ENABLE_EXCESSIVE_GC]*/
+//        Object oop = allocatePrim(size, klass, arrayLength);
+/*end[ENABLE_EXCESSIVE_GC]*/
         if (oop == null) {
             Assert.always(VM.isThreadingInitialized()); // "insufficient memory to start VM"
             if (gcEnabled) {
@@ -927,7 +937,8 @@ public class GC implements GlobalStaticFields {
      * @param forceFullGC  forces a collection of the whole heap
      */
     static void collectGarbage(boolean forceFullGC) {
-
+	VM.println("GC...");
+	
         // Trace.
         long free = freeMemory();
 

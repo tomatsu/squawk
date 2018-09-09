@@ -198,7 +198,7 @@ public class JavaApplicationManager {
         /*
          * Show execution statistics if requested
          */
-/*if[ENABLE_GC_STATISTICS]*/
+/*if[ENABLE_VM_STATISTICS]*/
         if (displayExecutionStatistics) {
             long endTime = System.currentTimeMillis();
             System.out.println();
@@ -209,7 +209,7 @@ public class JavaApplicationManager {
             System.out.println("=============================");
             System.out.println();
         }
-/*end[ENABLE_GC_STATISTICS]*/
+/*end[ENABLE_VM_STATISTICS]*/
         /*
          * Stop the VM.
          */
@@ -306,8 +306,10 @@ public class JavaApplicationManager {
             // Fix up the class path with respect to the system dependant separator characters
             classPath = ArgsUtilities.toPlatformPath(arg.substring("-cp:".length()), true);
 /*end[ENABLE_DYNAMIC_CLASSLOADING]*/
+/*if[ENABLE_EXCESSIVE_GC]*/	    
         } else if (arg.equals("-egc")) {
             GC.setExcessiveGC(true);
+/*end[ENABLE_EXCESSIVE_GC]*/	    
         } else if (arg.equals("-nogc")) {
             VM.allowUserGC(false);
 /*if[ENABLE_ISOLATE_INITIALIZER]*/			

@@ -1547,7 +1547,9 @@ public final class Isolate implements Runnable {
      * @throws IllegalStateException if the isolate has already been started
      */
     public void start() {
+/*if[ENABLE_MULTI_ISOLATE]*/		
         transitioningState = ALIVE;
+/*end[ENABLE_MULTI_ISOLATE]*/		
         String isoname = new StringBuilder(mainClassName).append(" - main").toString();
 /*if[ENABLE_MULTI_ISOLATE]*/	
         Thread t = new CrossIsolateThread(this, isoname);
@@ -1707,14 +1709,18 @@ public final class Isolate implements Runnable {
             throw new IllegalStateException();
         }
 
+/*if[ENABLE_MULTI_ISOLATE]*/	
         changeState(ALIVE);
         transitioningState = NEW; // not in transition
+/*end[ENABLE_MULTI_ISOLATE]*/	
 
         // Manually initialize com.sun.squawk.Klass.
         initializeClassKlass();
 
+/*if[ENABLE_SUITE_LOADING]*/
         // Update the leaf suite
         updateLeafSuite(false);
+/*end[ENABLE_SUITE_LOADING]*/
 
         // It is important that java.lang.System is initialized before com.sun.cldc.i18n.Helper
         // so initialized it now.
@@ -1992,7 +1998,6 @@ public final class Isolate implements Runnable {
             Assert.shouldNotReachHere();
         }
 /*else[ENABLE_MULTI_ISOLATE]*/
-//      changeState(EXITED);
 //		VM.haltVM(exitCode);
 /*end[ENABLE_MULTI_ISOLATE]*/
     }

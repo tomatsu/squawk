@@ -444,11 +444,15 @@ public final class Address {
         Address addr = (Address)pool.get(value);
         if (addr == null) {
             addr = new Address(value);
+/*if[!MINIMAL_ERROR_REPORT]*/
             try {
                 pool.put(value, addr);
             } catch (OutOfMemoryError e) {
                 throw new OutOfMemoryError("Failed to grow pool when adding " + value);
             }
+/*else[MINIMAL_ERROR_REPORT]*/
+//	    pool.put(value, addr);
+/*end[MINIMAL_ERROR_REPORT]*/
         }
         return addr;
     }

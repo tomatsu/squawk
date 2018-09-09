@@ -115,7 +115,7 @@ public final class CheneyCollector extends GarbageCollector {
      */
     private final VMBufferDecoder decoder;
     
-/*if[ENABLE_GC_STATISTICS]*/
+/*if[ENABLE_VM_STATISTICS]*/
     /**
      * The timing statistics related to garbage collection.
      */
@@ -137,7 +137,7 @@ public final class CheneyCollector extends GarbageCollector {
             return setup + copyRoots + copyNonRoots + repair + finalize;
         }
     }
-/*end[ENABLE_GC_STATISTICS]*/
+/*end[ENABLE_VM_STATISTICS]*/
 
     /**
      * Creates a CheneyCollector.
@@ -155,10 +155,10 @@ public final class CheneyCollector extends GarbageCollector {
         }
 
         decoder = Klass.DEBUG_CODE_ENABLED ? new VMBufferDecoder() : null;
-/*if[ENABLE_GC_STATISTICS]*/	
+/*if[ENABLE_VM_STATISTICS]*/	
         collectionTimings = new Timings();
         copyTimings = new Timings();
-/*end[ENABLE_GC_STATISTICS]*/	
+/*end[ENABLE_VM_STATISTICS]*/	
     }
 
     /**
@@ -1168,9 +1168,9 @@ public final class CheneyCollector extends GarbageCollector {
     @Vm2c(root="collectGarbage")
 /*end[JAVA5SYNTAX]*/
     boolean collectGarbageInJava(Address allocTop, boolean forceFullGC) {
-/*if[ENABLE_GC_STATISTICS]*/
+/*if[ENABLE_VM_STATISTICS]*/
         long start = now();
-/*end[ENABLE_GC_STATISTICS]*/
+/*end[ENABLE_VM_STATISTICS]*/
 	
         // Output heap trace
         if ((HEAP_TRACE || GC.GC_TRACING_SUPPORTED) && GC.isTracing(GC.TRACE_HEAP_BEFORE_GC)) {
@@ -1184,26 +1184,26 @@ public final class CheneyCollector extends GarbageCollector {
         // Set the from space to be read-only
         memoryProtect(fromSpaceStartPointer, fromSpaceEndPointer);
 	
-/*if[ENABLE_GC_STATISTICS]*/
+/*if[ENABLE_VM_STATISTICS]*/
         collectionTimings.setup += now() - start;
 	
         // Copy all the reachable objects.
         start = now();
-/*end[ENABLE_GC_STATISTICS]*/
+/*end[ENABLE_VM_STATISTICS]*/
 	
         copyRootObjects();
-/*if[ENABLE_GC_STATISTICS]*/	
+/*if[ENABLE_VM_STATISTICS]*/	
         collectionTimings.copyRoots =+ now() - start;
 	
         start = now();
-/*end[ENABLE_GC_STATISTICS]*/
+/*end[ENABLE_VM_STATISTICS]*/
 
         Address toSpaceUpdatePointer = copyNonRootObjects(toSpaceStartPointer);
 
-/*if[ENABLE_GC_STATISTICS]*/		
+/*if[ENABLE_VM_STATISTICS]*/		
         collectionTimings.copyNonRoots += now() - start;
         start = now();
-/*end[ENABLE_GC_STATISTICS]*/		
+/*end[ENABLE_VM_STATISTICS]*/		
 
 /*if[FINALIZATION]*/
         // Process the finalizer queue
@@ -1227,9 +1227,9 @@ public final class CheneyCollector extends GarbageCollector {
             traceHeap("After collection", toSpaceAllocationPointer);
         }
 	
-/*if[ENABLE_GC_STATISTICS]*/
+/*if[ENABLE_VM_STATISTICS]*/
         collectionTimings.finalize += now() - start;
-/*end[ENABLE_GC_STATISTICS]*/
+/*end[ENABLE_VM_STATISTICS]*/
 	
         // The Cheney collector always collects the full heap
         return true;
@@ -1246,7 +1246,7 @@ public final class CheneyCollector extends GarbageCollector {
         return (total == 0 ? 0 : (int)((part * 100) / total));
     }
 
-/*if[ENABLE_GC_STATISTICS]*/
+/*if[ENABLE_VM_STATISTICS]*/
     private void dumpTiming(java.io.PrintStream out, String label, long value, long total) {
         out.println(label + value + timerUnitSuffix() + " [" + percent(value, total) + "%]");
     }
@@ -1276,7 +1276,7 @@ public final class CheneyCollector extends GarbageCollector {
         dumpTiming(out, "    finalize:     ", timings.finalize, total);
 
     }
-/*end[ENABLE_GC_STATISTICS]*/
+/*end[ENABLE_VM_STATISTICS]*/
     
     /*---------------------------------------------------------------------------*\
      *                          Object graph copying                             *
@@ -1302,9 +1302,9 @@ public final class CheneyCollector extends GarbageCollector {
 /*end[DEBUG_CODE_ENABLED]*/
         }
 	
-/*if[ENABLE_GC_STATISTICS]*/
+/*if[ENABLE_VM_STATISTICS]*/
         long start = now();
-/*end[ENABLE_GC_STATISTICS]*/
+/*end[ENABLE_VM_STATISTICS]*/
 	
         // Set up the map that will be used to undo pointer forwarding
         if (!initializeForwardingRepairMap(toSpaceStartPointer, allocTop, toSpaceEndPointer)) {
@@ -1321,17 +1321,17 @@ public final class CheneyCollector extends GarbageCollector {
         // Switch semi-spaces
         toggleSpaces();
 	
-/*if[ENABLE_GC_STATISTICS]*/
+/*if[ENABLE_VM_STATISTICS]*/
         copyTimings.setup += now() - start;
 	
         // Copy all the reachable objects.
         start = now();
-/*end[ENABLE_GC_STATISTICS]*/
+/*end[ENABLE_VM_STATISTICS]*/
         object = copyObject(object);
         copyNonRootObjects(toSpaceStartPointer);
-/*if[ENABLE_GC_STATISTICS]*/	
+/*if[ENABLE_VM_STATISTICS]*/	
         copyTimings.copyNonRoots += now() - start;
-/*end[ENABLE_GC_STATISTICS]*/
+/*end[ENABLE_VM_STATISTICS]*/
 	
         // Get the start and end of the serialized graph
         Address graph = toSpaceStartPointer;
@@ -1342,21 +1342,21 @@ public final class CheneyCollector extends GarbageCollector {
         toggleSpaces();
 
         // Repair the class word of the forwarded objects
-/*if[ENABLE_GC_STATISTICS]*/		
+/*if[ENABLE_VM_STATISTICS]*/		
         start = now();
-/*end[ENABLE_GC_STATISTICS]*/		
+/*end[ENABLE_VM_STATISTICS]*/		
         repairForwardedObjects();
-/*if[ENABLE_GC_STATISTICS]*/	
+/*if[ENABLE_VM_STATISTICS]*/	
         copyTimings.repair += now() - start;
-/*end[ENABLE_GC_STATISTICS]*/
+/*end[ENABLE_VM_STATISTICS]*/
 	
         int graphSize = graphEnd.diff(graph).toInt();
         int freeSpace = toSpaceEndPointer.diff(allocTop).toInt() - HDR.arrayHeaderSize;
 
         if (graphSize <= freeSpace) {
-/*if[ENABLE_GC_STATISTICS]*/	
+/*if[ENABLE_VM_STATISTICS]*/	
             start = now();
-/*end[ENABLE_GC_STATISTICS]*/	
+/*end[ENABLE_VM_STATISTICS]*/	
             // Copy the serialized graph to the start of free memory and make it a byte array
             graphCopy = allocTop.add(HDR.basicHeaderSize);
             GC.setHeaderClass(graphCopy, ByteArrayKlass);
@@ -1386,18 +1386,18 @@ public final class CheneyCollector extends GarbageCollector {
             }
 
         } else {
-/*if[ENABLE_GC_STATISTICS]*/		    
+/*if[ENABLE_VM_STATISTICS]*/		    
             start = now();
-/*end[ENABLE_GC_STATISTICS]*/		    
+/*end[ENABLE_VM_STATISTICS]*/		    
             graphCopy = Address.zero();
         }
 
         copyingObjectGraph = false;
         theIsolate = null;
         oopMap = null;
-/*if[ENABLE_GC_STATISTICS]*/
+/*if[ENABLE_VM_STATISTICS]*/
         copyTimings.finalize += now() - start;
-/*end[ENABLE_GC_STATISTICS]*/	
+/*end[ENABLE_VM_STATISTICS]*/	
         return graphCopy;
     }
 

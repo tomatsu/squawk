@@ -66,5 +66,6 @@ build.properties
 squawk.exclude
 squawk.library.properties
 builder/dca.config
+builder/mapper.config
 builder/lisp2.config
 builder/cheney.config

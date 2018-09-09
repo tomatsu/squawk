@@ -18,9 +18,20 @@ SQUAWK_TOP = squawk
 BUILD_TOP ?= build
 JARFILE = classes.jar
 JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar
-DCA_CONFIG = dca.config
+DCA_CONFIG := $(SQUAWK_TOP)/builder/dca.config
+MAPPER_CONFIG = $(SQUAWK_TOP)/builder/mapper.config
+
+MAP ?= true
+
+ifeq ($(MAP),true)
+  DCA_CONFIG := $(DCA_CONFIG),$(MAPPER_CONFIG)
+else
+  ROMIZER_FLAGS += -stripSystemClassName
+endif
+
+DCA_CONFIG := $(DCA_CONFIG),$(SQUAWK_TOP)/builder/$(GC_DCA_CONF)
+
 FASTALLOC = false
-ROMIZER_FLAGS += -stripSystemClassName
 
 BUILD_FLAGS += -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
 BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE)
@@ -47,7 +58,13 @@ JAVA_SOURCE_FILES = $(shell $(FIND) src/classes -name '*.java' -print)
 
 vpath %.c $(C_SOURCE_DIRS)
 
-all: dirs $(JARFILE) romize compile link strip
+all:: dirs
+all:: $(JARFILE)
+all:: romize
+all:: compile
+all:: offset
+all:: link
+all:: strip
 
 dirs:
 	$(AT)mkdir -p $(OBJECT_DIR)
@@ -69,13 +86,11 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 	$(AT)tar cf - -C $(BUILD_TOP)/cldc/classes .  | (cd $(TMP)/classes; tar xf -)
 	$(AT)mkdir -p $(TMP)/classes2
 	$(AT)jar cf $(TMP)/classes.jar -C $(TMP)/classes .
-	$(AT)cp $(SQUAWK_TOP)/builder/$(DCA_CONFIG) $(TMP)
-	$(AT)cp $(SQUAWK_TOP)/builder/$(GC_DCA_CONF) $(TMP)
-	$(AT)echo "$$(cat $(BUILD_TOP)/MAIN_CLASS_NAME).main([Ljava/lang/String;)V" >> $(TMP)/$(DCA_CONFIG)
-	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(TMP)/$(DCA_CONFIG),$(TMP)/$(GC_DCA_CONF) -o $(TMP)/unused -u $(TMP)/used -i $(TMP)/itf -x $(TMP)/xref $(TMP)/classes.jar
+	$(AT)echo "$$(cat $(BUILD_TOP)/MAIN_CLASS_NAME).main([Ljava/lang/String;)V" >> $(TMP)/main.config
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(DCA_CONFIG),$(TMP)/main.config -o $(TMP)/unused -u $(TMP)/used -i $(TMP)/itf -x $(TMP)/xref $(TMP)/classes.jar
 	$(AT)cat $(TMP)/itf >> $(TMP)/unused
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.filter.Filter $(TMP)/unused $(TMP)/classes.jar $(TMP)/classes2.jar
-	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(TMP)/$(DCA_CONFIG),$(TMP)/$(GC_DCA_CONF) -o $(TMP)/unused2 -u $(TMP)/used2 -i $(TMP)/itf2 -x $(TMP)/xref2 $(TMP)/classes2.jar
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(DCA_CONFIG),$(TMP)/main.config -o $(TMP)/unused2 -u $(TMP)/used2 -i $(TMP)/itf2 -x $(TMP)/xref2 $(TMP)/classes2.jar
 	$(AT)cat $(TMP)/itf2 >> $(TMP)/unused2
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.filter.Filter $(TMP)/unused2 $(TMP)/classes2.jar $(TMP)/classes3.jar
 	$(AT)(cd $(TMP)/classes2; jar xf $(TMP)/classes3.jar)
@@ -114,7 +129,16 @@ $(OBJECT_DIR)/%.o: %.c
 	$(AT)$(CC) -c $(CFLAGS) -o $@ $<
 
 $(BUILD_TOP)/squawk : $(OBJECT_FILES)
+	$(AT)$(CC) -c $(CFLAGS) -DHAS_METHOD_OFFSETS=1 -o $(OBJECT_DIR)/squawk.o squawk/vmcore/src/vm/squawk.c
 	$(AT)$(CC) $(LDFLAGS) -o $@ $(OBJECT_FILES) $(LDSUFFIXES)
+
+$(TMP)/ofst : $(OBJECT_FILES)
+	$(AT)$(CC) $(LDFLAGS) -o $@ $(OBJECT_FILES) $(LDSUFFIXES)
+
+offset: $(BUILD_TOP)/vmcore/src/vm/methodOffsets.h
+
+$(BUILD_TOP)/vmcore/src/vm/methodOffsets.h : $(TMP)/ofst
+	$(TMP)/ofst > $(BUILD_TOP)/vmcore/src/vm/methodOffsets.h
 
 link: $(BUILD_TOP)/squawk
 

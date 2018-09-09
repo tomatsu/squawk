@@ -41,6 +41,10 @@
 #include "platform.h"
 #include "buildflags.h"
 
+#if HAS_METHOD_OFFSETS
+#include "methodOffsets.h"
+#endif
+
 #define stringify(s) _str(s)
 #define _str(s) #s
 
@@ -571,7 +575,6 @@ void freeBuffers() {
 #ifdef LISP2_BITMAP
 #include "lisp2.c.inc"
 #endif /* LISP2_BITMAP */
-
 /*
  * Include the switch and bytecode routines.
  */
@@ -581,7 +584,6 @@ void freeBuffers() {
  * Include java code translated into C code.
  */
 #include "vm2c.c.inc"
-
 
 #if KERNEL_SQUAWK
 /*
@@ -801,7 +803,9 @@ static void printCacheStats() {
         fprintf(stderr, format("Extends: %d (slots as %% of extends = %d.%02d%%)\n"), total_extends, AS_PERCENT(total_slots, total_extends));
     }
 #endif /* TRACE */
+#ifdef INTERPRETER_STATS
     fprintf(stderr, format("GCs: %d full, %d partial\n"), com_sun_squawk_GC_fullCollectionCount, com_sun_squawk_GC_partialCollectionCount);
+#endif    
 }
 
 #endif /* !FLASH_MEMORY */
@@ -1117,7 +1121,9 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     int realMemorySize;
     int bootstrapSize;
     Address suite;
+#if !PLATFORM_TYPE_BARE_METAL
     int argvTotalSize = calculateSizeForCopyOfCStringArray(argc, argv);
+#endif
     int offset;
 
     diagnosticWithValue("setupMemory: ram size", ramSize);
@@ -1125,7 +1131,11 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
 
 #if defined(FLASH_MEMORY) || defined(PLATFORM_TYPE_BARE_METAL)
     memorySize = roundUp(ramSize - (pageSize-1), pageSize);
+#if PLATFORM_TYPE_BARE_METAL
+    ramSize = memorySize - roundUp(serviceChunkSize, pageSize) /*- roundUp(argvTotalSize, pageSize)*/ - roundUp(nvmSize, pageSize);
+#else
     ramSize = memorySize - roundUp(serviceChunkSize, pageSize) - roundUp(argvTotalSize, pageSize) - roundUp(nvmSize, pageSize);
+#endif    
     diagnosticWithValue("ram size", ramSize);
 	diagnosticWithValue("page size", pageSize);
 	diagnosticWithValue("memory size", memorySize);
@@ -1211,10 +1221,12 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     setObject(com_sun_squawk_VMThread_serviceStack, SC_lastFP, 0);
     setUWord(com_sun_squawk_VMThread_serviceStack, SC_lastBCI, 0);
 
+#if !PLATFORM_TYPE_BARE_METAL
     // The command line arguments for the JAM start on the next page after the end of the stack for the service thread.
     com_sun_squawk_VM_argc = argc;
     com_sun_squawk_VM_argv = (Address)roundUp((UWord)Address_add(com_sun_squawk_VMThread_serviceStack, SERVICE_CHUNK_SIZE_MINUS2WORDS), pageSize);
     offset = writeCStringArray(argc, argv, Address_diff(com_sun_squawk_VM_argv, memory));
+#endif    
 
     // Ensure that the buffer did not overflow
 //    assumeAlways(loeq(Address_add(memory, offset), memoryEnd));
@@ -1919,8 +1931,10 @@ Address Squawk_setup(int argc, char *argv[]) {
     sysToggleMemoryProtection(com_sun_squawk_GC_nvmStart, com_sun_squawk_GC_nvmEnd, true);
     sysToggleMemoryProtection(com_sun_squawk_VM_romStart, com_sun_squawk_VM_romEnd, true);
 
-    initMethods();
-
+#if !HAS_METHOD_OFFSETS
+    defineMethodOffsets();
+    exit(0);
+#endif
     /*
      * Return the bootstrap suite.
      */
@@ -2322,6 +2336,7 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
     return 0;
 }
 
+#if !HAS_METHOD_OFFSETS
 /**
  * lookup a klass from the bootstrap suite
  * @param cid
@@ -2349,6 +2364,11 @@ static Address lookupStaticMethod(int cid, int methodOffset) {
     assume(inROM(klass));
     method = getStaticMethod(klass, methodOffset);
     assume(inCode(method));
-    //fprintf(stderr, "%x\n", method);
     return method;
 }
+
+void defineStaticMethodOffset(char* name, int cid, int methodOffset) {
+    Address addr = lookupStaticMethod(cid, methodOffset);
+    printf("#define Offset_%s 0x%x\n", name, (uintptr_t)addr - (uintptr_t)&_bootstrap_suite);
+}
+#endif

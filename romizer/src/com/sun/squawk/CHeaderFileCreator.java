@@ -251,6 +251,8 @@ public final class CHeaderFileCreator {
 
 
                 Klass klass = lookupClass(suite, className, field.toString());
+		System.out.println(klass);
+		
                 int methodCount = klass.getMethodCount(isStatic);
                 boolean found = false;
     nextMethod:
@@ -676,7 +678,15 @@ public final class CHeaderFileCreator {
         out.println("#define ROM_GLOBAL_OOP_COUNT  " + getIntProperty("ROM.GLOBAL.OOP.COUNT"));
         out.println("#define ROM_GLOBAL_ADDR_COUNT " + getIntProperty("ROM.GLOBAL.ADDR.COUNT"));
 
-        // Write the var decls for invoked methods.
+       out.println("#if HAS_METHOD_OFFSETS");
+       for (InterpreterMethodInfo minfo: interpreterInvokedMethods) {
+//          out.println("#define " + minfo.toCName() + "  (Address)((uintptr_t)&_bootstrap_suite +  Offset_" + minfo.toCName() + ")");
+            out.println("static const Address " + minfo.toCName() + " = (Address)((uintptr_t)&_bootstrap_suite +  Offset_" + minfo.toCName() + ");");
+       }
+       
+       out.println("#else");
+       
+        // Write the var decls for invoked methods.    
         for (InterpreterMethodInfo minfo: interpreterInvokedMethods) {
             out.println("static Address " + minfo.toCName() + ";");
         }
@@ -688,6 +698,13 @@ public final class CHeaderFileCreator {
         }
         out.println("}");
 
+        out.println("\nstatic void defineMethodOffsets() {");
+        for (InterpreterMethodInfo minfo: interpreterInvokedMethods) {
+            out.println("    defineStaticMethodOffset(\"" + minfo.toCName() + "\", " + minfo.klass.getSuiteID() + ", " + minfo.meth.getOffset() + ");");
+       }
+        out.println("}");
+       out.println("#endif");
+       
         out.close();
     }
 

@@ -156,7 +156,8 @@ public class Throwable {
      * @return  a string representation of this <code>Throwable</code>.
      */
     public String toString() {
-        String s = getClass().getName();
+//        String s = getClass().getName();
+	String s = com.sun.squawk.GC.getKlass(this).getName();
         String message = getMessage();
         return (message != null) ? (s + ": " + message) : s;
     }

@@ -74,7 +74,9 @@ final class Monitor {
      */
     Monitor(Object object) {
         this.object = object;
+/*if[ENABLE_VM_STATISTICS]*/	
         VMThread.monitorsAllocatedCount++;
+/*end[ENABLE_VM_STATISTICS]*/	
     }
 
     /**

@@ -36,6 +36,39 @@ import com.sun.squawk.*;
  * @since   JDK1.0
  */
 public class Object {
+    /**
+     * Throws an AbstractMethodError. This method is used as the entry in a
+     * vtable for all abstract methods, as well as all methods that have been been deleted during
+     * dead method elimination.
+     */
+    private void abstractMethodError() {
+        throw new Error("AbstractMethodError");
+    }
+
+    /**
+     * Returns a string representation of the object. In general, the
+     * <code>toString</code> method returns a string that
+     * "textually represents" this object. The result should
+     * be a concise but informative representation that is easy for a
+     * person to read.
+     * It is recommended that all subclasses override this method.
+     * <p>
+     * The <code>toString</code> method for class <code>Object</code>
+     * returns a string consisting of the name of the class of which the
+     * object is an instance, the at-sign character `<code>@</code>', and
+     * the unsigned hexadecimal representation of the hash code of the
+     * object. In other words, this method returns a string equal to the
+     * value of:
+     * <blockquote>
+     * <pre>
+     * getClass().getName() + '@' + Integer.toHexString(hashCode())
+     * </pre></blockquote>
+     *
+     * @return  a string representation of the object.
+     */
+    public String toString() {
+        return GC.getKlass(this).getName() + "@" + Integer.toHexString(hashCode());
+    }
 
     /**
      * Wakes up a single thread that is waiting on this object's
@@ -352,40 +385,6 @@ public class Object {
      */
     public boolean equals(Object obj) {
         return (this == obj);
-    }
-
-    /**
-     * Returns a string representation of the object. In general, the
-     * <code>toString</code> method returns a string that
-     * "textually represents" this object. The result should
-     * be a concise but informative representation that is easy for a
-     * person to read.
-     * It is recommended that all subclasses override this method.
-     * <p>
-     * The <code>toString</code> method for class <code>Object</code>
-     * returns a string consisting of the name of the class of which the
-     * object is an instance, the at-sign character `<code>@</code>', and
-     * the unsigned hexadecimal representation of the hash code of the
-     * object. In other words, this method returns a string equal to the
-     * value of:
-     * <blockquote>
-     * <pre>
-     * getClass().getName() + '@' + Integer.toHexString(hashCode())
-     * </pre></blockquote>
-     *
-     * @return  a string representation of the object.
-     */
-    public String toString() {
-        return GC.getKlass(this).getName() + "@" + Integer.toHexString(hashCode());
-    }
-
-    /**
-     * Throws an AbstractMethodError. This method is used as the entry in a
-     * vtable for all abstract methods, as well as all methods that have been been deleted during
-     * dead method elimination.
-     */
-    private void abstractMethodError() {
-        throw new Error("AbstractMethodError");
     }
 
 /*if[FINALIZATION]*/

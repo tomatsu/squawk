@@ -198,7 +198,7 @@ public class Klass<T> {
      * The translation state of the class.
      */
     private byte state = STATE_DEFINED;
-
+    
     /**
      * The identifier for this class. If the value is positive, then it
      * is a system wide unique identifier as well as the index of the class within its suite.
@@ -867,7 +867,9 @@ T
     private Klass(String name, Klass componentType, int suiteID, boolean hasSystemID) {
 		this.name = name;
         this.id = hasSystemID ? (short)suiteID : (short)-(suiteID+1);
+
         this.oopMapWord = UWord.zero();
+
         Assert.always((suiteID & 0xFFFF) == suiteID);
 
         if (name.charAt(0) == '[') {
@@ -1701,7 +1703,11 @@ T
 //VM.println();
                 // Ensure that the offsets all fit in 16 bits
                 if ((staticFieldsSize & 0xFFFF) != newSize) {
+/*if[!MINIMAL_ERROR_REPORT]*/
                     throw new NoClassDefFoundError("static fields overflow");
+/*else[MINIMAL_ERROR_REPORT]*/		    
+//                    throw new NoClassDefFoundError();
+/*end[MINIMAL_ERROR_REPORT]*/		    
                 }
 
             }
@@ -2048,7 +2054,11 @@ T
 
         // Ensure that the offsets all fit in 16 bits
         if ((staticFieldsSize & 0xFFFF) != tempStaticFieldsSize) {
+/*if[!MINIMAL_ERROR_REPORT]*/	    
             throw new NoClassDefFoundError("static fields overflow");
+/*else[MINIMAL_ERROR_REPORT]*/	    
+//            throw new NoClassDefFoundError();
+/*end[MINIMAL_ERROR_REPORT]*/	    
         }
 
         // TODO Find a way to do block bases assertions better ?
@@ -2199,7 +2209,11 @@ T
 
         // Set the size of an instance (in words) of this class
         if ((instanceSizeBytes & 0xFFFF) != instanceSizeBytes) {
+/*if[!MINIMAL_ERROR_REPORT]*/
             throw new NoClassDefFoundError("instance fields overflow");
+/*else[MINIMAL_ERROR_REPORT]*/
+//            throw new NoClassDefFoundError();
+/*end[MINIMAL_ERROR_REPORT]*/
         }
 
         // Create oop map
@@ -2318,7 +2332,7 @@ T
             }
         }
     }
-
+    
     /**
      * The size (in bits) of a data map entry.
      */
@@ -2400,7 +2414,6 @@ T
             dataMapLength++;
         }
     }
-
 
 
     /**
@@ -2503,12 +2516,20 @@ T
                     Assert.that(superMethod.isAccessibleFrom(this)); // lookupMethod() ensures this is true
                     
                     if (superMethod.isFinal()) {
+/*if[!MINIMAL_ERROR_REPORT]*/			
                         throw new NoClassDefFoundError("cannot override final method: " + superMethod.getFullyQualifiedName());
+/*else[MINIMAL_ERROR_REPORT]*/			
+//                        throw new NoClassDefFoundError();
+/*end[MINIMAL_ERROR_REPORT]*/			
                     }
 
                     // This is a restriction imposed by the way Squawk treats native methods
                     if (superMethod.isNative()) {
+/*if[!MINIMAL_ERROR_REPORT]*/			
                         throw new NoClassDefFoundError("cannot override native method ");
+/*else[MINIMAL_ERROR_REPORT]*/			
+//                        throw new NoClassDefFoundError();
+/*end[MINIMAL_ERROR_REPORT]*/			
                     }
 
 /*if[FINALIZATION]*/
@@ -3135,7 +3156,6 @@ T
         return word.and(bit).ne(UWord.zero());
     }
 
-
     /*---------------------------------------------------------------------------*\
      *                        Object table manipulation                          *
     \*---------------------------------------------------------------------------*/
@@ -3215,7 +3235,11 @@ T
             thread.setAppThreadTop(thread.framePointerAsOffset(VM.getFP()));
             VM.callStaticOneParm(this, index, args);
         } else {
+/*if[!MINIMAL_ERROR_REPORT]*/				    
             throw new Error("Class "+getName()+" has no main() method");
+/*else[MINIMAL_ERROR_REPORT]*/				    
+//            throw new Error();
+/*end[MINIMAL_ERROR_REPORT]*/				    
         }
     }
 
@@ -3408,7 +3432,11 @@ T
      */
     final void initialiseClass() {
         if (getState() == STATE_ERROR) {
+/*if[!MINIMAL_ERROR_REPORT]*/
             throw new NoClassDefFoundError(getName());
+/*else[MINIMAL_ERROR_REPORT]*/
+//            throw new NoClassDefFoundError();
+/*end[MINIMAL_ERROR_REPORT]*/
         }
 
         if (mustClinit() && getClassState() == null) {
@@ -3460,7 +3488,11 @@ T
          * Test to see if there was a linkage error.
          */
         if (state == STATE_ERROR) {
+/*if[!MINIMAL_ERROR_REPORT]*/
             throw new NoClassDefFoundError(name);
+/*else[MINIMAL_ERROR_REPORT]*/
+//            throw new NoClassDefFoundError();
+/*end[MINIMAL_ERROR_REPORT]*/
         }
 
         /*
@@ -3494,7 +3526,11 @@ T
              * Step 5
              */
             if (getInitializationState() == INITSTATE_FAILED) {
+/*if[!MINIMAL_ERROR_REPORT]*/
                 throw new NoClassDefFoundError(name);
+/*else[MINIMAL_ERROR_REPORT]*/
+//                throw new NoClassDefFoundError();
+/*end[MINIMAL_ERROR_REPORT]*/
             }
             /*
              * Step 6
@@ -3552,7 +3588,11 @@ T
                 err = (Error)ex;
             } else {
                 ex.printStackTrace();
+/*if[!MINIMAL_ERROR_REPORT]*/		
                 err = new Error("ExceptionInInitializer: " + name + ":" + ex);
+/*else[MINIMAL_ERROR_REPORT]*/		
+//                err = new Error();
+/*end[MINIMAL_ERROR_REPORT]*/		
             }
             /*
              * Step 11
@@ -3842,13 +3882,13 @@ T
      * @param   modifiers  the modifiers of the class
      * @return             the created class
      */
+/*if[ENABLE_HOSTED]*/	    	
     private static Klass boot(Klass superType, String name, int systemID, int modifiers) {
         Isolate isolate = VM.getCurrentIsolate();
         Suite bootstrapSuite = isolate.getBootstrapSuite();
         Klass klass = bootstrapSuite.getKlass(systemID);
 
         // Should never get here in a non-hosted system as all the bootstrap classes must be in the bootstrap suite
-/*if[ENABLE_HOSTED]*/	    	
         if (klass != null) {
             Assert.that(klass.getSuperType() == superType);
             Assert.that(klass.getSystemID() == systemID);
@@ -3857,15 +3897,15 @@ T
         }
         Assert.always(VM.isHosted());
         return bootHosted(superType, name, systemID, modifiers, bootstrapSuite);
-/*else[ENABLE_HOSTED]*/
-//		Assert.that(klass.getSuperType() == superType);
-//		Assert.that(klass.getSystemID() == systemID);
-//		Assert.that((klass.getModifiers() & modifiers) == modifiers);
-//		return klass;
-/*end[ENABLE_HOSTED]*/
-	
     }
+/*end[ENABLE_HOSTED]*/
+/*if[!ENABLE_HOSTED]*/	    	
+    private static Klass boot(int systemID) {
+        return VM.getCurrentIsolate().getBootstrapSuite().getKlass(systemID);
+    }
+/*end[ENABLE_HOSTED]*/
 
+    
     /**
      * Finds one of the bootstrap classes, creating it if necessary.
      *
@@ -3897,6 +3937,7 @@ T
      * Initializes the constants for the bootstrap classes.
      */
     static {
+/*if[ENABLE_HOSTED]*/	    	
         TOP                = boot(null,          "-T-",                     CID.TOP,               synthetic);
         ONE_WORD           = boot(TOP,           "-1-",                     CID.ONE_WORD,          synthetic); // only used by translator
         TWO_WORD           = boot(TOP,           "-2-",                     CID.TWO_WORD,          synthetic2);// only used by translator
@@ -3936,11 +3977,9 @@ T
         DOUBLE_ARRAY       = boot(OBJECT,        "[double",                 CID.DOUBLE_ARRAY,      synthetic); // only used by translator
         
         // Ensure that all the reserved system classes are loaded if running in a hosted environment
-/*if[ENABLE_HOSTED]*/	    	
         if (VM.isHosted()) {
             initBootstrapClassesHostedEarly();
         }
-/*end[ENABLE_HOSTED]*/
 	
         /*
          * Special implementation types.
@@ -3956,11 +3995,60 @@ T
         BYTECODE_ARRAY     = boot(OBJECT,        "[-bytecode-",             CID.BYTECODE_ARRAY,    synthetic);
 
         // Ensure that all the reserved system classes are loaded if running in a hosted environment
-/*if[ENABLE_HOSTED]*/	    	
         if (VM.isHosted()) {
             initBootstrapClassesHostedLate();
         }
-/*end[ENABLE_HOSTED]*/
+/*end[ENABLE_HOSTED]*/	    	
+/*if[!ENABLE_HOSTED]*/
+        TOP                = boot(CID.TOP);
+        ONE_WORD           = boot(CID.ONE_WORD);
+        TWO_WORD           = boot(CID.TWO_WORD);
+
+        INT                = boot(CID.INT);
+        BOOLEAN            = boot(CID.BOOLEAN);
+        BYTE               = boot(CID.BYTE);
+        CHAR               = boot(CID.CHAR);
+        SHORT              = boot(CID.SHORT);
+        FLOAT              = boot(CID.FLOAT);
+        LONG               = boot(CID.LONG);
+        LONG2              = boot(CID.LONG2);
+        DOUBLE             = boot(CID.DOUBLE);
+        DOUBLE2            = boot(CID.DOUBLE2);
+        VOID               = boot(CID.VOID);
+
+        REFERENCE          = boot(CID.REFERENCE);
+        UNINITIALIZED      = boot(CID.UNINITIALIZED);
+        UNINITIALIZED_THIS = boot(CID.UNINITIALIZED_THIS);
+        UNINITIALIZED_NEW  = boot(CID.UNINITIALIZED_NEW);
+
+        OBJECT             = boot(CID.OBJECT);
+        STRING             = boot(CID.STRING);
+        THROWABLE          = boot(CID.THROWABLE);
+        KLASS              = boot(CID.KLASS);
+        NULL               = boot(CID.NULL);
+
+        OBJECT_ARRAY       = boot(CID.OBJECT_ARRAY);
+        STRING_ARRAY       = boot(CID.STRING_ARRAY);
+        BOOLEAN_ARRAY      = boot(CID.BOOLEAN_ARRAY);
+        BYTE_ARRAY         = boot(CID.BYTE_ARRAY);
+        CHAR_ARRAY         = boot(CID.CHAR_ARRAY);
+        SHORT_ARRAY        = boot(CID.SHORT_ARRAY);
+        INT_ARRAY          = boot(CID.INT_ARRAY);
+        LONG_ARRAY         = boot(CID.LONG_ARRAY);
+        FLOAT_ARRAY        = boot(CID.FLOAT_ARRAY);
+        DOUBLE_ARRAY       = boot(CID.DOUBLE_ARRAY);
+
+        STRING_OF_BYTES    = boot(CID.STRING_OF_BYTES);
+        LOCAL_ARRAY        = boot(CID.LOCAL_ARRAY);
+        GLOBAL_ARRAY       = boot(CID.GLOBAL_ARRAY);
+        ADDRESS            = boot(CID.ADDRESS);
+        ADDRESS_ARRAY      = boot(CID.ADDRESS_ARRAY);
+        UWORD              = boot(CID.UWORD);
+        UWORD_ARRAY        = boot(CID.UWORD_ARRAY);
+        OFFSET             = boot(CID.OFFSET);
+        BYTECODE_ARRAY     = boot(CID.BYTECODE_ARRAY);
+	
+/*end[ENABLE_HOSTED]*/	    	
 	
         Assert.that(Klass.LONG2.isPrimitive());
         Assert.that(Klass.DOUBLE2.isPrimitive());
@@ -3971,9 +4059,15 @@ T
      */
     private static void initBootstrapClassesHostedEarly() throws HostedPragma {
         // Base classes have to be created before array classes
+/*if[ENABLE_HOSTED]*/	
         boot(ONE_WORD,      "-local-",                     CID.LOCAL,             synthetic);
         boot(ONE_WORD,      "-global-",                    CID.GLOBAL,            synthetic);
         boot(INT,           "-bytecode-",                  CID.BYTECODE,          synthetic);
+/*else[ENABLE_HOSTED]*/
+//        boot(CID.LOCAL);
+//        boot(CID.GLOBAL);
+//        boot(CID.BYTECODE);
+/*end[ENABLE_HOSTED]*/	
     }
 
     void bootLoad(TranslatorInterface translator) {
@@ -3990,9 +4084,14 @@ T
      */
     private static void initBootstrapClassesHostedLate() throws HostedPragma {
         // these classes have to be created for boostrap, but not looked up at runtime:
+/*if[ENABLE_HOSTED]*/	
         boot(OBJECT,        "[[-global-",                  CID.GLOBAL_ARRAYARRAY, synthetic);
         boot(OBJECT,        "com.sun.squawk.NativeUnsafe", CID.NATIVEUNSAFE,      none);
-
+/*else[ENABLE_HOSTED]*/
+//        boot(CID.GLOBAL_ARRAYARRAY);
+//        boot(CID.NATIVEUNSAFE);
+/*end[ENABLE_HOSTED]*/
+	
         // load all system classes:
         try {
             Isolate isolate = VM.getCurrentIsolate();
@@ -4016,7 +4115,11 @@ T
         } catch (NoClassDefFoundError noClassDefFoundError) {
             // these are fatal - don't try to defer in romizer:
             noClassDefFoundError.printStackTrace();
+/*if[!MINIMAL_ERROR_REPORT]*/	    
             throw new RuntimeException("Klass initialization failed: " + noClassDefFoundError);
+/*else[MINIMAL_ERROR_REPORT]*/	    
+//            throw new RuntimeException();
+/*end[MINIMAL_ERROR_REPORT]*/	    
         }
     }
 
@@ -4146,7 +4249,11 @@ T
                 klass = new Klass(name, componentType, suiteID, systemID != -1);
             } else {
             	if (suite.shouldThrowNoClassDefFoundErrorFor(name)) {
+/*if[!MINIMAL_ERROR_REPORT]*/	    		    
             		throw new NoClassDefFoundError(name);
+/*else[MINIMAL_ERROR_REPORT]*/
+//            		throw new NoClassDefFoundError();
+/*end[MINIMAL_ERROR_REPORT]*/
             	}
                 int suiteID = (systemID == -1 ? suite.getNextAvailableClassNumber() : systemID);
                 klass = new Klass(name, null, suiteID, systemID != -1);

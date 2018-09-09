@@ -135,7 +135,11 @@ public final class Suite {
         resourceFiles = new ResourceFile[0];
 		manifestProperties = new ManifestProperty [0];
         if (type < 0 || type > METADATA) {
+/*if[!MINIMAL_ERROR_REPORT]*/	    
             throw new IllegalArgumentException("type: " + type);
+/*else[MINIMAL_ERROR_REPORT]*/
+//            throw new IllegalArgumentException();
+/*end[MINIMAL_ERROR_REPORT]*/
         }
         this.type = type;
         this.configuration = "complete symbolic information available";
@@ -706,7 +710,11 @@ public final class Suite {
                 boolean continuationLine = isWhiteSpace(line.charAt(0));
                 if (continuationLine) {
                     if ((key == null || value == null)) {
+/*if[!MINIMAL_ERROR_REPORT]*/			
                         throw new IOException("Illformed continuation line :" + line);
+/*else[MINIMAL_ERROR_REPORT]*/			
+//                        throw new IOException();
+/*end[MINIMAL_ERROR_REPORT]*/			
                     }
                     value = value + stripLeadingWS(line, 0);
                 } else if (keyEnd > 0) {
@@ -717,7 +725,11 @@ public final class Suite {
                     value = stripLeadingWS(line, keyEnd+1);
                     // leave this data until next time around.
                 } else {
+/*if[!MINIMAL_ERROR_REPORT]*/		    
                     throw new IOException("Illformed property line :" + line);
+/*else[MINIMAL_ERROR_REPORT]*/		    		    
+//                    throw new IOException();
+/*end[MINIMAL_ERROR_REPORT]*/		    		    
                 }
             }
             
@@ -903,7 +915,11 @@ public final class Suite {
      */
     private void checkWrite() {
         if (closed) {
+/*if[!MINIMAL_ERROR_REPORT]*/	    
             throw new IllegalStateException(this + " is closed");
+/*else[MINIMAL_ERROR_REPORT]*/	    	    
+//            throw new IllegalStateException();
+/*end[MINIMAL_ERROR_REPORT]*/	    	    
         }
 /*if[ENABLE_HOSTED]*/
 	boolean isHosted = VM.isHosted();
@@ -911,7 +927,11 @@ public final class Suite {
 //	boolean isHosted = false;
 /*end[ENABLE_HOSTED]*/
         if (!isHosted && !GC.inRam(this)) {
+/*if[!MINIMAL_ERROR_REPORT]*/	    	    
             throw new IllegalStoreException("trying to update read-only object: " + this);
+/*else[MINIMAL_ERROR_REPORT]*/	    	    
+//            throw new IllegalStoreException();
+/*end[MINIMAL_ERROR_REPORT]*/	    	    
         }
     }
 
@@ -969,7 +989,11 @@ public final class Suite {
             } catch (IOException e) {
                 if (errorOnIOException) {
                     e.printStackTrace();
+/*if[!MINIMAL_ERROR_REPORT]*/	    	    		    
                     throw new Error("IO error while loading suite from '" + uri + "': " + e);
+/*else[MINIMAL_ERROR_REPORT]*/	    	    		    
+//                    throw new Error();
+/*end[MINIMAL_ERROR_REPORT]*/	    	    		    
                 } else {
                     return null;
                 }
@@ -985,7 +1009,11 @@ public final class Suite {
 
         Object root = om.getRoot();
         if (!(root instanceof Suite)) {
+/*if[!MINIMAL_ERROR_REPORT]*/	    
             throw new Error("object memory in '" + om.getURI() + "' does not contain a suite");
+/*else[MINIMAL_ERROR_REPORT]*/	    	    
+//            throw new Error();
+/*end[MINIMAL_ERROR_REPORT]*/	    	    
         }
         return (Suite)root;
     }

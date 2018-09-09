@@ -1225,6 +1225,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
          * @return a pointer to a well-formed object or null if the allocation failed
          */
 /*MAC*/ Address allocateFast(int $size, Address $klass, int $arrayLength) {
+/*if[ENABLE_EXCESSIVE_GC]*/
             if (
                 com_sun_squawk_GC_excessiveGC != false       ||
                 com_sun_squawk_GC_allocationEnabled == false ||
@@ -1232,6 +1233,7 @@ INLINE_UNALIGNED jlong getUnalignedLong(Address base, Offset offset) {
                ) {
                 return null; /* Force call to Java code */
             }
+/*end[ENABLE_EXCESSIVE_GC]*/
             return allocate($size, $klass, $arrayLength);
         }
 

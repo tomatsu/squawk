@@ -72,8 +72,8 @@ public interface MethodOffsets {
     public final static int com_sun_squawk_VM$reportStepEvent                 = 26;
 /*end[ENABLE_SDA_DEBUGGER]*/
     
-    public final static int virtual$java_lang_Object$toString            = 8;
-    public final static int virtual$java_lang_Object$abstractMethodError = 9;
+    public final static int virtual$java_lang_Object$abstractMethodError = 0;
+//    public final static int virtual$java_lang_Object$toString            = 1;
     public final static int java_lang_Object$missingMethodError          = 1;
     
 /*if[FINALIZATION]*/

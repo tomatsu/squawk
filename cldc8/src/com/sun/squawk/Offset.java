@@ -334,11 +334,15 @@ public final class Offset {
         Offset instance = (Offset)pool.get(value);
         if (instance == null) {
             instance = new Offset(value);
+/*if[!MINIMAL_ERROR_REPORT]*/		
             try {
                 pool.put(value, instance);
             } catch (OutOfMemoryError e) {
                 throw new OutOfMemoryError("Failed to grow instance pool when adding " + value);
             }
+/*else[MINIMAL_ERROR_REPORT]*/		
+//                pool.put(value, instance);
+/*end[MINIMAL_ERROR_REPORT]*/		
         }
         return instance;
     }

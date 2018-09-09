@@ -162,19 +162,17 @@ public final class MethodBody {
         Assert.that(parametersCount >= 0);
         Assert.that(maxStack >= 0);
     }
-
+    
+/*if[ENABLE_HOSTED]*/
     /**
      * Produce String for debugging
      *
      * @return the string
      */
     public String toString() {
-/*if[ENABLE_HOSTED]*/
         return "[bytecode for "+definingMethod.getDefiningClass().getName()+"."+definingMethod.getName();
-/*else[ENABLE_HOSTED]*/
-//	return super.toString();
-/*end[ENABLE_HOSTED]*/		
     }
+/*end[ENABLE_HOSTED]*/		
 
     /**
      * Gets the bytecode.

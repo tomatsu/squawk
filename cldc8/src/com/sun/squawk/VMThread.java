@@ -120,7 +120,8 @@ public final class VMThread implements GlobalStaticFields {
      * Hashtable of threads waiting for an OS event.
      */
     private static EventHashtable osevents;
-    
+
+/*if[ENABLE_VM_STATISTICS]*/    
     /**
      * Count of contended monitorEnters
      */
@@ -137,6 +138,7 @@ public final class VMThread implements GlobalStaticFields {
      * This does not include system-level switches that occur for GC, exception throwing, etc.
      */
     static int threadSwitchCount;
+/*end[ENABLE_VM_STATISTICS]*/
     
     /**
      * Time that system spent waiting - this covers idle as well as some system time.
@@ -197,7 +199,8 @@ public final class VMThread implements GlobalStaticFields {
     public static int getThreadsAllocatedCount() {
         return nextThreadNumber;
     }
-    
+
+/*if[ENABLE_VM_STATISTICS]*/        
     /**
      * Return the number of times that a thread was blocked trying to synchronize on an object.
      *
@@ -209,7 +212,7 @@ public final class VMThread implements GlobalStaticFields {
     public static int getContendedMontorEnterCount() {
         return contendedEnterCount;
     }
-    
+
     /**
      * Return the number of monitors allocated.
      *
@@ -232,6 +235,7 @@ public final class VMThread implements GlobalStaticFields {
     public static int getThreadSwitchCount() {
         return threadSwitchCount;
     }
+/*end[ENABLE_VM_STATISTICS]*/        
 
     /**
      * Set the maximum time that system will wait for IO, interrupts, etc.
@@ -365,7 +369,11 @@ public final class VMThread implements GlobalStaticFields {
      */
     public static void sleep(long millis) throws InterruptedException {
         if (millis < 0) {
+/*if[!MINIMAL_ERROR_REPORT]*/	    
             throw new IllegalArgumentException("negative sleep time");
+/*else[MINIMAL_ERROR_REPORT]*/
+//            throw new IllegalArgumentException();
+/*end[MINIMAL_ERROR_REPORT]*/	    
         }
 
         // Was the thread interrupted?
@@ -603,7 +611,11 @@ public final class VMThread implements GlobalStaticFields {
      */
     static void isolateJoin(Isolate isolate) {
         if (currentThread.isolate == isolate) {
+/*if[!MINIMAL_ERROR_REPORT]*/	    	    
             throw new RuntimeException("Isolate cannot join itself");
+/*else[MINIMAL_ERROR_REPORT]*/	    	    
+//            throw new RuntimeException();
+/*end[MINIMAL_ERROR_REPORT]*/	    	    
         }
         if (!isolate.isHibernated()) {
             Assert.that(currentThread.nextThread == null);
@@ -1534,6 +1546,7 @@ VM.println();
         return stackEnd.subOffset(fp);
     }
 
+/*if[ENABLE_VM_STATISTICS]*/    
     private static int stacksAllocatedCount;
     private static int maxStackSize;
     
@@ -1557,6 +1570,7 @@ VM.println();
     public static int getMaxStackSize() {
         return maxStackSize;
     }
+/*end[ENABLE_VM_STATISTICS]*/    
     
     
     private static void threadGC(boolean userThread, boolean fullGC) {
@@ -1576,7 +1590,11 @@ VM.println();
      * @return the stack or null if none could be allocated
      */
     private static Object newStack(int size, VMThread owner, boolean userThread) {
+/*if[ENABLE_EXCESSIVE_GC]*/
         Object stack = GC.getExcessiveGC() ? null : GC.newStack(size, owner);
+/*else[ENABLE_EXCESSIVE_GC]*/
+//        Object stack = GC.newStack(size, owner);
+/*end[ENABLE_EXCESSIVE_GC]*/
         if (stack == null) {
             threadGC(userThread, false);
             stack = GC.newStack(size, owner);
@@ -1585,10 +1603,12 @@ VM.println();
                 stack = GC.newStack(size, owner);
             }
         }
+/*if[ENABLE_VM_STATISTICS]*/    
         stacksAllocatedCount++;
         if (size > maxStackSize) {
             maxStackSize = size;
         }
+/*end[ENABLE_VM_STATISTICS]*/
         return stack;
     }
 
@@ -1669,8 +1689,10 @@ VM.println();
             } catch (OutOfMemoryError e) {
                 uncaughtException = true;
                 VM.print("Uncaught out of memory error on thread - aborting isolate ");
+/*if[!MINIMAL_ERROR_REPORT]*/		
                 VM.printThread(this);
                 VM.println();
+/*end[MINIMAL_ERROR_REPORT]*/		
                 isolate.abort(999);
                 didAbort = true;
             } catch (Throwable ex) {
@@ -1776,7 +1798,11 @@ VM.println();
                     Isolate.printAllIsolateStates(System.err);
 /*end[ENABLE_MULTI_ISOLATE]*/
 //                    Assert.shouldNotReachHere("Dead-locked system: no schedulable threads");
+/*if[!MINIMAL_ERROR_REPORT]*/	    	    		    
 		    throw new AssertionError("Dead-locked system: no schedulable threads");
+/*else[MINIMAL_ERROR_REPORT]*/	    	    		    
+//		    throw new AssertionError();
+/*end[MINIMAL_ERROR_REPORT]*/	    	    		    
                 }
 //VM.println("waitForEvent timeout");
                 // Emergency switch in case waitForEvent() "breaks" (misses wakeups and hangs)
@@ -1982,7 +2008,9 @@ VM.println();
      */
     private static void reschedule() throws NotInlinedPragma {
         fixupPendingMonitors();  // Convert any pending monitors to real ones
+/*if[ENABLE_VM_STATISTICS]*/	
         threadSwitchCount++;
+/*end[ENABLE_VM_STATISTICS]*/	
 /*if[DEBUG_CODE_ENABLED]*/
         if (!GC.isGCEnabled()) {
             throw new IllegalStateException("reschedule while GC disabled!");
@@ -2215,7 +2243,11 @@ VM.println();
         if (FATAL_MONITOR_ERRORS) {
             VM.fatalVMError();
         }
+/*if[!MINIMAL_ERROR_REPORT]*/	    	    		    	
         throw new IllegalMonitorStateException("current thread (" + Thread.currentThread() + ") not owner (" + monitor.owner + ")");
+/*else[MINIMAL_ERROR_REPORT]*/	    	    		    	
+//        throw new IllegalMonitorStateException();
+/*end[MINIMAL_ERROR_REPORT]*/	    	    		    	
     }
 
     /**
@@ -2378,7 +2410,9 @@ VM.println();
 //         monitor.owner.printState();
 //    }
 */
+/*if[ENABLE_VM_STATISTICS]*/
             contendedEnterCount++;
+/*end[ENABLE_VM_STATISTICS]*/
             /*
              * Add to the wait queue and set the depth for when thread is restarted.
              */

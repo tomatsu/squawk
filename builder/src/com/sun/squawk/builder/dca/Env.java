@@ -34,10 +34,11 @@ public class Env {
 	    throw new RuntimeException("illegal method id: " + id);
 	}
 	String clazz = id.substring(0, idx);
-	ClassNode cn = getClassNode(clazz);
-	if (cn == null) {
-	    throw new RuntimeException("no class definition: " + clazz);
-	}
+	ClassNode cn = registerClass(clazz);
+//	ClassNode cn = getClassNode(clazz);
+//	if (cn == null) {
+//	    throw new RuntimeException("no class definition: " + clazz + " required by " + id);
+//	}
 	int idx2 = id.indexOf('(', idx + 1);
 	if (idx2 < 0) {
 	    throw new RuntimeException("illegal method id: " + id);

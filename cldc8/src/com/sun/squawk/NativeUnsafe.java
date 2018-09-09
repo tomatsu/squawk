@@ -909,7 +909,11 @@ System.err.println("deleteNativeTask failed");
                 builder.append(keys.nextElement());
             }
             builder.append("\n------");
+/*if[!MINIMAL_ERROR_REPORT]*/	    
             throw new RuntimeException(builder.toString());
+/*else[MINIMAL_ERROR_REPORT]*/	    
+//            throw new RuntimeException();
+/*end[MINIMAL_ERROR_REPORT]*/	    
         }
         unresolvedClassPointers.clear();
     }
@@ -979,7 +983,11 @@ System.err.println("deleteNativeTask failed");
      */
     private static void checkAddress(int address) throws IndexOutOfBoundsException, HostedPragma {
         if (address < 0 || address >= memorySize) {
+/*if[!MINIMAL_ERROR_REPORT]*/	    
             throw new IndexOutOfBoundsException("address is out of range: " + address);
+/*else[MINIMAL_ERROR_REPORT]*/	    	    
+//            throw new IndexOutOfBoundsException();
+/*end[MINIMAL_ERROR_REPORT]*/	    	    
         }
     }
 

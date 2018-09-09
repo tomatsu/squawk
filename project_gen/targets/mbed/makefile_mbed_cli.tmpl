@@ -7,13 +7,21 @@ JAVAC = javac
 JAR = jar
 FIND = find
 MBED = mbed
+
 DCA_CONFIG = dca.config
+MAPPER_CONFIG = $(SQUAWK_TOP)/builder/mapper.config
+MAP ?= false
+
+ifeq ($(MAP),true)
+  DCA_CONFIG := $(DCA_CONFIG),$(MAPPER_CONFIG)
+else
+  ROMIZER_FLAGS += -stripSystemClassName
+endif
 
 SQUAWK_TOP = squawk
 BUILD_TOP ?= build
 JARFILE = classes.jar
 JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar mbed_hal.jar
-#ROMIZER_FLAGS += -stripSystemClassName
 
 BUILD_FLAGS += -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
 BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE)
