@@ -1,4 +1,3 @@
-#include <stdbool.h>
 #include <stdint.h>
 #include "tcp.h"
 #include "udp.h"

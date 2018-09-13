@@ -1,4 +1,5 @@
 //#define USE_US_TIMER
+#include <sys/types.h>
 #include <mem.h>
 #include <osapi.h>
 #include <uart.h>

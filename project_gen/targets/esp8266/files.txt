@@ -68,6 +68,6 @@ squawk.library.properties
 builder/dca.config
 builder/lisp2.config
 builder/cheney.config
-targets/esp8266/src
+targets/esp8266
 gcf
 spiffs
