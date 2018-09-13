@@ -157,7 +157,7 @@ public class Assert {
      *         values from functions that have failed.
      */
 /*if[JAVA5SYNTAX]*/
-    @Vm2c(macro="{ fprintf(stderr, \"shouldNotReachHere: %s -- %s:%d\n\", msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+    @Vm2c(macro="shouldNotReachHere()")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHere(String msg) throws NotInlinedPragma {
         throwAssertFailedException("should not reach here: ", msg);
@@ -166,7 +166,7 @@ public class Assert {
     }
 
 /*if[JAVA5SYNTAX]*/
-    @Vm2c (macro="{ fprintf(stderr, \"shouldNotReachHere: %s -- %s:%d\n\", (char*)msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+    @Vm2c (macro="shouldNotReachHere()")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHere(String msg, String filename, int lineno) throws NotInlinedPragma {
         throwAssertFailedException("should not reach here: ", msg, filename, lineno);
@@ -183,7 +183,7 @@ public class Assert {
      *         values from functions that have failed.
      */
 /*if[JAVA5SYNTAX]*/
-    @Vm2c(macro="{ fprintf(stderr, \"shouldNotReachHere -- %s:%d\n\", __FILE__, __LINE__); fatalVMError(\"\"); }")
+    @Vm2c(macro="shouldNotReachHere()")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHere() {
         throwAssertFailedException("should not reach here");
@@ -192,7 +192,7 @@ public class Assert {
     }
 
 /*if[JAVA5SYNTAX]*/
-    @Vm2c (macro="{ fprintf(stderr, \"shouldNotReachHere -- %s:%d\n\", __FILE__, __LINE__); fatalVMError(\"\"); }")
+    @Vm2c (macro="shouldNotReachHere()")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHere(String filename, int lineno) {
         throwAssertFailedException("", "should not reach here", filename, lineno);
@@ -280,7 +280,7 @@ public class Assert {
      *         values from functions that have failed.
      */
 /*if[JAVA5SYNTAX]*/
-    @Vm2c(macro="{ fprintf(stderr, \"shouldNotReachHere: %s -- %s:%d\n\", (char*)msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+    @Vm2c(macro="shouldNotReachHere()")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHereFatal(String msg) {
         VM.print("Assertion failed: ");
@@ -291,7 +291,7 @@ public class Assert {
     }
 
 /*if[JAVA5SYNTAX]*/
-    @Vm2c (macro="{ fprintf(stderr, \"shouldNotReachHere: %s -- %s:%d\n\", (char*)msg, __FILE__, __LINE__); fatalVMError(\"\"); }")
+    @Vm2c (macro="shouldNotReachHere()")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHereFatal(String msg, String filename, int lineno) {
         printContext("should not reach here: ", filename, lineno);
@@ -309,7 +309,7 @@ public class Assert {
      *         values from functions that have failed.
      */
 /*if[JAVA5SYNTAX]*/
-    @Vm2c(macro="{ fprintf(stderr, \"shouldNotReachHere -- %s:%d\n\", __FILE__, __LINE__); fatalVMError(\"\"); }")
+    @Vm2c(macro="shouldNotReachHere()")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHereFatal() {
         VM.print("Assertion failed: ");
@@ -319,7 +319,7 @@ public class Assert {
     }
 
 /*if[JAVA5SYNTAX]*/
-    @Vm2c (macro="{ fprintf(stderr, \"shouldNotReachHere -- %s:%d\n\", __FILE__, __LINE__); fatalVMError(\"\"); }")
+    @Vm2c (macro="shouldNotReachHere()")
 /*end[JAVA5SYNTAX]*/
     public static RuntimeException shouldNotReachHereFatal(String filename, int lineno) {
         printContext("should not reach here: ", filename, lineno);

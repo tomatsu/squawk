@@ -3241,6 +3241,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
             } else {
                 int overflow = (sl + FP_FIXED_FRAME_SIZE) - (fp - nlocals - nstack);
                 assumeInterp(getUWord(ss, SC_guard) == 0);
+		/*
                 if (com_sun_squawk_GC_GC_TRACING_SUPPORTED && com_sun_squawk_GC_traceFlags > 1) {
                     fprintf(stderr, format(
                                             "*** Extending stack *** (stack size=%d, remaining stack=%d, nlocals=%d, nstack=%d, slotsToClear=%d, mp=0x%x)\n"),
@@ -3252,6 +3253,7 @@ boolean sda_handleSingleStep(ByteAddress actual_ip, UWordAddress actual_fp, UWor
                                             (int)mp
                                           );
                 }
+		*/
                 if (usingServiceStack()) {
                     fatalInterpreterError("cannot extend service stack");
                 }
@@ -5722,7 +5724,8 @@ if (l != 0 && r > (java_lang_Long_MAX_VALUE/l)) {
 /*MAC*/ void do_throw() {
             if (usingServiceStack()) {
                 Address exception = popAddress();
-                fprintf(stderr, "do_throw on service stack. current code=%d:\n", com_sun_squawk_ServiceOperation_code);
+                /*fprintf(stderr, "do_throw on service stack. current code=%d:\n", com_sun_squawk_ServiceOperation_code);*/
+		cioPrintCString("do_throw on service stack.\n");
                 assumeInterp(exception == null || ((UWord)getObject(exception, HDR_klass) & HDR_headerTagMask) == 0);
                 if (exception != NULL && getClass(exception) != NULL) {
                     printJavaStrSafely(com_sun_squawk_Klass_name(getClass(exception)), "class");

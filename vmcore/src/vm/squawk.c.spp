@@ -2099,23 +2099,39 @@ int printValueInRange(Address value, char* valueName, Address low, Address high,
     return result;
 }
 
+#ifdef DIAGNOSTICS_ENABLED
 void printStrSafely(Address value, char* valueName, Address low, Address high, char* rangeName) {
     int result = (value >= low && value < high);
     cioPrintCString("    ");
-	cioPrintCString(valueName);
+    cioPrintCString(valueName);
     cioPrintCString(": ");
     if (value == 0) {
         cioPrintCString("NULL.\n");
     } else if (result) {
         cioPrintJavaString(value);
-        fprintf(stderr, "\n");
+	cioPrintCString("\n");
     } else {
         fprintf(stderr, "%p is NOT in %s range %p .. %p\n", value, rangeName, low, high);
     }
 }
+#else
+#define printStrSafely(v, n, l, h, r) printJavaStrSafely(v, n)
+#endif
 
 void printJavaStrSafely(Address value, char* valueName) {
+#ifdef DIAGNOSTICS_ENABLED
     printStrSafely(value, valueName, com_sun_squawk_VM_romStart, com_sun_squawk_GC_ramEnd, "RAM or ROM");
+#else
+    cioPrintCString("    ");
+    cioPrintCString(valueName);
+    cioPrintCString(": ");
+    if (value == 0) {
+        cioPrintCString("NULL.\n");
+    } else {
+        cioPrintJavaString(value);
+	cioPrintCString("\n");
+    }
+#endif
 }
 
 

@@ -123,7 +123,7 @@ NORETURN void fatalVMError(char *msg) {
     fatalVMError0(msg, true);
 }
 
-#define shouldNotReachHere() { fprintf(stderr, "shouldNotReachHere -- %s:%d\n", __FILE__, __LINE__); fatalVMError(""); }
+#define shouldNotReachHere() { fatalVMError("shouldNotReachHere"); }
 
 #if defined(ASSUME) && ASSUME != 0
 #define assume(x) if (!(x))  { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #x, __FILE__, __LINE__); fatalVMError(""); }
@@ -136,7 +136,7 @@ NORETURN void fatalVMError(char *msg) {
 /**
  * version of assume that is always enabled.
  */
-#define assumeAlways(x) if (!(x))  { fprintf(stderr, "Assertion failed: \"%s\", at %s:%d\n", #x, __FILE__, __LINE__); fatalVMError(""); }
+#define assumeAlways(x) if (!(x))  { fatalVMError("Assertion Failed"); }
 
 /**
  * Exits the VM with an error message including various interpreter state.

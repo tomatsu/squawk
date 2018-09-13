@@ -145,15 +145,38 @@ void cioPrintBytes(char* bytes, int len) {
 #elif HAS_STDIO
 
 void cioPrintCString(char* s) {
-	 puts(s);
+     int len = strlen(s);
+     write(1, s, len);
 }
 
 void cioPrintBytes(char* bytes, int len) {
-	 write(1, bytes, len);
+     write(1, bytes, len);
 }
 
 void cioPrintChar(int ch) {
-	 putchar(ch);
+     write(1, &ch, 1);
+}
+
+static void printNumber (int base, int unsigned_p, int n)
+{
+    static char chars[16] = "0123456789abcdef";
+    char *p, buf[32];
+        
+    if (!unsigned_p && n < 0) {
+	cioPrintChar('-');
+	n = -n;
+    }
+        
+    p = buf + sizeof (buf);
+    *--p = '\0';
+
+    do {
+	*--p = chars[n % base];
+	n /= base;
+    } while (n != 0);
+        
+    while (*p)
+	cioPrintChar(*p++);
 }
 
 void cioPrintLong(jlong x) {
@@ -161,7 +184,7 @@ void cioPrintLong(jlong x) {
 }
 
 void cioPrintWord(int x) {
-         printf("%d", x);
+     printNumber(10, 0, x);
 }
 
 #endif /* HAS_STREAM_IO */
