@@ -32,12 +32,12 @@ public interface HDR {
     /**
      * The size (in bytes) of a pointer.
      */
-    public final static int BYTES_PER_WORD = (/*VAL*/false/*SQUAWK_64*/ ? 8 : 4);
+    public final static int BYTES_PER_WORD = /*VAL*/false/*SQUAWK_16*/ ? 2 : (/*VAL*/false/*SQUAWK_64*/ ? 8 : 4);
 
     /**
      * The amount by which to right shift a byte offset to find the offset of the word that contains the indexed byte.
      */
-    public final static int LOG2_BYTES_PER_WORD = (/*VAL*/false/*SQUAWK_64*/ ? 3 : 2);
+    public final static int LOG2_BYTES_PER_WORD = /*VAL*/false/*SQUAWK_16*/ ? 1 : (/*VAL*/false/*SQUAWK_64*/ ? 3 : 2);
 
     /**
      * The number of bits per byte.

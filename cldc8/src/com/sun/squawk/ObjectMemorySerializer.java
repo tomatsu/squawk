@@ -125,7 +125,7 @@ public class ObjectMemorySerializer {
         }
 /*end[TYPEMAP]*/
 
-        if (!Klass.SQUAWK_64) {
+        if (!Klass.SQUAWK_64 && !Klass.SQUAWK_16) {
             attributes |= ObjectMemoryFile.ATTRIBUTE_32BIT;
         }
 

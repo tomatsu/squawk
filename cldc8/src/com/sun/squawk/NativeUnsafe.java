@@ -124,7 +124,11 @@ public final class NativeUnsafe {
     @Vm2c(proxy="")
 /*end[JAVA5SYNTAX]*/
     public static void setUWord(Object base, int offset, UWord value) throws NativePragma {
-        setInt/*S64*/(base, offset, value.toPrimitive());
+	if (HDR.BYTES_PER_WORD == 2) {
+	    setShort(base, offset, value.toPrimitive());
+	} else {
+	    setInt/*S64*/(base, offset, value.toPrimitive());
+	}
         int index = ((Address)base).add(offset * HDR.BYTES_PER_WORD).asIndex();
         setType0(index, AddressType.UWORD);
     }
@@ -364,7 +368,11 @@ public final class NativeUnsafe {
     @Vm2c(proxy="")
 /*end[JAVA5SYNTAX]*/
     public static UWord getUWord(Object base, int offset) throws NativePragma {
-        return UWord.fromPrimitive(getInt/*S64*/(base, offset));
+	if (HDR.BYTES_PER_WORD == 2) {
+	    return UWord.fromPrimitive(getShort(base, offset));
+	} else {
+	    return UWord.fromPrimitive(getInt/*S64*/(base, offset));
+	}
     }
 
     /**
