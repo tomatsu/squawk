@@ -12,6 +12,9 @@ FIND = find
 CC = xtensa-lx106-elf-cc
 AR = xtensa-lx106-elf-ar
 OBJCOPY = xtensa-lx106-elf-objcopy
+AWK = awk
+EGREP = egrep
+CAT = cat
 
 SQUAWK_TOP = squawk
 BUILD_TOP ?= build
@@ -19,6 +22,8 @@ LINKERSCRIPT = esp8266.ld
 JARFILE = classes.jar
 JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar
 DCA_CONFIG = dca.config
+WIFI_CONFIG = $(SQUAWK_TOP)/targets/esp8266/wifi.config
+CONNECTOR_CONFIG = $(SQUAWK_TOP)/targets/esp8266/connector.config
 FASTALLOC = true
 #ROMIZER_FLAGS += -stripSystemClassName
 
@@ -27,7 +32,8 @@ BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE)
 BUILD_FLAGS += -DSERVICE_CHUNK_SIZE=$(SERVICE_CHUNK_SIZE)
 BUILD_FLAGS += -DFASTALLOC=$(FASTALLOC)
 BUILD_FLAGS += -DGCC_OPTIMIZE_INTERPRETER_LOOP=1
-# BUILD_FLAGS += -DMINIMAL_ERROR_REPORT
+BUILD_FLAGS += -DMINIMAL_ERROR_REPORT
+BUILD_FLAGS += -DHAS_METHOD_OFFSETS=1
 
 INCLUDE_DIRS += $(ESP_SDK)/include .
 INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/esp8266
@@ -83,10 +89,10 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 	$(AT)cp $(SQUAWK_TOP)/builder/$(DCA_CONFIG) $(TMP)
 	$(AT)cp $(SQUAWK_TOP)/builder/$(GC_DCA_CONF) $(TMP)		
 	$(AT)echo "$$(cat $(BUILD_TOP)/MAIN_CLASS_NAME).main([Ljava/lang/String;)V" >> $(TMP)/$(DCA_CONFIG)
-	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(TMP)/$(DCA_CONFIG),$(TMP)/$(GC_DCA_CONF) -o $(TMP)/unused -u $(TMP)/used -i $(TMP)/itf -x $(TMP)/xref $(TMP)/classes.jar
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(WIFI_CONFIG),$(CONNECTOR_CONFIG),$(TMP)/$(DCA_CONFIG),$(TMP)/$(GC_DCA_CONF) -o $(TMP)/unused -u $(TMP)/used -i $(TMP)/itf -x $(TMP)/xref $(TMP)/classes.jar
 	$(AT)cat $(TMP)/itf >> $(TMP)/unused
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.filter.Filter $(TMP)/unused $(TMP)/classes.jar $(TMP)/classes2.jar
-	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(TMP)/$(DCA_CONFIG),$(TMP)/$(GC_DCA_CONF) -o $(TMP)/unused2 -u $(TMP)/used2 -i $(TMP)/itf2 -x $(TMP)/xref2 $(TMP)/classes2.jar
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(WIFI_CONFIG),$(CONNECTOR_CONFIG),$(TMP)/$(DCA_CONFIG),$(TMP)/$(GC_DCA_CONF) -o $(TMP)/unused2 -u $(TMP)/used2 -i $(TMP)/itf2 -x $(TMP)/xref2 $(TMP)/classes2.jar
 	$(AT)cat $(TMP)/itf2 >> $(TMP)/unused2
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.filter.Filter $(TMP)/unused2 $(TMP)/classes2.jar $(TMP)/classes3.jar
 	$(AT)(cd $(TMP)/classes2; jar xf $(TMP)/classes3.jar)
@@ -101,6 +107,9 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 		-d:$(BUILD_TOP) -o:squawk -arch:X86 -endian:little -cp:$(TMP)/j2meclasses -java5cp:$(TMP)/j2meclasses -nometadata -noApi $(TMP)/j2meclasses
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/mapper/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar \
 		com.sun.squawk.suiteconverter.FlashConverter -c $(BUILD_TOP)/squawk.suite 0
+	$(AT)$(EGREP) '#define com_sun_squawk_VM ' $(BUILD_TOP)/vmcore/src/vm/classes.h | $(AWK) '{print $$3}' > $(BUILD_TOP)/cid
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/mapper/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar \
+		com.sun.squawk.suiteconverter.FlashConverter -m:$$($(CAT) $(BUILD_TOP)/cid) $(BUILD_TOP)/squawk.suite 0 > $(BUILD_TOP)/vmcore/src/vm/methodOffsets.h
 
 buildflags:
 	$(AT)echo "#define BUILD_FLAGS \""$(BUILD_FLAGS)"\"" > $(TMP)/buildflags.h

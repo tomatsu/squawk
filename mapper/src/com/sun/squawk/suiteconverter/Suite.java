@@ -28,6 +28,9 @@ package com.sun.squawk.suiteconverter;
 import com.sun.squawk.ObjectMemoryFile;
 import com.sun.squawk.ObjectMemorySerializer;
 import com.sun.squawk.VM;
+import com.sun.squawk.Klass;
+import com.sun.squawk.vm.HDR;
+import com.sun.squawk.vm.FieldOffsets;
 import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
@@ -327,6 +330,17 @@ public class Suite {
 	}
 	sbuf.append(s);
     }
+    static void encodeWord(StringBuffer sbuf, int word) {
+	if (HDR.BYTES_PER_WORD == 2) {
+	    toHex(sbuf, (word >> 8) & 0xff);
+	    toHex(sbuf, (word >> 0) & 0xff);
+	} else {
+	    toHex(sbuf, (word >> 24) & 0xff);
+	    toHex(sbuf, (word >> 16) & 0xff);
+	    toHex(sbuf, (word >> 8) & 0xff);
+	    toHex(sbuf, (word >> 0) & 0xff);
+	}	    
+    }
 
 	public void generateRelocatableArrayInAsm(String var, java.io.OutputStream o) throws IOException {
 		java.io.PrintStream out = new java.io.PrintStream(o);
@@ -377,11 +391,11 @@ public class Suite {
 
 	StringBuffer sbuf = new StringBuffer();
 	sbuf.append("0x");
-	toHex(sbuf, rootOffset + outputHeaderSize, 8);
+	encodeWord(sbuf, rootOffset + outputHeaderSize);
 	sbuf.append(",0x");
-	toHex(sbuf, getHash(), 8);
+	encodeWord(sbuf, getHash());
 	sbuf.append(",0x");
-	toHex(sbuf, memorySize, 8);
+	encodeWord(sbuf, memorySize);
 	sbuf.append(",");
 	out.println(sbuf);
 		
@@ -389,17 +403,14 @@ public class Suite {
 	    byte currentByte = oopMap[i];
 	    sbuf = new StringBuffer();
 	    for (int j = 0; j < 8; j++) {
-		int index = 4 * ((i * 8) + j);
+		int index = ((HDR.BYTES_PER_WORD == 2) ? 2 : 4) * ((i * 8) + j);
 		if (index + 3 > objectMemory.length) continue;
 		int pointer = getObjectMemoryWord(objectMemory, index);
 		if (pointer != 0 && ((currentByte >> j) & 1) == 1) {
 		    sbuf.append("p(");
 		}
 		sbuf.append("0x");
-		toHex(sbuf, (pointer >> 24) & 0xff);
-		toHex(sbuf, (pointer >> 16) & 0xff);
-		toHex(sbuf, (pointer >> 8) & 0xff);
-		toHex(sbuf, (pointer >> 0) & 0xff);
+		encodeWord(sbuf, pointer);
 		if (pointer != 0 && ((currentByte >> j) & 1) == 1) {
 		    sbuf.append(")");
 		}
@@ -411,6 +422,43 @@ public class Suite {
 	out.println("};");
     }
 
+    static String[] VM_methods = {
+	"startup", 
+	"undefinedNativeMethod",
+	"callRun",
+	"getStaticOop",
+	"getStaticInt",
+	"getStaticLong",
+	"putStaticOop",
+	"putStaticInt",
+	"putStaticLong",
+	"yield",
+	"nullPointerException",
+	"arrayIndexOutOfBoundsException",
+	"arithmeticException",
+	"abstractMethodError",
+	"arrayStoreException",
+	"monitorenter",
+	"monitorexit",
+	"checkcastException",
+	"class_1clinit",
+	"_1new",
+	"newarray",
+	"newdimension",
+	"_1lcmp"
+    };
+    
+    public void generateMethodOffsets(int cid) throws IOException {
+	int classesIndex = getObjectMemoryWord(objectMemory, HDR.BYTES_PER_WORD);
+	int vmClassIndex = getObjectMemoryWord(objectMemory, classesIndex + cid * HDR.BYTES_PER_WORD); // com.sun.squawk.VM
+	int staticMethodsOffset = (int)(FieldOffsets.com_sun_squawk_Klass$staticMethods & (long)~0);
+	int staticMethodsIndex = getObjectMemoryWord(objectMemory, vmClassIndex + HDR.BYTES_PER_WORD * staticMethodsOffset); // static methods
+
+	for (int i = 0; i < VM_methods.length; i++) {
+	    int i3 = getObjectMemoryWord(objectMemory, staticMethodsIndex + (i + 1) * HDR.BYTES_PER_WORD) + HDR.BYTES_PER_WORD * 3;
+	    System.out.println("#define Offset_com_sun_squawk_VM_" + VM_methods[i] + " 0x" + Integer.toHexString(i3));
+	}
+    }
     
     /**
      * pointer is canonical. If it points into our memory space, then assume our
@@ -473,14 +521,24 @@ public class Suite {
     }
 
     static private int getObjectMemoryWord(byte[] memory, int index) {
-	int b0 = memory[index + 0] & 0xFF;
-	int b1 = memory[index + 1] & 0xFF;
-	int b2 = memory[index + 2] & 0xFF;
-	int b3 = memory[index + 3] & 0xFF;
-	if (isTargetBigEndian()) {
-	    return (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
+	if (HDR.BYTES_PER_WORD == 2) {
+	    int b0 = memory[index + 0] & 0xFF;
+	    int b1 = memory[index + 1] & 0xFF;
+	    if (isTargetBigEndian()) {
+		return (b0 << 8) | b1;
+	    } else {
+		return (b1 << 8) | b0;
+	    }
 	} else {
-	    return (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
+	    int b0 = memory[index + 0] & 0xFF;
+	    int b1 = memory[index + 1] & 0xFF;
+	    int b2 = memory[index + 2] & 0xFF;
+	    int b3 = memory[index + 3] & 0xFF;
+	    if (isTargetBigEndian()) {
+		return (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
+	    } else {
+		return (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
+	    }
 	}
     }
 

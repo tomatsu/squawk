@@ -13,6 +13,9 @@ FIND = find
 CC = gcc
 CXX = g++
 STRIP = strip
+AWK = awk
+EGREP = egrep
+CAT = cat
 
 SQUAWK_TOP = squawk
 BUILD_TOP ?= build
@@ -39,6 +42,7 @@ BUILD_FLAGS += -DSERVICE_CHUNK_SIZE=$(SERVICE_CHUNK_SIZE)
 BUILD_FLAGS += -DFASTALLOC=$(FASTALLOC)
 BUILD_FLAGS += -DGCC_OPTIMIZE_INTERPRETER_LOOP=0
 BUILD_FLAGS += -DMINIMAL_ERROR_REPORT
+BUILD_FLAGS += -DHAS_METHOD_OFFSETS=1
 
 INCLUDE_DIRS += $(BUILD_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/rts/gcc
 CFLAGS += $(CFLAGS_ARCH) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLAGS_OPTS) -fdata-sections -ffunction-sections -MD
@@ -62,7 +66,6 @@ all:: dirs
 all:: $(JARFILE)
 all:: romize
 all:: compile
-all:: offset
 all:: link
 all:: strip
 
@@ -86,12 +89,12 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 	$(AT)tar cf - -C $(BUILD_TOP)/cldc/classes .  | (cd $(TMP)/classes; tar xf -)
 	$(AT)mkdir -p $(TMP)/classes2
 	$(AT)jar cf $(TMP)/classes.jar -C $(TMP)/classes .
-	$(AT)echo "$$(cat $(BUILD_TOP)/MAIN_CLASS_NAME).main([Ljava/lang/String;)V" >> $(TMP)/main.config
+	$(AT)echo "$$($(CAT) $(BUILD_TOP)/MAIN_CLASS_NAME).main([Ljava/lang/String;)V" >> $(TMP)/main.config
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(DCA_CONFIG),$(TMP)/main.config -o $(TMP)/unused -u $(TMP)/used -i $(TMP)/itf -x $(TMP)/xref $(TMP)/classes.jar
-	$(AT)cat $(TMP)/itf >> $(TMP)/unused
+	$(AT)$(CAT) $(TMP)/itf >> $(TMP)/unused
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.filter.Filter $(TMP)/unused $(TMP)/classes.jar $(TMP)/classes2.jar
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(DCA_CONFIG),$(TMP)/main.config -o $(TMP)/unused2 -u $(TMP)/used2 -i $(TMP)/itf2 -x $(TMP)/xref2 $(TMP)/classes2.jar
-	$(AT)cat $(TMP)/itf2 >> $(TMP)/unused2
+	$(AT)$(CAT) $(TMP)/itf2 >> $(TMP)/unused2
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.filter.Filter $(TMP)/unused2 $(TMP)/classes2.jar $(TMP)/classes3.jar
 	$(AT)(cd $(TMP)/classes2; jar xf $(TMP)/classes3.jar)
 	$(AT)mkdir -p $(TMP)/weaved
@@ -99,19 +102,22 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 	$(AT)mkdir -p $(TMP)/j2meclasses
 	$(AT)$(SQUAWK_TOP)/tools/linux-x86/preverify -classpath $(SQUAWK_TOP)/cldc/classes.target.jar -d $(TMP)/j2meclasses $(TMP)/weaved
 	$(AT)$(JAVA) -cp $(BUILD_TOP)/cldc/classes:$(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/romizer/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar \
-		com.sun.squawk.Romizer $(ROMIZER_FLAGS) -strip:a -mainclass:$(shell cat $(BUILD_TOP)/MAIN_CLASS_NAME) -DGC_com.sun.squawk.Lisp2Collector=false -DPLATFORM_TYPE_DELEGATING=false \
+		com.sun.squawk.Romizer $(ROMIZER_FLAGS) -strip:a -mainclass:$(shell $(CAT) $(BUILD_TOP)/MAIN_CLASS_NAME) -DGC_com.sun.squawk.Lisp2Collector=false -DPLATFORM_TYPE_DELEGATING=false \
 		-DGC_com.sun.squawk.Lisp2GenerationalCollector=false -DPLATFORM_TYPE_SOCKET=false \
 		-DMACROIZE=true -DGC_com.sun.squawk.CheneyCollector=true -DPLATFORM_TYPE_BARE_METAL=true -DPLATFORM_TYPE_NATIVE=false \
 		-d:$(BUILD_TOP) -o:squawk -arch:X86 -endian:little -cp:$(TMP)/j2meclasses -java5cp:$(TMP)/j2meclasses -nometadata -noApi $(TMP)/j2meclasses
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/mapper/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar \
 		com.sun.squawk.suiteconverter.FlashConverter -c $(BUILD_TOP)/squawk.suite 0
+	$(AT)$(EGREP) '#define com_sun_squawk_VM ' $(BUILD_TOP)/vmcore/src/vm/classes.h | $(AWK) '{print $$3}' > $(BUILD_TOP)/CID
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/mapper/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar \
+		com.sun.squawk.suiteconverter.FlashConverter -m:$$($(CAT) $(BUILD_TOP)/CID) $(BUILD_TOP)/squawk.suite 0 > $(BUILD_TOP)/vmcore/src/vm/methodOffsets.h
 
 buildflags:
 	$(AT)echo "#define BUILD_FLAGS \""$(BUILD_FLAGS)"\"" > $(TMP)/buildflags.h
 	$(AT)if [ -f $(BUILD_TOP)/vmcore/src/vm/native.c.inc ]; then \
 		echo "#define INCLUDE_NATIVE" >> $(TMP)/buildflags.h; \
 	fi
-	$(AT)echo "#define MAIN_CLASS_NAME "$(shell cat $(BUILD_TOP)/MAIN_CLASS_NAME) >> $(TMP)/buildflags.h
+	$(AT)echo "#define MAIN_CLASS_NAME "$(shell $(CAT) $(BUILD_TOP)/MAIN_CLASS_NAME) >> $(TMP)/buildflags.h
 	$(AT)if [ -f $(BUILD_TOP)/vmcore/src/vm/buildflags.h ]; then \
 	    diff $(TMP)/buildflags.h $(BUILD_TOP)/vmcore/src/vm/buildflags.h > /dev/null || cp $(TMP)/buildflags.h $(BUILD_TOP)/vmcore/src/vm/buildflags.h; \
 	else \
@@ -129,16 +135,7 @@ $(OBJECT_DIR)/%.o: %.c
 	$(AT)$(CC) -c $(CFLAGS) -o $@ $<
 
 $(BUILD_TOP)/squawk : $(OBJECT_FILES)
-	$(AT)$(CC) -c $(CFLAGS) -DHAS_METHOD_OFFSETS=1 -o $(OBJECT_DIR)/squawk.o squawk/vmcore/src/vm/squawk.c
 	$(AT)$(CC) $(LDFLAGS) -o $@ $(OBJECT_FILES) $(LDSUFFIXES)
-
-$(TMP)/ofst : $(OBJECT_FILES)
-	$(AT)$(CC) $(LDFLAGS) -o $@ $(OBJECT_FILES) $(LDSUFFIXES)
-
-offset: $(BUILD_TOP)/vmcore/src/vm/methodOffsets.h
-
-$(BUILD_TOP)/vmcore/src/vm/methodOffsets.h : $(TMP)/ofst
-	$(TMP)/ofst > $(BUILD_TOP)/vmcore/src/vm/methodOffsets.h
 
 link: $(BUILD_TOP)/squawk
 

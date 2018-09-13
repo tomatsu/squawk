@@ -40,7 +40,9 @@ public class FlashConverter {
     private int libraryAddress;
     private int bootstrapAddress;
     private boolean generateRelocatableCArray;
-	private boolean generateRelocatableArrayInAsm;
+    private boolean generateRelocatableArrayInAsm;
+    private boolean generateMethodOffsets;
+    private int cid; /* system ID of com.sun.squawk.VM */
     private final static String relocatableArraySymbol = "/*VAL*/_bootstrap_suite/*BOOTSTRAP_SUITE_ADDR_SYM*/";
 
     /**
@@ -123,9 +125,13 @@ public class FlashConverter {
                 VM.setVerbose(true);
                 VM.setVeryVerbose(true);
             } else if (arg.equals("-c")) {
-				generateRelocatableCArray = true;
+		generateRelocatableCArray = true;
             } else if (arg.equals("-S")) {
-				generateRelocatableArrayInAsm = true;
+		generateRelocatableArrayInAsm = true;
+            } else if (arg.startsWith("-m:")) {
+                String value = arg.substring("-m:".length());
+		cid = Integer.parseInt(value);
+		generateMethodOffsets = true;
             } else if (arg.equals("-h")) {
                 usage(null);
                 return false;
@@ -182,33 +188,41 @@ public class FlashConverter {
      * Execute the mapper and produce the dump.
      */
     private void run() throws IOException {
-		if (generateRelocatableCArray) {
-			generateRelocatableCArray();
-		} else if (generateRelocatableArrayInAsm) {
-			generateRelocatableArrayInAsm();
-		} else {
-			relocateMemory();
-		}
+	if (generateRelocatableCArray) {
+	    generateRelocatableCArray();
+	} else if (generateRelocatableArrayInAsm) {
+	    generateRelocatableArrayInAsm();
+	} else if (generateMethodOffsets) {
+	    generateMethodOffsets(cid);
+	} else {
+	    relocateMemory();
+	}
     }
     
     private void generateRelocatableCArray() throws IOException {
         int[] memoryAddrs = getMemoryAddrs();
-		Suite suite = new Suite();
-		suite.loadFromFile(suiteFilePath, new File(bootstrapSuitePath).getPath());
+	Suite suite = new Suite();
+	suite.loadFromFile(suiteFilePath, new File(bootstrapSuitePath).getPath());
 		
-		FileOutputStream oc = new FileOutputStream(suiteFilePath + ".c");
-		suite.generateRelocatableCArray(memoryAddrs, relocatableArraySymbol, oc);
-		oc.close();
+	FileOutputStream oc = new FileOutputStream(suiteFilePath + ".c");
+	suite.generateRelocatableCArray(memoryAddrs, relocatableArraySymbol, oc);
+	oc.close();
     }
 
-	private void generateRelocatableArrayInAsm() throws IOException {
-		Suite suite = new Suite();
-		suite.loadFromFile(suiteFilePath, new File(bootstrapSuitePath).getPath());
+    private void generateRelocatableArrayInAsm() throws IOException {
+	Suite suite = new Suite();
+	suite.loadFromFile(suiteFilePath, new File(bootstrapSuitePath).getPath());
 		
-		FileOutputStream o = new FileOutputStream(suiteFilePath + ".S");
-		suite.generateRelocatableArrayInAsm(relocatableArraySymbol, o);
-		o.close();
-	}
+	FileOutputStream o = new FileOutputStream(suiteFilePath + ".S");
+	suite.generateRelocatableArrayInAsm(relocatableArraySymbol, o);
+	o.close();
+    }
+
+    private void generateMethodOffsets(int cid) throws IOException {
+	Suite suite = new Suite();
+	suite.loadFromFile(suiteFilePath, new File(bootstrapSuitePath).getPath());
+	suite.generateMethodOffsets(cid);
+    }
     
     private void relocateMemory() throws IOException {
         File binFilePath = new File(outFile);
@@ -216,14 +230,14 @@ public class FlashConverter {
         if (VM.isVerbose()) {
             System.out.println("Relocating address in " + suiteFilePath + " to " + Integer.toHexString(requiredRelocationAddress) + " to new file " + binFilePath);
         }
-		Suite suite = new Suite();
-		suite.loadFromFile(suiteFilePath,
-                new File(bootstrapSuitePath).getPath());
-		suite.relocateMemory(memoryAddrs);
-		File outputFile = new File(binFilePath.getAbsolutePath());
-		FileOutputStream fos = new FileOutputStream(outputFile);
-		suite.writeToStream(new DataOutputStream(fos));
-		fos.close();
+	Suite suite = new Suite();
+	suite.loadFromFile(suiteFilePath,
+			   new File(bootstrapSuitePath).getPath());
+	suite.relocateMemory(memoryAddrs);
+	File outputFile = new File(binFilePath.getAbsolutePath());
+	FileOutputStream fos = new FileOutputStream(outputFile);
+	suite.writeToStream(new DataOutputStream(fos));
+	fos.close();
     }
     
     /*---------------------------------------------------------------------------*\
