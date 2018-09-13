@@ -942,8 +942,10 @@ public class GC implements GlobalStaticFields {
         // Trace.
         long free = freeMemory();
 
+/*if[ENABLE_MULTI_ISOLATE]*/	
         // Prunes 'dead' isolates from weakly linked global list of isolates.
         VM.pruneIsolateList();
+/*end[ENABLE_MULTI_ISOLATE]*/	
 
         // Clear the class state cache.
         VM.invalidateClassStateCache();
