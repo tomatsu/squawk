@@ -51,6 +51,10 @@ public class ClassNode implements Opcodes {
 	return ((access & ACC_INTERFACE) != 0);
     }
 
+    public boolean isAbstract() {
+	return ((access & ACC_ABSTRACT) != 0);
+    }
+
     public ClassNode getSuperclass() {
 	return superClass;
     }
@@ -233,6 +237,17 @@ public class ClassNode implements Opcodes {
 	}
 	required = true;
     }
+
+    void setMethodRequired(Env env, String name, String desc) {
+	MethodNode mn = getMethod(name, desc);
+	if (mn != null) {
+	    mn.setRequired(env);
+	} else if (superClass != null) {
+	    superClass.setMethodRequired(env, name, desc);
+	} else {
+	    throw new RuntimeException(name + desc + " is not defined in " + this.name);
+	}
+    }
     
     boolean checkRequired(Env env) {
 	for (Map.Entry<String,MethodNode> entry : methodNodes.entrySet()) {
@@ -279,6 +294,20 @@ public class ClassNode implements Opcodes {
 		    }
 		}
 	    }
+
+	    if (!isInterface() && !isAbstract()) {
+		for (ClassNode t : getSuperTypes()) {
+		    if (t.required && t.isInterface()) {
+			for (Map.Entry<String,MethodNode> entry : t.methodNodes.entrySet()) {
+			    MethodNode mn = entry.getValue();
+			    if (mn.required) {
+				setMethodRequired(env, mn.getName(), mn.getDesc());
+			    }
+			}
+		    }
+		}
+	    }
+	    
 	    for (Map.Entry<String,MethodNode> entry : methodNodes.entrySet()) {
 		MethodNode mn = entry.getValue();
 		if (!mn.name.equals("<init>") && requiredMethods.contains(mn.getName() + mn.getDesc())) {

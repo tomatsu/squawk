@@ -5,6 +5,8 @@ import java.util.*;
 import java.io.*;
 import org.objectweb.asm.commons.*;
 import org.objectweb.asm.*;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 public class DeadCodeAnalyzer implements Opcodes {
 
@@ -19,9 +21,21 @@ public class DeadCodeAnalyzer implements Opcodes {
     
     void processClassFile(Env env, InputStream in) throws IOException {
 	ClassReader cr = new ClassReader(in);
-	ClassVisitor cv = new MyVisitor(env);
-
+	ClassVisitor cv;
+	org.objectweb.asm.tree.ClassNode classNode = null;
+	
+	if (eliminateWriteOnlyFields) {
+	    classNode = new org.objectweb.asm.tree.ClassNode();
+	    cv = new MyVisitor(env, classNode);
+	} else {
+	    cv = new MyVisitor(env, null);
+	}
+	
 	cr.accept(cv, ClassReader.SKIP_DEBUG);
+
+	if (eliminateWriteOnlyFields) {
+	    processDoubleAssignment(env, classNode);
+	}
     }
 
     void processClassFiles(Env env, String[] input) throws IOException {
@@ -38,7 +52,40 @@ public class DeadCodeAnalyzer implements Opcodes {
 	    }
 	}
     }
-	
+
+    /*
+     * Look for double assignment. 
+     * e.g. int a = foo.bar = c;
+     */
+    void processDoubleAssignment(Env env, org.objectweb.asm.tree.ClassNode classNode) {
+	List<org.objectweb.asm.tree.MethodNode> m = classNode.methods;
+        for (org.objectweb.asm.tree.MethodNode methodNode : m) {
+	    InsnList instructions = methodNode.instructions;
+	    ListIterator<AbstractInsnNode> iter = instructions.iterator();
+	    while (iter.hasNext()) {
+		AbstractInsnNode insn = iter.next();
+		int opcode = insn.getOpcode();
+		if (opcode == PUTSTATIC || opcode == PUTFIELD) {
+		    int idx = instructions.indexOf(insn);
+		    if (idx < 1) {
+			continue;
+		    }
+		    AbstractInsnNode prev = instructions.get(idx - 1);
+		    AbstractInsnNode next = instructions.get(idx + 1);
+		    int prevOpcode = prev.getOpcode();
+		    int nextOpcode = next.getOpcode();
+		    if (nextOpcode >= ISTORE && nextOpcode <= SASTORE) {
+			if (prevOpcode >= DUP && prevOpcode <= DUP2_X2) {
+			    org.objectweb.asm.tree.FieldInsnNode f = (org.objectweb.asm.tree.FieldInsnNode)insn;
+			    MethodNode mn = env.getMethodNode(classNode.name + "." + methodNode.name + methodNode.desc);
+			    mn.accessField(env, f.owner, f.name, f.desc, opcode);
+			}
+		    }
+		}
+	    }
+	}
+    }
+    
     void doit(String[] input) throws IOException {
 	Env env = new Env(this);
 	processClassFiles(env, input);
@@ -116,8 +163,8 @@ public class DeadCodeAnalyzer implements Opcodes {
 	ClassNode classNode;
 	Env env;
 
-	MyVisitor(Env env) {
-	    super(Opcodes.ASM5, null);
+	MyVisitor(Env env, ClassVisitor cv) {
+	    super(Opcodes.ASM5, cv);
 	    this.env = env;
 	}
 	

@@ -297,7 +297,7 @@ public class Env {
 	    
 	    for (Map.Entry<String,ClassNode> e : classNodes.entrySet()) {
 		ClassNode cn = e.getValue();
-		if (!cn.required) {
+		if (cn.required) {
 		    continue;
 		}
 		if (!cn.isInterface()) {
