@@ -169,6 +169,7 @@ public class Klass<T> {
      */
     private UWord oopMapWord;
 
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
     /**
      * The data map describes the multi-byte data contained within an instance
      * of this class.  The data map is used to facilitate conversion of data contained
@@ -188,6 +189,7 @@ public class Klass<T> {
      *  The number of dataMap entries.
      */
     private short dataMapLength;
+/*end[PLATFORM_TYPE_BARE_METAL]*/    
 
     /**
      * A mask of the constants defined in {@link Modifier}.
@@ -398,9 +400,11 @@ public class Klass<T> {
         this.objects = objects;
         this.oopMap = oopMap;
         this.oopMapWord = oopMapWord;
+/*if[!PLATFORM_TYPE_BARE_METAL]*/	
         this.dataMap = dataMap;
         this.dataMapWord = dataMapWord;
         this.dataMapLength = dataMapLength;
+/*end[PLATFORM_TYPE_BARE_METAL]*/	
         this.modifiers = modifiers;
         this.state = state;
         this.instanceSizeBytes = instanceSizeBytes;
@@ -888,18 +892,23 @@ T
                 case 8: log2ComponentDataSize = 3; break;
                 default: throw Assert.shouldNotReachHere();
             }
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
             this.dataMapWord = UWord.fromPrimitive(log2ComponentDataSize);
-
+/*end[PLATFORM_TYPE_BARE_METAL]*/
         } else {
             this.componentType = null;
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
             this.dataMapWord = UWord.zero();
+/*end[PLATFORM_TYPE_BARE_METAL]*/
             if (hasSystemID && (suiteID == CID.STRING || suiteID == CID.STRING_OF_BYTES)) {
                 this.modifiers = Modifier.SQUAWKARRAY;
                 int log2ComponentDataSize = 0;
                 if (suiteID == CID.STRING) {
                     log2ComponentDataSize = 1;
                 }
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
                 this.dataMapWord = UWord.fromPrimitive(log2ComponentDataSize);
+/*end[PLATFORM_TYPE_BARE_METAL]*/
             }
         }
 
@@ -927,7 +936,9 @@ T
         this.state         = STATE_CONVERTED;
         this.componentType = null;
         this.oopMapWord    = UWord.zero();
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
         this.dataMapWord   = UWord.zero();
+/*end[PLATFORM_TYPE_BARE_METAL]*/
     }
 
     /*---------------------------------------------------------------------------*\
@@ -1645,6 +1656,7 @@ T
      * A flag that controls conditional 64-bitness.
      */
     public static final boolean SQUAWK_64 = /*VAL*/false/*SQUAWK_64*/;
+    public static final boolean SQUAWK_16 = /*VAL*/false/*SQUAWK_16*/;
 
 /*if[DEBUG_CODE_ENABLED]*/
     void dumpMethodSymbols(PrintStream out, String fileName, Object body) {
@@ -2177,8 +2189,10 @@ T
             Assert.that(instanceSizeBytes == 0);
             oopMap = null;
             oopMapWord = UWord.zero();
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
             dataMap = null;
             dataMapWord = UWord.zero();
+/*end[PLATFORM_TYPE_BARE_METAL]*/	    
             return;
         }
         
@@ -2188,8 +2202,10 @@ T
             Assert.that(instanceSizeBytes == 0);
             oopMap = null;
             oopMapWord = UWord.zero();
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
             dataMap = null;
             //dataMapWord set in constructor
+/*end[PLATFORM_TYPE_BARE_METAL]*/	    
             return;
         }
 
@@ -2198,9 +2214,11 @@ T
             instanceSizeBytes  = superType.instanceSizeBytes;
             oopMap        = superType.oopMap;
             oopMapWord    = superType.oopMapWord;
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
             dataMap       = superType.dataMap;
             dataMapWord   = superType.dataMapWord;
             dataMapLength = superType.dataMapLength;
+/*end[PLATFORM_TYPE_BARE_METAL]*/
             return;
         }
 
@@ -2219,8 +2237,10 @@ T
         // Create oop map
         initializeOopMap(fields);
 
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
         // Create data map
         initializeDataMap(fields);
+/*end[PLATFORM_TYPE_BARE_METAL]*/	
     }
 
     /**
@@ -2348,6 +2368,7 @@ T
      */
     public final static int DATAMAP_ENTRIES_PER_WORD = HDR.BITS_PER_WORD / DATAMAP_ENTRY_BITS;
 
+/*if[!PLATFORM_TYPE_BARE_METAL]*/    
     /**
      * Initialize the data map based on the fields defined by this class and it superclasses.
      *
@@ -2415,7 +2436,6 @@ T
         }
     }
 
-
     /**
      * Return the number of entries within the dataMap
      *
@@ -2446,6 +2466,7 @@ T
         int dataSize = (1 << log2DataSize);
         return dataSize;
     }
+/*end[PLATFORM_TYPE_BARE_METAL]*/
 
 
     /*---------------------------------------------------------------------------*\

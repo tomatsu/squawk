@@ -111,6 +111,51 @@ public class FieldOffsets {
      */
     public final static long com_sun_squawk_Klass$oopMapWord = 10 | OOP;
 
+/*if[PLATFORM_TYPE_BARE_METAL]*/
+    /**
+     * The offset of the 'modifiers' field in com.sun.squawk.Klass.
+     */
+    public final static long com_sun_squawk_Klass$modifiers = 11 | INT;
+    
+    /**
+     * The offset of the 'id' field in com.sun.squawk.Klass.
+     */
+    public final static long com_sun_squawk_Klass$id = 24 | SHORT;
+
+    /**
+     * The offset of the 'instanceSizeBytes' field in com.sun.squawk.Klass.
+     */
+    public final static long com_sun_squawk_Klass$instanceSizeBytes = 25 | SHORT;
+
+    /**
+     * The offset of the 'staticFieldsSize' field in com.sun.squawk.Klass.
+     */
+    public final static long com_sun_squawk_Klass$staticFieldsSize = 26 | SHORT;
+
+    /**
+     * The offset of the 'refStaticFieldsSize' field in com.sun.squawk.Klass.
+     */
+    public final static long com_sun_squawk_Klass$refStaticFieldsSize = 27 | SHORT;
+
+    /**
+     * The offset of the 'state' field in com.sun.squawk.Klass.
+     */
+    public final static long com_sun_squawk_Klass$state = 56 | BYTE;
+
+    /**
+     * The offset of the 'initModifiers' field in com.sun.squawk.Klass.
+     */
+    public final static long com_sun_squawk_Klass$initModifiers = 57 | BYTE;
+
+    // unused
+    public final static long com_sun_squawk_Klass$dataMap = 0 | OOP;
+    public final static long com_sun_squawk_Klass$dataMapWord = 0 | OOP;
+    public final static long com_sun_squawk_Klass$dataMapLength = 0 | SHORT;
+    
+    
+/*end[PLATFORM_TYPE_BARE_METAL]*/
+    
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
     /**
      * The offset of the 'dataMap' field in com.sun.squawk.Klass.
      */
@@ -160,6 +205,7 @@ public class FieldOffsets {
      * The offset of the 'initModifiers' field in com.sun.squawk.Klass.
      */
     public final static long com_sun_squawk_Klass$initModifiers = 67 | BYTE;
+/*end[PLATFORM_TYPE_BARE_METAL]*/
 
     /**
      * The offset of the 'entryTable' field in com.sun.squawk.util.SquawkHashtable.
