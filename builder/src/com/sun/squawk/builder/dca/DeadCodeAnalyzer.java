@@ -74,12 +74,12 @@ public class DeadCodeAnalyzer implements Opcodes {
 		    AbstractInsnNode next = instructions.get(idx + 1);
 		    int prevOpcode = prev.getOpcode();
 		    int nextOpcode = next.getOpcode();
-		    if (nextOpcode >= ISTORE && nextOpcode <= SASTORE) {
-			if (prevOpcode >= DUP && prevOpcode <= DUP2_X2) {
+		    if (prevOpcode >= DUP && prevOpcode <= DUP2_X2) {
+//			if (nextOpcode >= ISTORE && nextOpcode <= SASTORE) {
 			    org.objectweb.asm.tree.FieldInsnNode f = (org.objectweb.asm.tree.FieldInsnNode)insn;
 			    MethodNode mn = env.getMethodNode(classNode.name + "." + methodNode.name + methodNode.desc);
 			    mn.accessField(env, f.owner, f.name, f.desc, opcode);
-			}
+//			}
 		    }
 		}
 	    }
