@@ -301,10 +301,12 @@ public final class Isolate implements Runnable {
 //    private Finalizer finalizers;
 /*end[FINALIZATION]*/
 
+/*if[ENABLE_MULTI_ISOLATE]*/
     /**
      * The state that we are transitioning to, or NEW if not transitioning
      */
     private int transitioningState;
+/*end[ENABLE_MULTI_ISOLATE]*/
 
 /*if[NEW_IIC_MESSAGES]*/
     /**
@@ -513,7 +515,7 @@ public final class Isolate implements Runnable {
     public Isolate(Suite suite) {
         this.leafSuite = suite;
 		this.bootstrapSuite = suite;
-        this.state = NEW;
+		this.state = NEW;
 		this.id = 1;
 		this.args = new String[0];
 		this.mainClassName = "Hello";
@@ -1709,8 +1711,8 @@ public final class Isolate implements Runnable {
             throw new IllegalStateException();
         }
 
-/*if[ENABLE_MULTI_ISOLATE]*/	
         changeState(ALIVE);
+/*if[ENABLE_MULTI_ISOLATE]*/	
         transitioningState = NEW; // not in transition
 /*end[ENABLE_MULTI_ISOLATE]*/	
 
@@ -2130,6 +2132,7 @@ public final class Isolate implements Runnable {
         this.state = newState;
     }
 
+/*if[ENABLE_MULTI_ISOLATE]*/
     /**
      * Hibernate or exit the isolate. If the current thread is in this isolate then
      * this function will only return when the isolate is unhibernated. If hibernating,
@@ -2143,7 +2146,6 @@ public final class Isolate implements Runnable {
         if ((state != newState) && (newState > transitioningState)) {
             // note that while in transition to exit, a concurrent call to exit or hibernate will be ignored.
             transitioningState = newState; // we are in process of moving to newState;
-/*if[ENABLE_MULTI_ISOLATE]*/
             if (doHooks) {
                 switch (newState) {
                     case HIBERNATED: {
@@ -2162,8 +2164,6 @@ public final class Isolate implements Runnable {
             }
             
             removeVMShutdownHook();
-/*end[ENABLE_MULTI_ISOLATE]*/
-
 /*if[NEW_IIC_MESSAGES]*/
             cleanupMailboxes();
 /*end[NEW_IIC_MESSAGES]*/
@@ -2196,7 +2196,6 @@ public final class Isolate implements Runnable {
                 this.channelContext = 0;
             }
 
-/*if[ENABLE_MULTI_ISOLATE]*/
            /*
             * Remove this isolate from its parent's list of children. The parentIsolate pointer
             * will be null for the bootstrap isolate as well as for unhibernated isolates
@@ -2205,7 +2204,6 @@ public final class Isolate implements Runnable {
                 parentIsolate.childIsolates.remove(this);
                 parentIsolate = null;
             }
-/*end[ENABLE_MULTI_ISOLATE]*/
             
             /*
              * Hibernate all the executing threads.
@@ -2214,7 +2212,6 @@ public final class Isolate implements Runnable {
         }
     }
 
-/*if[ENABLE_MULTI_ISOLATE]*/
     /*
      * Add a thread to the list of hibernated run threads.
      *
