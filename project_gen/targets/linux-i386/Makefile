@@ -11,6 +11,8 @@ ifneq ($(filter com.sun.squawk.Cheney%,$(COLLECTOR)),)
 GC_DCA_CONF = cheney.config
 endif
 
+STATIC_MAIN_CLASS = $(shell java -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.util.PropertyUtil $(SQUAWK_TOP)/build.properties | egrep '^STATIC_MAIN_CLASS=' | awk -F '=' '{print $$2}')
+
 PROJECT ?= helloworld
 PROJECT_DIR = $(BUILD_TOP)/$(TARGET)_$(PROJECT)
 
@@ -23,6 +25,7 @@ FILELIST = files.txt
 makefile:
 	$(AT)echo GC_DCA_CONF = $(GC_DCA_CONF) > $(PROJECT_DIR)/Makefile
 	$(AT)echo $(GC_CFLAG) >> $(PROJECT_DIR)/Makefile
+	$(AT)echo STATIC_MAIN_CLASS = $(STATIC_MAIN_CLASS) >> $(PROJECT_DIR)/Makefile
 	$(AT)cat makefile.tmpl >> $(PROJECT_DIR)/Makefile
 
 all: copy_squawk makefile copy_app

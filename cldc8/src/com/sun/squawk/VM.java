@@ -188,7 +188,7 @@ public class VM implements GlobalStaticFields {
 //    private static ServerConnectionHandler serverConnectionHandlers;
 /*end[OLD_IIC_MESSAGES]*/
 
-/*if[!PLATFORM_TYPE_BARE_METAL]*/    
+/*if[!STATIC_MAIN_CLASS]*/    
     /**
      * The C array of the null terminated C strings representing the command line
      * arguments that will be converted to a String[] and passed to the {@link JavaApplicationManager}.
@@ -199,7 +199,7 @@ public class VM implements GlobalStaticFields {
      * The number of elements in the {@link #argv} array.
      */
     private static int argc;
-/*end[PLATFORM_TYPE_BARE_METAL]*/
+/*end[STATIC_MAIN_CLASS]*/
     
 /*if[ENABLE_ISOLATE_INITIALIZER]*/
     /**
@@ -299,17 +299,12 @@ public class VM implements GlobalStaticFields {
         /*
          * Create the root isolate and manually initialize com.sun.squawk.Klass.
          */
-/*if[!PLATFORM_TYPE_BARE_METAL]*/	
 /*if[!STATIC_MAIN_CLASS]*/
         String[] args  = new String[argc];
         currentIsolate = new Isolate("com.sun.squawk.JavaApplicationManager", args, bootstrapSuite);
 /*else[STATIC_MAIN_CLASS]*/		
-//        String[] args  = new String[argc];
 //        currentIsolate = new Isolate(bootstrapSuite);
 /*end[STATIC_MAIN_CLASS]*/
-/*else[PLATFORM_TYPE_BARE_METAL]*/
-//	currentIsolate = new Isolate(bootstrapSuite);
-/*end[PLATFORM_TYPE_BARE_METAL]*/
 	
         currentIsolate.initializeClassKlass();
 		
@@ -320,12 +315,14 @@ public class VM implements GlobalStaticFields {
         synchronizationEnabled = true;
 
 
-/*if[!PLATFORM_TYPE_BARE_METAL]*/
+/*if[!STATIC_MAIN_CLASS]*/
         /*
          * Fill in the args array with the C command line arguments.
          */
         GC.copyCStringArray(argv, args);
+/*end[STATIC_MAIN_CLASS]*/
 	
+/*if[!PLATFORM_TYPE_BARE_METAL]*/
         taskCache = new Stack();
 /*end[PLATFORM_TYPE_BARE_METAL]*/
         /*

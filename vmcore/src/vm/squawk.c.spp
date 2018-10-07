@@ -1121,7 +1121,7 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     int realMemorySize;
     int bootstrapSize;
     Address suite;
-#if !PLATFORM_TYPE_BARE_METAL
+#if !STATIC_MAIN_CLASS
     int argvTotalSize = calculateSizeForCopyOfCStringArray(argc, argv);
 #endif
     int offset;
@@ -1131,7 +1131,7 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
 
 #if defined(FLASH_MEMORY) || defined(PLATFORM_TYPE_BARE_METAL)
     memorySize = roundUp(ramSize - (pageSize-1), pageSize);
-#if PLATFORM_TYPE_BARE_METAL
+#if STATIC_MAIN_CLASS
     ramSize = memorySize - roundUp(serviceChunkSize, pageSize) /*- roundUp(argvTotalSize, pageSize)*/ - roundUp(nvmSize, pageSize);
 #else
     ramSize = memorySize - roundUp(serviceChunkSize, pageSize) - roundUp(argvTotalSize, pageSize) - roundUp(nvmSize, pageSize);
@@ -1221,7 +1221,7 @@ Address setupMemory(int ramSize, int nvmSize, int argc, char *argv[], char *boot
     setObject(com_sun_squawk_VMThread_serviceStack, SC_lastFP, 0);
     setUWord(com_sun_squawk_VMThread_serviceStack, SC_lastBCI, 0);
 
-#if !PLATFORM_TYPE_BARE_METAL
+#if !STATIC_MAIN_CLASS
     // The command line arguments for the JAM start on the next page after the end of the stack for the service thread.
     com_sun_squawk_VM_argc = argc;
     com_sun_squawk_VM_argv = (Address)roundUp((UWord)Address_add(com_sun_squawk_VMThread_serviceStack, SERVICE_CHUNK_SIZE_MINUS2WORDS), pageSize);
@@ -1445,7 +1445,7 @@ Address processArgs(char *argv[], const int argc) {
 #if TRACE
     fprintf(stderr, "*************** Tracing version ***************\n");
 #endif
-#if !PLATFORM_TYPE_BARE_METAL
+#if !STATIC_MAIN_CLASS
 
     while (oldIndex != argc) {
         char *arg = argv[oldIndex];
@@ -1540,13 +1540,13 @@ Address processArgs(char *argv[], const int argc) {
 //    newIndex = argc;
 /*end[EMULATOR_LAUNCHER]*/
 
-#ifndef FLASH_MEMORY
+#if !defined(FLASH_MEMORY) && !defined(PLATFORM_TYPE_BARE_METAL)
     if (!notrap) {
         setupSignals();
     } else {
         printf("Trap handling disabled\n");
     }
-#endif /* FLASH_MEMORY */
+#endif
 
 #if PLATFORM_TYPE_DELEGATING
     /*
@@ -2336,7 +2336,7 @@ int Squawk_main_wrapper(int argc, char *argv[]) {
     /*
      * Lose the first argument (the path to the executable program).
      */
-#if !PLATFORM_TYPE_BARE_METAL || defined (__linux__)
+#if !STATIC_MAIN_CLASS
     argv++;
     argc--;
 #else

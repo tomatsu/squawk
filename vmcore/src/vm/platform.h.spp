@@ -128,6 +128,10 @@
 #error "unspecified platform type"
 #endif
 
+#ifndef STATIC_MAIN_CLASS
+#define STATIC_MAIN_CLASS PLATFORM_TYPE_BARE_METAL
+#endif
+
 #include "platform_md.h"
 
 extern jlong sysTimeMicros(void);

@@ -23,6 +23,7 @@ JARFILE = classes.jar
 JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar
 DCA_CONFIG := $(SQUAWK_TOP)/builder/dca.config
 MAPPER_CONFIG = $(SQUAWK_TOP)/builder/mapper.config
+JAVA_APPLICATION_MANAGER_CONFIG = $(SQUAWK_TOP)/builder/java_application_manager.config
 
 MAP ?= true
 
@@ -30,6 +31,11 @@ ifeq ($(MAP),true)
   DCA_CONFIG := $(DCA_CONFIG),$(MAPPER_CONFIG)
 else
   ROMIZER_FLAGS += -stripSystemClassName
+endif
+
+ifeq ($(STATIC_MAIN_CLASS),false)
+  DCA_CONFIG := $(DCA_CONFIG),$(JAVA_APPLICATION_MANAGER_CONFIG)
+  BUILD_FLAGS += -DSTATIC_MAIN_CLASS=0
 endif
 
 DCA_CONFIG := $(DCA_CONFIG),$(SQUAWK_TOP)/builder/$(GC_DCA_CONF)
