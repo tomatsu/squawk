@@ -2,7 +2,9 @@ BUILD_TOP ?= /tmp
 TARGET ?= linux-i386
 SQUAWK_TOP = ../../..
 
-COLLECTOR = $(shell java -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.util.PropertyUtil $(SQUAWK_TOP)/build.properties | egrep '^GC=' | awk -F '=' '{print $$2}')
+property = $(shell java -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.util.PropertyUtil $(SQUAWK_TOP)/build.properties | egrep '^$(1)=' | awk -F '=' '{print $$2}')
+
+COLLECTOR = $(call property,GC)
 ifneq ($(filter com.sun.squawk.Lisp2%,$(COLLECTOR)),)
 GC_CFLAG = "BUILD_FLAGS += -DLISP2_BITMAP"
 GC_DCA_CONF = lisp2.config
@@ -11,7 +13,8 @@ ifneq ($(filter com.sun.squawk.Cheney%,$(COLLECTOR)),)
 GC_DCA_CONF = cheney.config
 endif
 
-STATIC_MAIN_CLASS = $(shell java -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.util.PropertyUtil $(SQUAWK_TOP)/build.properties | egrep '^STATIC_MAIN_CLASS=' | awk -F '=' '{print $$2}')
+STATIC_MAIN_CLASS = $(call property,STATIC_MAIN_CLASS)
+ENABLE_MULTI_ISOLATE = $(call property,ENABLE_MULTI_ISOLATE)
 
 PROJECT ?= helloworld
 PROJECT_DIR = $(BUILD_TOP)/$(TARGET)_$(PROJECT)
@@ -26,6 +29,7 @@ makefile:
 	$(AT)echo GC_DCA_CONF = $(GC_DCA_CONF) > $(PROJECT_DIR)/Makefile
 	$(AT)echo $(GC_CFLAG) >> $(PROJECT_DIR)/Makefile
 	$(AT)echo STATIC_MAIN_CLASS = $(STATIC_MAIN_CLASS) >> $(PROJECT_DIR)/Makefile
+	$(AT)echo ENABLE_MULTI_ISOLATE = $(ENABLE_MULTI_ISOLATE) >> $(PROJECT_DIR)/Makefile
 	$(AT)cat makefile.tmpl >> $(PROJECT_DIR)/Makefile
 
 all: copy_squawk makefile copy_app

@@ -259,7 +259,11 @@ public class Klass<T> {
     public static synchronized Class asClass(Klass klass) {
         if (klassToClass == null) {
             klassToClass = new SquawkHashtable();
+/*if[STATIC_MAIN_CLASS]*/
             klassClass = VM.getCurrentIsolate().getBootstrapSuite().classKlass;
+/*else[STATIC_MAIN_CLASS]*/
+//          klassClass = VM.getCurrentIsolate().getBootstrapSuite().lookup("java.lang.Class");
+/*end[STATIC_MAIN_CLASS]*/
             Assert.always(klassClass != null);
         }
         Class c = (Class)klassToClass.get(klass);

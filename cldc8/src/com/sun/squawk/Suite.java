@@ -110,11 +110,8 @@ public final class Suite {
 
 /*if[STATIC_MAIN_CLASS]*/
     Klass mainKlass;
+    Klass classKlass;    
 /*end[STATIC_MAIN_CLASS]*/
-
-/*if[BOOTSTRAP_SUITE_ONLY]*/	
-    Klass classKlass;
-/*end[BOOTSTRAP_SUITE_ONLY]*/	
     
     /**
      * Creates a new <code>Suite</code> instance.

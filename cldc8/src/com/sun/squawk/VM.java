@@ -331,9 +331,9 @@ public class VM implements GlobalStaticFields {
          */
         try {
             exceptionsEnabled = true;
-/*if[!PLATFORM_TYPE_BARE_METAL]*/		    
+/*if[ENABLE_MULTI_ISOLATE]*/	    
             shutdownHooks = new CallbackManager(true);
-/*end[PLATFORM_TYPE_BARE_METAL]*/		    
+/*end[ENABLE_MULTI_ISOLATE]*/	    
             currentIsolate.primitiveThreadStart();
             VMThread.initializeThreading2();
             ServiceOperation.execute();
@@ -2666,11 +2666,13 @@ hbp.dumpState();
             System.out.println("Running top-level shutdown hooks:");
         }
 /*end[ENABLE_VERBOSE]*/
-/*if[!PLATFORM_TYPE_BARE_METAL]*/		
+/*if[ENABLE_MULTI_ISOLATE]*/	
         shutdownHooks.runHooks();
+/*end[ENABLE_MULTI_ISOLATE]*/	
+/*if[!PLATFORM_TYPE_BARE_METAL]*/	
         // system-wide shutdown
         cleanupTaskExecutors();
-/*end[PLATFORM_TYPE_BARE_METAL]*/
+/*end[PLATFORM_TYPE_BARE_METAL]*/	
 
 /*if[ENABLE_VERBOSE]*/	
         if (VM.isVerbose()) {
@@ -2773,7 +2775,7 @@ hbp.dumpState();
      * @see #haltVM(int)
      * @see #stopVM(int)
      */
-/*if[!PLATFORM_TYPE_BARE_METAL]*/	
+/*if[ENABLE_MULTI_ISOLATE]*/    
     public static void addShutdownHook(Isolate iso, Runnable hook) {
         // thread-safe in Squawk only! This is a system class.
         if (executingHooks) {
@@ -2921,7 +2923,7 @@ hbp.dumpState();
         
         return shutdownHooks.remove(VMThread.asVMThread(hook).getIsolate(), hook);
     }
-/*end[PLATFORM_TYPE_BARE_METAL]*/
+/*end[ENABLE_MULTI_ISOLATE]*/    
 	
     /**
      * Return a system global Stack of cached TaskExecutors. Only for use by the JNA implementation.

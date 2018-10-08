@@ -937,7 +937,6 @@ public class GC implements GlobalStaticFields {
      * @param forceFullGC  forces a collection of the whole heap
      */
     static void collectGarbage(boolean forceFullGC) {
-	VM.println("GC...");
 	
         // Trace.
         long free = freeMemory();

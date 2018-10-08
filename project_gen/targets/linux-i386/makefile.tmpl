@@ -24,6 +24,7 @@ JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar
 DCA_CONFIG := $(SQUAWK_TOP)/builder/dca.config
 MAPPER_CONFIG = $(SQUAWK_TOP)/builder/mapper.config
 JAVA_APPLICATION_MANAGER_CONFIG = $(SQUAWK_TOP)/builder/java_application_manager.config
+MULTI_ISOLATE_CONFIG = $(SQUAWK_TOP)/builder/multi_isolate.config
 
 MAP ?= true
 
@@ -36,6 +37,10 @@ endif
 ifeq ($(STATIC_MAIN_CLASS),false)
   DCA_CONFIG := $(DCA_CONFIG),$(JAVA_APPLICATION_MANAGER_CONFIG)
   BUILD_FLAGS += -DSTATIC_MAIN_CLASS=0
+endif
+
+ifeq ($(ENABLE_MULTI_ISOLATE),true)
+  DCA_CONFIG := $(DCA_CONFIG),$(MULTI_ISOLATE_CONFIG)
 endif
 
 DCA_CONFIG := $(DCA_CONFIG),$(SQUAWK_TOP)/builder/$(GC_DCA_CONF)
