@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include "events.h"
 
+extern void set_event(int);
+extern int squawk_cioRequestor(void);
+
 #define IS_BOUND_EVENT(type) (squawk_event_type(type) == BOUND_EVENT)
 #define EVENT_NUMBER (squawk_cioRequestor()+1)
 

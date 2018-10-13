@@ -32,6 +32,9 @@
 
 #define MAX_MICRO_SLEEP 999999
 
+extern int getEvent(void);
+extern int storeIrqRequest(int);
+
 /**
  * Sleep Squawk for specified milliseconds
  */
@@ -84,6 +87,7 @@ static void ioExecute() {
 
     switch (op) {
         case ChannelConstants_GLOBAL_GETEVENT: {
+	    res = getEvent();
             break;
         }
 
@@ -93,6 +97,17 @@ static void ioExecute() {
             break;
         }
 
+	case ChannelConstants_IRQ_WAIT: {
+	    int addr = i1;
+	    int s = storeIrqRequest(addr);
+	    if (s == -1) {
+	      res = ChannelConstants_RESULT_EXCEPTION;
+            } else {
+	      res = s;
+	    }
+            break;
+	}
+	
         default: {
 //            ioExecuteSys(); // do platform-specific
 //            res = com_sun_squawk_ServiceOperation_result; // result set by ioExecuteSys.
@@ -101,4 +116,16 @@ static void ioExecute() {
         }
     }
     com_sun_squawk_ServiceOperation_result = res;
+}
+
+void set_event(int evt) {
+	 com_sun_squawk_ServiceOperation_event = evt;
+}
+
+int squawk_threadID() {
+	return com_sun_squawk_VMThread_threadNumber(com_sun_squawk_VMThread_currentThread);
+}
+
+int squawk_cioRequestor() {
+	return com_sun_squawk_ServiceOperation_requestor;
 }

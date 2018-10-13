@@ -446,6 +446,11 @@ public class Suite {
 	"newarray",
 	"newdimension",
 	"_1lcmp"
+/*if[ENABLE_SDA_DEBUGGER]*/	
+	,"reportException"
+	,"reportBreakpoint"
+	,"reportStepEvent"
+/*end[ENABLE_SDA_DEBUGGER]*/
     };
     
     public void generateMethodOffsets(int cid) throws IOException {

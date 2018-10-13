@@ -3,6 +3,8 @@ hosted-support/squawk.jar.filelist
 tools/linux-x86/preverify
 tools/asm-all-5.2.jar
 tools/retroweaver-all-squawk.jar
+vmcore/src/vm/events.c
+vmcore/src/vm/events.h
 vmcore/src/vm/squawk.suite.h
 vmcore/src/vm/bytecodes.c.inc
 vmcore/src/vm/metal_sleep.h
@@ -71,3 +73,7 @@ builder/multi_isolate.config
 builder/mapper.config
 builder/lisp2.config
 builder/cheney.config
+builder/debugger.config
+debugger
+gcf
+targets/linux

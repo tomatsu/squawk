@@ -1,4 +1,4 @@
-RAM_SIZE ?= 10*1024
+RAM_SIZE ?= 50*1024
 SERVICE_CHUNK_SIZE ?= 1024
 
 AT ?= @
@@ -25,6 +25,7 @@ DCA_CONFIG := $(SQUAWK_TOP)/builder/dca.config
 MAPPER_CONFIG = $(SQUAWK_TOP)/builder/mapper.config
 JAVA_APPLICATION_MANAGER_CONFIG = $(SQUAWK_TOP)/builder/java_application_manager.config
 MULTI_ISOLATE_CONFIG = $(SQUAWK_TOP)/builder/multi_isolate.config
+DEBUGGER_CONFIG = $(SQUAWK_TOP)/builder/debugger.config
 
 MAP ?= true
 
@@ -41,6 +42,12 @@ endif
 
 ifeq ($(ENABLE_MULTI_ISOLATE),true)
   DCA_CONFIG := $(DCA_CONFIG),$(MULTI_ISOLATE_CONFIG)
+endif
+
+DEBUGGER_SRC ?=
+ifeq ($(ENABLE_SDA_DEBUGGER),true)
+  DCA_CONFIG := $(DCA_CONFIG),$(DEBUGGER_CONFIG)
+  DEBUGGER_SRC = $(SQUAWK_TOP)/debugger/src
 endif
 
 DCA_CONFIG := $(DCA_CONFIG),$(SQUAWK_TOP)/builder/$(GC_DCA_CONF)
@@ -62,14 +69,15 @@ LDSUFFIXES += -lm
 TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
 CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes
 
-C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/rts/gcc $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm
+C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/rts/gcc $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/targets/linux/src/native
 C_SOURCE_FILES  = $(shell for i in $(patsubst %,%/*.c,$(C_SOURCE_DIRS)); do if [ -f $$i ]; then basename $$i; fi; done)
 OBJECT_DIR = $(BUILD_TOP)/obj
 OBJECT_FILES = $(patsubst %.c,$(OBJECT_DIR)/%.o,$(C_SOURCE_FILES))
 OBJECT_FILES += $(OBJECT_DIR)/squawk.suite.o
 DEPENDS = $(patsubst %.o,%.d,$(OBJECT_FILES))
 
-JAVA_SOURCE_FILES = $(shell $(FIND) src/classes -name '*.java' -print)
+JAVA_SOURCE_DIRS = src/classes $(SQUAWK_TOP)/gcf/src $(SQUAWK_TOP)/targets/linux/src/classes $(DEBUGGER_SRC)
+JAVA_SOURCE_FILES = $(shell $(FIND) $(JAVA_SOURCE_DIRS) -name '*.java' -print)
 
 vpath %.c $(C_SOURCE_DIRS)
 
@@ -88,7 +96,11 @@ $(JARFILE): $(JAVA_SOURCE_FILES)
 	$(AT)mkdir -p classes
 	$(AT)$(JAVAC) -bootclasspath $(SQUAWK_TOP)/cldc/classes.target.jar -d classes $(JAVA_SOURCE_FILES)
 	$(AT)$(JAR) cf classes.jar -C classes .
+ifeq ($(STATIC_MAIN_CLASS),true)
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.asm.MainFinder $(JARFILE) > $(BUILD_TOP)/MAIN_CLASS_NAME
+else
+	$(AT)echo $(MAIN_CLASS_NAME) > $(BUILD_TOP)/MAIN_CLASS_NAME
+endif
 
 romize: $(BUILD_TOP)/squawk.suite.c
 
@@ -113,9 +125,9 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 	$(AT)mkdir -p $(TMP)/j2meclasses
 	$(AT)$(SQUAWK_TOP)/tools/linux-x86/preverify -classpath $(SQUAWK_TOP)/cldc/classes.target.jar -d $(TMP)/j2meclasses $(TMP)/weaved
 	$(AT)$(JAVA) -cp $(BUILD_TOP)/cldc/classes:$(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/romizer/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar \
-		com.sun.squawk.Romizer $(ROMIZER_FLAGS) -strip:a -mainclass:$(shell $(CAT) $(BUILD_TOP)/MAIN_CLASS_NAME) -DGC_com.sun.squawk.Lisp2Collector=false -DPLATFORM_TYPE_DELEGATING=false \
-		-DGC_com.sun.squawk.Lisp2GenerationalCollector=false -DPLATFORM_TYPE_SOCKET=false \
-		-DMACROIZE=true -DGC_com.sun.squawk.CheneyCollector=true -DPLATFORM_TYPE_BARE_METAL=true -DPLATFORM_TYPE_NATIVE=false \
+		com.sun.squawk.Romizer $(ROMIZER_FLAGS) -strip:a -mainclass:$(shell $(CAT) $(BUILD_TOP)/MAIN_CLASS_NAME) \
+		$(GC_JAVAFLAG) -DPLATFORM_TYPE_SOCKET=false -DPLATFORM_TYPE_DELEGATING=false \
+		-DMACROIZE=true -DPLATFORM_TYPE_BARE_METAL=true -DPLATFORM_TYPE_NATIVE=false \
 		-d:$(BUILD_TOP) -o:squawk -arch:X86 -endian:little -cp:$(TMP)/j2meclasses -java5cp:$(TMP)/j2meclasses -nometadata -noApi $(TMP)/j2meclasses
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/mapper/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar \
 		com.sun.squawk.suiteconverter.FlashConverter -c $(BUILD_TOP)/squawk.suite 0

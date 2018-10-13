@@ -117,7 +117,7 @@ typedef int64_t jlong;
 #define sysPlatformName() "linux"
 #endif
 
-#define sysInitialize() /* empty */
+#define sysInitialize() install_signal_handler()
 
 #if PLATFORM_TYPE_BARE_METAL
 #define sysGetPageSize() 128
@@ -136,4 +136,4 @@ typedef int64_t jlong;
 
 extern jlong sysTimeMicros(void);
 extern jlong sysTimeMillis(void);
-
+extern void install_signal_handler(void);

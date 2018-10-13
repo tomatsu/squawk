@@ -73,7 +73,9 @@ public interface MethodOffsets {
 /*end[ENABLE_SDA_DEBUGGER]*/
     
     public final static int virtual$java_lang_Object$abstractMethodError = 0;
-//    public final static int virtual$java_lang_Object$toString            = 1;
+/*if[ENABLE_SDA_DEBUGGER]*/
+    public final static int virtual$java_lang_Object$toString            = 1;
+/*end[ENABLE_SDA_DEBUGGER]*/
     public final static int java_lang_Object$missingMethodError          = 1;
     
 /*if[FINALIZATION]*/

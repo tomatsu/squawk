@@ -146,15 +146,15 @@ void cioPrintBytes(char* bytes, int len) {
 
 void cioPrintCString(char* s) {
      int len = strlen(s);
-     write(1, s, len);
+     puts(s);
 }
 
 void cioPrintBytes(char* bytes, int len) {
-     write(1, bytes, len);
+     fwrite(bytes, len, 1, stdout);
 }
 
 void cioPrintChar(int ch) {
-     write(1, &ch, 1);
+     putchar(ch);
 }
 
 static void printNumber (int base, int unsigned_p, int n)
