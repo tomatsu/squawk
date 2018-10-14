@@ -46,6 +46,11 @@ all: copy_squawk makefile copy_app
 copy_squawk:
 	$(AT)mkdir -p $(PROJECT_DIR)/squawk
 	$(AT)(files="$(shell cat $(FILELIST))"; cd $(SQUAWK_TOP); tar cf - $$files) | (cd $(PROJECT_DIR)/squawk; tar xf -)
+ifeq ($(ENABLE_SDA_DEBUGGER),true)
+	$(AT)mkdir -p $(PROJECT_DIR)/squawk/debugger $(PROJECT_DIR)/squawk/debugger-proxy
+	$(AT)cd $(SQUAWK_TOP)/debugger/build/classes; jar cfM $(PROJECT_DIR)/squawk/debugger/debugger.jar com
+	$(AT)cp $(SQUAWK_TOP)/debugger-proxy/dist/Squawk-debugger-proxy.jar $(PROJECT_DIR)/squawk/debugger-proxy/debugger-proxy.jar
+endif
 
 copy_app:
 	$(AT)(cd ../../projects/$(PROJECT); tar cf - .) | (cd $(PROJECT_DIR); tar xf -)

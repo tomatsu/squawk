@@ -74,6 +74,5 @@ builder/mapper.config
 builder/lisp2.config
 builder/cheney.config
 builder/debugger.config
-debugger
 gcf
 targets/linux
