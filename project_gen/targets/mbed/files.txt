@@ -32,6 +32,8 @@ vmcore/src/vm/fp/s_ceil.c
 vmcore/src/vm/fp/e_sqrt.c
 vmcore/src/vm/fp/s_fabs.c
 vmcore/src/vm/fp/e_rem_pio2.c
+vmcore/src/vm/fp/s_fmod.c
+vmcore/src/vm/fp/k_fmod.c
 vmcore/src/vm/io_metal.c.inc
 vmcore/src/vm/cio.c.inc
 vmcore/src/vm/io_socket.c.inc

@@ -114,7 +114,7 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 	$(AT)tar cf - -C $(BUILD_TOP)/cldc/classes .  | (cd $(TMP)/classes; tar xf -)
 	$(AT)mkdir -p $(TMP)/classes2
 	$(AT)jar cf $(TMP)/classes.jar -C $(TMP)/classes .
-	$(AT)echo "$$($(CAT) $(BUILD_TOP)/MAIN_CLASS_NAME).main([Ljava/lang/String;)V" >> $(TMP)/main.config
+	$(AT)echo "$$($(CAT) $(BUILD_TOP)/MAIN_CLASS_NAME).main([Ljava/lang/String;)V" > $(TMP)/main.config
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(DCA_CONFIG),$(TMP)/main.config -o $(TMP)/unused -u $(TMP)/used -i $(TMP)/itf -x $(TMP)/xref $(TMP)/classes.jar
 	$(AT)$(CAT) $(TMP)/itf >> $(TMP)/unused
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.filter.Filter $(TMP)/unused $(TMP)/classes.jar $(TMP)/classes2.jar

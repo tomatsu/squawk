@@ -18,14 +18,47 @@ CAT = cat
 
 SQUAWK_TOP = squawk
 BUILD_TOP ?= build
+BUILD_TOP_ABS = $(filter /%,$(BUILD_TOP))
+ifeq ($(BUILD_TOP_ABS),)
+  BUILD_TOP_ABS = $(shell pwd)/$(BUILD_TOP)
+endif
 LINKERSCRIPT = esp8266.ld
 JARFILE = classes.jar
 JARFILES = $(JARFILE) $(SQUAWK_TOP)/cldc/classes.target.jar
-DCA_CONFIG = dca.config
+
+DCA_CONFIG := $(SQUAWK_TOP)/builder/dca.config
+MAPPER_CONFIG = $(SQUAWK_TOP)/builder/mapper.config
+JAVA_APPLICATION_MANAGER_CONFIG = $(SQUAWK_TOP)/builder/java_application_manager.config
+MULTI_ISOLATE_CONFIG = $(SQUAWK_TOP)/builder/multi_isolate.config
+DEBUGGER_CONFIG = $(SQUAWK_TOP)/builder/debugger.config
+
 WIFI_CONFIG = $(SQUAWK_TOP)/targets/esp8266/wifi.config
 CONNECTOR_CONFIG = $(SQUAWK_TOP)/targets/esp8266/connector.config
 FASTALLOC = true
-#ROMIZER_FLAGS += -stripSystemClassName
+
+MAP ?= false
+
+ifeq ($(MAP),true)
+  DCA_CONFIG := $(DCA_CONFIG),$(MAPPER_CONFIG)
+else
+  ROMIZER_FLAGS += -stripSystemClassName
+endif
+
+ifeq ($(STATIC_MAIN_CLASS),false)
+  DCA_CONFIG := $(DCA_CONFIG),$(JAVA_APPLICATION_MANAGER_CONFIG)
+  BUILD_FLAGS += -DSTATIC_MAIN_CLASS=0
+endif
+
+ifeq ($(ENABLE_MULTI_ISOLATE),true)
+  DCA_CONFIG := $(DCA_CONFIG),$(MULTI_ISOLATE_CONFIG)
+endif
+
+ifeq ($(ENABLE_SDA_DEBUGGER),true)
+  DCA_CONFIG := $(DCA_CONFIG),$(DEBUGGER_CONFIG)
+  JARFILES += $(SQUAWK_TOP)/debugger/debugger.jar
+endif
+
+DCA_CONFIG := $(DCA_CONFIG),$(SQUAWK_TOP)/builder/$(GC_DCA_CONF)
 
 BUILD_FLAGS += -DMACROIZE -D_GNU_SOURCE -DSQUAWK_64=false -DPLATFORM_BIG_ENDIAN=false -DPLATFORM_UNALIGNED_LOADS=false -DPLATFORM_TYPE_BARE_METAL=1
 BUILD_FLAGS += -DDEFAULT_RAM_SIZE=$(RAM_SIZE)
@@ -48,8 +81,8 @@ LDSUFFIXES += -L$(BUILD_TOP)
 LIBAR = $(BUILD_TOP)/libsquawk.a
 LIBS = crypto main net80211 wpa wpa2 wps lwip pp phy driver gcc cirom m squawk
 LDSUFFIXES += -L$(ESP_SDK)/lib -L$(ESP_SDK)/ld -nostdlib -Wl,--start-group $(patsubst %,-l%,$(LIBS)) -Wl,--end-group 
-TMP = /tmp/squawk.$(shell pwd | sum | awk '{print $$1}')
-CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP) classes
+TMP = $(BUILD_TOP_ABS)
+CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) $(TMP)/classes classes
 
 C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/vmcore/src/rts/esp8266 $(SQUAWK_TOP)/targets/esp8266/src/native
 C_SOURCE_DIRS += $(SQUAWK_TOP)/spiffs/latest/src
@@ -74,25 +107,26 @@ $(JARFILE): $(JAVA_SOURCE_FILES)
 	$(AT)mkdir -p classes
 	$(AT)$(JAVAC) -bootclasspath $(SQUAWK_TOP)/cldc/classes.target.jar -d classes $(JAVA_SOURCE_FILES)
 	$(AT)$(JAR) cf $(JARFILE) -C classes .
+ifeq ($(STATIC_MAIN_CLASS),true)
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.asm.MainFinder $(JARFILE) > $(BUILD_TOP)/MAIN_CLASS_NAME
+else
+	$(AT)echo $(MAIN_CLASS_NAME) > $(BUILD_TOP)/MAIN_CLASS_NAME
+endif
 
 romize: $(BUILD_TOP)/squawk.suite.c
 
 $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
-	$(AT)rm -rf $(TMP)
 	$(AT)mkdir -p $(TMP)/classes $(BUILD_TOP)
 	$(AT)for i in $(JARFILES); do (cd $(TMP)/classes; $(JAR) x) < $$i; done
 	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-all-5.2.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.glue.NativeGlueGen -d:$(BUILD_TOP) $(TMP)/classes
 	$(AT)tar cf - -C $(BUILD_TOP)/cldc/classes .  | (cd $(TMP)/classes; tar xf -)
 	$(AT)mkdir -p $(TMP)/classes2
 	$(AT)jar cf $(TMP)/classes.jar -C $(TMP)/classes .
-	$(AT)cp $(SQUAWK_TOP)/builder/$(DCA_CONFIG) $(TMP)
-	$(AT)cp $(SQUAWK_TOP)/builder/$(GC_DCA_CONF) $(TMP)		
-	$(AT)echo "$$(cat $(BUILD_TOP)/MAIN_CLASS_NAME).main([Ljava/lang/String;)V" >> $(TMP)/$(DCA_CONFIG)
-	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(WIFI_CONFIG),$(CONNECTOR_CONFIG),$(TMP)/$(DCA_CONFIG),$(TMP)/$(GC_DCA_CONF) -o $(TMP)/unused -u $(TMP)/used -i $(TMP)/itf -x $(TMP)/xref $(TMP)/classes.jar
+	$(AT)echo "$$(cat $(BUILD_TOP)/MAIN_CLASS_NAME).main([Ljava/lang/String;)V" > $(TMP)/main.config
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(WIFI_CONFIG),$(CONNECTOR_CONFIG),$(DCA_CONFIG),$(TMP)/main.config -o $(TMP)/unused -u $(TMP)/used -i $(TMP)/itf -x $(TMP)/xref $(TMP)/classes.jar
 	$(AT)cat $(TMP)/itf >> $(TMP)/unused
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.filter.Filter $(TMP)/unused $(TMP)/classes.jar $(TMP)/classes2.jar
-	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(WIFI_CONFIG),$(CONNECTOR_CONFIG),$(TMP)/$(DCA_CONFIG),$(TMP)/$(GC_DCA_CONF) -o $(TMP)/unused2 -u $(TMP)/used2 -i $(TMP)/itf2 -x $(TMP)/xref2 $(TMP)/classes2.jar
+	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.dca.DeadCodeAnalyzer -w -config $(WIFI_CONFIG),$(CONNECTOR_CONFIG),$(DCA_CONFIG),$(TMP)/main.config -o $(TMP)/unused2 -u $(TMP)/used2 -i $(TMP)/itf2 -x $(TMP)/xref2 $(TMP)/classes2.jar
 	$(AT)cat $(TMP)/itf2 >> $(TMP)/unused2
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/build.jar:$(SQUAWK_TOP)/tools/asm-all-5.2.jar com.sun.squawk.builder.filter.Filter $(TMP)/unused2 $(TMP)/classes2.jar $(TMP)/classes3.jar
 	$(AT)(cd $(TMP)/classes2; jar xf $(TMP)/classes3.jar)
@@ -101,9 +135,9 @@ $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
 	$(AT)mkdir -p $(TMP)/j2meclasses
 	$(AT)$(SQUAWK_TOP)/tools/linux-x86/preverify -classpath $(SQUAWK_TOP)/cldc/classes.target.jar -d $(TMP)/j2meclasses $(TMP)/weaved
 	$(AT)$(JAVA) -cp $(BUILD_TOP)/cldc/classes:$(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/romizer/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar \
-		com.sun.squawk.Romizer $(ROMIZER_FLAGS) -strip:a -mainclass:$(shell cat $(BUILD_TOP)/MAIN_CLASS_NAME) -DGC_com.sun.squawk.Lisp2Collector=false -DPLATFORM_TYPE_DELEGATING=false \
-		-DGC_com.sun.squawk.Lisp2GenerationalCollector=false -DPLATFORM_TYPE_SOCKET=false \
-		-DMACROIZE=true -DGC_com.sun.squawk.CheneyCollector=true -DPLATFORM_TYPE_BARE_METAL=true -DPLATFORM_TYPE_NATIVE=false \
+		com.sun.squawk.Romizer $(ROMIZER_FLAGS) -strip:a -mainclass:$(shell $(CAT) $(BUILD_TOP)/MAIN_CLASS_NAME) \
+		$(GC_JAVAFLAG) -DPLATFORM_TYPE_SOCKET=false -DPLATFORM_TYPE_DELEGATING=false \
+		-DMACROIZE=true -DPLATFORM_TYPE_BARE_METAL=true -DPLATFORM_TYPE_NATIVE=false \
 		-d:$(BUILD_TOP) -o:squawk -arch:X86 -endian:little -cp:$(TMP)/j2meclasses -java5cp:$(TMP)/j2meclasses -nometadata -noApi $(TMP)/j2meclasses
 	$(AT)$(JAVA) -cp $(SQUAWK_TOP)/hosted-support/classes.jar:$(SQUAWK_TOP)/mapper/classes.jar:$(SQUAWK_TOP)/cldc/classes.jar:$(SQUAWK_TOP)/translator/classes.jar \
 		com.sun.squawk.suiteconverter.FlashConverter -c $(BUILD_TOP)/squawk.suite 0
@@ -151,4 +185,4 @@ map:
 clean:
 	$(AT)rm -rf $(CLEAN_TARGETS)
 
-.PHONY: all dirs romize buildflags compile link bin hex map clean
+.PHONY: all dirs romize buildflags compile link bin hex map clean run-debugger-proxy
