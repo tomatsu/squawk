@@ -12,7 +12,7 @@ public class Socket extends AbstractSocket {
     private static native int read0(int handle, byte[] buf, int offset, int size);
     private static native int read1(int handle);
     private static native int write0(int handle, byte[] buf, int offset, int size);
-    private static native int write1(int handle, byte value);
+    private static native int write1(int handle, int value);
     private static native int close0(int handle);
 
     int handle;

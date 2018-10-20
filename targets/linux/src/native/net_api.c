@@ -182,12 +182,12 @@ int Java_com_sun_squawk_io_Socket_read0(int handle, void* buf, int off, int len)
 }
 
 int Java_com_sun_squawk_io_Socket_read1(int handle) {
-    int c;
-    int n = socket_read(handle, (char*)&c, 1);
-    if (n < 0) {
+    uint8_t c;
+    int n = socket_read(handle, &c, 1);
+    if (n <= 0) {
 	return n;
     } else {
-	return c;
+	return (int)c;
     }
 }
 
@@ -196,7 +196,8 @@ int Java_com_sun_squawk_io_Socket_write0(int handle, void* buf, int off, int len
 }
 
 int Java_com_sun_squawk_io_Socket_write1(int handle, int value) {
-    return socket_write(handle, (char*)&value, 1);
+    int8_t c = (int8_t)value;
+    return socket_write(handle, (char*)&c, 1);
 }
 
 int Java_com_sun_squawk_io_Socket_available0(int handle) {
