@@ -15,6 +15,7 @@ Build for mbed
 ---------------
 * Install gcc-arm-none-eabi
 * Install JDK
+* Install mbed cli (tested with 1.7.5)
 * git clone https://github.com/tomatsu/squawk
 * cd squawk; make
 * cd project_gen/targets/mbed;  make TARGET=LPC1768 PROJECT=helloworld

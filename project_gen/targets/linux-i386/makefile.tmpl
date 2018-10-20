@@ -70,7 +70,7 @@ CFLAGS += $(CFLAGS_ARCH) $(BUILD_FLAGS) $(patsubst %,-I%,$(INCLUDE_DIRS)) $(CFLA
 LDFLAGS += $(CFLAGS_ARCH) $(CFLAGS_OPTS) -Wl,-gc-sections
 LDSUFFIXES += -lm
 TMP = $(BUILD_TOP_ABS)
-CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) classes
+CLEAN_TARGETS = $(BUILD_TOP) $(JARFILE) classes $(TMP)/classes
 
 C_SOURCE_DIRS = src/native $(SQUAWK_TOP)/vmcore/src/rts/gcc $(SQUAWK_TOP)/vmcore/src/vm/fp $(SQUAWK_TOP)/vmcore/src/vm $(SQUAWK_TOP)/targets/linux/src/native
 C_SOURCE_FILES  = $(shell for i in $(patsubst %,%/*.c,$(C_SOURCE_DIRS)); do if [ -f $$i ]; then basename $$i; fi; done)
@@ -108,7 +108,6 @@ endif
 romize: $(BUILD_TOP)/squawk.suite.c
 
 $(BUILD_TOP)/squawk.suite.c: $(JARFILES)
-	$(AT)rm -rf $(TMP)/classes
 	$(AT)mkdir -p $(TMP)/classes $(BUILD_TOP)
 	$(AT)for i in $(JARFILES); do (cd $(TMP)/classes; $(JAR) x) < $$i; done
 	$(AT)$(JAVA) -Xbootclasspath/a:$(SQUAWK_TOP)/tools/asm-all-5.2.jar -cp $(SQUAWK_TOP)/build.jar com.sun.squawk.builder.glue.NativeGlueGen -d:$(BUILD_TOP) $(TMP)/classes

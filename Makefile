@@ -32,10 +32,10 @@ preprocess:
 
 ifeq ($(ENABLE_SDA_DEBUGGER),true)
 debugger:
-	cd debugger; ant -Djavac.classpath=../cldc/classes.jar
+	cd debugger; ant -Djavac.classpath=../cldc/classes.jar jar
 
 debugger-proxy: debugger
-	cd debugger-proxy; ant -Djavac.classpath=../debugger/dist/Squawk-debugger.jar:../cldc/classes.jar:../translator/classes.jar
+	cd debugger-proxy; ant -Djavac.classpath=../debugger/dist/Squawk-debugger.jar:../cldc/classes.jar:../translator/classes.jar jar
 else
 debugger-proxy:
 endif
